@@ -1,0 +1,10 @@
+include_guard(GLOBAL)
+
+function(csPathListNormalize INPUT_LIST_NAME)
+  set(OUTPUT_LIST "")
+  foreach (PATH_ITEM IN ITEMS ${${INPUT_LIST_NAME}})
+    cmake_path(SET NORMALIZED_PATH NORMALIZE "${PATH_ITEM}")
+    list(APPEND OUTPUT_LIST ${NORMALIZED_PATH})
+  endforeach()
+  set(${INPUT_LIST_NAME} ${OUTPUT_LIST} PARENT_SCOPE)
+endfunction()

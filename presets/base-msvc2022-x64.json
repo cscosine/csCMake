@@ -1,0 +1,60 @@
+{
+  "version":  10,
+  "include": [
+    "base-presets.json",
+    "${sourceDir}/cmakeUserPath.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "msvc2022-x64",
+      "inherits": [ "cs-base-msvc2022-x64", "cmake-user-path-msvc2022-x64"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msvc2022-x64-debug",
+      "inherits": ["cs-windows-debug"],
+      "configurePreset" : "msvc2022-x64"
+    },
+    {
+      "name": "msvc2022-x64-release",
+      "inherits": ["cs-windows-release"],
+      "configurePreset" : "msvc2022-x64"
+    },
+    {
+      "name": "msvc2022-x64-debug-install",
+      "inherits": ["msvc2022-x64-debug", "cs-windows-install"]
+    },
+    {
+      "name": "msvc2022-x64-release-install",
+      "inherits": ["msvc2022-x64-release", "cs-windows-install"]
+    }
+  ],  
+  "workflowPresets": [
+    {
+      "name": "msvc2022-x64",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc2022-x64"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-debug"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-debug-install"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-release-install"
+        }
+      ]
+    }
+  ]
+}

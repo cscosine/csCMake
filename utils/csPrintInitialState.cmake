@@ -1,0 +1,12 @@
+include_guard(GLOBAL)
+
+function(csPrintInitialState)
+  MESSAGE(STATUS "--- csCMake initial state ---")
+  MESSAGE(STATUS "  csCMake path: ${CMAKE_CURRENT_LIST_DIR}")
+  MESSAGE(STATUS "  CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+  MESSAGE(STATUS "  Packages search paths:")
+  MESSAGE(STATUS "    ENV{CMAKE_PREFIX_PATH} = $ENV{CMAKE_PREFIX_PATH}")
+  MESSAGE(STATUS "    CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
+  MESSAGE(STATUS "    CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+  MESSAGE(STATUS "--- csCMake ---")
+endfunction()
