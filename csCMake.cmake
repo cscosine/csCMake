@@ -3,7 +3,12 @@ include_guard(GLOBAL)
 
 include(utils/csPrintInitialState)
 include(utils/csPathUtils)
+
+include(utils/csAddLibraryExecutable)
 include(utils/csFindPackage)
+include(utils/csTargetSources)
+include(utils/csTargetLinkLibraries)
+include(utils/csTargetDependencies)
 
 # normalize paths
 csPathListNormalize(CMAKE_PREFIX_PATH)
@@ -33,3 +38,10 @@ enable_testing()
 # list of properties added to a target when using csCMake
 # - csFindPackage: the complete list of the find_package requests (added via cs_find_package)
 # - 
+
+function (cs_finalize_project)
+	cs_print_all_target() 
+	set(TARGETS "")
+	cs_get_all_targets(TARGETS)
+  _cs_recursive_analyze_target_finalize("${TARGETS}")
+endfunction()
