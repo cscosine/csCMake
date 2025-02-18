@@ -9,6 +9,7 @@ include(utils/csFindPackage)
 include(utils/csTargetSources)
 include(utils/csTargetLinkLibraries)
 include(utils/csTargetDependencies)
+include(utils/csMSVCUtils)
 
 # normalize paths
 csPathListNormalize(CMAKE_PREFIX_PATH)
@@ -33,15 +34,17 @@ enable_testing()
 	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
   
-  
-  
-# list of properties added to a target when using csCMake
-# - csFindPackage: the complete list of the find_package requests (added via cs_find_package)
-# - 
 
 function (cs_finalize_project)
 	cs_print_all_target() 
+	
 	set(TARGETS "")
 	cs_get_all_targets(TARGETS)
-  _cs_recursive_analyze_target_finalize("${TARGETS}")
+  
+	# finalize path recursion for dll dependencies
+	_cs_recursive_analyze_targets_finalize("${TARGETS}")
+
+	# set on visual studio env variable the path required
+	_cs_set_vs_debugger_env_variable("${TARGETS}")
+
 endfunction()
