@@ -133,7 +133,7 @@ endfunction()
 
 # - csTargetDependenciesDebugFinalized: list of debug dll necessary to the target
 # - csTargetDependenciesReleaseFinalized: list of release dll necessary to the target
-# during the execution a variable csTargetDependenciesToAnalyze is created as temporary, but will be removed before exiting
+# during the execution a variable csTargetDependenciesToAnalyze is created as temporary, but it will be used as a "buffer", at exist it is empty
 function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   csDebugMessage("[_cs_recursive_analyze_targets_finalize] targets: ${TARGETS_LIST}")
   
@@ -307,14 +307,6 @@ function(cs_get_target_dependencies_release_libraries_finalized TARGET_NAME OUTP
 endfunction()
 
 function (_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
-
-  # generic
-  get_target_property(IMPORTED_LOCATION ${TARGET_TO_ANALYZE} IMPORTED_LOCATION)
-	if(IMPORTED_LOCATION)
-    message(NOTICE "[_csPopulateTargetDependencies] IMPORTED_LOCATION for ${TARGET_TO_ANALYZE} is not empty: ${IMPORTED_LOCATION}, ignored. TODO(sc) how to use?")
-  endif()
-  
-	
   # DEBUG
 	get_target_property(IMPORTED_LOCATION_DEBUG ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_DEBUG) 
   _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_DEBUG} ${TARGET_NAME} csTargetDependenciesDebug ${TARGET_TO_ANALYZE})
@@ -322,8 +314,20 @@ function (_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
 	# RELEASE
 	get_target_property(IMPORTED_LOCATION_RELEASE ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_RELEASE) 
   _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_RELEASE} ${TARGET_NAME} csTargetDependenciesRelease ${TARGET_TO_ANALYZE})
+
+  # generic
+  get_target_property(IMPORTED_LOCATION ${TARGET_TO_ANALYZE} IMPORTED_LOCATION)
+	if(IMPORTED_LOCATION AND IMPORTED_LOCATION_RELEASE)
+		if(NOT "${IMPORTED_LOCATION}" STREQUAL "${IMPORTED_LOCATION_RELEASE}")
+			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has both IMPORTED_LOCATION=${IMPORTED_LOCATION} and IMPORTED_LOCATION_RELEASE=${IMPORTED_LOCATION_RELEASE} but they are different, IMPORTED_LOCATION will be ignored")
+		endif()
+	elseif(IMPORTED_LOCATION AND NOT IMPORTED_LOCATION_RELEASE)
+		# if imported location and not release, use it for release
+			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_RELEASE, use IMPORTED_LOCATION")
+		set(IMPORTED_LOCATION_RELEASE "${IMPORTED_LOCATION}")
+	endif()
         
-  # Use release path for libraries that does not have the debug
+  # Use release (or generic if substituted) path for libraries that does not have the debug
   if(IMPORTED_LOCATION_RELEASE AND NOT IMPORTED_LOCATION_DEBUG)
     _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_RELEASE} ${TARGET_NAME} csTargetDependenciesDebug ${TARGET_TO_ANALYZE})
 		message(NOTICE "[_csPopulatecsTargetDependencies] ${TARGET_TO_ANALYZE} has only a release version, use it also as debug dependencies")

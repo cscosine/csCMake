@@ -22,7 +22,12 @@ csPrintInitialState()
 # enable cmake testing
 enable_testing()
 
-# add_library(cs::MSVCCommon INTERFACE)
+# add_library(cs::MSVCCommon INTERFACE) to add common compilation flags etc
+
+if(MSVC)
+	# define a single output folder for binaries (dll and exe)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+endif()
 
 ## TODO: if exe or shared, 
 # set target property RUNTIME_OUTPUT_DIRECTORY to ${CMAKE_BINARY_DIR}/bin)

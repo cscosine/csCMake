@@ -19,17 +19,23 @@ function(_cs_set_vs_debugger_env_variable TARGETS_LIST)
     set(TARGET_RELEASE_FOLDERS_PATH "PATH=${TARGET_RELEASE_FOLDERS}\n")
 
     # TODO(sc) add extra env variable here, e.g. qt plugins etc can be managed in a second line with "QT_PLUGIN_PATH=..."
+    set(EXTRA_ENV_VARIABLES_DEBUG "")
+    set(EXTRA_ENV_VARIABLES_RELEASE "")
 
-    set(VS_DEBUGGER_ENVIRONMENT_DEBUG "${TARGET_DEBUG_FOLDERS_PATH}")
-    set(VS_DEBUGGER_ENVIRONMENT_RELEASE "${TARGET_RELEASE_FOLDERS_PATH}")
+    # set the full ENV 
+    set(VS_DEBUGGER_ENVIRONMENT_DEBUG "${TARGET_DEBUG_FOLDERS_PATH}${EXTRA_ENV_VARIABLES_DEBUG}")
+    set(VS_DEBUGGER_ENVIRONMENT_RELEASE "${TARGET_RELEASE_FOLDERS_PATH}${EXTRA_ENV_VARIABLES_RELEASE}")
 
+    # set the full ENV to a target property
     set_property(TARGET ${TARGET_NAME} PROPERTY VS_DEBUGGER_ENVIRONMENT_DEBUG "${VS_DEBUGGER_ENVIRONMENT_DEBUG}")
-    set_property(TARGET ${TARGET_NAME} PROPERTY VS_DEBUGGER_ENVIRONMENT_RELEASE "PATH=${VS_DEBUGGER_ENVIRONMENT_RELEASE}")
+    set_property(TARGET ${TARGET_NAME} PROPERTY VS_DEBUGGER_ENVIRONMENT_RELEASE "${VS_DEBUGGER_ENVIRONMENT_RELEASE}")
 
-    # set special VS variable, need to use generator expressions
+
+    # set a generator expression that retrieve the target properties
     set(P_RELEASE "$<TARGET_PROPERTY:${TARGET_NAME},VS_DEBUGGER_ENVIRONMENT_RELEASE>") # helper variable
     set(P_DEBUG "$<TARGET_PROPERTY:${TARGET_NAME},VS_DEBUGGER_ENVIRONMENT_DEBUG>") # helper variable
 
+    # set special VS variable, need to use generator expressions
     set_target_properties(${TARGET_NAME}
         PROPERTIES VS_DEBUGGER_ENVIRONMENT "$<$<CONFIG:Debug>:${P_DEBUG}>$<$<CONFIG:Release>:${P_RELEASE}>"
     )
