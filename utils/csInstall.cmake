@@ -87,14 +87,13 @@ function(cs_get_exported_list_default OUTPUT_VARIABLE_NAME)
 endfunction()
 
 
-
 function(_cs_finalize_install EXPORT_NAMESPACE)
   # directory to install cmake files
   set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${EXPORT_NAMESPACE})
 
   # get export list
   cs_get_exported_list(EXPORTS)
-  # and install cmake files of it
+  # and install cmake files of them
 	foreach(NAME ${EXPORTS})
 		install(EXPORT ${NAME}-targets
 		FILE
@@ -106,9 +105,59 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
 		)
 	endforeach()
 
+  
+  # generate the main cmake for finding this package
+  set(INJECTED_FIND_PACKAGES_CODE "")
+	foreach(EXPORT_NAME ${EXPORTS})
+    set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}if(\"${EXPORT_NAME}\" IN_LIST ${EXPORT_NAMESPACE}_FIND_COMPONENTS)\n")
+    cs_get_exported_find_packages(${EXPORT_NAME} FIND_PACKAGES_LIST)
+
+		foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
+			set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}  find_package(${FIND_ARGS})\n")
+		endforeach()
+
+    set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}endif()\n")
+	endforeach()
+
+  # get list of components when find_package without arguments is used
+  cs_get_exported_list(COMPONENTS_LIST)
+  # get list of default components when find_package without arguments is used
+  cs_get_exported_list_default(DEFAULT_COMPONENTS_LIST)
+	# Write the Config.cmake file
+  _cs_configure_config_cmake(${EXPORT_NAMESPACE} "${COMPONENTS_LIST}" "${DEFAULT_COMPONENTS_LIST}" "${INJECTED_FIND_PACKAGES_CODE}")
+
+	#Write a ConfigVersion.cmake file
+	write_basic_package_version_file(
+		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}ConfigVersion.cmake
+		VERSION ${PROJECT_VERSION}
+		COMPATIBILITY AnyNewerVersion
+	)
+
+	#Install the Config and configVersion files
+	install(FILES
+		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}Config.cmake
+		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}ConfigVersion.cmake
+		DESTINATION ${INSTALL_CONFIGDIR}
+	)
 
 endfunction()
 
+function(_cs_configure_config_cmake EXPORT_NAMESPACE COMPONENTS_LIST DEFAULT_COMPONENTS_LISTX INJECTED_FIND_PACKAGES_CODE)
+  # note, the file csTemplateConfig.cmake.in uses the @variable@ substituion with the values prepared in this function of
+  # - EXPORT_NAMESPACE
+  # - COMPONENTS_LIST
+  # - DEFAULT_COMPONENTS_LIST
+  # - INJECTED_FIND_PACKAGES_CODE
+  # do not refactor / change name of those variables
+
+  cs_get_base_path(_BASE_PATH)
+	configure_package_config_file(
+    "${_BASE_PATH}/templates/csTemplateConfig.cmake.in"
+	  "${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}Config.cmake"
+	  INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
+	)
+
+endfunction()
 
 # return the csExported${EXPORT_NAME}FindPackages global property 
 function(cs_get_exported_find_packages EXPORT_NAME OUTPUT_VARIABLE_NAME)

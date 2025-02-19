@@ -1,0 +1,18 @@
+include(CMakeFindDependencyMacro)
+
+# list of all available components
+SET(@EXPORT_NAMESPACE@_COMPONENTS_LIST "@COMPONENTS_LIST@")
+
+# list of default components
+SET(@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST "@DEFAULT_COMPONENTS_LIST@")
+# TODO(sc) SET(@EXPORT_NAMESPACE@_ORDERED_COMPONENTS_LIST "@ORDERED_COMPONENTS_LIST@")
+
+# check the required components asked by the usre, if empty set to default component list
+STRING(COMPARE EQUAL "${@EXPORT_NAMESPACE@_FIND_COMPONENTS}" "" FIND_COMPONENTS_EMPTY)
+if(FIND_COMPONENTS_EMPTY)
+ SET(@EXPORT_NAMESPACE@_FIND_COMPONENTS ${@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST})
+endif()
+
+#find package section
+@INJECTED_FIND_PACKAGES_CODE@
+#end find package section

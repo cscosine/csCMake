@@ -6,8 +6,14 @@
   ],
   "configurePresets": [
     {
+      "name": "msvc2022-x64-LLVM-standard-dir",
+      "hidden": true,
+      "binaryDir": "${sourceParentDir}/build-msvc2022-x64-LLVM",
+      "installDir": "${sourceParentDir}/../../install/msvc2022-x64-LLVM/${sourceDirName}"
+    },
+    {
       "name": "msvc2022-x64-LLVM",
-      "inherits": [ "cs-base-msvc2022-x64-LLVM", "cmake-user-path-msvc2022-x64-LLVM"]
+      "inherits": [ "cs-base-msvc2022-x64-LLVM", "msvc2022-x64-LLVM-standard-dir", "cmake-user-path-msvc2022-x64-LLVM" ]
     }
   ],
   "buildPresets": [

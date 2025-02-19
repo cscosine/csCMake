@@ -32,19 +32,15 @@
       "hidden": true,
       "inherits": [ "cs-host-windows" ],
       "generator": "Visual Studio 17 2022",
-      "architecture": "x64",
-      "binaryDir": "${sourceParentDir}/build-msvc2022-x64",
-      "installDir": "${sourceParentDir}/../../install/msvc2022-x64/${sourceDirName}"
+      "architecture": "x64"
     },
     {
       "name": "cs-base-msvc2022-x64-LLVM",
       "displayName": "Window toolset LLVM",
       "description": "The Window with toolset LLVM",
       "hidden": true,
-      "inherits": ["cs-base-msvc2022-x64"],
-      "toolset":"ClangCL",
-      "binaryDir": "${sourceParentDir}/build-msvc2022-x64-LLVM",
-      "installDir": "${sourceParentDir}/../../install/msvc2022-x64-LLVM/${sourceDirName}"
+      "inherits": [ "cs-base-msvc2022-x64" ],
+      "toolset": "ClangCL"
     }
   ],
   "buildPresets": [

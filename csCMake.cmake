@@ -12,6 +12,26 @@ include(utils/csTargetDependencies)
 include(utils/csMSVCUtils)
 include(utils/csInstall)
 
+# store in a global variable the directory of csCMake, need to be invoked right after
+function(cs_set_base_path PATH)
+	get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
+	if(VAL)
+		if(NOT VAL STREQUAL ${PATH})
+			message(FATAL_ERROR "[cs_set_base_path] csCMake has been included multiple times with different base paths. Check your configuration.")
+		endif()
+	endif()
+	set_property(GLOBAL PROPERTY csCMakeBasePath ${PATH})
+endfunction()
+cs_set_base_path(${CMAKE_CURRENT_LIST_DIR})
+
+# get the stored base path
+function(cs_get_base_path PATH)
+	get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
+	set(${PATH} ${VAL} PARENT_SCOPE)
+endfunction()
+
+
+
 macro(cs_initialize_project)
 	# normalize paths
 	_cs_path_list_normalize(CMAKE_PREFIX_PATH)
