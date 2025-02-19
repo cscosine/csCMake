@@ -10,38 +10,64 @@ include(utils/csTargetSources)
 include(utils/csTargetLinkLibraries)
 include(utils/csTargetDependencies)
 include(utils/csMSVCUtils)
+include(utils/csInstall)
 
-# normalize paths
-csPathListNormalize(CMAKE_PREFIX_PATH)
-csPathListNormalize(CMAKE_MODULE_PATH)
-csPathListNormalize(CMAKE_INSTALL_PREFIX)
+macro(cs_initialize_project)
+	# normalize paths
+	_cs_path_list_normalize(CMAKE_PREFIX_PATH)
+	_cs_path_list_normalize(CMAKE_MODULE_PATH)
+	_cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
-# print information on the csCMake configuration
-csPrintInitialState()
+	# print information on the csCMake configuration
+	cs_print_initial_state()
 
-# enable cmake testing
-enable_testing()
+	# enable cmake testing
+	enable_testing()
 
-# add_library(cs::MSVCCommon INTERFACE) to add common compilation flags etc
+	if(MSVC)
+		# define a single output folder for binaries (dll and exe)
+		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+	endif()
 
-if(MSVC)
-	# define a single output folder for binaries (dll and exe)
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-endif()
-
-## TODO: if exe or shared, 
-# set target property RUNTIME_OUTPUT_DIRECTORY to ${CMAKE_BINARY_DIR}/bin)
-
-#	# silent generally an annoying warning from visual studio about dll export/import
-	#add_compile_options(/wd4251)
-	
+	# add_library(cs::MSVCCommon INTERFACE) to add common compilation flags etc
 	# add multicore compilation in visual studio
 	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-  
 
-function (cs_finalize_project)
+	cs_add_target_base_project_include_dir()
+endmacro()
+
+# add a target named <ProjectName>BaseInclude, alias <ProjectName>::<ProjectName>BaseInclude
+# that allow to propagate include directories to the root of the project
+function(cs_add_target_base_project_include_dir)
+	set(TARGET_NAME ${PROJECT_NAME}BaseInclude)
+	cs_add_library(${TARGET_NAME} INTERFACE)
+	cs_add_library(${PROJECT_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
+
+	target_include_directories(${TARGET_NAME}
+		INTERFACE
+			$<INSTALL_INTERFACE:>
+			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+		INTERFACE
+			$<INSTALL_INTERFACE:>
+			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+	)
+
+	cs_target_link_libraries(${TARGET_NAME}) # no target libraries
+
+	# add to its own export
+	cs_install_target(${TARGET_NAME} ${PROJECT_NAME}BaseInclude DEFAULT)
+
+	cs_finalize_target(${TARGET_NAME})
+endfunction()
+
+# TODO(sc) add a target that manages the version
+
+# EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
+function (cs_finalize_project EXPORT_NAMESPACE)
+	# print info
 	cs_print_all_target() 
+	cs_print_exported_list_details()
 	
 	set(TARGETS "")
 	cs_get_all_targets(TARGETS)
@@ -51,5 +77,8 @@ function (cs_finalize_project)
 
 	# set on visual studio env variable the path required
 	_cs_set_vs_debugger_env_variable("${TARGETS}")
+
+	# finalize the installation: add the cmake/ dir with all cmake files required to find the exported targets
+	_cs_finalize_install(${EXPORT_NAMESPACE})
 
 endfunction()

@@ -4,7 +4,7 @@ include_guard(GLOBAL)
 OPTION(${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG OFF)
 
 # print message msg if ${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG is ON, or if a additional parameter at end is true
-function(csDebugMessage msg)
+function(cs_debug_message msg)
 	set(forced False)
 	if(ARGC EQUAL 2)
 		set(forced ${ARGV1})

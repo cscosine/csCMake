@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-function(print_target_properties tgt)
+function(cs_print_target_properties tgt)
   # Get all propreties that cmake supports
   execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
 
@@ -14,7 +14,7 @@ function(print_target_properties tgt)
   # remove duplicates
   list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
   
-  message("print_target_properties ${tgt}")
+  message("cs_print_target_properties ${tgt}")
   if(NOT TARGET ${tgt})
       message("There is no target named '${tgt}'")
       return()

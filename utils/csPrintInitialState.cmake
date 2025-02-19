@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-function(csPrintInitialState)
+function(cs_print_initial_state)
   MESSAGE(STATUS "--- csCMake initial state ---")
   MESSAGE(STATUS "  csCMake path: ${CMAKE_CURRENT_LIST_DIR}")
   MESSAGE(STATUS "  CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")

@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 include(utils/csPathUtils)
 
 function(_cs_set_vs_debugger_env_variable TARGETS_LIST)
-  csDebugMessage("[_cs_set_vs_debugger_env_variable] targets: ${TARGETS_LIST}")
+  cs_debug_message("[_cs_set_vs_debugger_env_variable] targets: ${TARGETS_LIST}")
 
 	# for each target, get the path with unique folders
   foreach (TARGET_NAME IN ITEMS ${TARGETS_LIST})
@@ -12,8 +12,8 @@ function(_cs_set_vs_debugger_env_variable TARGETS_LIST)
 		cs_get_target_dependencies_release_libraries_finalized(${TARGET_NAME} TARGET_RELEASE_DLLS)
 		cs_extract_unique_folders_list_from_file_list(TARGET_RELEASE_FOLDERS ${TARGET_RELEASE_DLLS})
 
-		csDebugMessage("[_cs_set_vs_debugger_env_variable] target: ${TARGET_NAME} PATH DEBUG ${TARGET_DEBUG_FOLDERS}")
-		csDebugMessage("[_cs_set_vs_debugger_env_variable] target: ${TARGET_NAME} PATH RELEASE ${TARGET_RELEASE_FOLDERS}")
+		cs_debug_message("[_cs_set_vs_debugger_env_variable] target: ${TARGET_NAME} PATH DEBUG ${TARGET_DEBUG_FOLDERS}")
+		cs_debug_message("[_cs_set_vs_debugger_env_variable] target: ${TARGET_NAME} PATH RELEASE ${TARGET_RELEASE_FOLDERS}")
 
     set(TARGET_DEBUG_FOLDERS_PATH "PATH=${TARGET_DEBUG_FOLDERS}\n")
     set(TARGET_RELEASE_FOLDERS_PATH "PATH=${TARGET_RELEASE_FOLDERS}\n")

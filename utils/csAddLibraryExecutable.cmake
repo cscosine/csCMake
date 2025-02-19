@@ -3,6 +3,7 @@ include(utils/csDebugMessage)
 include(utils/csListUtils)
 
 # add a target as library and add to list csProjectTargets
+# note, set some commond properties to target, such that "d" postfix for debug versions
 function(cs_add_library TARGET_NAME)
 	add_library("${TARGET_NAME}" ${ARGN})
   _cs_add_target_to_project_targets(${TARGET_NAME})
@@ -18,7 +19,8 @@ function (_cs_add_target_to_project_targets TARGET_NAME)
   # add to list of targets if it is not an alias
 	get_target_property(TARGET_NAME_ALIAS ${TARGET_NAME} ALIASED_TARGET)
 	if(NOT TARGET_NAME_ALIAS)
-	  _csAddToGlobalPropertyUniqueValue(csProjectTargets ${TARGET_NAME})
+    set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "d")
+	  _cs_add_to_global_property_unique_value(csProjectTargets ${TARGET_NAME})
   endif()
 endfunction()
 
