@@ -49,10 +49,13 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
 	)
 
 	# and install the pdb file for debugging if exists
-  get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
-  if(${TARGET_TYPE} STREQUAL "SHARED_LIBRARY" OR ${TARGET_TYPE} STREQUAL "EXECUTABLE")
-    install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION bin OPTIONAL)	
+  if(WIN32)
+    get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+    if((${TARGET_TYPE} STREQUAL "SHARED_LIBRARY" OR ${TARGET_TYPE} STREQUAL "EXECUTABLE"))
+      install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION bin OPTIONAL)	
+    endif()
   endif()
+
 
 	# get all the find_packages propagated for this target
 	cs_get_target_find_packages(${TARGET_NAME} FIND_PACKAGES_LIST)

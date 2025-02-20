@@ -1,0 +1,91 @@
+{
+  "version":  10,
+  "include": [
+    "base-presets.json",
+    "${sourceDir}/cmakeUserPath.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "linux-ninja-debug-standard-dir",
+      "hidden": true,
+      "binaryDir": "${sourceParentDir}/build-ninja-debug",
+      "installDir": "${sourceParentDir}/../../install/linux-ninja/debug/${sourceDirName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-ninja-release-standard-dir",
+      "hidden": true,
+      "binaryDir": "${sourceParentDir}/build-ninja-release",
+      "installDir": "${sourceParentDir}/../../install/linux-ninja/release/${sourceDirName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-ninja-debug",
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-debug-standard-dir", "cmake-user-path-linux-ninja-debug" ]
+    },
+    {
+      "name": "linux-ninja-release",
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-release-standard-dir", "cmake-user-path-linux-ninja-release" ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-ninja-debug",
+      "inherits": [ "cs-linux-debug"],
+      "configurePreset": "linux-ninja-debug"
+    },
+    {
+      "name": "linux-ninja-release",
+      "inherits": [ "cs-linux-release"],
+      "configurePreset": "linux-ninja-release"
+    },
+    {
+      "name": "linux-ninja-debug-install",
+      "inherits": [ "linux-ninja-debug", "cs-linux-install" ]
+    },
+    {
+      "name": "linux-ninja-release-install",
+      "inherits": [ "linux-ninja-release", "cs-linux-install" ]
+    }
+  ],  
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-debug-install"
+        }
+      ]
+    },
+    {
+      "name": "linux-ninja-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-release-install"
+        }
+      ]
+    }
+  ]
+}

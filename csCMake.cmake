@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.4)
+cmake_minimum_required(VERSION 3.31.5)
 include_guard(GLOBAL)
 
 include(utils/csPrintInitialState)
