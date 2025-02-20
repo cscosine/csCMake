@@ -1,7 +1,7 @@
 {
   "version":  10,
   "include": [
-    "base-presets.json",
+    "base-presets-windows.json",
     "${sourceDir}/cmakeUserPath.json"
   ],
   "configurePresets": [

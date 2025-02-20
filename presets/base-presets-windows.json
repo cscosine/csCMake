@@ -2,43 +2,15 @@
   "version":  10,
   "configurePresets": [
     {
-      "name": "cs-base",
-      "displayName": "Base Preset",
-      "description": "The very first Base Preset",
-      "hidden": true,
-      "inherits": []
-    },
-    {
       "name": "cs-host-windows",
       "displayName": "Host Window ",
       "description": "The Window Host Base Preset",
       "hidden": true,
-      "inherits": [ "cs-base" ],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
-    },
-    {
-      "name": "cs-host-linux",
-      "displayName": "Host Linux ",
-      "description": "The Linux Host Base Preset",
-      "hidden": true,
-      "inherits": [ "cs-base" ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      }
-    },
-    {
-      "name": "cs-base-linux-ninja",
-      "displayName": "Linux gcc Debug",
-      "description": "Linux gcc Debug",
-      "hidden": true,
-      "inherits": [ "cs-host-linux" ],
-      "generator": "Ninja"
     },
     {
       "name": "cs-base-msvc2022-x64",
@@ -87,34 +59,6 @@
       "name": "cs-windows-install",
       "hidden": true,
       "inherits": ["cs-host-windows"],
-      "targets": "install"
-    },
-    {
-      "name": "cs-host-linux",
-      "displayName": "Host Linux ",
-      "description": "The Linux Host Base Preset",
-      "hidden": true,
-      "inherits": [],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      }
-    },
-    {
-      "name": "cs-linux-debug",
-      "hidden": true,
-      "inherits": ["cs-host-linux"]
-    },
-    {
-      "name": "cs-linux-release",
-      "hidden": true,
-      "inherits": ["cs-host-linux"]
-    },
-    {
-      "name": "cs-linux-install",
-      "hidden": true,
-      "inherits": ["cs-host-linux"],
       "targets": "install"
     }
   ]
