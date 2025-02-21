@@ -32,7 +32,8 @@ endfunction()
 
 
 
-macro(cs_initialize_project)
+macro(cs_initialize_project PROJECT_NAME)
+	cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
 	# normalize paths
 	_cs_path_list_normalize(CMAKE_PREFIX_PATH)
 	_cs_path_list_normalize(CMAKE_MODULE_PATH)
