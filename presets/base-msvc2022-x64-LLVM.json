@@ -8,8 +8,8 @@
     {
       "name": "msvc2022-x64-LLVM-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/build-msvc2022-x64-LLVM",
-      "installDir": "${sourceParentDir}/../../install/msvc2022-x64-LLVM/${sourceDirName}"
+      "binaryDir": "${sourceParentDir}/../build/msvc2022-x64-LLVM/${sourceDirName}",
+      "installDir": "${sourceParentDir}/../install/msvc2022-x64-LLVM/${sourceDirName}"
     },
     {
       "name": "msvc2022-x64-LLVM",

@@ -8,8 +8,8 @@
     {
       "name": "linux-ninja-debug-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/build-ninja-debug",
-      "installDir": "${sourceParentDir}/../../install/linux-ninja/debug/${sourceDirName}",
+      "binaryDir": "${sourceParentDir}/../build/linux-ninja/debug/${sourceDirName}",
+      "installDir": "${sourceParentDir}/../install/linux-ninja/debug/${sourceDirName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -17,8 +17,8 @@
     {
       "name": "linux-ninja-release-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/build-ninja-release",
-      "installDir": "${sourceParentDir}/../../install/linux-ninja/release/${sourceDirName}",
+      "binaryDir": "${sourceParentDir}/../build/linux-ninja/release/${sourceDirName}",
+      "installDir": "${sourceParentDir}/../install/linux-ninja/release/${sourceDirName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }

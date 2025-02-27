@@ -8,8 +8,8 @@
     {
       "name": "msvc2022-x64-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/build-msvc2022-x64",
-      "installDir": "${sourceParentDir}/../../install/msvc2022-x64/${sourceDirName}"
+      "binaryDir": "${sourceParentDir}/../build/msvc2022-x64/${sourceDirName}",
+      "installDir": "${sourceParentDir}/../install/msvc2022-x64/${sourceDirName}"
     },
     {
       "name": "msvc2022-x64",
