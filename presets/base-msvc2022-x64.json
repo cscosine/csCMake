@@ -8,12 +8,16 @@
     {
       "name": "msvc2022-x64-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/../build/msvc2022-x64/${sourceDirName}",
-      "installDir": "${sourceParentDir}/../install/msvc2022-x64/${sourceDirName}"
+      "binaryDir": "${sourceParentDir}/build/msvc2022-x64/${sourceDirName}",
+      "installDir": "${sourceParentDir}/install/msvc2022-x64/${sourceDirName}",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/msvc2022-x64",
+        "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
+      }
     },
     {
       "name": "msvc2022-x64",
-      "inherits": [ "cs-base-msvc2022-x64", "msvc2022-x64-standard-dir", "cmake-user-path-msvc2022-x64" ]
+      "inherits": [ "cs-base-msvc2022-x64", "msvc2022-x64-standard-dir", "cmake-path-msvc2022-x64" ]
     }
   ],
   "buildPresets": [

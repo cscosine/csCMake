@@ -35,12 +35,23 @@ endfunction()
 macro(cs_initialize_project PROJECT_NAME)
 	cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
 	# normalize paths
+	_cs_path_list_normalize(CS_CMAKE_PREFIX_PATH_HEAD)
 	_cs_path_list_normalize(CMAKE_PREFIX_PATH)
+	_cs_path_list_normalize(CS_CMAKE_PREFIX_PATH_TAIL)
+
+	_cs_path_list_normalize(CS_CMAKE_MODULE_PATH_HEAD)
 	_cs_path_list_normalize(CMAKE_MODULE_PATH)
+	_cs_path_list_normalize(CS_CMAKE_MODULE_PATH_TAIL)
+
 	_cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
+	
 	# print information on the csCMake configuration
 	cs_print_initial_state()
+
+	# join CMAKE_PREFIX_PATH
+	set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
+	set(CMAKE_MODULE_PATH "${CS_CMAKE_MODULE_PATH_HEAD};${CMAKE_MODULE_PATH};${CS_CMAKE_MODULE_PATH_TAIL}")
 
 	# enable cmake testing
 	enable_testing()

@@ -8,12 +8,16 @@
     {
       "name": "msvc2022-x64-LLVM-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/../build/msvc2022-x64-LLVM/${sourceDirName}",
-      "installDir": "${sourceParentDir}/../install/msvc2022-x64-LLVM/${sourceDirName}"
+      "binaryDir": "${sourceParentDir}/build/msvc2022-x64-LLVM/${sourceDirName}",
+      "installDir": "${sourceParentDir}/install/msvc2022-x64-LLVM/${sourceDirName}",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/msvc2022-x64-LLVM",
+        "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
+      }
     },
     {
       "name": "msvc2022-x64-LLVM",
-      "inherits": [ "cs-base-msvc2022-x64-LLVM", "msvc2022-x64-LLVM-standard-dir", "cmake-user-path-msvc2022-x64-LLVM" ]
+      "inherits": [ "cs-base-msvc2022-x64-LLVM", "msvc2022-x64-LLVM-standard-dir", "cmake-path-msvc2022-x64-LLVM" ]
     }
   ],
   "buildPresets": [

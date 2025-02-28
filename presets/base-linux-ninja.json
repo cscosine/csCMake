@@ -8,28 +8,32 @@
     {
       "name": "linux-ninja-debug-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/../build/linux-ninja/debug/${sourceDirName}",
-      "installDir": "${sourceParentDir}/../install/linux-ninja/debug/${sourceDirName}",
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/debug/${sourceDirName}",
+      "installDir": "${sourceParentDir}/install/linux-ninja/debug/${sourceDirName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja/debug",
+        "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
       }
     },
     {
       "name": "linux-ninja-release-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/../build/linux-ninja/release/${sourceDirName}",
-      "installDir": "${sourceParentDir}/../install/linux-ninja/release/${sourceDirName}",
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/release/${sourceDirName}",
+      "installDir": "${sourceParentDir}/install/linux-ninja/release/${sourceDirName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja/release",
+        "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
       }
     },
     {
       "name": "linux-ninja-debug",
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-debug-standard-dir", "cmake-user-path-linux-ninja-debug" ]
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-debug-standard-dir", "cmake-path-linux-ninja-debug"]
     },
     {
       "name": "linux-ninja-release",
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-release-standard-dir", "cmake-user-path-linux-ninja-release" ]
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-release-standard-dir", "cmake-path-linux-ninja-release" ]
     }
   ],
   "buildPresets": [
