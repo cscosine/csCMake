@@ -58,12 +58,22 @@ def csGetOS():
     else:
         return "unknown OS"
 
+#TODO(sc): change to a class and use members, then inherit in the projects
+_global_build_only = None
+
 def csWorkflow(repo_dir, os_presets_dict):
+    print(f"*** csWorkflow for ${repo_dir}, _global_build_only = {_global_build_only}")
+    
+    if(_global_build_only and _global_build_only != repo_dir):
+        print(f"skip {repo_dir} because only {_global_build_only} is requested!")
+        return
+        
     original_dir = os.getcwd()
     os.chdir(repo_dir)
     cmake_command_base = ["cmake", "--workflow"] 
 
     os_name = csGetOS()
+    #TODO(sc): add a check on os_name existence
     os_list = os_presets_dict[os_name]
             
     for preset in os_list:
@@ -71,13 +81,21 @@ def csWorkflow(repo_dir, os_presets_dict):
         cmake_command.append(preset)
 
         try:
-            print("CMake run with command ", " ".join(["cmake", "--workflow"]))
+            print(f"{repo_dir}:: CMake run with command ", " ".join(["cmake", "--workflow"]))
             subprocess.run(cmake_command, check=True)
-            print("CMake succesfully run")
+            print(f"CMake succesfully run")
         except subprocess.CalledProcessError as e:
-            print(f"Error during CMake execution: {e}")
+            print(f"{repo_dir}::Error during CMake execution: {e}")
                 
     os.chdir(original_dir)
+    
+def askConfirmAndClear(path):
+    confirm = input(f"Are you sure you want to delete the {path} folder? (y/N): ").strip().lower()
+    if confirm == "y":
+        print(f"removing {path}...")        
+        shutil.rmtree(path, ignore_errors=True)
+        print(f"...done")        
+
 
 def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_func):
     from csCMake.csCMakeProjectManager import csGetRepository, csWorkflow
@@ -85,34 +103,44 @@ def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_fun
     # additional arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--sub-projects-branch", nargs="?", default="main", help="The branch to use for the sub projects (default: main)")
-    parser.add_argument("-b", "--build", action="store_true", help="Enable build mode (default: off)")
-    parser.add_argument("-cb", "--clear-build", action="store_true", help="Clear (delete) the build folder (default: off)")
-    parser.add_argument("-ci", "--clear-install", action="store_true", help="Clear (delete) the install folder (default: off)")
+    parser.add_argument("-b", "--build", action="store_true", help="Enable build mode (default: off). If --build-only is specified, will be forced to True.")
+    parser.add_argument("-cb", "--clear-build", action="store_true", help="Clear (delete) the build folder (default: off).  If --build-only is specified, only the specific subfolder will be deleted.")
+    parser.add_argument("-ci", "--clear-install", action="store_true", help="Clear (delete) the install folder (default: off).  If --build-only is specified, only the specific subfolder will be deleted.")
+    parser.add_argument("-bo", "--build-only", type=str, default="", help="Build a specified subdir only")    
     args = parser.parse_args(args)
+    
     sub_projects_branch = args.sub_projects_branch
     build_project = args.build
     clear_build = args.clear_build
     clear_install = args.clear_install
+    build_only = args.build_only
+    
+    # store in a global variable
+    global _global_build_only
+    _global_build_only = build_only
 
     print(f"Subprojects branch: {sub_projects_branch}")
     print(f"Build project: {build_project}")
+    print(f"Build Only: {build_only}")
     print(f"Clear build: {clear_build}")
     print(f"Clear install: {clear_install}")
+    
+    if(build_only):
+        print(f"* force build project, but only {build_only}")
+        build_project = True
 
     # clear build if required
     if(clear_build):
-        confirm = input(f"Are you sure you want to delete the build folder? (y/N): ").strip().lower()
-        if confirm == "y":
-            print("removing build...")        
-            shutil.rmtree("build", ignore_errors=True)
-            print("...done")        
+        if(build_only):
+            askConfirmAndClear("build/"+build_only)
+        else:
+            askConfirmAndClear("build")
     # clear install if required
     if(clear_install):
-        confirm = input(f"Are you sure you want to delete the install folder? (y/N): ").strip().lower()
-        if confirm == "y":        
-            print("removing install...")        
-            shutil.rmtree("install", ignore_errors=True)
-            print("...done")        
+        if(build_only):
+            askConfirmAndClear("install/"+build_only)
+        else:
+            askConfirmAndClear("install")
 
     # --- get all repos ---
     if(checkout_project):
