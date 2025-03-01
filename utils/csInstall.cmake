@@ -112,14 +112,17 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
   # generate the main cmake for finding this package
   set(INJECTED_FIND_PACKAGES_CODE "")
 	foreach(EXPORT_NAME ${EXPORTS})
-    set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}if(\"${EXPORT_NAME}\" IN_LIST ${EXPORT_NAMESPACE}_FIND_COMPONENTS)\n")
     cs_get_exported_find_packages(${EXPORT_NAME} FIND_PACKAGES_LIST)
 
-		foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
-			set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}  find_package(${FIND_ARGS})\n")
-		endforeach()
+    if(FIND_PACKAGES_LIST)
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}if(\"${EXPORT_NAME}\" IN_LIST ${EXPORT_NAMESPACE}_FIND_COMPONENTS)\n")
 
-    set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}endif()\n")
+      foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
+        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}  find_package(${FIND_ARGS})\n")
+      endforeach()
+
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}endif()\n")
+    endif()
 	endforeach()
 
   # get list of components when find_package without arguments is used
