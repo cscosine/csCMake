@@ -11,10 +11,6 @@ include(utils/csDebugUtils)
 function (_cs_recursive_analyze_target TARGET_NAME)
 	# get target type
 	get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
-	if(${TARGET_TYPE} STREQUAL "INTERFACE_LIBRARY")
-		cs_debug_message("[_cs_recursive_analyze_target] early return for ${base_target}, reason: TARGET_TYPE is INTERFACE_LIBRARY")
-		return()
-	endif()
 
 	# initialize the iterative list of target to analyze
 	set(TARGETS_TO_ANALYZE_LIST ${TARGET_NAME})
@@ -131,8 +127,19 @@ function(cs_get_target_dependencies_not_targets TARGET_NAME OUTPUT_VARIABLE_NAME
 	endif()
 endfunction()
 
+# - csTargetDependencies, created in _cs_recursive_analyze_targets_finalize
+function(cs_get_target_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
+	get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies)
+	if(_VALUES)
+		set(${OUTPUT_VARIABLE_NAME} ${_VALUES} PARENT_SCOPE)
+	else()
+		set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
+	endif()
+endfunction()
+
 # - csTargetDependenciesDebugFinalized: list of debug dll necessary to the target
 # - csTargetDependenciesReleaseFinalized: list of release dll necessary to the target
+# - csTargetDependencies: list of other target of this project needed for this target
 # during the execution a variable csTargetDependenciesToAnalyze is created as temporary, but it will be used as a "buffer", at exist it is empty
 function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] targets: ${TARGETS_LIST}")
@@ -140,7 +147,7 @@ function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
 	# for each target, 
   foreach (TARGET_NAME IN ITEMS ${TARGETS_LIST})
 		# - copy csTargetDependenciesDebug and csTargetDependenciesRelease to the Finalized copies
-		# - create a unique list of target csTargetDependenciesToAnalyze as merge of csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets, by selecting only what is effectively a target and removing aliases
+		# - create a unique list of target csTargetDependenciesToAnalyze and csTargetDependencies as merge of csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets, by selecting only what is effectively a target and removing aliases
 		_cs_prepare_finalize_target(${TARGET_NAME})
 	endforeach()
 
@@ -239,7 +246,8 @@ endfunction()
 
 # this function 
 # - copy csTargetDependenciesDebug and csTargetDependenciesRelease to the Finalized copy
-# - merges the csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets and select valid targets, preparing the list in csTargetDependenciesToAnalyze
+# - merges the csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets and select valid targets, preparing the list in both csTargetDependencies and csTargetDependenciesToAnalyze
+#   csTargetDependenciesToAnalyze will be consumed in _cs_recursive_analyze_targets_finalize until is empty, while  csTargetDependencies remain persistent
 function(_cs_prepare_finalize_target TARGET_NAME)
 	cs_debug_message("[_cs_prepare_finalize_target] process target: ${TARGET_NAME}")
 
@@ -281,8 +289,10 @@ function(_cs_prepare_finalize_target TARGET_NAME)
 			_cs_list_add_unique_value(TARGETS_TO_ANALYZE_LIST "${TARGET_TO_ANALYZE}")
 		endif()
 	endforeach()
+  
 	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} TARGETS_TO_ANALYZE_LIST ${TARGETS_TO_ANALYZE_LIST}")
 	set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesToAnalyze "${TARGETS_TO_ANALYZE_LIST}")
+  set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies "${TARGETS_TO_ANALYZE_LIST}")
 
 endfunction()
 
