@@ -60,6 +60,9 @@ def csGetOS():
 
 #TODO(sc): change to a class and use members, then inherit in the projects
 _global_build_only = None
+_global_clear_build = False
+_global_clear_install = False
+_global_answer_yes = False
 
 def csWorkflow(repo_dir, os_presets_dict):
     print(f"*** csWorkflow for ${repo_dir}, _global_build_only = {_global_build_only}")
@@ -67,7 +70,7 @@ def csWorkflow(repo_dir, os_presets_dict):
     if(_global_build_only and _global_build_only != repo_dir):
         print(f"skip {repo_dir} because only {_global_build_only} is requested!")
         return
-        
+       
     original_dir = os.getcwd()
     os.chdir(repo_dir)
     cmake_command_base = ["cmake", "--workflow"] 
@@ -80,6 +83,12 @@ def csWorkflow(repo_dir, os_presets_dict):
         cmake_command = list(cmake_command_base)
         cmake_command.append(preset)
 
+        if(_global_build_only and _global_build_only == repo_dir):
+            if(_global_clear_build):
+                askConfirmAndClear(os.path.join(original_dir, "build", preset, repo_dir))
+            if(_global_clear_install):
+                askConfirmAndClear(os.path.join(original_dir, "install", preset, repo_dir))
+
         try:
             print(f"{repo_dir}:: CMake run with command ", " ".join(["cmake", "--workflow"]))
             subprocess.run(cmake_command, check=True)
@@ -90,7 +99,16 @@ def csWorkflow(repo_dir, os_presets_dict):
     os.chdir(original_dir)
     
 def askConfirmAndClear(path):
-    confirm = input(f"Are you sure you want to delete the {path} folder? (y/N): ").strip().lower()
+    if(_global_answer_yes):
+        confirm = "y"
+    else:
+        confirm_ok = False
+        while(confirm_ok == False): 
+            confirm = input(f"Are you sure you want to delete the {path} folder? (y/N): ").strip().lower()
+            if(confirm == "y" or confirm == "n"):
+                confirm_ok = True
+            else:
+                print("invalid input, retry...")
     if confirm == "y":
         print(f"removing {path}...")        
         shutil.rmtree(path, ignore_errors=True)
@@ -98,7 +116,7 @@ def askConfirmAndClear(path):
 
 
 def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_func):
-    from csCMake.csCMakeProjectManager import csGetRepository, csWorkflow
+    from csCMake.csCMakeProjectManager import csGetRepository
 
     # additional arguments
     parser = argparse.ArgumentParser()
@@ -107,6 +125,7 @@ def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_fun
     parser.add_argument("-cb", "--clear-build", action="store_true", help="Clear (delete) the build folder (default: off).  If --build-only is specified, only the specific subfolder will be deleted.")
     parser.add_argument("-ci", "--clear-install", action="store_true", help="Clear (delete) the install folder (default: off).  If --build-only is specified, only the specific subfolder will be deleted.")
     parser.add_argument("-bo", "--build-only", type=str, default="", help="Build a specified subdir only")    
+    parser.add_argument("-y", "--yes", action="store_true", help="Answer yes to delete confirmation (default :off)")
     args = parser.parse_args(args)
     
     sub_projects_branch = args.sub_projects_branch
@@ -114,10 +133,17 @@ def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_fun
     clear_build = args.clear_build
     clear_install = args.clear_install
     build_only = args.build_only
+    answer_yes = args.yes
     
-    # store in a global variable
+    # store in global variables 
     global _global_build_only
     _global_build_only = build_only
+    global _global_clear_build
+    _global_clear_build = clear_build
+    global _global_clear_install
+    _global_clear_install = clear_install
+    global _global_answer_yes
+    _global_answer_yes = answer_yes
 
     print(f"Subprojects branch: {sub_projects_branch}")
     print(f"Build project: {build_project}")
@@ -130,17 +156,11 @@ def csSetupProject(args, repo_cs_url, checkout_project, checkout_func, build_fun
         build_project = True
 
     # clear build if required
-    if(clear_build):
-        if(build_only):
-            askConfirmAndClear("build/"+build_only)
-        else:
-            askConfirmAndClear("build")
+    if(clear_build and not build_only):
+        askConfirmAndClear("build")
     # clear install if required
-    if(clear_install):
-        if(build_only):
-            askConfirmAndClear("install/"+build_only)
-        else:
-            askConfirmAndClear("install")
+    if(clear_install and not build_only):
+        askConfirmAndClear("install")
 
     # --- get all repos ---
     if(checkout_project):

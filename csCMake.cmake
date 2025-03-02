@@ -11,6 +11,7 @@ include(utils/csTargetLinkLibraries)
 include(utils/csTargetDependencies)
 include(utils/csMSVCUtils)
 include(utils/csInstall)
+include(utils/csDefaultTargets)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
 function(cs_set_base_path PATH)
@@ -66,34 +67,8 @@ macro(cs_initialize_project PROJECT_NAME)
 	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 
-	cs_add_target_base_project_include_dir()
+	_cs_add_default_targets()
 endmacro()
-
-# add a target named <ProjectName>BaseInclude, alias <ProjectName>::<ProjectName>BaseInclude
-# that allow to propagate include directories to the root of the project
-function(cs_add_target_base_project_include_dir)
-	set(TARGET_NAME ${PROJECT_NAME}BaseInclude)
-	cs_add_library(${TARGET_NAME} INTERFACE)
-	cs_add_library(${PROJECT_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
-
-	target_include_directories(${TARGET_NAME}
-		INTERFACE
-			$<INSTALL_INTERFACE:>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-		INTERFACE
-			$<INSTALL_INTERFACE:>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-	)
-
-	cs_target_link_libraries(${TARGET_NAME}) # no target libraries
-
-	# add to its own export
-	cs_install_target(${TARGET_NAME} ${PROJECT_NAME}BaseInclude DEFAULT)
-
-	cs_finalize_target(${TARGET_NAME})
-endfunction()
-
-# TODO(sc) add a target that manages the version
 
 # EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
 function (cs_finalize_project EXPORT_NAMESPACE)
