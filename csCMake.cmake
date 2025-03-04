@@ -62,11 +62,6 @@ macro(cs_initialize_project PROJECT_NAME)
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 	endif()
 
-	# add_library(cs::MSVCCommon INTERFACE) to add common compilation flags etc
-	# add multicore compilation in visual studio
-	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-	#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-
 	_cs_add_default_targets()
 endmacro()
 
