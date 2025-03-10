@@ -17,3 +17,10 @@ function(cs_extract_unique_folders_list_from_file_list OUT_LIST)
 	endforeach()
 	SET(${OUT_LIST} ${OUT_TMP} PARENT_SCOPE)
 endfunction()
+
+function(cs_get_default_folder_for_generated_files OUTPUT_FOLDER)
+
+  set(FOLDER "${CMAKE_CURRENT_BINARY_DIR}/csCMakeGenerated/")
+  set(${OUTPUT_FOLDER} "${FOLDER}" PARENT_SCOPE)
+
+endfunction()

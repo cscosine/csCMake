@@ -1,6 +1,7 @@
 include_guard(GLOBAL)
 include(utils/csFindPackage)
 include(utils/csListUtils)
+include(utils/csPathUtils)
 include(utils/csTargetDependencies)
 
 include(GNUInstallDirs)
@@ -188,26 +189,31 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
   cs_get_exported_list(COMPONENTS_LIST)
   # get list of default components when find_package without arguments is used
   cs_get_exported_list_default(DEFAULT_COMPONENTS_LIST)
+
+  # retrieve output folder for generated files
+  cs_get_default_folder_for_generated_files(OUTPUT_FOLDER)
+
 	# Write the Config.cmake file
-  _cs_configure_config_cmake(${EXPORT_NAMESPACE} "${COMPONENTS_LIST}" "${DEFAULT_COMPONENTS_LIST}" "${INJECTED_FIND_PACKAGES_CODE}" "${INJECTED_EXPORT_DEPENDENCIES}")
+  _cs_configure_config_cmake(${OUTPUT_FOLDER} ${EXPORT_NAMESPACE} "${COMPONENTS_LIST}" "${DEFAULT_COMPONENTS_LIST}" "${INJECTED_FIND_PACKAGES_CODE}" "${INJECTED_EXPORT_DEPENDENCIES}")
+
 
 	#Write a ConfigVersion.cmake file
 	write_basic_package_version_file(
-		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}ConfigVersion.cmake
+		${OUTPUT_FOLDER}/${EXPORT_NAMESPACE}ConfigVersion.cmake
 		VERSION ${PROJECT_VERSION}
 		COMPATIBILITY AnyNewerVersion
 	)
 
 	#Install the Config and configVersion files
 	install(FILES
-		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}Config.cmake
-		${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}ConfigVersion.cmake
+		${OUTPUT_FOLDER}/${EXPORT_NAMESPACE}Config.cmake
+		${OUTPUT_FOLDER}/${EXPORT_NAMESPACE}ConfigVersion.cmake
 		DESTINATION ${INSTALL_CONFIGDIR}
 	)
 
 endfunction()
 
-function(_cs_configure_config_cmake EXPORT_NAMESPACE COMPONENTS_LIST DEFAULT_COMPONENTS_LIST INJECTED_FIND_PACKAGES_CODE INJECTED_EXPORT_DEPENDENCIES)
+function(_cs_configure_config_cmake OUTPUT_FOLDER EXPORT_NAMESPACE COMPONENTS_LIST DEFAULT_COMPONENTS_LIST INJECTED_FIND_PACKAGES_CODE INJECTED_EXPORT_DEPENDENCIES)
   # note, the file csTemplateConfig.cmake.in uses the @variable@ substituion with the values prepared in this function of
   # - EXPORT_NAMESPACE
   # - COMPONENTS_LIST
@@ -219,7 +225,7 @@ function(_cs_configure_config_cmake EXPORT_NAMESPACE COMPONENTS_LIST DEFAULT_COM
   cs_get_base_path(_BASE_PATH)
 	configure_package_config_file(
     "${_BASE_PATH}/templates/csTemplateConfig.cmake.in"
-	  "${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_NAMESPACE}Config.cmake"
+	  "${OUTPUT_FOLDER}/${EXPORT_NAMESPACE}Config.cmake"
 	  INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 	)
 
