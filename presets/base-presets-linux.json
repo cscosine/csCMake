@@ -19,6 +19,14 @@
       "hidden": true,
       "inherits": [ "cs-host-linux" ],
       "generator": "Ninja"
+    },
+    {
+      "name": "cs-base-linux-ninja-multi-config",
+      "displayName": "Linux ninja multi config",
+      "description": "Linux ninja multi config",
+      "hidden": true,
+      "inherits": [ "cs-host-linux" ],
+      "generator": "Ninja Multi-Config"
     }
   ],
   "buildPresets": [
@@ -46,6 +54,24 @@
     },
     {
       "name": "cs-linux-install",
+      "hidden": true,
+      "inherits": ["cs-host-linux"],
+      "targets": "install"
+    },
+    {
+      "name": "cs-linux-multi-config-debug",
+      "hidden": true,
+      "inherits": ["cs-host-linux"],
+      "configuration": "Debug"
+    },
+    {
+      "name": "cs-linux-multi-config-release",
+      "hidden": true,
+      "inherits": ["cs-host-linux"],
+      "configuration": "Release"
+    },
+    {
+      "name": "cs-linux-multi-config-install",
       "hidden": true,
       "inherits": ["cs-host-linux"],
       "targets": "install"
