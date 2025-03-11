@@ -42,7 +42,7 @@ function(_cs_target_base_project_include_dir)
   # add include to root dir
 	target_include_directories(${TARGET_NAME}
 		INTERFACE
-			$<INSTALL_INTERFACE:INSTALL_FOLDER_EXPRESSION>
+			$<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
 			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   )
 

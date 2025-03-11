@@ -11,7 +11,6 @@ function(cs_get_install_folder_suffix INSTALL_FOLDER_EXPRESSION)
   get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if(GENERATOR_IS_MULTI_CONFIG)
     set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
-    # need \<$ for VS?!?
     set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
     message("multi config ${FOLDER}")
   else()
