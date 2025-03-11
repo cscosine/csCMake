@@ -20,13 +20,6 @@ function(cs_print_target_properties tgt)
       return()
   endif()
 
-  get_target_property(target_type ${tgt} TYPE)
-  if(target_type STREQUAL "INTERFACE_LIBRARY")
-      set(PROP_LIST ${CMAKE_WHITELISTED_PROPERTY_LIST})
-  else()
-      set(PROP_LIST ${CMAKE_PROPERTY_LIST})
-  endif()
-
   foreach (prop ${PROP_LIST})
       string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" prop ${prop})
       # message ("Checking ${prop}")

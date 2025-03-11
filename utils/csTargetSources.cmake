@@ -34,7 +34,6 @@ function(cs_target_sources TARGET_NAME)
 		foreach(_FILE ${ARG_${BASE_TYPE}_INSTALL})
 			target_sources(${TARGET_NAME} ${BASE_TYPE}
 				$<BUILD_INTERFACE:${_FILE}>
-				$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${DESTINATION_FOLDER}/${_FILE}>
 			)		
 			_cs_add_to_target_property_unique_value(${TARGET_NAME} csSourcesToInstall "${_FILE}")
 		endforeach()

@@ -31,20 +31,31 @@ function(_cs_add_default_targets)
 
 endfunction()
 
+
 # add a target named <ProjectName>_csCMakeBaseInclude, alias <ProjectName>::<ProjectName>_csCMakeBaseInclude
 # that allow to propagate include directories to the root of the project
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(_csCMakeBaseInclude INTERFACE TARGET_NAME)
 
+  cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
+
   # add include to root dir
 	target_include_directories(${TARGET_NAME}
 		INTERFACE
-			$<INSTALL_INTERFACE:>
+			$<INSTALL_INTERFACE:INSTALL_FOLDER_EXPRESSION>
 			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-		INTERFACE
-			$<INSTALL_INTERFACE:>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-	)
+  )
+
+  # get the folder where files are generated
+  cs_get_generate_folder_common(COMMON_FOLDER)
+  cs_get_generate_folder_config(CONFIG_FOLDER)
+
+	target_include_directories(${TARGET_NAME}
+    INTERFACE
+      $<BUILD_INTERFACE:${COMMON_FOLDER}>
+      $<BUILD_INTERFACE:${CONFIG_FOLDER}>
+    )
+
 endfunction()
 
 function(_cs_target_msvc_parallel_compilation)

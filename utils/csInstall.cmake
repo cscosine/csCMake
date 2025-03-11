@@ -7,6 +7,20 @@ include(utils/csTargetDependencies)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+function(cs_get_install_folder_suffix INSTALL_FOLDER_EXPRESSION)
+  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(GENERATOR_IS_MULTI_CONFIG)
+    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
+    # need \<$ for VS?!?
+    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
+    message("multi config ${FOLDER}")
+  else()
+    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}")
+    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
+    message("single config ${FOLDER}")
+  endif()
+endfunction()
+
 # create a global variable csExportedList collecting all the different EXPORT_NAME used
 # create a global variable csExported<EXPORT_NAME>FindPackages containing the list of find_package(ARGS...) that will be added to the installed configuration file
 # if DEFAULT is passed as additional arguments, the EXPORT_NAME will be added to the list csExportedListDefault global variable
@@ -39,11 +53,12 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
 
   # retrieve the source files that have to be installed
   cs_get_target_sources_to_install(${TARGET_NAME} FILES_TO_INSTALL)
+  cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
 	foreach(FILE ${FILES_TO_INSTALL})
     set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
-    set(DEST_PATH ${CMAKE_INSTALL_INCLUDEDIR}/${DESTINATION_FOLDER}/)
+    set(DEST_PATH ${INSTALL_FOLDER_EXPRESSION}/${DESTINATION_FOLDER}/)
 		install(FILES ${SOURCE_PATH} DESTINATION ${DEST_PATH})
-    cs_debug_message("-- [cs_install_target] install ${SOURCE_PATH} to ${DEST_PATH}")
+    cs_debug_message("-- [cs_install_target] install ${SOURCE_PATH} to ${DEST_PATH}" true)
 	endforeach()
 
 	# install effectively the target
@@ -52,7 +67,6 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 	)
 
 	# and install the pdb file for debugging if exists
@@ -191,7 +205,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
   cs_get_exported_list_default(DEFAULT_COMPONENTS_LIST)
 
   # retrieve output folder for generated files
-  cs_get_default_folder_for_generated_files(OUTPUT_FOLDER)
+  cs_get_generate_folder_common(OUTPUT_FOLDER)
 
 	# Write the Config.cmake file
   _cs_configure_config_cmake(${OUTPUT_FOLDER} ${EXPORT_NAMESPACE} "${COMPONENTS_LIST}" "${DEFAULT_COMPONENTS_LIST}" "${INJECTED_FIND_PACKAGES_CODE}" "${INJECTED_EXPORT_DEPENDENCIES}")

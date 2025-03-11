@@ -18,9 +18,22 @@ function(cs_extract_unique_folders_list_from_file_list OUT_LIST)
 	SET(${OUT_LIST} ${OUT_TMP} PARENT_SCOPE)
 endfunction()
 
-function(cs_get_default_folder_for_generated_files OUTPUT_FOLDER)
-
+function(cs_get_generate_folder_common OUTPUT_FOLDER)
   set(FOLDER "${CMAKE_CURRENT_BINARY_DIR}/csCMakeGenerated/")
   set(${OUTPUT_FOLDER} "${FOLDER}" PARENT_SCOPE)
+endfunction()
 
+function(cs_get_generate_folder_config OUTPUT_FOLDER)
+
+  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
+  if(GENERATOR_IS_MULTI_CONFIG)
+    # if multi-generator, use a -CONFIG folder
+    set(FOLDER "${CMAKE_CURRENT_BINARY_DIR}/csCMakeGenerated-$<CONFIG>/")
+    set(${OUTPUT_FOLDER} "${FOLDER}" PARENT_SCOPE)
+  else()
+    # if not multigenerator, just get the common folder
+    cs_get_generate_folder_common(FOLDER)
+    set(${OUTPUT_FOLDER} "${FOLDER}" PARENT_SCOPE)
+  endif()
 endfunction()
