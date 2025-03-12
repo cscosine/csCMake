@@ -31,3 +31,12 @@ function(_cs_add_to_global_property_unique_value PROPERTY_NAME VALUE)
 		set_property(GLOBAL APPEND PROPERTY ${PROPERTY_NAME} ${VALUE})
 	endif()
 endfunction()
+
+# check if VALUE is in VALUE_LIST
+# if not, print a FATAL_ERROR message, using the MESSAGE_PREFIX to inform the user
+function(_cs_assert_value_is_in_list VALUE VALUE_LIST MESSAGE_PREFIX)
+    list(FIND VALUE_LIST "${VALUE}" RES)
+    if(RES EQUAL -1)
+        message(FATAL_ERROR "${MESSAGE_PREFIX} invalid value ${VALUE}, choose on of ${VALUE_LIST}")
+    endif()
+endfunction()
