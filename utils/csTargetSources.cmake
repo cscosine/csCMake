@@ -9,14 +9,12 @@ function(cs_target_sources TARGET_NAME)
 	cs_debug_message("[cs_target_sources] target ${TARGET_NAME} find ${ARGN}")
 	
 	# split arguments in groups according to keywords
-	set(KEYWORDS PRIVATE PUBLIC INTERFACE PRIVATE_INSTALL PUBLIC_INSTALL INTERFACE_INSTALL)
+	set(KEYWORDS PRIVATE PUBLIC INTERFACE PRIVATE_INSTALL PUBLIC_INSTALL INTERFACE_INSTALL PRIVATE_INSTALL_ABSOLUTE_PATH PUBLIC_INSTALL_ABSOLUTE_PATH INTERFACE_INSTALL_ABSOLUTE_PATH)
 	cmake_parse_arguments(ARG "" "" "${KEYWORDS}" ${ARGN})
 	
 	# retrieve the relative install path
 	file(RELATIVE_PATH DESTINATION_FOLDER ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_LIST_DIR})
 	cs_debug_message("[cs_target_sources] relative install path is ${DESTINATION_FOLDER}")
-
-	set(SOURCES_TO_INSTALL "")
 
 	# get the different groups
 	foreach(BASE_TYPE IN ITEMS PRIVATE PUBLIC INTERFACE)
@@ -38,6 +36,15 @@ function(cs_target_sources TARGET_NAME)
 			_cs_add_to_target_property_unique_value(${TARGET_NAME} csSourcesToInstall "${_FILE}")
 		endforeach()
 
+		# add the files to be installed from absolute path
+		cs_debug_message("[cs_target_sources] ARG_${BASE_TYPE}_INSTALL_ABSOLUTE_PATH contains ${ARG_${BASE_TYPE}_INSTALL_ABSOLUTE_PATH}")
+		foreach(_FILE ${ARG_${BASE_TYPE}_INSTALL_ABSOLUTE_PATH})
+			target_sources(${TARGET_NAME} ${BASE_TYPE}
+				$<BUILD_INTERFACE:${_FILE}>
+			)		
+			_cs_add_to_target_property_unique_value(${TARGET_NAME} csSourcesToInstallAbsolutePath "${_FILE}")
+		endforeach()
+
 	endforeach()
 endfunction()
 
@@ -52,14 +59,35 @@ function(cs_get_target_sources_to_install TARGET_NAME OUTPUT_VARIABLE_NAME)
     set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
   endif()
 endfunction()
- 
+
+# return the csSourcesToInstallAbsolutePath property of the target, i.e., a list, eventually empty
+function(cs_get_target_sources_to_install_absolute_path TARGET_NAME OUTPUT_VARIABLE_NAME)
+  get_target_property(LIST_VALUES ${TARGET_NAME} csSourcesToInstallAbsolutePath)
+  if(LIST_VALUES)
+    # if exists
+    set(${OUTPUT_VARIABLE_NAME} ${LIST_VALUES} PARENT_SCOPE)
+  else()
+    # otherwise set to empty list
+    set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
 function(cs_print_target_sources_to_install TARGET_NAME)
   set(_VALUES "")
+
   cs_get_target_sources_to_install("${TARGET_NAME}" _VALUES )
   list(LENGTH _VALUES N)
   if(N GREATER 0)
     message(STATUS "cs_print_target_sources_to_install ${TARGET_NAME}: ${_VALUES}")
   else()
     message(STATUS "cs_print_target_sources_to_install ${TARGET_NAME}: empty")
+  endif()
+
+  cs_get_target_sources_to_install_absolute_path("${TARGET_NAME}" _VALUES )
+  list(LENGTH _VALUES N)
+  if(N GREATER 0)
+    message(STATUS "cs_print_target_sources_to_install (absolute path) ${TARGET_NAME}: ${_VALUES}")
+  else()
+    message(STATUS "cs_print_target_sources_to_install (absolute path) ${TARGET_NAME}: empty")
   endif()
 endfunction()
