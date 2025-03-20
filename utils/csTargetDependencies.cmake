@@ -42,26 +42,33 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 				# get all link libraries of the TARGET_TO_ANALYZE and add as recoursive dependecies to analyze
 				set(TARGET_TO_ANALYZE_LINKED_LIBS "")
 				_cs_get_all_linked_libs(${TARGET_TO_ANALYZE} TARGET_TO_ANALYZE_LINKED_LIBS)
-				cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} TARGET_TO_ANALYZE_LINKED_LIBS: ${TARGET_TO_ANALYZE_LINKED_LIBS}")
+				cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} has the following dependencies to be further analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${TARGET_TO_ANALYZE_LINKED_LIBS}")
 				# add to continue the analysis loop
 				_cs_list_add_list_unique_values(TARGETS_TO_ANALYZE_LIST "${TARGET_TO_ANALYZE_LINKED_LIBS}")
 
 				if(NOT TARGET_TO_ANALYZE_IMPORTED)
 					# not imported target, i.e., a target specified inside the project, will be analyzed further for recursive dependencies
 					if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
-						_cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNotImportedTargets ${TARGET_TO_ANALYZE})
+					  cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported (i.e., is defined in this project), add it to the list of non resolved recursive dependencies")
+					  _cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNotImportedTargets ${TARGET_TO_ANALYZE})
+					else()
+						cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported, but is the base target to analyze, do not add it recursively")
 					endif()
 				else()
-					# if the target is a shared or module library, add its debug and release path
-					if((${TARGET_TO_ANALYZE_TYPE} STREQUAL "MODULE_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "SHARED_LIBRARY"))
+					# if the target is a shared, interface or module library, add its debug and release path
+					if((${TARGET_TO_ANALYZE_TYPE} STREQUAL "MODULE_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "SHARED_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "INTERFACE_LIBRARY"))
+						cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is imported, populate its library path")
 						_csPopulateTargetDependencies(${TARGET_NAME} ${TARGET_TO_ANALYZE})
+					else()
 					endif()
 				endif()
 
 			else()
-				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target")
 				if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
+					cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, add it to the list of non resolved recursive dependencies")
 					_cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNonTargets ${TARGET_TO_ANALYZE})
+				else()
+				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, but is the base target to analyze, do not add it recursively")
 				endif()
 			endif()
 
@@ -358,34 +365,60 @@ endfunction()
 function (_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIBS_OUT)
 	set(TARGET_TO_ANALYZE_LINKED_LIBS "")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_LIBRARIES)
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	# interface link (seems to be legacy...)
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  # link dependent
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES_DEBUG)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES_RELEASE)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	# interface link depends
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_DEPENDS)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  # link interface
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	# interface link libraries
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES_DEBUG)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES_RELEASE)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-  get_target_property(tmp_list ${TARGET_TO_ANALYZE} MANUALLY_ADDED_DEPENDENCIES)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS ${tmp_list})
+	# imported interface link libraries
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_DEBUG)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_RELEASE)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	# link depends
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_DEPENDS)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	
+
+	# link dependent
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_DEBUG)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+
+	get_target_property(tmp_list ${TARGET_TO_ANALYZE} MANUALLY_ADDED_DEPENDENCIES)
+	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
 	# set output value
 	set(${TARGET_TO_ANALYZE_LINKED_LIBS_OUT} ${TARGET_TO_ANALYZE_LINKED_LIBS} PARENT_SCOPE)

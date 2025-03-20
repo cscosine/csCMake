@@ -28,6 +28,8 @@ function(_cs_add_default_targets)
     ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile
   ) 
 
+  _cs_target_create_default_finalize(_csCMakeCompileOptionsDefault)
+
 
 endfunction()
 
@@ -56,6 +58,8 @@ function(_cs_target_base_project_include_dir)
       $<BUILD_INTERFACE:${CONFIG_FOLDER}>
     )
 
+  _cs_target_create_default_finalize(_csCMakeBaseInclude)
+
 endfunction()
 
 function(_cs_target_msvc_parallel_compilation)
@@ -63,6 +67,9 @@ function(_cs_target_msvc_parallel_compilation)
 
   # add /MP
   target_compile_options(${TARGET_NAME} INTERFACE "$<$<CXX_COMPILER_ID:MSVC>:/MP>")  
+
+  _cs_target_create_default_finalize(MSVCParallelCompile)
+
 endfunction()
 
 # create a empty target with coherent name, alias, export, etc...
@@ -70,12 +77,17 @@ function(_cs_target_create_default TARGET_SUB_NAME TARGET_TYPE TARGET_NAME_OUT)
 	set(TARGET_NAME ${PROJECT_NAME}${TARGET_SUB_NAME})
 	cs_add_library(${TARGET_NAME} ${TARGET_TYPE})
 	cs_add_library(${PROJECT_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
+   
+  # return the target name
+  set(${TARGET_NAME_OUT} ${TARGET_NAME} PARENT_SCOPE)
+endfunction()
+
+function(_cs_target_create_default_finalize TARGET_SUB_NAME)
+  set(TARGET_NAME ${PROJECT_NAME}${TARGET_SUB_NAME})
   
 	# add to its own export
 	cs_install_target(${TARGET_NAME} ${PROJECT_NAME}_csCMakeCommon DEFAULT)
 
 	cs_finalize_target(${TARGET_NAME})
   
-  # return the target name
-  set(${TARGET_NAME_OUT} ${TARGET_NAME} PARENT_SCOPE)
 endfunction()

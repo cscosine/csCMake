@@ -192,18 +192,23 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
     cs_get_exported_find_packages(${EXPORT_NAME} FIND_PACKAGES_LIST)
 
     if(FIND_PACKAGES_LIST)
-      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}if(\"${EXPORT_NAME}\" IN_LIST ${EXPORT_NAMESPACE}_FIND_COMPONENTS)\n")
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  if(NOT ${EXPORT_NAME}_FIND_DONE)\n" )
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}    if(\"${EXPORT_NAME}\" STREQUAL \"\${COMPONENT_NAME}\")\n")
 
       foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
-        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}  find_package(${FIND_ARGS})\n")
+      set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      find_dependency(${FIND_ARGS})\n")
+      set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      SET(${EXPORT_NAME}_FIND_DONE True)\n")
       endforeach()
 
-      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}endif()\n")
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}    endif()\n")
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  else()\n")
+        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}   MESSAGE(STATUS \"[${EXPORT_NAMESPACE}Config] find_dependency for ${EXPORT_NAME} already satisfied\")\n")
+      set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  endif()\n")
     endif()
 	endforeach()
   
   if(INJECTED_FIND_PACKAGES_CODE)
-    set(INJECTED_FIND_PACKAGES_CODE "# -- find packages section --\n${INJECTED_FIND_PACKAGES_CODE}# -- end find packages section --")
+    set(INJECTED_FIND_PACKAGES_CODE "  # -- find packages section --\n${INJECTED_FIND_PACKAGES_CODE}  # -- end find packages section --")
   endif()
 
   # get list of components when find_package without arguments is used

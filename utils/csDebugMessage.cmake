@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
 # option to print out messages as "STATUS" from this module
-OPTION(${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG OFF)
+OPTION(${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG "activate the debug of csCMake for the current project" OFF)
 
 # print message msg if ${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG is ON, or if a additional parameter at end is true
 function(cs_debug_message msg)

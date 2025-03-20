@@ -1,3 +1,5 @@
+message(STATUS "[@EXPORT_NAMESPACE@Config] entry point")
+
 get_filename_component(@EXPORT_NAMESPACE@_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(@EXPORT_NAMESPACE@_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../")
 cmake_path(SET @EXPORT_NAMESPACE@_BASE_DIR NORMALIZE "${@EXPORT_NAMESPACE@_BASE_DIR}")
@@ -17,7 +19,12 @@ if(FIND_COMPONENTS_EMPTY)
  SET(@EXPORT_NAMESPACE@_FIND_COMPONENTS ${@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST})
 endif()
 
+include(CMakeFindDependencyMacro)
+
+macro(find_dependency_for_component COMPONENT_NAME)
+  message(STATUS "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
 @INJECTED_FIND_PACKAGES_CODE@
+endmacro()
 
 # include required components recursively with dependencies
 foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
@@ -25,20 +32,25 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
   if(NOT ${COMPONENT} IN_LIST @EXPORT_NAMESPACE@_COMPONENTS_LIST)
 		message(FATAL_ERROR "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} is not present in component list, available components are ${@EXPORT_NAMESPACE@_COMPONENTS_LIST}")
 	endif()
+
   
   if(${COMPONENT}_DEPENDENT_EXPORTS)
     # dependent component, add its dependencies and add it at the end
 		message(STATUS "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
     set(DEPENDENT_COMPONENT_LIST ${${COMPONENT}_DEPENDENT_EXPORTS})
     foreach(DEPENDENT_COMPONENT ${DEPENDENT_COMPONENT_LIST})
-      message(STATUS "[@EXPORT_NAMESPACE@Config] -- including ${DEPENDENT_COMPONENT}Targets.cmake")
+      find_dependency_for_component(${DEPENDENT_COMPONENT})
+      message(STATUS "[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
       include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${DEPENDENT_COMPONENT}Targets.cmake")
     endforeach()
     
   endif()
   
   # and include the component
+  find_dependency_for_component(${COMPONENT})
   message(STATUS "[@EXPORT_NAMESPACE@Config] -- including ${COMPONENT}Targets.cmake")
   include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${COMPONENT}Targets.cmake")
 
 endforeach()
+
+message(STATUS "[@EXPORT_NAMESPACE@Config] exit point")
