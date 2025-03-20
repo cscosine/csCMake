@@ -125,11 +125,10 @@ function(cs_get_target_exported_to TARGET_NAME OUTPUT_VARIABLE_NAME)
   set(${OUTPUT_VARIABLE_NAME} ${VALUE} PARENT_SCOPE)
 endfunction()
 
-function(_cs_populate_export_dependent_exports EXPORT_NAME DEPENDENT_EXPORTS_OUT)
+function(_cs_populate_export_dependent_exports EXPORT_NAME)
   cs_get_exported_targets(${EXPORT_NAME} TARGETS_LIST)
   cs_debug_message("[_cs_populate_export_dependent_exports] EXPORT ${EXPORT_NAME} has the following targets: ${TARGETS_LIST}")
   
-  set(DEPENDENT_EXPORTS "") # reset to be sure
   foreach(TARGET_NAME ${TARGETS_LIST})
     cs_get_target_dependencies(${TARGET_NAME} TARGET_DEPS)
     cs_debug_message("[_cs_populate_export_dependent_exports] -- target ${TARGET_NAME} depends on internal targets ${TARGET_DEPS}")
@@ -138,8 +137,8 @@ function(_cs_populate_export_dependent_exports EXPORT_NAME DEPENDENT_EXPORTS_OUT
       cs_get_target_exported_to(${TARGET_DEP_NAME} EXPORT_DEP_NAME)
       cs_debug_message("[_cs_populate_export_dependent_exports] ---- subtarget ${TARGET_DEP_NAME} is exported to ${EXPORT_DEP_NAME}")
       if(NOT ${EXPORT_DEP_NAME} STREQUAL ${EXPORT_NAME})
-        _cs_list_add_unique_value(DEPENDENT_EXPORTS ${EXPORT_DEP_NAME})
-        cs_debug_message("[_cs_populate_export_dependent_exports] ---- cumulated ${DEPENDENT_EXPORTS}")
+        cs_debug_message("[_cs_populate_export_dependent_exports] ---- add ${EXPORT_DEP_NAME}")
+        _cs_add_to_global_property_unique_value(csExported${EXPORT_NAME}Depends ${EXPORT_DEP_NAME})
       else()
         cs_debug_message("[_cs_populate_export_dependent_exports] ---- subtarget is in my same export set")
       endif()
@@ -148,8 +147,65 @@ function(_cs_populate_export_dependent_exports EXPORT_NAME DEPENDENT_EXPORTS_OUT
     
   endforeach()
 
+  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS)  
   cs_debug_message("[_cs_populate_export_dependent_exports] final result, EXPORT ${EXPORT_NAME} depends on EXPORTS ${DEPENDENT_EXPORTS}")
-  set(${DEPENDENT_EXPORTS_OUT} "${DEPENDENT_EXPORTS}" PARENT_SCOPE)
+endfunction()
+
+function(_cs_sort_export_dependent_exports EXPORT_NAME)
+  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS_UNSORTED)  
+  cs_debug_message("[_cs_sort_export_dependent_exports] -- for export ${EXPORT_NAME} sort ${DEPENDENT_EXPORTS_UNSORTED}")
+
+	# initialize the iterative list of target to analyze
+	set(DEPENDENT_EXPORTS_LIST ${DEPENDENT_EXPORTS_UNSORTED})
+	list(LENGTH DEPENDENT_EXPORTS_LIST DEPENDENT_EXPORTS_LIST_SIZE)
+
+  cs_debug_message("[_cs_sort_export_dependent_exports] -- initial list has ${DEPENDENT_EXPORTS_LIST_SIZE} elements: ${DEPENDENT_EXPORTS_LIST}")
+
+  set(DEPENDENT_EXPORTS_SORTED "")
+	# loop
+	while(DEPENDENT_EXPORTS_LIST_SIZE GREATER 0)
+			# get the first target in the list
+			list(GET DEPENDENT_EXPORTS_LIST 0 CURRENT_ELEMENT)
+			# and remove it
+			list(REMOVE_AT DEPENDENT_EXPORTS_LIST 0)
+
+      # get the dependencies of the current element
+      cs_get_exported_depends(${CURRENT_ELEMENT} CURRENT_ELEMENT_DEPENDENT_EXPORTS)
+      cs_debug_message("[_cs_sort_export_dependent_exports] ---- analyze ${CURRENT_ELEMENT}, it depends on: ${CURRENT_ELEMENT_DEPENDENT_EXPORTS}")
+
+      # clean up and keep only the one not yet satisfied
+      set(CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN "")
+      foreach(TEMP_ELEMENT ${CURRENT_ELEMENT_DEPENDENT_EXPORTS})
+        if(NOT ${TEMP_ELEMENT} IN_LIST DEPENDENT_EXPORTS_SORTED)
+          _cs_list_add_unique_value(CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN ${TEMP_ELEMENT})
+        endif()
+      endforeach()
+      
+      list(LENGTH CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN_SIZE)
+      cs_debug_message("[_cs_sort_export_dependent_exports] ---- analyze ${CURRENT_ELEMENT}, cleaned up list of unsatisfied dependency has ${CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN_SIZE} elements: ${CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN}")
+
+
+      # finally add the element itself if is a leaf, or recursive add its dependencies and itself later
+      if(CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN_SIZE EQUAL 0)
+        cs_debug_message("[_cs_sort_export_dependent_exports] ------ add ${CURRENT_ELEMENT} to sorted list, is a leaf (no other dependencies)")
+        _cs_list_add_unique_value(DEPENDENT_EXPORTS_SORTED ${CURRENT_ELEMENT})
+      else()
+      foreach(TEMP_ELEMENT ${CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN})
+          cs_debug_message("[_cs_sort_export_dependent_exports] ------ add ${TEMP_ELEMENT} to the elements to be re-evaluated")
+          _cs_list_add_unique_value(DEPENDENT_EXPORTS_LIST ${TEMP_ELEMENT})
+        endforeach()
+        cs_debug_message("[_cs_sort_export_dependent_exports] ------ add the original ${CURRENT_ELEMENT} to the elements to be re-evaluated")
+        _cs_list_add_unique_value(DEPENDENT_EXPORTS_LIST ${CURRENT_ELEMENT})
+      endif()
+      
+
+			# finally refresh while condition variable
+			list(LENGTH DEPENDENT_EXPORTS_LIST DEPENDENT_EXPORTS_LIST_SIZE)
+	endwhile()
+
+  
+  cs_debug_message("[_cs_sort_export_dependent_exports] -- sort result: ${DEPENDENT_EXPORTS_SORTED}")
+  set_property(GLOBAL PROPERTY csExported${EXPORT_NAME}DependsSorted "${DEPENDENT_EXPORTS_SORTED}")
 endfunction()
 
 
@@ -173,14 +229,23 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
 
   # per each export, prepare a list of the export it depends 
 	foreach(EXPORT_NAME ${EXPORTS})
-    _cs_populate_export_dependent_exports(${EXPORT_NAME} ${EXPORT_NAME}_DEPENDENT_EXPORTS)
-    cs_debug_message("[_cs_finalize_install] -- EXPORT ${EXPORT_NAME} depends on other exports ${${EXPORT_NAME}_DEPENDENT_EXPORTS}")
+    _cs_populate_export_dependent_exports(${EXPORT_NAME})
+
+    # retrieve for debug purposes
+    cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS)
+    cs_debug_message("[_cs_finalize_install] -- EXPORT ${EXPORT_NAME} depends on other exports (unsorted) ${DEPENDENT_EXPORTS}")
+  endforeach()
+
+  foreach(EXPORT_NAME ${EXPORTS})
+    _cs_sort_export_dependent_exports(${EXPORT_NAME} DEPENDENT_EXPORTS_SORTED)
+    cs_get_exported_depends_sorted(${EXPORT_NAME} ${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED)
+    cs_debug_message("[_cs_finalize_install] -- EXPORT ${EXPORT_NAME} depends on other exports (sorted) ${${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED}")
   endforeach()
   
   # write all ${${EXPORT_NAME}_DEPENDENT_EXPORTS} in the cmake config
   set(INJECTED_EXPORT_DEPENDENCIES "")
   foreach(EXPORT_NAME ${EXPORTS})
-    set(INJECTED_EXPORT_DEPENDENCIES "${INJECTED_EXPORT_DEPENDENCIES}set(${EXPORT_NAME}_DEPENDENT_EXPORTS \"${${EXPORT_NAME}_DEPENDENT_EXPORTS}\")\n")
+    set(INJECTED_EXPORT_DEPENDENCIES "${INJECTED_EXPORT_DEPENDENCIES}set(${EXPORT_NAME}_DEPENDENT_EXPORTS \"${${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED}\")\n")
   endforeach()
   
   # TODO(sc): implement a mechanism to auto import dependencies (unique)
@@ -269,6 +334,30 @@ function(cs_get_exported_targets EXPORT_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
+# return the csExported${EXPORT_NAME}Depends global property 
+function(cs_get_exported_depends EXPORT_NAME OUTPUT_VARIABLE_NAME)
+  get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}Depends)
+  if(LIST_VALUES)
+    # if exists
+    set(${OUTPUT_VARIABLE_NAME} ${LIST_VALUES} PARENT_SCOPE)
+  else()
+    # otherwise set to empty list
+    set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
+# return the csExported${EXPORT_NAME}DependsSorted global property 
+function(cs_get_exported_depends_sorted EXPORT_NAME OUTPUT_VARIABLE_NAME)
+  get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}DependsSorted)
+  if(LIST_VALUES)
+    # if exists
+    set(${OUTPUT_VARIABLE_NAME} ${LIST_VALUES} PARENT_SCOPE)
+  else()
+    # otherwise set to empty list
+    set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
 # return the csExported${EXPORT_NAME}FindPackages global property 
 function(cs_get_exported_find_packages EXPORT_NAME OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}FindPackages)
@@ -287,7 +376,9 @@ function(cs_print_exported_list_details)
   foreach(EXPORT ${EXPORTS})
     cs_get_exported_targets(${EXPORT} TARGETS_VALUES)
     cs_get_exported_find_packages(${EXPORT} FIND_PACKAGES_VALUES)
-    cs_debug_message("[cs_print_exported_list_details] export ${EXPORT} contains the following targets: ${TARGETS_VALUES} and has the following find_packages: ${FIND_PACKAGES_VALUES}")
+    cs_get_exported_depends(${EXPORT} DEPENDS_VALUES)
+    cs_get_exported_depends_sorted(${EXPORT} DEPENDS_VALUES_SORTED)
+    cs_debug_message("[cs_print_exported_list_details] export ${EXPORT} contains the following targets: ${TARGETS_VALUES}, has the following find_packages: ${FIND_PACKAGES_VALUES} and depends on those other exports: ${DEPENDS_VALUES} (sorted as ${DEPENDS_VALUES_SORTED})")
   endforeach()
 
   cs_get_exported_list(EXPORTS_DEFAULT)
