@@ -151,6 +151,33 @@ function(_cs_populate_export_dependent_exports EXPORT_NAME)
   cs_debug_message("[_cs_populate_export_dependent_exports] final result, EXPORT ${EXPORT_NAME} depends on EXPORTS ${DEPENDENT_EXPORTS}")
 endfunction()
 
+function(_cs_check_export_cyclic_dependencies_recursive EXPORT_NAME VISITED_LIST)
+  cs_debug_message("[_cs_check_export_cyclic_dependencies_recursive] -- for export ${EXPORT_NAME} with visited list = ${VISITED_LIST}")
+
+  if(${EXPORT_NAME} IN_LIST VISITED_LIST)
+    message(FATAL_ERROR "[_cs_check_export_cyclic_dependencies_recursive] detected cyclic dependency: ${VISITED_LIST} -> ${EXPORT_NAME}")
+  endif()
+  
+  list(APPEND VISITED_LIST ${EXPORT_NAME})
+
+  cs_get_exported_depends(${EXPORT_NAME} NEXT_ELEMENTS_LIST)
+  foreach(NEXT_ELEMENT ${NEXT_ELEMENTS_LIST})
+    cs_debug_message("[_cs_check_export_cyclic_dependencies_recursive] -- for export ${EXPORT_NAME} call recursive on ${NEXT_ELEMENT} with visited list = ${VISITED_LIST}")
+    _cs_check_export_cyclic_dependencies_recursive(${NEXT_ELEMENT} "${VISITED_LIST}")
+  endforeach()
+
+endfunction()
+
+
+function(_cs_check_export_cyclic_dependencies EXPORT_NAME)
+  cs_debug_message("[_cs_check_export_cyclic_dependencies] -- for export ${EXPORT_NAME}")
+
+  set(VISITED_LIST "")
+  _cs_check_export_cyclic_dependencies_recursive(${EXPORT_NAME} "${VISITED_LIST}")
+
+endfunction()
+
+
 function(_cs_sort_export_dependent_exports EXPORT_NAME)
   cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS_UNSORTED)  
   cs_debug_message("[_cs_sort_export_dependent_exports] -- for export ${EXPORT_NAME} sort ${DEPENDENT_EXPORTS_UNSORTED}")
@@ -236,6 +263,12 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
     cs_debug_message("[_cs_finalize_install] -- EXPORT ${EXPORT_NAME} depends on other exports (unsorted) ${DEPENDENT_EXPORTS}")
   endforeach()
 
+  # fail if cyclic loops in exports are detected
+  foreach(EXPORT_NAME ${EXPORTS})
+    _cs_check_export_cyclic_dependencies(${EXPORT_NAME})
+  endforeach()
+
+  # then sort the dependencies in order to have independent exports before
   foreach(EXPORT_NAME ${EXPORTS})
     _cs_sort_export_dependent_exports(${EXPORT_NAME} DEPENDENT_EXPORTS_SORTED)
     cs_get_exported_depends_sorted(${EXPORT_NAME} ${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED)
