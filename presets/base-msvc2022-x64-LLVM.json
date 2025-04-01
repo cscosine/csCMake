@@ -39,6 +39,18 @@
       "name": "msvc2022-x64-LLVM-release-install",
       "inherits": ["msvc2022-x64-LLVM-release", "cs-windows-install"]
     }
+  ],
+  "testPresets": [
+    {
+      "name": "msvc2022-x64-LLVM-debug-test",
+      "inherits": [ "cs-windows-test-base-multi-config-debug"],
+      "configurePreset": "msvc2022-x64-LLVM"
+    },
+    {
+      "name": "msvc2022-x64-LLVM-release-test",
+      "inherits": [ "cs-windows-test-base-multi-config-release"],
+      "configurePreset": "msvc2022-x64-LLVM"
+    }
   ],  
   "workflowPresets": [
     {
@@ -63,6 +75,14 @@
         {
           "type": "build",
           "name": "msvc2022-x64-LLVM-release-install"
+        },
+        {
+          "type": "test",
+          "name": "msvc2022-x64-LLVM-debug-test"
+        },
+        {
+          "type": "test",
+          "name": "msvc2022-x64-LLVM-release-test"
         }
       ]
     }

@@ -61,5 +61,29 @@
       "inherits": ["cs-host-windows"],
       "targets": "install"
     }
+  ],
+  "testPresets": [
+    {
+      "name": "cs-windows-test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "cs-windows-test-base-multi-config-debug",
+      "hidden": true,
+      "inherits": ["cs-windows-test-base"],
+      "configuration": "Debug"
+    },
+    {
+      "name": "cs-windows-test-base-multi-config-release",
+      "hidden": true,
+      "inherits": ["cs-windows-test-base"],
+      "configuration": "Release"
+    }
   ]
 }
