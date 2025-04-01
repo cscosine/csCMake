@@ -76,5 +76,29 @@
       "inherits": ["cs-host-linux"],
       "targets": "install"
     }
-  ]
+  ],
+  "testPresets": [
+    {
+      "name": "cs-linux-test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "cs-linux-test-base-multi-config-debug",
+      "hidden": true,
+      "inherits": ["cs-linux-test-base"],
+      "configuration": "Debug"
+    },
+    {
+      "name": "cs-linux-test-base-multi-config-release",
+      "hidden": true,
+      "inherits": ["cs-linux-test-base"],
+      "configuration": "Release"
+    }
+  ]  
 }

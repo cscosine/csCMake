@@ -55,7 +55,19 @@
       "name": "linux-ninja-release-install",
       "inherits": [ "linux-ninja-release", "cs-linux-install" ]
     }
-  ],  
+  ],
+  "testPresets": [
+    {
+      "name": "linux-ninja-debug-test",
+      "inherits": [ "cs-linux-test-base"],
+      "configurePreset": "linux-ninja-debug"
+    },
+    {
+      "name": "linux-ninja-release-test",
+      "inherits": [ "cs-linux-test-base"],
+      "configurePreset": "linux-ninja-release"
+    }
+  ],
   "workflowPresets": [
     {
       "name": "linux-ninja-debug",
@@ -71,6 +83,10 @@
         {
           "type": "build",
           "name": "linux-ninja-debug-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-debug-test"
         }
       ]
     },
@@ -88,6 +104,10 @@
         {
           "type": "build",
           "name": "linux-ninja-release-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-release-test"
         }
       ]
     }

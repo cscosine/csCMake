@@ -39,6 +39,18 @@
       "name": "linux-ninja-multi-config-release-install",
       "inherits": [ "linux-ninja-multi-config-release", "cs-linux-multi-config-install" ]
     }
+  ],
+  "testPresets": [
+    {
+      "name": "linux-ninja-multi-config-debug-test",
+      "inherits": [ "cs-linux-test-base-multi-config-debug"],
+      "configurePreset": "linux-ninja-multi-config"
+    },
+    {
+      "name": "linux-ninja-multi-config-release-test",
+      "inherits": [ "cs-linux-test-base-multi-config-release"],
+      "configurePreset": "linux-ninja-multi-config"
+    }
   ],  
   "workflowPresets": [
     {
@@ -63,6 +75,14 @@
         {
           "type": "build",
           "name": "linux-ninja-multi-config-release-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-debug-test"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-release-test"
         }
       ]
     }
