@@ -280,10 +280,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
   foreach(EXPORT_NAME ${EXPORTS})
     set(INJECTED_EXPORT_DEPENDENCIES "${INJECTED_EXPORT_DEPENDENCIES}set(${EXPORT_NAME}_DEPENDENT_EXPORTS \"${${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED}\")\n")
   endforeach()
-  
-  # TODO(sc): implement a mechanism to auto import dependencies (unique)
-  
-  
+   
   # generate the main cmake for finding this package
   set(INJECTED_FIND_PACKAGES_CODE "")
 	foreach(EXPORT_NAME ${EXPORTS})
