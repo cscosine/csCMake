@@ -62,6 +62,12 @@ macro(cs_initialize_project PROJECT_NAME)
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 	endif()
 
+	# enable generation of compile commands on ninja generators
+	if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
+		message(STATUS "[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
+		set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+	endif()
+
 	_cs_add_default_targets()
 endmacro()
 
