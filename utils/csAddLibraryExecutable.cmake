@@ -3,7 +3,6 @@ include(utils/csDebugMessage)
 include(utils/csListUtils)
 
 # add a target as library and add to list csProjectTargets
-# note, set some commond properties to target, such that "d" postfix for debug versions
 function(cs_add_library TARGET_NAME)
 	add_library("${TARGET_NAME}" ${ARGN})
   _cs_add_target_to_project_targets(${TARGET_NAME})
@@ -19,7 +18,17 @@ function (_cs_add_target_to_project_targets TARGET_NAME)
   # add to list of targets if it is not an alias
 	get_target_property(TARGET_NAME_ALIAS ${TARGET_NAME} ALIASED_TARGET)
 	if(NOT TARGET_NAME_ALIAS)
-    set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "d")
+    # iterate on all specified configurations and add the target postfix
+    cs_get_specified_build_configurations(CONFIGS_LIST)
+    foreach(CONFIG ${CONFIGS_LIST})
+      string(TOUPPER "${CONFIG}" CONFIG)
+      if(DEFINED CSCMAKE_${CONFIG}_POSTFIX)
+        set_target_properties(${TARGET_NAME} PROPERTIES ${CONFIG}_POSTFIX "${CSCMAKE_${CONFIG}_POSTFIX}")
+      else()
+        message(FATAL_ERROR "CSCMAKE_${CONFIG}_POSTFIX variable do not exists, have you properly added configurations via _cs_add_custom_build_configuration?")
+      endif()      
+    endforeach()
+    
 	  _cs_add_to_global_property_unique_value(csProjectTargets ${TARGET_NAME})
   endif()
 endfunction()

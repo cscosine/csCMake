@@ -36,9 +36,10 @@ endfunction()
 # cs_initialize_project(MyProject 
 #   DEFAULT_CONFIG Debug 
 #   DEFAULT_CONFIG Release
-#   CUSTOM_CONFIG MyCustomConfig1 
-#   CUSTOM_CONFIG MyCustomConfig2
+#   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
+#   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
 # )
+#  note, make sure to use POSTFIX "" if no postfix
 macro(cs_initialize_project PROJECT_NAME)
 	cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
 	# normalize paths
@@ -65,7 +66,6 @@ macro(cs_initialize_project PROJECT_NAME)
 
 	# print information on the csCMake configuration
 	cs_print_initial_state()
-	message(FATAL_ERROR "STOP HERE TODO(sc) continue the variable copy in cs_copy_configuration_type and set into cache")
 
 	# join CMAKE_PREFIX_PATH
 	set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
