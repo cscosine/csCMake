@@ -62,7 +62,7 @@ function(_cs_add_default_build_configurations CONFIG)
 endfunction()
 
 # add a custom configuration, based on a default one
-function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX)
+function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONFIG_AND_FALLBACK)
 	cs_get_specified_build_configurations(CONFIGS_LIST)
     cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
 
@@ -75,7 +75,7 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX)
     if(NOT ${BASE_CONFIG} IN_LIST CONFIGS_LIST_DEFAULT)
         message(FATAL_ERROR "[_cs_add_custom_build_configuration] element ${CONFIG} base on ${BASE_CONFIG}, which is not in default configs ${CONFIGS_LIST_DEFAULT}")
     else()
-        cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG})
+        cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG} "${BASE_CONFIG_AND_FALLBACK}")
 	endif()
 
     # set the postfix
@@ -117,7 +117,7 @@ function(_cs_parse_additional_configurations)
     list(LENGTH ARG_CUSTOM_CONFIG ARG_CUSTOM_CONFIG_SIZE)
     math(EXPR MOD_SIZE "${ARG_CUSTOM_CONFIG_SIZE} % 5")
     if(NOT ${MOD_SIZE} EQUAL 0)
-        message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify pairs of values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\"")
+        message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ")
     endif()
 	
     set(I 0)
@@ -128,7 +128,7 @@ function(_cs_parse_additional_configurations)
         list(GET ARG_CUSTOM_CONFIG ${I} BASED_ON_KEYWORD)
         math(EXPR I "${I} + 1")
         
-        list(GET ARG_CUSTOM_CONFIG ${I} BASE_CONFIG)
+        list(GET ARG_CUSTOM_CONFIG ${I} BASE_CONFIG_AND_FALLBACK)
         math(EXPR I "${I} + 1")
         
         list(GET ARG_CUSTOM_CONFIG ${I} POSTFIX_KEYWORD)
@@ -137,15 +137,24 @@ function(_cs_parse_additional_configurations)
         list(GET ARG_CUSTOM_CONFIG ${I} POSTFIX_VALUE)
         math(EXPR I "${I} + 1")
 
-        if(NOT ${BASED_ON_KEYWORD} STREQUAL "BASED_ON")
-            message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify pairs of values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected BASED_ON found ${BASED_ON_KEYWORD}")
-        endif()
-        if(NOT ${POSTFIX_KEYWORD} STREQUAL "POSTFIX")
-            message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify pairs of values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected POSTFIX found ${POSTFIX_KEYWORD}")
+        # parse the ; separated BASE_CONFIG_AND_FALLBACK variable
+        string(FIND "${BASE_CONFIG_AND_FALLBACK}" "," POS)
+        if(${POS} EQUAL -1)
+            set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
+        else()
+            string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
+            string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
         endif()
 
-		cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG}")
-		_cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE})
+        if(NOT ${BASED_ON_KEYWORD} STREQUAL "BASED_ON")
+            message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected BASED_ON found ${BASED_ON_KEYWORD}")
+        endif()
+        if(NOT ${POSTFIX_KEYWORD} STREQUAL "POSTFIX")
+            message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected POSTFIX found ${POSTFIX_KEYWORD}")
+        endif()
+
+		cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}")
+		_cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
 	endwhile()
 endfunction()
 
@@ -160,7 +169,7 @@ function(_cs_process_configurations)
 			message(FATAL_ERROR "[_cs_process_configurations] request to build with config ${CMAKE_BUILD_TYPE} which is not supported by this project")
 		endif()
 	endif()
-endfunction(_cs)
+endfunction()
 
 # set a global property csCMakeConfigurationVariables
 # highly inspired from https://stackoverflow.com/questions/75823363/how-can-i-copy-all-build-type-parameters-from-an-existing-build-configuration-ty/75828118#75828118
@@ -188,7 +197,7 @@ function(_cs_process_build_configurations_variables)
     set_property(GLOBAL PROPERTY csCMakeConfigurationVariables ${CONFIG_VAR_LIST})
 endfunction()
 
-function(cs_copy_configuration_type config_from_in config_to_in)
+function(cs_copy_configuration_type config_from_in config_to_in BASE_CONFIG_AND_FALLBACK)
   cs_get_build_configurations_variables(CONFIG_VAR_LIST)
 
   string(TOUPPER "${config_from_in}" config_from)
@@ -203,7 +212,9 @@ function(cs_copy_configuration_type config_from_in config_to_in)
     cs_debug_message("[cs_copy_configuration_type] ${config_var_to} = ${${config_var_from}}")
   endforeach()
 
-  #TODO(sc) consider also DEBUG_CONFIGURATIONS global property 
-  set(CMAKE_MAP_IMPORTED_CONFIG_${config_to} "${config_from_in}")
-  cs_debug_message("[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${config_from_in}")
+  #TODO(sc) consider also DEBUG_CONFIGURATIONS global property  ?
+
+  set("CMAKE_MAP_IMPORTED_CONFIG_${config_to}" "${BASE_CONFIG_AND_FALLBACK}" CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}" FORCE)
+  cs_debug_message("[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}" True)
+
   endfunction()
