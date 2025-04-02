@@ -12,6 +12,7 @@ include(utils/csTargetDependencies)
 include(utils/csMSVCUtils)
 include(utils/csInstall)
 include(utils/csDefaultTargets)
+include(utils/csBuildConfigurations)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
 function(cs_set_base_path PATH)
@@ -31,8 +32,13 @@ function(cs_get_base_path PATH)
 	set(${PATH} ${VAL} PARENT_SCOPE)
 endfunction()
 
-
-
+# accepts extra arguments to specify the available build configurations
+# cs_initialize_project(MyProject 
+#   DEFAULT_CONFIG Debug 
+#   DEFAULT_CONFIG Release
+#   CUSTOM_CONFIG MyCustomConfig1 
+#   CUSTOM_CONFIG MyCustomConfig2
+# )
 macro(cs_initialize_project PROJECT_NAME)
 	cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
 	# normalize paths
@@ -46,9 +52,20 @@ macro(cs_initialize_project PROJECT_NAME)
 
 	_cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
+	# initialize the default configuration list variables
+	_cs_process_build_configurations_variables()
+	cs_get_build_configurations_variables(TEMP_VAR_LIST)
+	cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${TEMP_VAR_LIST}")
 	
+	# parse the additional configurations
+	_cs_parse_additional_configurations(${ARGN})
+
+	# check validity of requested config (if single generator, or set the build types to the requested configs)
+	_cs_process_configurations()
+
 	# print information on the csCMake configuration
 	cs_print_initial_state()
+	message(FATAL_ERROR "STOP HERE TODO(sc) continue the variable copy in cs_copy_configuration_type and set into cache")
 
 	# join CMAKE_PREFIX_PATH
 	set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
@@ -73,7 +90,8 @@ endmacro()
 
 # EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
 function (cs_finalize_project EXPORT_NAMESPACE)
-	# print info
+ 
+	# print target and export info
 	cs_print_all_target() 
 	cs_print_exported_list_details()
 	
