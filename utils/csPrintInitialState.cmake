@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
-function(cs_print_initial_state)
-  MESSAGE(STATUS "--- csCMake initial state ---")
+function(cs_print_state_info HEADER_MESSAGE)
+  MESSAGE(STATUS "--- csCMake ${HEADER_MESSAGE} state ---")
   MESSAGE(STATUS "  csCMake path: ${CMAKE_CURRENT_LIST_DIR}")
   MESSAGE(STATUS "  CS_CMAKE_MODULE_PATH_HEAD: ${CS_CMAKE_MODULE_PATH_HEAD}")
   MESSAGE(STATUS "  CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
@@ -18,5 +18,7 @@ function(cs_print_initial_state)
   
   cs_get_specified_build_configurations(LIST)
   MESSAGE(STATUS "  csCMakeConfigurationTypes ${LIST}")
+
+  cs_print_all_configurations_variables("[${HEADER_MESSAGE} state]")
   MESSAGE(STATUS "--- csCMake ---")
 endfunction()

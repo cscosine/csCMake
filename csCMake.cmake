@@ -65,7 +65,7 @@ macro(cs_initialize_project PROJECT_NAME)
 	_cs_process_configurations()
 
 	# print information on the csCMake configuration
-	cs_print_initial_state()
+	cs_print_state_info("initial state")
 
 	# join CMAKE_PREFIX_PATH
 	set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
@@ -94,6 +94,9 @@ function (cs_finalize_project EXPORT_NAMESPACE)
 	# print target and export info
 	cs_print_all_target() 
 	cs_print_exported_list_details()
+
+	cs_print_state_info("final state")
+
 	
 	set(TARGETS "")
 	cs_get_all_targets(TARGETS)

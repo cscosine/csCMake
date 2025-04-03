@@ -1,16 +1,18 @@
 include_guard(GLOBAL)
 
-# get the stored list of available default build config
+# get the stored list of available build config (including default ones)
 function(cs_get_specified_build_configurations CONFIGS_LIST)
 	get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypes)
 	set(${CONFIGS_LIST} ${VAL} PARENT_SCOPE)
 endfunction()
 
+# get the stored list of available default build config
 function(cs_get_specified_build_configurations_default CONFIGS_LIST)
 	get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypesDefault)
 	set(${CONFIGS_LIST} ${VAL} PARENT_SCOPE)
 endfunction()
 
+# get all the CMAKE variables that belongs to a configuration
 function(cs_get_build_configurations_variables CONFIGS_LIST)
 	get_property(VAL GLOBAL PROPERTY csCMakeConfigurationVariables)
 	set(${CONFIGS_LIST} ${VAL} PARENT_SCOPE)
@@ -217,4 +219,24 @@ function(cs_copy_configuration_type config_from_in config_to_in BASE_CONFIG_AND_
   set("CMAKE_MAP_IMPORTED_CONFIG_${config_to}" "${BASE_CONFIG_AND_FALLBACK}" CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}" FORCE)
   cs_debug_message("[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}" True)
 
-  endfunction()
+endfunction()
+
+function(cs_print_all_configurations_variables ADD_MESSAGE)
+  cs_get_specified_build_configurations(CONFIG_VAR_LIST)
+  foreach(CONFIG ${CONFIG_VAR_LIST})
+    message(STATUS "[cs_print_all_configurations_variables] CONFIG ${CONFIG} ${ADD_MESSAGE}")
+    cs_print_configuration_variables(${CONFIG} "  ")
+    message(STATUS "[cs_print_all_configurations_variables] -------")
+  endforeach()
+endfunction()
+
+function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
+  
+  cs_get_build_configurations_variables(CONFIG_VAR_LIST)
+  string(TOUPPER "${CONFIG_IN}" CONFIG)
+
+  foreach(VAR ${CONFIG_VAR_LIST})
+      string(REPLACE "<CONFIG>" "${CONFIG}" VAR_OUT "${VAR}")
+      message(STATUS "${PRINT_PREFIX} ${VAR_OUT} = ${${VAR_OUT}}")
+  endforeach()
+endfunction()
