@@ -32,12 +32,21 @@
       "configurePreset": "linux-ninja-multi-config"
     },
     {
+      "name": "linux-ninja-multi-config-relWithDebInfo",
+      "inherits": [ "cs-linux-multi-config-relWithDebInfo"],
+      "configurePreset": "linux-ninja-multi-config"
+    },
+    {
       "name": "linux-ninja-multi-config-debug-install",
       "inherits": [ "linux-ninja-multi-config-debug", "cs-linux-multi-config-install" ]
     },
     {
       "name": "linux-ninja-multi-config-release-install",
       "inherits": [ "linux-ninja-multi-config-release", "cs-linux-multi-config-install" ]
+    },
+    {
+      "name": "linux-ninja-multi-config-relWithDebInfo-install",
+      "inherits": [ "linux-ninja-multi-config-relWithDebInfo", "cs-linux-multi-config-install" ]
     }
   ],
   "testPresets": [
@@ -50,41 +59,11 @@
       "name": "linux-ninja-multi-config-release-test",
       "inherits": [ "cs-linux-test-base-multi-config-release"],
       "configurePreset": "linux-ninja-multi-config"
-    }
-  ],  
-  "workflowPresets": [
+    },
     {
-      "name": "linux-ninja-multi-config",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "linux-ninja-multi-config"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-multi-config-debug"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-multi-config-release"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-multi-config-debug-install"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-multi-config-release-install"
-        },
-        {
-          "type": "test",
-          "name": "linux-ninja-multi-config-debug-test"
-        },
-        {
-          "type": "test",
-          "name": "linux-ninja-multi-config-release-test"
-        }
-      ]
+      "name": "linux-ninja-multi-config-relWithDebInfo-test",
+      "inherits": [ "cs-linux-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "linux-ninja-multi-config"
     }
   ]
 }

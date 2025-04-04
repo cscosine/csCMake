@@ -71,6 +71,12 @@
       "configuration": "Release"
     },
     {
+      "name": "cs-linux-multi-config-relWithDebInfo",
+      "hidden": true,
+      "inherits": ["cs-host-linux"],
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "cs-linux-multi-config-install",
       "hidden": true,
       "inherits": ["cs-host-linux"],
@@ -99,6 +105,12 @@
       "hidden": true,
       "inherits": ["cs-linux-test-base"],
       "configuration": "Release"
+    },
+    {
+      "name": "cs-linux-test-base-multi-config-relWithDebInfo",
+      "hidden": true,
+      "inherits": ["cs-linux-test-base"],
+      "configuration": "RelWithDebInfo"
     }
   ]  
 }
