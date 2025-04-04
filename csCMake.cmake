@@ -74,10 +74,8 @@ macro(cs_initialize_project PROJECT_NAME)
 	# enable cmake testing
 	enable_testing()
 
-	if(MSVC)
-		# define a single output folder for binaries (dll and exe)
-		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-	endif()
+	# define a single output folder for binaries (dll and exe in win, .so and executables in linux)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 	# enable generation of compile commands on ninja generators
 	if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
