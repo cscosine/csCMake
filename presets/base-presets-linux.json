@@ -45,39 +45,23 @@
     {
       "name": "cs-linux-debug",
       "hidden": true,
-      "inherits": ["cs-host-linux"]
-    },
-    {
-      "name": "cs-linux-release",
-      "hidden": true,
-      "inherits": ["cs-host-linux"]
-    },
-    {
-      "name": "cs-linux-install",
-      "hidden": true,
-      "inherits": ["cs-host-linux"],
-      "targets": "install"
-    },
-    {
-      "name": "cs-linux-multi-config-debug",
-      "hidden": true,
       "inherits": ["cs-host-linux"],
       "configuration": "Debug"
     },
     {
-      "name": "cs-linux-multi-config-release",
+      "name": "cs-linux-release",
       "hidden": true,
       "inherits": ["cs-host-linux"],
       "configuration": "Release"
     },
     {
-      "name": "cs-linux-multi-config-relWithDebInfo",
+      "name": "cs-linux-relWithDebInfo",
       "hidden": true,
       "inherits": ["cs-host-linux"],
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "cs-linux-multi-config-install",
+      "name": "cs-linux-install",
       "hidden": true,
       "inherits": ["cs-host-linux"],
       "targets": "install"

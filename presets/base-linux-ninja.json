@@ -6,34 +6,37 @@
   ],
   "configurePresets": [
     {
-      "name": "linux-ninja-debug-standard-dir",
+      "name": "linux-ninja-standard-dir",
       "hidden": true,
-      "binaryDir": "${sourceParentDir}/build/linux-ninja-debug/${sourceDirName}",
-      "installDir": "${sourceParentDir}/install/linux-ninja-debug/${sourceDirName}",
+      "installDir": "${sourceParentDir}/install/linux-ninja/${sourceDirName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja-debug",
-        "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
-      }
-    },
-    {
-      "name": "linux-ninja-release-standard-dir",
-      "hidden": true,
-      "binaryDir": "${sourceParentDir}/build/linux-ninja-release/${sourceDirName}",
-      "installDir": "${sourceParentDir}/install/linux-ninja-release/${sourceDirName}",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja-release",
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja",
         "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
       }
     },
     {
       "name": "linux-ninja-debug",
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-debug-standard-dir", "cmake-path-linux-ninja-debug"]
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/${sourceDirName}/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja"]
     },
     {
       "name": "linux-ninja-release",
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-release-standard-dir", "cmake-path-linux-ninja-release" ]
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/${sourceDirName}/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
+    },
+    {
+      "name": "linux-ninja-relWithDebInfo",
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/${sourceDirName}/relWithDebInfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
     }
   ],
   "buildPresets": [
@@ -48,12 +51,21 @@
       "configurePreset": "linux-ninja-release"
     },
     {
+      "name": "linux-ninja-relWithDebInfo",
+      "inherits": [ "cs-linux-relWithDebInfo"],
+      "configurePreset": "linux-ninja-relWithDebInfo"
+    },
+    {
       "name": "linux-ninja-debug-install",
       "inherits": [ "linux-ninja-debug", "cs-linux-install" ]
     },
     {
       "name": "linux-ninja-release-install",
       "inherits": [ "linux-ninja-release", "cs-linux-install" ]
+    },
+    {
+      "name": "linux-ninja-relWithDebInfo-install",
+      "inherits": [ "linux-ninja-relWithDebInfo", "cs-linux-install" ]
     }
   ],
   "testPresets": [
@@ -66,50 +78,11 @@
       "name": "linux-ninja-release-test",
       "inherits": [ "cs-linux-test-base"],
       "configurePreset": "linux-ninja-release"
-    }
-  ],
-  "workflowPresets": [
-    {
-      "name": "linux-ninja-debug",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "linux-ninja-debug"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-debug"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-debug-install"
-        },
-        {
-          "type": "test",
-          "name": "linux-ninja-debug-test"
-        }
-      ]
     },
     {
-      "name": "linux-ninja-release",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "linux-ninja-release"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-release"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-release-install"
-        },
-        {
-          "type": "test",
-          "name": "linux-ninja-release-test"
-        }
-      ]
+      "name": "linux-ninja-relWithDebInfo-test",
+      "inherits": [ "cs-linux-test-base"],
+      "configurePreset": "linux-ninja-relWithDebInfo"
     }
   ]
 }

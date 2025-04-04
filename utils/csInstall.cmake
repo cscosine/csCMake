@@ -8,14 +8,9 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 function(cs_get_install_folder_suffix INSTALL_FOLDER_EXPRESSION)
-  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if(GENERATOR_IS_MULTI_CONFIG)
-    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
-    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
-  else()
-    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}")
-    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
-  endif()
+  # includes are installed per configuration, independently if we are with a multi generator or a single one
+  set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
+  set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
 endfunction()
 
 # create a global variable csExportedList collecting all the different EXPORT_NAME used
@@ -60,7 +55,6 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
 
   # retrieve the source files that have to be installed from a absolute path
   cs_get_target_sources_to_install_absolute_path(${TARGET_NAME} FILES_TO_INSTALL)
-  cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
 	foreach(FILE ${FILES_TO_INSTALL})
     set(SOURCE_PATH ${FILE})
     set(DEST_PATH ${INSTALL_FOLDER_EXPRESSION}/${DESTINATION_FOLDER}/)

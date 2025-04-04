@@ -23,30 +23,30 @@
   "buildPresets": [
     {
       "name": "linux-ninja-multi-config-debug",
-      "inherits": [ "cs-linux-multi-config-debug"],
+      "inherits": [ "cs-linux-debug"],
       "configurePreset": "linux-ninja-multi-config"
     },
     {
       "name": "linux-ninja-multi-config-release",
-      "inherits": [ "cs-linux-multi-config-release"],
+      "inherits": [ "cs-linux-release"],
       "configurePreset": "linux-ninja-multi-config"
     },
     {
       "name": "linux-ninja-multi-config-relWithDebInfo",
-      "inherits": [ "cs-linux-multi-config-relWithDebInfo"],
+      "inherits": [ "cs-linux-relWithDebInfo"],
       "configurePreset": "linux-ninja-multi-config"
     },
     {
       "name": "linux-ninja-multi-config-debug-install",
-      "inherits": [ "linux-ninja-multi-config-debug", "cs-linux-multi-config-install" ]
+      "inherits": [ "linux-ninja-multi-config-debug", "cs-linux-install" ]
     },
     {
       "name": "linux-ninja-multi-config-release-install",
-      "inherits": [ "linux-ninja-multi-config-release", "cs-linux-multi-config-install" ]
+      "inherits": [ "linux-ninja-multi-config-release", "cs-linux-install" ]
     },
     {
       "name": "linux-ninja-multi-config-relWithDebInfo-install",
-      "inherits": [ "linux-ninja-multi-config-relWithDebInfo", "cs-linux-multi-config-install" ]
+      "inherits": [ "linux-ninja-multi-config-relWithDebInfo", "cs-linux-install" ]
     }
   ],
   "testPresets": [
