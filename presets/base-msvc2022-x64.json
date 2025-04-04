@@ -32,12 +32,21 @@
       "configurePreset": "msvc2022-x64"
     },
     {
+      "name": "msvc2022-x64-relWithDebInfo",
+      "inherits": [ "cs-windows-relWithDebInfo"],
+      "configurePreset": "msvc2022-x64"
+    },
+    {
       "name": "msvc2022-x64-debug-install",
       "inherits": [ "msvc2022-x64-debug", "cs-windows-install" ]
     },
     {
       "name": "msvc2022-x64-release-install",
       "inherits": [ "msvc2022-x64-release", "cs-windows-install" ]
+    },
+    {
+      "name": "msvc2022-x64-relWithDebInfo-install",
+      "inherits": [ "msvc2022-x64-relWithDebInfo", "cs-windows-install" ]
     }
   ],
   "testPresets": [
@@ -50,41 +59,11 @@
       "name": "msvc2022-x64-release-test",
       "inherits": [ "cs-windows-test-base-multi-config-release"],
       "configurePreset": "msvc2022-x64"
-    }
-  ],  
-  "workflowPresets": [
+    },
     {
-      "name": "msvc2022-x64",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "msvc2022-x64"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-debug"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-release"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-debug-install"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-release-install"
-        },
-        {
-          "type": "test",
-          "name": "msvc2022-x64-debug-test"
-        },
-        {
-          "type": "test",
-          "name": "msvc2022-x64-release-test"
-        }
-      ]
+      "name": "msvc2022-x64-relWithDebInfo-test",
+      "inherits": [ "cs-windows-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "msvc2022-x64"
     }
   ]
 }

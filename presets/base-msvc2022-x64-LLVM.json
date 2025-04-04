@@ -32,12 +32,21 @@
       "configurePreset" : "msvc2022-x64-LLVM"
     },
     {
+      "name": "msvc2022-x64-LLVM-relWithDebInfo",
+      "inherits": ["cs-windows-relWithDebInfo"],
+      "configurePreset" : "msvc2022-x64-LLVM"
+    },
+    {
       "name": "msvc2022-x64-LLVM-debug-install",
       "inherits": ["msvc2022-x64-LLVM-debug", "cs-windows-install"]
     },
     {
       "name": "msvc2022-x64-LLVM-release-install",
       "inherits": ["msvc2022-x64-LLVM-release", "cs-windows-install"]
+    },
+    {
+      "name": "msvc2022-x64-LLVM-relWithDebInfo-install",
+      "inherits": ["msvc2022-x64-LLVM-relWithDebInfo", "cs-windows-install"]
     }
   ],
   "testPresets": [
@@ -50,41 +59,11 @@
       "name": "msvc2022-x64-LLVM-release-test",
       "inherits": [ "cs-windows-test-base-multi-config-release"],
       "configurePreset": "msvc2022-x64-LLVM"
-    }
-  ],  
-  "workflowPresets": [
+    },
     {
-      "name": "msvc2022-x64-LLVM",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "msvc2022-x64-LLVM"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-LLVM-debug"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-LLVM-release"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-LLVM-debug-install"
-        },
-        {
-          "type": "build",
-          "name": "msvc2022-x64-LLVM-release-install"
-        },
-        {
-          "type": "test",
-          "name": "msvc2022-x64-LLVM-debug-test"
-        },
-        {
-          "type": "test",
-          "name": "msvc2022-x64-LLVM-release-test"
-        }
-      ]
+      "name": "msvc2022-x64-LLVM-relWithDebInfo-test",
+      "inherits": [ "cs-windows-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "msvc2022-x64-LLVM"
     }
   ]
 }

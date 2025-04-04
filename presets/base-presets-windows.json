@@ -50,6 +50,12 @@
       "configuration": "Debug"
     },
     {
+      "name": "cs-windows-relWithDebInfo",
+      "hidden": true,
+      "inherits": ["cs-host-windows"],
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "cs-windows-release",
       "hidden": true,
       "inherits": ["cs-host-windows"],
@@ -84,6 +90,12 @@
       "hidden": true,
       "inherits": ["cs-windows-test-base"],
       "configuration": "Release"
+    },
+    {
+      "name": "cs-windows-test-base-multi-config-relWithDebInfo",
+      "hidden": true,
+      "inherits": ["cs-windows-test-base"],
+      "configuration": "RelWithDebInfo"
     }
   ]
 }
