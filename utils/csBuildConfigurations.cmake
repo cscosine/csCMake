@@ -19,7 +19,7 @@ function(cs_get_build_configurations_variables CONFIGS_LIST)
 endfunction()
 
 # add a default configuration
-function(_cs_add_default_build_configurations CONFIG)
+function(_cs_add_default_build_configuration CONFIG)
 	cs_get_specified_build_configurations(CONFIGS_LIST)
     cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
 	
@@ -63,6 +63,18 @@ function(_cs_add_default_build_configurations CONFIG)
 
 endfunction()
 
+# add a default configuration that need a fallback mapping
+function(_cs_add_default_build_configuration_mapped CONFIG BASE_CONFIG_AND_FALLBACK)
+    _cs_add_default_build_configuration(${CONFIG})
+
+  string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+
+  set("CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}" "${BASE_CONFIG_AND_FALLBACK}" CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}" FORCE)
+  cs_debug_message("[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE} = ${BASE_CONFIG_AND_FALLBACK}" True)
+
+endfunction()
+
+
 # add a custom configuration, based on a default one
 function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONFIG_AND_FALLBACK)
 	cs_get_specified_build_configurations(CONFIGS_LIST)
@@ -93,6 +105,7 @@ endfunction()
 # _cs_process_configurations( 
 #   DEFAULT_CONFIG Debug 
 #   DEFAULT_CONFIG Release
+#   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
 #   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
 #  note, make sure to use POSTFIX "" if no postfix has to be used
@@ -102,7 +115,7 @@ function(_cs_parse_additional_configurations)
 
 	set(OPTIONS "")
 	set(ONEVALUE "")
-	set(MULTIVALUE DEFAULT_CONFIG CUSTOM_CONFIG)
+	set(MULTIVALUE DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
 	cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
 
 	if(ARG_UNPARSED_ARGUMENTS)
@@ -112,14 +125,51 @@ function(_cs_parse_additional_configurations)
     # add default configurations
 	foreach(DEFAULT_CONFIG ${ARG_DEFAULT_CONFIG})
 		cs_debug_message("adding default config ${DEFAULT_CONFIG}")
-		_cs_add_default_build_configurations(${DEFAULT_CONFIG})
+		_cs_add_default_build_configuration(${DEFAULT_CONFIG})
 	endforeach()
+
+    # add default configurations mapped
+    list(LENGTH ARG_DEFAULT_CONFIG_MAPPED ARG_DEFAULT_CONFIG_MAPPED_SIZE)
+    math(EXPR MOD_SIZE "${ARG_DEFAULT_CONFIG_MAPPED_SIZE} % 3")
+    if(NOT ${MOD_SIZE} EQUAL 0)
+        message(FATAL_ERROR "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${ARG_DEFAULT_CONFIG_MAPPED}")
+    endif()
+
+    set(I 0)
+    while(ARG_DEFAULT_CONFIG_MAPPED_SIZE GREATER I)
+        list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} DEFAULT_CONFIG_MAPPED)
+        math(EXPR I "${I} + 1")
+
+        list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} MAPPED_TO_KEYWORD)
+        math(EXPR I "${I} + 1")
+        
+        list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} BASE_CONFIG_AND_FALLBACK)
+        math(EXPR I "${I} + 1")
+
+        # parse the ; separated BASE_CONFIG_AND_FALLBACK variable
+        string(FIND "${BASE_CONFIG_AND_FALLBACK}" "," POS)
+        if(${POS} EQUAL -1)
+            set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
+        else()
+            string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
+            string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
+        endif()
+
+        if(NOT ${MAPPED_TO_KEYWORD} STREQUAL "MAPPED_TO")
+        message(FATAL_ERROR "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${ARG_DEFAULT_CONFIG_MAPPED}")
+        endif()
+
+		cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}")
+		_cs_add_default_build_configuration_mapped(${DEFAULT_CONFIG_MAPPED} "${BASE_CONFIG_AND_FALLBACK}")
+
+    endwhile()
+
 
     # add custom configs, based on default ones
     list(LENGTH ARG_CUSTOM_CONFIG ARG_CUSTOM_CONFIG_SIZE)
     math(EXPR MOD_SIZE "${ARG_CUSTOM_CONFIG_SIZE} % 5")
     if(NOT ${MOD_SIZE} EQUAL 0)
-        message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ")
+        message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ${ARG_CUSTOM_CONFIG}")
     endif()
 	
     set(I 0)

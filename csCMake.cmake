@@ -32,10 +32,11 @@ function(cs_get_base_path PATH)
 	set(${PATH} ${VAL} PARENT_SCOPE)
 endfunction()
 
-# accepts extra arguments to specify the available build configurations
+# accepts extra arguments to specify the available build configurations:
 # cs_initialize_project(MyProject 
 #   DEFAULT_CONFIG Debug 
 #   DEFAULT_CONFIG Release
+#   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
 #   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
 # )
