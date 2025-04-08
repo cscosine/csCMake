@@ -42,17 +42,17 @@
   "buildPresets": [
     {
       "name": "linux-ninja-debug",
-      "inherits": [ "cs-linux-debug"],
+      "inherits": [ "cs-host-linux"],
       "configurePreset": "linux-ninja-debug"
     },
     {
       "name": "linux-ninja-release",
-      "inherits": [ "cs-linux-release"],
+      "inherits": [ "cs-host-linux"],
       "configurePreset": "linux-ninja-release"
     },
     {
       "name": "linux-ninja-relWithDebInfo",
-      "inherits": [ "cs-linux-relWithDebInfo"],
+      "inherits": [ "cs-host-linux"],
       "configurePreset": "linux-ninja-relWithDebInfo"
     },
     {
