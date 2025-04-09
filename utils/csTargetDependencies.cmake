@@ -4,8 +4,7 @@ include(utils/csListUtils)
 include(utils/csDebugUtils)
 
 # target properties added by this function
-# - csTargetDependenciesDebug: list of debug dll necessary to the target
-# - csTargetDependenciesRelease: list of release dll necessary to the target
+# - csTargetDependencies${CONFIG}: list of dll necessary to the target, a variable for each configuration is created
 # - csTargetDependenciesNotImportedTargets: list of dependent targets that are marked as not imported
 # - csTargetDependenciesNonTargets: list of dependencies that are marked as non-target
 function (_cs_recursive_analyze_target TARGET_NAME)
@@ -18,72 +17,76 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 
 	# loop
 	while(TARGETS_TO_ANALYZE_SIZE GREATER 0)
-			# get the first target in the list
-			list(GET TARGETS_TO_ANALYZE_LIST 0 TARGET_TO_ANALYZE)
-			# and remove it
-			list(REMOVE_AT TARGETS_TO_ANALYZE_LIST 0)
+		# get the first target in the list
+		list(GET TARGETS_TO_ANALYZE_LIST 0 TARGET_TO_ANALYZE)
+		# and remove it
+		list(REMOVE_AT TARGETS_TO_ANALYZE_LIST 0)
 
-			# # get target type
-			if(TARGET ${TARGET_TO_ANALYZE})
-				# get type and imported properties
-				get_target_property(TARGET_TO_ANALYZE_TYPE ${TARGET_TO_ANALYZE} TYPE)
-				get_target_property(TARGET_TO_ANALYZE_IMPORTED ${TARGET_TO_ANALYZE} IMPORTED)
-				
-				# check aliasing and retrieve original name
-				get_target_property(ALIASED_TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} ALIASED_TARGET)
-				if(ALIASED_TARGET_TO_ANALYZE)
-					cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} ALIAS ${ALIASED_TARGET_TO_ANALYZE} TYPE ${TARGET_TO_ANALYZE_TYPE} IMPORTED ${TARGET_TO_ANALYZE_IMPORTED}")
-					SET(TARGET_TO_ANALYZE "${ALIASED_TARGET_TO_ANALYZE}")
-				else()
-					cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} TYPE ${TARGET_TO_ANALYZE_TYPE} IMPORTED ${TARGET_TO_ANALYZE_IMPORTED}")
-				endif()
-
-
-				# get all link libraries of the TARGET_TO_ANALYZE and add as recoursive dependecies to analyze
-				set(TARGET_TO_ANALYZE_LINKED_LIBS "")
-				_cs_get_all_linked_libs(${TARGET_TO_ANALYZE} TARGET_TO_ANALYZE_LINKED_LIBS)
-				cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} has the following dependencies to be further analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${TARGET_TO_ANALYZE_LINKED_LIBS}")
-				# add to continue the analysis loop
-				_cs_list_add_list_unique_values(TARGETS_TO_ANALYZE_LIST "${TARGET_TO_ANALYZE_LINKED_LIBS}")
-
-				if(NOT TARGET_TO_ANALYZE_IMPORTED)
-					# not imported target, i.e., a target specified inside the project, will be analyzed further for recursive dependencies
-					if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
-					  cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported (i.e., is defined in this project), add it to the list of non resolved recursive dependencies")
-					  _cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNotImportedTargets ${TARGET_TO_ANALYZE})
-					else()
-						cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported, but is the base target to analyze, do not add it recursively")
-					endif()
-				else()
-					# if the target is a shared, interface or module library, add its debug and release path
-					if((${TARGET_TO_ANALYZE_TYPE} STREQUAL "MODULE_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "SHARED_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "INTERFACE_LIBRARY"))
-						cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is imported, populate its library path")
-						_csPopulateTargetDependencies(${TARGET_NAME} ${TARGET_TO_ANALYZE})
-					else()
-					endif()
-				endif()
-
+		# get target type
+		if(TARGET ${TARGET_TO_ANALYZE})
+			# get type and imported properties
+			get_target_property(TARGET_TO_ANALYZE_TYPE ${TARGET_TO_ANALYZE} TYPE)
+			get_target_property(TARGET_TO_ANALYZE_IMPORTED ${TARGET_TO_ANALYZE} IMPORTED)
+			
+			# check aliasing and retrieve original name
+			get_target_property(ALIASED_TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} ALIASED_TARGET)
+			if(ALIASED_TARGET_TO_ANALYZE)
+				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} ALIAS ${ALIASED_TARGET_TO_ANALYZE} TYPE ${TARGET_TO_ANALYZE_TYPE} IMPORTED ${TARGET_TO_ANALYZE_IMPORTED}")
+				SET(TARGET_TO_ANALYZE "${ALIASED_TARGET_TO_ANALYZE}")
 			else()
-				if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
-					cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, add it to the list of non resolved recursive dependencies")
-					_cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNonTargets ${TARGET_TO_ANALYZE})
-				else()
-				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, but is the base target to analyze, do not add it recursively")
-				endif()
+				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} TYPE ${TARGET_TO_ANALYZE_TYPE} IMPORTED ${TARGET_TO_ANALYZE_IMPORTED}")
 			endif()
 
 
-			# finally refresh while condition variable
-			list(LENGTH TARGETS_TO_ANALYZE_LIST TARGETS_TO_ANALYZE_SIZE)
+			# get all link libraries of the TARGET_TO_ANALYZE and add as recoursive dependecies to analyze
+			set(TARGET_TO_ANALYZE_LINKED_LIBS "")
+			_cs_get_all_linked_libs(${TARGET_TO_ANALYZE} TARGET_TO_ANALYZE_LINKED_LIBS)
+			cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} has the following dependencies to be further analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${TARGET_TO_ANALYZE_LINKED_LIBS}")
+			# add to continue the analysis loop
+			_cs_list_add_list_unique_values(TARGETS_TO_ANALYZE_LIST "${TARGET_TO_ANALYZE_LINKED_LIBS}")
+
+			if(NOT TARGET_TO_ANALYZE_IMPORTED)
+				# not imported target, i.e., a target specified inside the project, will be analyzed further for recursive dependencies
+				if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
+					cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported (i.e., is defined in this project), add it to the list of non resolved recursive dependencies")
+					_cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNotImportedTargets ${TARGET_TO_ANALYZE})
+				else()
+					cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported, but is the base target to analyze, do not add it recursively")
+				endif()
+			else()
+				# if the target is a shared, interface or module library, add its paths
+				if((${TARGET_TO_ANALYZE_TYPE} STREQUAL "MODULE_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "SHARED_LIBRARY") OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "INTERFACE_LIBRARY"))
+					cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is imported, populate its library path")
+					_csPopulateTargetDependencies(${TARGET_NAME} ${TARGET_TO_ANALYZE})
+				else()
+				endif()
+			endif()
+
+		else()
+			if(NOT ${TARGET_TO_ANALYZE} STREQUAL ${TARGET_NAME})
+				cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, add it to the list of non resolved recursive dependencies")
+				_cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNonTargets ${TARGET_TO_ANALYZE})
+			else()
+			cs_debug_message("[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, but is the base target to analyze, do not add it recursively")
+			endif()
+		endif()
+
+
+		# finally refresh while condition variable
+		list(LENGTH TARGETS_TO_ANALYZE_LIST TARGETS_TO_ANALYZE_SIZE)
 	endwhile()
 
 	# print for debug purposes
-	cs_get_target_dependencies_debug_libraries(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_DEBUG)
-	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesDebug: ${TARGET_TO_ANALYZE_DEPENDENCIES_DEBUG}")
+	
+	# per config
+	cs_get_specified_build_configurations(CONFIGS_LIST)
+	foreach(CONFIG ${CONFIGS_LIST})
 
-	cs_get_target_dependencies_release_libraries(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_RELEASE)
-	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesRelease: ${TARGET_TO_ANALYZE_DEPENDENCIES_RELEASE}")
+		cs_get_target_dependencies_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
+		cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependencies${CONFIG}: ${TARGET_TO_ANALYZE_DEPENDENCIES}")
 
+	endforeach()
+	
 	cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS)
 	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS}")
 		
@@ -94,19 +97,9 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 
 endfunction()
 
-# return csTargetDependenciesDebug for target
-function(cs_get_target_dependencies_debug_libraries TARGET_NAME OUTPUT_VARIABLE_NAME)
-	get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesDebug)
-	if(_VALUES)
-		set(${OUTPUT_VARIABLE_NAME} ${_VALUES} PARENT_SCOPE)
-	else()
-		set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
-	endif()
-endfunction()
-
-# return csTargetDependenciesRelease for target
-function(cs_get_target_dependencies_release_libraries TARGET_NAME OUTPUT_VARIABLE_NAME)
-	get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesRelease)
+# return csTargetDependencies${CONFIG} for target
+function(cs_get_target_dependencies_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
+	get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG})
 	if(_VALUES)
 		set(${OUTPUT_VARIABLE_NAME} ${_VALUES} PARENT_SCOPE)
 	else()
@@ -144,8 +137,7 @@ function(cs_get_target_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
 	endif()
 endfunction()
 
-# - csTargetDependenciesDebugFinalized: list of debug dll necessary to the target
-# - csTargetDependenciesReleaseFinalized: list of release dll necessary to the target
+# - csTargetDependencies${CONFIG}Finalized: list of ${CONFIG} dll necessary to the target
 # - csTargetDependencies: list of other target of this project needed for this target
 # during the execution a variable csTargetDependenciesToAnalyze is created as temporary, but it will be used as a "buffer", at exist it is empty
 function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
@@ -153,7 +145,7 @@ function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   
 	# for each target, 
   foreach (TARGET_NAME IN ITEMS ${TARGETS_LIST})
-		# - copy csTargetDependenciesDebug and csTargetDependenciesRelease to the Finalized copies
+		# - copy csTargetDependencies${CONFIG} to the Finalized copies
 		# - create a unique list of target csTargetDependenciesToAnalyze and csTargetDependencies as merge of csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets, by selecting only what is effectively a target and removing aliases
 		_cs_prepare_finalize_target(${TARGET_NAME})
 	endforeach()
@@ -198,13 +190,13 @@ function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
 	# print out final dependency list
 	cs_debug_message("[_cs_recursive_analyze_targets_finalize] concluded, print final state")
 	foreach(TARGET_NAME IN ITEMS ${TARGETS_LIST_ORIGINAL})
-		cs_get_target_dependencies_debug_libraries_finalized(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_DEBUG)
-		cs_debug_message("[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} csTargetDependenciesDebug: ${TARGET_TO_ANALYZE_DEPENDENCIES_DEBUG}")
-
-		cs_get_target_dependencies_release_libraries_finalized(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_RELEASE)
-		cs_debug_message("[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} csTargetDependenciesRelease: ${TARGET_TO_ANALYZE_DEPENDENCIES_RELEASE}")		
+	  cs_get_specified_build_configurations(CONFIGS_LIST)
+	  foreach(CONFIG ${CONFIGS_LIST})
+		  cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
+		  cs_debug_message("[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized : ${TARGET_TO_ANALYZE_DEPENDENCIES}")
+		endforeach()
 	endforeach()
-	cs_debug_message("[_cs_recursive_analyze_targets_finalize] end")
+  cs_debug_message("[_cs_recursive_analyze_targets_finalize] end")
 
 endfunction()
 
@@ -215,19 +207,19 @@ function(_cs_target_try_to_finalize TARGET_NAME)
 	foreach(DEP_TARGET IN ITEMS "${DEP_TARGETS}")
 		_cs_target_is_fully_finalized(${DEP_TARGET} DEP_TARGET_FINALIZED)
 		if(DEP_TARGET_FINALIZED)
-			# merge the two finalized list of debug and release dependencies
-			cs_get_target_dependencies_debug_libraries_finalized(${TARGET_NAME} TARGET_DEBUG)
-			cs_get_target_dependencies_release_libraries_finalized(${TARGET_NAME} TARGET_RELEASE)
+			# merge the two finalized list of target and dep target
+			cs_get_specified_build_configurations(CONFIGS_LIST)
+			foreach(CONFIG ${CONFIGS_LIST})
+	
+				cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_LIB)
 
-			cs_get_target_dependencies_debug_libraries_finalized(${DEP_TARGET} TARGET_DEP_DEBUG)
-			cs_get_target_dependencies_release_libraries_finalized(${DEP_TARGET} TARGET_DEP_RELEASE)
+				cs_get_target_dependencies_libraries_finalized(${DEP_TARGET} ${CONFIG} TARGET_LIB_DEP)
 
-			_cs_list_add_list_unique_values(TARGET_DEBUG "${TARGET_DEP_DEBUG}")
-			_cs_list_add_list_unique_values(TARGET_RELEASE "${TARGET_DEP_RELEASE}")
+				_cs_list_add_list_unique_values(TARGET_LIB "${TARGET_LIB_DEP}")
 
-			# and set back
-			set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesDebugFinalized "${TARGET_DEBUG}")
-			set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesReleaseFinalized "${TARGET_RELEASE}")
+				# and set back
+				set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies${CONFIG}Finalized "${TARGET_LIB}")
+			endforeach()
 
 		else()
 			_cs_list_add_unique_value(PENDING_DEP_TARGETS ${DEP_TARGET})
@@ -252,20 +244,20 @@ endfunction()
 
 
 # this function 
-# - copy csTargetDependenciesDebug and csTargetDependenciesRelease to the Finalized copy
+# - copy csTargetDependencies${CONFIG} the csTargetDependencies${CONFIG}Finalized copy
 # - merges the csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets and select valid targets, preparing the list in both csTargetDependencies and csTargetDependenciesToAnalyze
 #   csTargetDependenciesToAnalyze will be consumed in _cs_recursive_analyze_targets_finalize until is empty, while  csTargetDependencies remain persistent
 function(_cs_prepare_finalize_target TARGET_NAME)
 	cs_debug_message("[_cs_prepare_finalize_target] process target: ${TARGET_NAME}")
 
 	# copy on Finalized
-	cs_get_target_dependencies_debug_libraries(${TARGET_NAME} TARGET_DEBUG_LIBS)
-	set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesDebugFinalized "${TARGET_DEBUG_LIBS}")
-	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesDebug: ${TARGET_DEBUG_LIBS}")
+	cs_get_specified_build_configurations(CONFIGS_LIST)
+	foreach(CONFIG ${CONFIGS_LIST})
 
-	cs_get_target_dependencies_release_libraries(${TARGET_NAME} TARGET_RELEASE_LIBS)
-	set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesReleaseFinalized "${TARGET_RELEASE_LIBS}")
-	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesRelease: ${TARGET_RELEASE_LIBS}")
+		cs_get_target_dependencies_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIBS)
+		set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies${CONFIG}Finalized "${TARGET_LIBS}")
+		cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized: ${TARGET_LIBS}")
+	endforeach()
 
 	# retrieve targets to analyze
 	cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_NOT_IMPORTED)
@@ -303,19 +295,9 @@ function(_cs_prepare_finalize_target TARGET_NAME)
 
 endfunction()
 
-# return csTargetDependenciesDebug for target
-function(cs_get_target_dependencies_debug_libraries_finalized TARGET_NAME OUTPUT_VARIABLE_NAME)
-	get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesDebugFinalized)
-	if(_VALUES)
-		set(${OUTPUT_VARIABLE_NAME} ${_VALUES} PARENT_SCOPE)
-	else()
-		set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
-	endif()
-endfunction()
-
-# return csTargetDependenciesRelease for target
-function(cs_get_target_dependencies_release_libraries_finalized TARGET_NAME OUTPUT_VARIABLE_NAME)
-	get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesReleaseFinalized)
+# return csTargetDependencies${CONFIG} for target
+function(cs_get_target_dependencies_libraries_finalized TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
+	get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized)
 	if(_VALUES)
 		set(${OUTPUT_VARIABLE_NAME} ${_VALUES} PARENT_SCOPE)
 	else()
@@ -324,31 +306,27 @@ function(cs_get_target_dependencies_release_libraries_finalized TARGET_NAME OUTP
 endfunction()
 
 function (_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
-  # DEBUG
-	get_target_property(IMPORTED_LOCATION_DEBUG ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_DEBUG) 
-  _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_DEBUG} ${TARGET_NAME} csTargetDependenciesDebug ${TARGET_TO_ANALYZE})
-			
-	# RELEASE
-	get_target_property(IMPORTED_LOCATION_RELEASE ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_RELEASE) 
-  _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_RELEASE} ${TARGET_NAME} csTargetDependenciesRelease ${TARGET_TO_ANALYZE})
+	cs_get_specified_build_configurations(CONFIGS_LIST)
+
+	# per config
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+		get_target_property(IMPORTED_LOCATION_${CONFIG_UCASE} ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_${CONFIG_UCASE}) 
+		_csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME} csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
+	endforeach()
 
   # generic
   get_target_property(IMPORTED_LOCATION ${TARGET_TO_ANALYZE} IMPORTED_LOCATION)
-	if(IMPORTED_LOCATION AND IMPORTED_LOCATION_RELEASE)
-		if(NOT "${IMPORTED_LOCATION}" STREQUAL "${IMPORTED_LOCATION_RELEASE}")
-			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has both IMPORTED_LOCATION=${IMPORTED_LOCATION} and IMPORTED_LOCATION_RELEASE=${IMPORTED_LOCATION_RELEASE} but they are different, IMPORTED_LOCATION will be ignored")
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+		if(IMPORTED_LOCATION AND NOT IMPORTED_LOCATION_${CONFIG_UCASE})
+			# if imported location and not specific config, use it 
+			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_${CONFIG_UCASE}, use IMPORTED_LOCATION for it")
+			set(IMPORTED_LOCATION_${CONFIG_UCASE} "${IMPORTED_LOCATION}")
+			_csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME} csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
 		endif()
-	elseif(IMPORTED_LOCATION AND NOT IMPORTED_LOCATION_RELEASE)
-		# if imported location and not release, use it for release
-			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_RELEASE, use IMPORTED_LOCATION")
-		set(IMPORTED_LOCATION_RELEASE "${IMPORTED_LOCATION}")
-	endif()
-        
-  # Use release (or generic if substituted) path for libraries that does not have the debug
-  if(IMPORTED_LOCATION_RELEASE AND NOT IMPORTED_LOCATION_DEBUG)
-    _csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_RELEASE} ${TARGET_NAME} csTargetDependenciesDebug ${TARGET_TO_ANALYZE})
-		message(NOTICE "[_csPopulatecsTargetDependencies] ${TARGET_TO_ANALYZE} has only a release version, use it also as debug dependencies")
-  endif()
+	endforeach()
+       
 endfunction()
 
 function (_csCheckPathExistsAndAddToTargetProperty PATH_VALUE TARGET_NAME TARGET_PROPERTY TARGET_TO_ANALYZE)
@@ -363,7 +341,9 @@ function (_csCheckPathExistsAndAddToTargetProperty PATH_VALUE TARGET_NAME TARGET
 endfunction()
 
 function (_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIBS_OUT)
-	set(TARGET_TO_ANALYZE_LINKED_LIBS "")
+cs_get_specified_build_configurations(CONFIGS_LIST)
+
+set(TARGET_TO_ANALYZE_LINKED_LIBS "")
 
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
@@ -372,11 +352,12 @@ function (_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIB
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+		get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_INTERFACE_LIBRARIES_${CONFIG_UCASE})
+		_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	endforeach()
 
 	# interface link depends
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_DEPENDS)
@@ -386,21 +367,23 @@ function (_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIB
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+		get_target_property(tmp_list ${TARGET_TO_ANALYZE} INTERFACE_LINK_LIBRARIES_${CONFIG_UCASE})
+		_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	endforeach()
 
 	# imported interface link libraries
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+		get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_INTERFACE_LIBRARIES_${CONFIG_UCASE})
+		_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	endforeach()
 
 	# link depends
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_DEPENDS)
@@ -411,11 +394,12 @@ function (_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIB
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_DEBUG)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+	foreach(CONFIG ${CONFIGS_LIST})
+		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
-	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_RELEASE)
-	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+		get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES_${CONFIG_UCASE})
+		_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
+  endforeach()
 
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} MANUALLY_ADDED_DEPENDENCIES)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
