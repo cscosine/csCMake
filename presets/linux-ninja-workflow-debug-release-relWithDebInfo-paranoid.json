@@ -1,0 +1,29 @@
+{
+  "version":  10,
+  "include": [
+    "linux-ninja-workflow-debug-release-relWithDebInfo.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-paranoid",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-paranoid"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-paranoid"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-paranoid-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-paranoid-test"
+        }
+      ]
+    }
+  ]
+}

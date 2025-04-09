@@ -37,6 +37,14 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
       "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
+    },
+    {
+      "name": "linux-ninja-paranoid",
+      "binaryDir": "${sourceParentDir}/build/linux-ninja/${sourceDirName}/paranoid",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Paranoid"
+      },
+      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
     }
   ],
   "buildPresets": [
@@ -56,6 +64,11 @@
       "configurePreset": "linux-ninja-relWithDebInfo"
     },
     {
+      "name": "linux-ninja-paranoid",
+      "inherits": [ "cs-host-linux"],
+      "configurePreset": "linux-ninja-paranoid"
+    },
+    {
       "name": "linux-ninja-debug-install",
       "inherits": [ "linux-ninja-debug", "cs-linux-install" ]
     },
@@ -66,6 +79,10 @@
     {
       "name": "linux-ninja-relWithDebInfo-install",
       "inherits": [ "linux-ninja-relWithDebInfo", "cs-linux-install" ]
+    },
+    {
+      "name": "linux-ninja-paranoid-install",
+      "inherits": [ "linux-ninja-paranoid", "cs-linux-install" ]
     }
   ],
   "testPresets": [
@@ -83,6 +100,11 @@
       "name": "linux-ninja-relWithDebInfo-test",
       "inherits": [ "cs-linux-test-base"],
       "configurePreset": "linux-ninja-relWithDebInfo"
+    },
+    {
+      "name": "linux-ninja-paranoid-test",
+      "inherits": [ "cs-linux-test-base"],
+      "configurePreset": "linux-ninja-paranoid"
     }
   ]
 }
