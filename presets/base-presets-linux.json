@@ -61,6 +61,12 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "cs-linux-paranoid",
+      "hidden": true,
+      "inherits": ["cs-host-linux"],
+      "configuration": "Paranoid"
+    },
+    {
       "name": "cs-linux-install",
       "hidden": true,
       "inherits": ["cs-host-linux"],
@@ -95,6 +101,12 @@
       "hidden": true,
       "inherits": ["cs-linux-test-base"],
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "cs-linux-test-base-multi-config-paranoid",
+      "hidden": true,
+      "inherits": ["cs-linux-test-base"],
+      "configuration": "Paranoid"
     }
   ]  
 }

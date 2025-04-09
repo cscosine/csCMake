@@ -37,6 +37,11 @@
       "configurePreset": "linux-ninja-multi-config"
     },
     {
+      "name": "linux-ninja-multi-config-paranoid",
+      "inherits": [ "cs-linux-paranoid"],
+      "configurePreset": "linux-ninja-multi-config"
+    },
+    {
       "name": "linux-ninja-multi-config-debug-install",
       "inherits": [ "linux-ninja-multi-config-debug", "cs-linux-install" ]
     },
@@ -47,6 +52,10 @@
     {
       "name": "linux-ninja-multi-config-relWithDebInfo-install",
       "inherits": [ "linux-ninja-multi-config-relWithDebInfo", "cs-linux-install" ]
+    },
+    {
+      "name": "linux-ninja-multi-config-paranoid-install",
+      "inherits": [ "linux-ninja-multi-config-paranoid", "cs-linux-install" ]
     }
   ],
   "testPresets": [
@@ -63,6 +72,11 @@
     {
       "name": "linux-ninja-multi-config-relWithDebInfo-test",
       "inherits": [ "cs-linux-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "linux-ninja-multi-config"
+    },
+    {
+      "name": "linux-ninja-multi-config-paranoid-test",
+      "inherits": [ "cs-linux-test-base-multi-config-paranoid"],
       "configurePreset": "linux-ninja-multi-config"
     }
   ]
