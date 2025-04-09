@@ -37,6 +37,11 @@
       "configurePreset": "msvc2022-x64"
     },
     {
+      "name": "msvc2022-x64-paranoid",
+      "inherits": ["cs-windows-paranoid"],
+      "configurePreset" : "msvc2022-x64"
+    },
+    {
       "name": "msvc2022-x64-debug-install",
       "inherits": [ "msvc2022-x64-debug", "cs-windows-install" ]
     },
@@ -47,6 +52,10 @@
     {
       "name": "msvc2022-x64-relWithDebInfo-install",
       "inherits": [ "msvc2022-x64-relWithDebInfo", "cs-windows-install" ]
+    },
+    {
+      "name": "msvc2022-x64-paranoid-install",
+      "inherits": [ "msvc2022-x64-paranoid", "cs-windows-install" ]
     }
   ],
   "testPresets": [
@@ -63,6 +72,11 @@
     {
       "name": "msvc2022-x64-relWithDebInfo-test",
       "inherits": [ "cs-windows-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "msvc2022-x64"
+    },
+    {
+      "name": "msvc2022-x64-paranoid-test",
+      "inherits": [ "cs-windows-test-base-multi-config-paranoid"],
       "configurePreset": "msvc2022-x64"
     }
   ]

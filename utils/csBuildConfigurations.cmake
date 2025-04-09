@@ -1,5 +1,17 @@
 include_guard(GLOBAL)
 
+# set cache variables with postfix for targets
+set(CSCMAKE_DEBUG_POSTFIX "d" CACHE STRING "value for suffix in Debug config" FORCE)
+set(CSCMAKE_RELEASE_POSTFIX "" CACHE STRING "value for suffix in Release config" FORCE)
+set(CSCMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "value for suffix in RelWithDebInfo config" FORCE)
+
+# note, MSVC supports also MinSizeRel, but it is not supported here
+
+# set CACHE variables with the expected MSVC runtime library
+set(CSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG "MultiThreadedDebugDLL" CACHE STRING "The MSVC runtime library to use in Debug" FORCE)
+set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELWITHDEBINFO "MultiThreadedDLL" CACHE STRING "The MSVC runtime library to use in RelWithDebInfo" FORCE)
+set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE "MultiThreadedDLL" CACHE STRING "The MSVC runtime library to use in Release" FORCE)
+
 # get the stored list of available build config (including default ones)
 function(cs_get_specified_build_configurations CONFIGS_LIST)
 	get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypes)
@@ -23,24 +35,7 @@ function(_cs_add_default_build_configuration CONFIG)
 	cs_get_specified_build_configurations(CONFIGS_LIST)
     cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
 	
-	if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
-		set(VALID_DEFAULT_CONFIGS "Debug;Release;RelWithDebInfo")
-        # set cache variables with postfix for targets
-        set(CSCMAKE_DEBUG_POSTFIX "d" CACHE STRING "value for suffix in Debug config" FORCE)
-        set(CSCMAKE_RELEASE_POSTFIX "" CACHE STRING "value for suffix in Release config" FORCE)
-        set(CSCMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "value for suffix in RelWithDebInfo config" FORCE)
-
-    elseif(CMAKE_GENERATOR STREQUAL "Visual Studio 17 2022")
-		set(VALID_DEFAULT_CONFIGS "Debug;Release;RelWithDebInfo;MinSizeRel")
-        # set cache variables with postfix for targets
-        set(CSCMAKE_DEBUG_POSTFIX "d" CACHE STRING "value for suffix in Debug config" FORCE)
-        set(CSCMAKE_RELEASE_POSTFIX "" CACHE STRING "value for suffix in Release config" FORCE)
-        set(CSCMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "value for suffix in RelWithDebInfo config" FORCE)
-        set(CSCMAKE_MINSIZEREL_POSTFIX "mr" CACHE STRING "value for suffix in MinSizeRel config" FORCE)
-
-    else()
-		message(FATAL_ERROR "[cs_set_default_build_config] generator ${CMAKE_GENERATOR} not supported")
-	endif()
+    set(VALID_DEFAULT_CONFIGS "Debug;Release;RelWithDebInfo")
 
 	if(NOT ${CONFIG} IN_LIST VALID_DEFAULT_CONFIGS)
 		message(FATAL_ERROR "[cs_set_default_build_config] called with invalid default config ${CONFIG}, choose one of ${VALID_DEFAULT_CONFIGS}")
@@ -92,10 +87,11 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONF
         cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG} "${BASE_CONFIG_AND_FALLBACK}")
 	endif()
 
-    # set the postfix
     string(TOUPPER "${CONFIG}" CONFIG_UPPER)
+    string(TOUPPER "${BASE_CONFIG}" BASE_CONFIG_UPPER)
+    
+    # set the postfix
     set(CSCMAKE_${CONFIG_UPPER}_POSTFIX "${POSTFIX}" CACHE STRING "value for suffix in ${CONFIG} config" FORCE)
-
 
 	set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
 endfunction()
@@ -208,6 +204,21 @@ function(_cs_parse_additional_configurations)
 		cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}")
 		_cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
 	endwhile()
+
+    # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with cs_add_library / cs_add_executable)
+    set(TEMP_STRING "")
+	cs_get_specified_build_configurations(CONFIGS_LIST)
+    foreach(CONFIG ${CONFIGS_LIST})
+        string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+        set(VALUE "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG_UCASE}}")
+        message(STATUS "-- ${CONFIG_UCASE} = ${VALUE}")
+        set(TEMP_STRING "${TEMP_STRING}$<$<CONFIG:${CONFIG}>:${VALUE}>")
+        message(STATUS "-- TEMP_STRING = ${TEMP_STRING}")
+    endforeach()
+    set(CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "${TEMP_STRING}" CACHE STRING "final value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
+
+    # and set CMAKE_MSVC_RUNTIME_LIBRARY = CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION for generic targes (fallback)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "${TEMP_STRING}" CACHE STRING "default value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
 endfunction()
 
 function(_cs_process_configurations)
@@ -269,15 +280,22 @@ function(cs_copy_configuration_type config_from_in config_to_in BASE_CONFIG_AND_
   set("CMAKE_MAP_IMPORTED_CONFIG_${config_to}" "${BASE_CONFIG_AND_FALLBACK}" CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}" FORCE)
   cs_debug_message("[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}" True)
 
+  # set the MSVC Runtime Library based on the config to copy
+  set(CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_to} "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_from}}" CACHE STRING "The MSVC runtime library to use in ${config_to_in}, copied from ${config_from_in}" FORCE)
+
 endfunction()
 
 function(cs_print_all_configurations_variables ADD_MESSAGE)
   cs_get_specified_build_configurations(CONFIG_VAR_LIST)
+  message(STATUS "[cs_print_all_configurations_variables] configs are ${CONFIG_VAR_LIST}")
   foreach(CONFIG ${CONFIG_VAR_LIST})
     message(STATUS "[cs_print_all_configurations_variables] CONFIG ${CONFIG} ${ADD_MESSAGE}")
     cs_print_configuration_variables(${CONFIG} "  ")
     message(STATUS "[cs_print_all_configurations_variables] -------")
   endforeach()
+  message(STATUS "[cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION ${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
+  message(STATUS "[cs_print_all_configurations_variables] end --------")
+  
 endfunction()
 
 function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
@@ -289,4 +307,9 @@ function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
       string(REPLACE "<CONFIG>" "${CONFIG}" VAR_OUT "${VAR}")
       message(STATUS "${PRINT_PREFIX} ${VAR_OUT} = ${${VAR_OUT}}")
   endforeach()
+
+  # extra, CS variables
+  message(STATUS "${PRINT_PREFIX} CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG}}")
+  message(STATUS "${PRINT_PREFIX} CSCMAKE_${CONFIG}_POSTFIX = ${CSCMAKE_${CONFIG}_POSTFIX}")
+  
 endfunction()

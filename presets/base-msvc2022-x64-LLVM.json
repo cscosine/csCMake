@@ -37,6 +37,11 @@
       "configurePreset" : "msvc2022-x64-LLVM"
     },
     {
+      "name": "msvc2022-x64-LLVM-paranoid",
+      "inherits": ["cs-windows-paranoid"],
+      "configurePreset" : "msvc2022-x64-LLVM"
+    },
+    {
       "name": "msvc2022-x64-LLVM-debug-install",
       "inherits": ["msvc2022-x64-LLVM-debug", "cs-windows-install"]
     },
@@ -47,6 +52,10 @@
     {
       "name": "msvc2022-x64-LLVM-relWithDebInfo-install",
       "inherits": ["msvc2022-x64-LLVM-relWithDebInfo", "cs-windows-install"]
+    },
+    {
+      "name": "msvc2022-x64-LLVM-paranoid-install",
+      "inherits": ["msvc2022-x64-LLVM-paranoid", "cs-windows-install"]
     }
   ],
   "testPresets": [
@@ -63,6 +72,11 @@
     {
       "name": "msvc2022-x64-LLVM-relWithDebInfo-test",
       "inherits": [ "cs-windows-test-base-multi-config-relWithDebInfo"],
+      "configurePreset": "msvc2022-x64-LLVM"
+    },
+    {
+      "name": "msvc2022-x64-LLVM-paranoid-test",
+      "inherits": [ "cs-windows-test-base-multi-config-paranoid"],
       "configurePreset": "msvc2022-x64-LLVM"
     }
   ]

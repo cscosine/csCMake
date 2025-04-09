@@ -27,6 +27,12 @@ function (_cs_add_target_to_project_targets TARGET_NAME)
       else()
         message(FATAL_ERROR "CSCMAKE_${CONFIG}_POSTFIX variable do not exists, have you properly added configurations via _cs_add_custom_build_configuration?")
       endif()      
+
+      if(DEFINED CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION)
+        set_target_properties(${TARGET_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
+      else()
+        message(FATAL_ERROR "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, have you used properly cs_initialize_project")
+      endif()      
     endforeach()
     
 	  _cs_add_to_global_property_unique_value(csProjectTargets ${TARGET_NAME})

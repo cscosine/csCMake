@@ -56,6 +56,12 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "cs-windows-paranoid",
+      "hidden": true,
+      "inherits": ["cs-host-windows"],
+      "configuration": "Paranoid"
+    },
+    {
       "name": "cs-windows-release",
       "hidden": true,
       "inherits": ["cs-host-windows"],
@@ -96,6 +102,12 @@
       "hidden": true,
       "inherits": ["cs-windows-test-base"],
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "cs-windows-test-base-multi-config-paranoid",
+      "hidden": true,
+      "inherits": ["cs-windows-test-base"],
+      "configuration": "Paranoid"
     }
   ]
 }
