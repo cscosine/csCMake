@@ -54,6 +54,21 @@ macro(cs_initialize_project PROJECT_NAME)
 
 	_cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
+	# define a single output folder for binaries (dll and exe in win, .so and executables in linux)
+	# note: for some reason, this does not work / does not get propagated to custom config, 
+	# therefore, _cs_parse_additional_configurations will set CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UCASE} for each custom config
+	# TODO(sceriani) try to understand better this behavior, at the moment this is a workaround
+	get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+	if(GENERATOR_IS_MULTI_CONFIG)
+		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>" CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>" CACHE STRING "LIBRARY OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+	else()
+		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE STRING "LIBRARY OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+	endif()	
+
 	# initialize the default configuration list variables
 	_cs_process_build_configurations_variables()
 	cs_get_build_configurations_variables(TEMP_VAR_LIST)
@@ -74,9 +89,6 @@ macro(cs_initialize_project PROJECT_NAME)
 
 	# enable cmake testing
 	enable_testing()
-
-	# define a single output folder for binaries (dll and exe in win, .so and executables in linux)
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 	# enable generation of compile commands on ninja generators
 	if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")

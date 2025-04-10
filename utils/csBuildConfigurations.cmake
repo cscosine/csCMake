@@ -203,6 +203,20 @@ function(_cs_parse_additional_configurations)
 
 		cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}")
 		_cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
+
+        # for some reason, the output directory of custom configuration does not get set properly, therefore we need to set it explicitely
+        # TODO(sceriani) try to understand better this behavior, at the moment this is a workaround
+        get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+        if(GENERATOR_IS_MULTI_CONFIG)
+            string(TOUPPER "${CUSTOM_CONFIG}" CUSTOM_CONFIG_UCASE)
+            set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/bin/${CUSTOM_CONFIG}" CACHE STRING "RUNTIME OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+            set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib/${CUSTOM_CONFIG}" CACHE STRING "LIBRARY OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+            set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib/${CUSTOM_CONFIG}" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+        else()
+            set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/bin" CACHE STRING "RUNTIME OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+            set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib" CACHE STRING "LIBRARY OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+            set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+        endif()	   
 	endwhile()
 
     # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with cs_add_library / cs_add_executable)
