@@ -21,7 +21,7 @@
       "generator": "Ninja"
     },
     {
-      "name": "cs-base-linux-ninja-multi-config",
+      "name": "cs-base-linux-ninja-multi-config-clang",
       "displayName": "Linux ninja multi config",
       "description": "Linux ninja multi config",
       "hidden": true,

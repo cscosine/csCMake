@@ -1,0 +1,29 @@
+{
+  "version":  10,
+  "include": [
+    "base-linux-ninja-multi-config-clang.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-multi-config-clang",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-multi-config-clang"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-release-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-clang-release-test"
+        }
+      ]
+    }
+  ]
+}

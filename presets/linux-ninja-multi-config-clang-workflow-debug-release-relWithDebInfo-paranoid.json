@@ -1,0 +1,65 @@
+{
+  "version":  10,
+  "include": [
+    "base-linux-ninja-multi-config-clang.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-multi-config-clang",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-multi-config-clang"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-relWithDebInfo"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-paranoid"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-debug-install"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-release-install"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-relWithDebInfo-install"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-clang-paranoid-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-clang-debug-test"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-clang-release-test"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-clang-relWithDebInfo-test"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-clang-paranoid-test"
+        }
+      ]
+    }
+  ]
+}
