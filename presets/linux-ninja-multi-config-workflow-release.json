@@ -1,0 +1,29 @@
+{
+  "version":  10,
+  "include": [
+    "base-linux-ninja-multi-config.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-multi-config",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-multi-config"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-multi-config-release-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-multi-config-release-test"
+        }
+      ]
+    }
+  ]
+}

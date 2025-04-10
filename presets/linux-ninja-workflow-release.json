@@ -1,0 +1,30 @@
+{
+  "version":  10,
+  "include": [
+    "base-linux-ninja.json",
+    "${sourceDir}/cmakeUserPath.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ninja-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-release"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-release-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-release-test"
+        }
+      ]
+    }
+  ]
+}

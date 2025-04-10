@@ -1,8 +1,7 @@
 {
   "version":  10,
   "include": [
-    "base-linux-ninja.json",
-    "${sourceDir}/cmakeUserPath.json"
+    "linux-ninja-workflow-release.json"
   ],
   "workflowPresets": [
     {
@@ -23,27 +22,6 @@
         {
           "type": "test",
           "name": "linux-ninja-debug-test"
-        }
-      ]
-    },
-    {
-      "name": "linux-ninja-release",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "linux-ninja-release"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-release"
-        },
-        {
-          "type": "build",
-          "name": "linux-ninja-release-install"
-        },
-        {
-          "type": "test",
-          "name": "linux-ninja-release-test"
         }
       ]
     }

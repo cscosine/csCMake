@@ -1,27 +1,27 @@
 {
   "version":  10,
   "include": [
-    "linux-ninja-workflow-debug-release.json"
+    "base-msvc2022-x64.json"
   ],
   "workflowPresets": [
     {
-      "name": "linux-ninja-relWithDebInfo",
+      "name": "msvc2022-x64",
       "steps": [
         {
           "type": "configure",
-          "name": "linux-ninja-relWithDebInfo"
+          "name": "msvc2022-x64"
         },
         {
           "type": "build",
-          "name": "linux-ninja-relWithDebInfo"
+          "name": "msvc2022-x64-release"
         },
         {
           "type": "build",
-          "name": "linux-ninja-relWithDebInfo-install"
+          "name": "msvc2022-x64-release-install"
         },
         {
           "type": "test",
-          "name": "linux-ninja-relWithDebInfo-test"
+          "name": "msvc2022-x64-release-test"
         }
       ]
     }

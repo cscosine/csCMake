@@ -1,9 +1,30 @@
 {
   "version":  10,
   "include": [
-    "linux-ninja-workflow-debug-release-relWithDebInfo.json"
+    "linux-ninja-workflow-debug-release.json"
   ],
   "workflowPresets": [
+    {
+      "name": "linux-ninja-relWithDebInfo",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-ninja-relWithDebInfo"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-relWithDebInfo"
+        },
+        {
+          "type": "build",
+          "name": "linux-ninja-relWithDebInfo-install"
+        },
+        {
+          "type": "test",
+          "name": "linux-ninja-relWithDebInfo-test"
+        }
+      ]
+    },
     {
       "name": "linux-ninja-paranoid",
       "steps": [

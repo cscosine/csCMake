@@ -1,0 +1,29 @@
+{
+  "version":  10,
+  "include": [
+    "base-msvc2022-x64-LLVM.json"
+  ], 
+  "workflowPresets": [
+    {
+      "name": "msvc2022-x64-LLVM",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc2022-x64-LLVM"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-LLVM-release"
+        },
+        {
+          "type": "build",
+          "name": "msvc2022-x64-LLVM-release-install"
+        },
+        {
+          "type": "test",
+          "name": "msvc2022-x64-LLVM-release-test"
+        }
+      ]
+    }
+  ]
+}
