@@ -15,12 +15,18 @@
       }
     },
     {
+      "name": "linux-gcc-compiler",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
       "name": "linux-ninja-debug",
       "binaryDir": "${sourceParentDir}/build/linux-ninja/${sourceDirName}/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       },
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja"]
+      "inherits": [ "linux-gcc-compiler", "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja"]
     },
     {
       "name": "linux-ninja-release",
@@ -28,7 +34,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       },
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
+      "inherits": [ "linux-gcc-compiler", "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
     },
     {
       "name": "linux-ninja-relWithDebInfo",
@@ -36,7 +42,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
+      "inherits": [ "linux-gcc-compiler", "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
     },
     {
       "name": "linux-ninja-paranoid",
@@ -44,7 +50,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Paranoid"
       },
-      "inherits": [ "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
+      "inherits": [ "linux-gcc-compiler", "cs-base-linux-ninja", "linux-ninja-standard-dir", "cmake-path-linux-ninja" ]
     }
   ],
   "buildPresets": [

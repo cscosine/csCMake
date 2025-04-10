@@ -16,8 +16,14 @@
       }
     },
     {
+      "name": "linux-ck-compiler",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },    
+    {
       "name": "linux-ninja-multi-config",
-      "inherits": [ "cs-base-linux-ninja-multi-config", "linux-ninja-multi-config-standard-dir", "cmake-path-linux-ninja-multi-config"]
+      "inherits": [ "linux-gcc-compiler", "cs-base-linux-ninja-multi-config", "linux-ninja-multi-config-standard-dir", "cmake-path-linux-ninja-multi-config"]
     }
   ],
   "buildPresets": [
