@@ -38,7 +38,6 @@ function(cs_target_link_libraries TARGET_NAME)
 
 	cs_debug_message("[cs_target_link_libraries] original  ${TARGET_NAME} ${ARGN}" True)
 	cs_debug_message("[cs_target_link_libraries] converted ${TARGET_NAME} ${LINK_TARGETS_LIST}" True)
-	
+
 	target_link_libraries("${TARGET_NAME}" ${LINK_TARGETS_LIST})
 endfunction()
-

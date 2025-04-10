@@ -7,7 +7,7 @@ include(utils/csListUtils)
 # - PROVATE will not propagate the very same line as a find_package in the cmake prepared for installation
 macro(cs_find_package TARGET_NAME PROPAGATE_MODE)
 	cs_debug_message("[cs_find_package] target ${TARGET_NAME} find ${ARGN} with mode ${PROPAGATE_MODE}")
-  
+
 	# this has to be a macro, because some find_package out variable needs to be visible to the caller
 	find_package(${ARGN})
 	_cs_add_find_package_args_to_target("${TARGET_NAME}" "${PROPAGATE_MODE}" "${ARGN}")
@@ -24,7 +24,7 @@ function(cs_get_target_find_packages TARGET_NAME OUTPUT_VARIABLE_NAME)
     set(${OUTPUT_VARIABLE_NAME} "" PARENT_SCOPE)
   endif()
 endfunction()
- 
+
 function(cs_print_target_find_packages TARGET_NAME)
   set(PACKAGES "")
   cs_get_target_find_packages("${TARGET_NAME}" PACKAGES)

@@ -21,7 +21,7 @@ function(_cs_set_vs_debugger_env_variable TARGETS_LIST)
       # TODO(sc) add extra env variable here, e.g. qt plugins etc can be managed in a second line with "QT_PLUGIN_PATH=..."
       set(EXTRA_ENV_VARIABLES_${CONFIG_UCASE} "")
 
-      # set the full ENV 
+      # set the full ENV
       set(VS_DEBUGGER_ENVIRONMENT_${CONFIG_UCASE} "${TARGET_${CONFIG_UCASE}_FOLDERS_PATH}${EXTRA_ENV_VARIABLES_${CONFIG_UCASE}}")
 
       # set the full ENV to a target property

@@ -33,8 +33,8 @@ function(cs_get_base_path PATH)
 endfunction()
 
 # accepts extra arguments to specify the available build configurations:
-# cs_initialize_project(MyProject 
-#   DEFAULT_CONFIG Debug 
+# cs_initialize_project(MyProject
+#   DEFAULT_CONFIG Debug
 #   DEFAULT_CONFIG Release
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
@@ -55,7 +55,7 @@ macro(cs_initialize_project PROJECT_NAME)
 	_cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
 	# define a single output folder for binaries (dll and exe in win, .so and executables in linux)
-	# note: for some reason, this does not work / does not get propagated to custom config, 
+	# note: for some reason, this does not work / does not get propagated to custom config,
 	# therefore, _cs_parse_additional_configurations will set CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UCASE} for each custom config
 	# TODO(sceriani) try to understand better this behavior, at the moment this is a workaround
 	get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -67,13 +67,13 @@ macro(cs_initialize_project PROJECT_NAME)
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
 		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE STRING "LIBRARY OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
-	endif()	
+	endif()
 
 	# initialize the default configuration list variables
 	_cs_process_build_configurations_variables()
 	cs_get_build_configurations_variables(TEMP_VAR_LIST)
 	cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${TEMP_VAR_LIST}")
-	
+
 	# parse the additional configurations
 	_cs_parse_additional_configurations(${ARGN})
 
@@ -101,17 +101,17 @@ endmacro()
 
 # EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
 function (cs_finalize_project EXPORT_NAMESPACE)
- 
+
 	# print target and export info
-	cs_print_all_target() 
+	cs_print_all_target()
 	cs_print_exported_list_details()
 
 	cs_print_state_info("final state")
 
-	
+
 	set(TARGETS "")
 	cs_get_all_targets(TARGETS)
-  
+
 	# finalize path recursion for dll dependencies
 	_cs_recursive_analyze_targets_finalize("${TARGETS}")
 

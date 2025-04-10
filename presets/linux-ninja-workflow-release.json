@@ -1,9 +1,6 @@
 {
-  "version":  10,
-  "include": [
-    "base-linux-ninja.json",
-    "${sourceDir}/cmakeUserPath.json"
-  ],
+  "version": 10,
+  "include": ["base-linux-ninja.json", "${sourceDir}/cmakeUserPath.json"],
   "workflowPresets": [
     {
       "name": "linux-ninja-release",

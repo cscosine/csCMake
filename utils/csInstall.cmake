@@ -19,12 +19,12 @@ endfunction()
 # add a target property csTargetExportedTo with the name of the export
 function(cs_install_target TARGET_NAME EXPORT_NAME)
   cs_debug_message("[cs_install_target] target ${TARGET_NAME} export to ${EXPORT_NAME}")
-  
+
   # set the csTargetExportedTo property
   set_target_properties(${TARGET_NAME} PROPERTIES csTargetExportedTo ${EXPORT_NAME})
 
 
-  # get the relative folder from the target folder to the base of the project  
+  # get the relative folder from the target folder to the base of the project
   file(RELATIVE_PATH DESTINATION_FOLDER ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
   # add the EXPORT_NAME to the list of exports
@@ -74,22 +74,22 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
   if(WIN32)
     get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
     if((${TARGET_TYPE} STREQUAL "SHARED_LIBRARY" OR ${TARGET_TYPE} STREQUAL "EXECUTABLE"))
-      install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION bin OPTIONAL)	
+      install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION bin OPTIONAL)
     endif()
   endif()
 
   # add the target to the list of target of this export
   _cs_add_to_global_property_unique_value(csExported${EXPORT_NAME}Targets ${TARGET_NAME})
-  
+
 	# get all the find_packages propagated for this target
 	cs_get_target_find_packages(${TARGET_NAME} FIND_PACKAGES_LIST)
 	foreach(FIND_PACKAGE ${FIND_PACKAGES_LIST})
 		_cs_add_to_global_property_unique_value(csExported${EXPORT_NAME}FindPackages ${FIND_PACKAGE})
 	endforeach()
-	
+
 endfunction()
 
-# return the csExportedList global property 
+# return the csExportedList global property
 function(cs_get_exported_list OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExportedList)
   if(LIST_VALUES)
@@ -101,7 +101,7 @@ function(cs_get_exported_list OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# return the csExportedListDefault global property 
+# return the csExportedListDefault global property
 function(cs_get_exported_list_default OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExportedListDefault)
   if(LIST_VALUES)
@@ -122,11 +122,11 @@ endfunction()
 function(_cs_populate_export_dependent_exports EXPORT_NAME)
   cs_get_exported_targets(${EXPORT_NAME} TARGETS_LIST)
   cs_debug_message("[_cs_populate_export_dependent_exports] EXPORT ${EXPORT_NAME} has the following targets: ${TARGETS_LIST}")
-  
+
   foreach(TARGET_NAME ${TARGETS_LIST})
     cs_get_target_dependencies(${TARGET_NAME} TARGET_DEPS)
     cs_debug_message("[_cs_populate_export_dependent_exports] -- target ${TARGET_NAME} depends on internal targets ${TARGET_DEPS}")
-    
+
     foreach(TARGET_DEP_NAME ${TARGET_DEPS})
       cs_get_target_exported_to(${TARGET_DEP_NAME} EXPORT_DEP_NAME)
       cs_debug_message("[_cs_populate_export_dependent_exports] ---- subtarget ${TARGET_DEP_NAME} is exported to ${EXPORT_DEP_NAME}")
@@ -136,12 +136,12 @@ function(_cs_populate_export_dependent_exports EXPORT_NAME)
       else()
         cs_debug_message("[_cs_populate_export_dependent_exports] ---- subtarget is in my same export set")
       endif()
-      
+
     endforeach()
-    
+
   endforeach()
 
-  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS)  
+  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS)
   cs_debug_message("[_cs_populate_export_dependent_exports] final result, EXPORT ${EXPORT_NAME} depends on EXPORTS ${DEPENDENT_EXPORTS}")
 endfunction()
 
@@ -151,7 +151,7 @@ function(_cs_check_export_cyclic_dependencies_recursive EXPORT_NAME VISITED_LIST
   if(${EXPORT_NAME} IN_LIST VISITED_LIST)
     message(FATAL_ERROR "[_cs_check_export_cyclic_dependencies_recursive] detected cyclic dependency: ${VISITED_LIST} -> ${EXPORT_NAME}")
   endif()
-  
+
   list(APPEND VISITED_LIST ${EXPORT_NAME})
 
   cs_get_exported_depends(${EXPORT_NAME} NEXT_ELEMENTS_LIST)
@@ -173,7 +173,7 @@ endfunction()
 
 
 function(_cs_sort_export_dependent_exports EXPORT_NAME)
-  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS_UNSORTED)  
+  cs_get_exported_depends(${EXPORT_NAME} DEPENDENT_EXPORTS_UNSORTED)
   cs_debug_message("[_cs_sort_export_dependent_exports] -- for export ${EXPORT_NAME} sort ${DEPENDENT_EXPORTS_UNSORTED}")
 
 	# initialize the iterative list of target to analyze
@@ -201,7 +201,7 @@ function(_cs_sort_export_dependent_exports EXPORT_NAME)
           _cs_list_add_unique_value(CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN ${TEMP_ELEMENT})
         endif()
       endforeach()
-      
+
       list(LENGTH CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN_SIZE)
       cs_debug_message("[_cs_sort_export_dependent_exports] ---- analyze ${CURRENT_ELEMENT}, cleaned up list of unsatisfied dependency has ${CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN_SIZE} elements: ${CURRENT_ELEMENT_DEPENDENT_EXPORTS_CLEAN}")
 
@@ -218,13 +218,13 @@ function(_cs_sort_export_dependent_exports EXPORT_NAME)
         cs_debug_message("[_cs_sort_export_dependent_exports] ------ add the original ${CURRENT_ELEMENT} to the elements to be re-evaluated")
         _cs_list_add_unique_value(DEPENDENT_EXPORTS_LIST ${CURRENT_ELEMENT})
       endif()
-      
+
 
 			# finally refresh while condition variable
 			list(LENGTH DEPENDENT_EXPORTS_LIST DEPENDENT_EXPORTS_LIST_SIZE)
 	endwhile()
 
-  
+
   cs_debug_message("[_cs_sort_export_dependent_exports] -- sort result: ${DEPENDENT_EXPORTS_SORTED}")
   set_property(GLOBAL PROPERTY csExported${EXPORT_NAME}DependsSorted "${DEPENDENT_EXPORTS_SORTED}")
 endfunction()
@@ -248,7 +248,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
 		)
 	endforeach()
 
-  # per each export, prepare a list of the export it depends 
+  # per each export, prepare a list of the export it depends
 	foreach(EXPORT_NAME ${EXPORTS})
     _cs_populate_export_dependent_exports(${EXPORT_NAME})
 
@@ -268,13 +268,13 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
     cs_get_exported_depends_sorted(${EXPORT_NAME} ${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED)
     cs_debug_message("[_cs_finalize_install] -- EXPORT ${EXPORT_NAME} depends on other exports (sorted) ${${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED}")
   endforeach()
-  
+
   # write all ${${EXPORT_NAME}_DEPENDENT_EXPORTS} in the cmake config
   set(INJECTED_EXPORT_DEPENDENCIES "")
   foreach(EXPORT_NAME ${EXPORTS})
     set(INJECTED_EXPORT_DEPENDENCIES "${INJECTED_EXPORT_DEPENDENCIES}set(${EXPORT_NAME}_DEPENDENT_EXPORTS \"${${EXPORT_NAME}_DEPENDENT_EXPORTS_SORTED}\")\n")
   endforeach()
-   
+
   # generate the main cmake for finding this package
   set(INJECTED_FIND_PACKAGES_CODE "")
 	foreach(EXPORT_NAME ${EXPORTS})
@@ -295,7 +295,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  endif()\n")
     endif()
 	endforeach()
-  
+
   if(INJECTED_FIND_PACKAGES_CODE)
     set(INJECTED_FIND_PACKAGES_CODE "  # -- find packages section --\n${INJECTED_FIND_PACKAGES_CODE}  # -- end find packages section --")
   endif()
@@ -346,7 +346,7 @@ function(_cs_configure_config_cmake OUTPUT_FOLDER EXPORT_NAMESPACE COMPONENTS_LI
 
 endfunction()
 
-# return the csExported${EXPORT_NAME}Targets global property 
+# return the csExported${EXPORT_NAME}Targets global property
 function(cs_get_exported_targets EXPORT_NAME OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}Targets)
   if(LIST_VALUES)
@@ -358,7 +358,7 @@ function(cs_get_exported_targets EXPORT_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# return the csExported${EXPORT_NAME}Depends global property 
+# return the csExported${EXPORT_NAME}Depends global property
 function(cs_get_exported_depends EXPORT_NAME OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}Depends)
   if(LIST_VALUES)
@@ -370,7 +370,7 @@ function(cs_get_exported_depends EXPORT_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# return the csExported${EXPORT_NAME}DependsSorted global property 
+# return the csExported${EXPORT_NAME}DependsSorted global property
 function(cs_get_exported_depends_sorted EXPORT_NAME OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}DependsSorted)
   if(LIST_VALUES)
@@ -382,7 +382,7 @@ function(cs_get_exported_depends_sorted EXPORT_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# return the csExported${EXPORT_NAME}FindPackages global property 
+# return the csExported${EXPORT_NAME}FindPackages global property
 function(cs_get_exported_find_packages EXPORT_NAME OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csExported${EXPORT_NAME}FindPackages)
   if(LIST_VALUES)

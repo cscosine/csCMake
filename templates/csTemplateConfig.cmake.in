@@ -28,12 +28,12 @@ endmacro()
 
 # include required components recursively with dependencies
 foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
-	
+
   if(NOT ${COMPONENT} IN_LIST @EXPORT_NAMESPACE@_COMPONENTS_LIST)
 		message(FATAL_ERROR "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} is not present in component list, available components are ${@EXPORT_NAMESPACE@_COMPONENTS_LIST}")
 	endif()
 
-  
+
   if(${COMPONENT}_DEPENDENT_EXPORTS)
     # dependent component, add its dependencies and add it at the end
 		message(STATUS "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
@@ -43,9 +43,9 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
       message(STATUS "[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
       include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${DEPENDENT_COMPONENT}Targets.cmake")
     endforeach()
-    
+
   endif()
-  
+
   # and include the component
   find_dependency_for_component(${COMPONENT})
   message(STATUS "[@EXPORT_NAMESPACE@Config] -- including ${COMPONENT}Targets.cmake")

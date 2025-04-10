@@ -7,13 +7,13 @@ function(cs_print_target_properties tgt)
   # Convert command output into a CMake list
   STRING(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
   STRING(REGEX REPLACE "\n" ";" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
-  
+
   # Remove all LOCATION* properties, that are no more readable
   list(FILTER CMAKE_PROPERTY_LIST EXCLUDE REGEX "^LOCATION$|^LOCATION_|_LOCATION$")
-  
+
   # remove duplicates
   list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
-  
+
   message("cs_print_target_properties ${tgt}")
   if(NOT TARGET ${tgt})
       message("There is no target named '${tgt}'")

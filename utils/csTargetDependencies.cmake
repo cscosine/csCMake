@@ -27,7 +27,7 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 			# get type and imported properties
 			get_target_property(TARGET_TO_ANALYZE_TYPE ${TARGET_TO_ANALYZE} TYPE)
 			get_target_property(TARGET_TO_ANALYZE_IMPORTED ${TARGET_TO_ANALYZE} IMPORTED)
-			
+
 			# check aliasing and retrieve original name
 			get_target_property(ALIASED_TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} ALIASED_TARGET)
 			if(ALIASED_TARGET_TO_ANALYZE)
@@ -77,7 +77,7 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 	endwhile()
 
 	# print for debug purposes
-	
+
 	# per config
 	cs_get_specified_build_configurations(CONFIGS_LIST)
 	foreach(CONFIG ${CONFIGS_LIST})
@@ -86,13 +86,13 @@ function (_cs_recursive_analyze_target TARGET_NAME)
 		cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependencies${CONFIG}: ${TARGET_TO_ANALYZE_DEPENDENCIES}")
 
 	endforeach()
-	
+
 	cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS)
 	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS}")
-		
+
 	cs_get_target_dependencies_not_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS)
 	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS}")
-	 
+
 	cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} end")
 
 endfunction()
@@ -142,8 +142,8 @@ endfunction()
 # during the execution a variable csTargetDependenciesToAnalyze is created as temporary, but it will be used as a "buffer", at exist it is empty
 function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] targets: ${TARGETS_LIST}")
-  
-	# for each target, 
+
+	# for each target,
   foreach (TARGET_NAME IN ITEMS ${TARGETS_LIST})
 		# - copy csTargetDependencies${CONFIG} to the Finalized copies
 		# - create a unique list of target csTargetDependenciesToAnalyze and csTargetDependencies as merge of csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets, by selecting only what is effectively a target and removing aliases
@@ -162,7 +162,7 @@ function (_cs_recursive_analyze_targets_finalize TARGETS_LIST)
 		list(GET TARGETS_LIST 0 TARGET_NAME)
 		# and remove it
 		list(REMOVE_AT TARGETS_LIST 0)
-		
+
 		cs_debug_message("[_cs_recursive_analyze_targets_finalize] analyze target ${TARGET_NAME}")
 
 		_cs_target_is_fully_finalized(${TARGET_NAME} TARGET_FINALIZED)
@@ -210,7 +210,7 @@ function(_cs_target_try_to_finalize TARGET_NAME)
 			# merge the two finalized list of target and dep target
 			cs_get_specified_build_configurations(CONFIGS_LIST)
 			foreach(CONFIG ${CONFIGS_LIST})
-	
+
 				cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_LIB)
 
 				cs_get_target_dependencies_libraries_finalized(${DEP_TARGET} ${CONFIG} TARGET_LIB_DEP)
@@ -225,7 +225,7 @@ function(_cs_target_try_to_finalize TARGET_NAME)
 			_cs_list_add_unique_value(PENDING_DEP_TARGETS ${DEP_TARGET})
 		endif()
 	endforeach()
-	
+
 	cs_debug_message("[_cs_target_try_to_finalize] target ${TARGET_NAME} pending dependencies ${PENDING_DEP_TARGETS}")
 	set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesToAnalyze "${PENDING_DEP_TARGETS}")
 
@@ -243,7 +243,7 @@ function(_cs_target_is_fully_finalized TARGET_NAME TARGET_FINALIZED)
 endfunction()
 
 
-# this function 
+# this function
 # - copy csTargetDependencies${CONFIG} the csTargetDependencies${CONFIG}Finalized copy
 # - merges the csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets and select valid targets, preparing the list in both csTargetDependencies and csTargetDependenciesToAnalyze
 #   csTargetDependenciesToAnalyze will be consumed in _cs_recursive_analyze_targets_finalize until is empty, while  csTargetDependencies remain persistent
@@ -262,7 +262,7 @@ function(_cs_prepare_finalize_target TARGET_NAME)
 	# retrieve targets to analyze
 	cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_NOT_IMPORTED)
 	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_NOT_IMPORTED}")
-		
+
 	cs_get_target_dependencies_not_targets(${TARGET_NAME} TARGET_NON_TARGETS)
 	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_NON_TARGETS}")
 
@@ -288,7 +288,7 @@ function(_cs_prepare_finalize_target TARGET_NAME)
 			_cs_list_add_unique_value(TARGETS_TO_ANALYZE_LIST "${TARGET_TO_ANALYZE}")
 		endif()
 	endforeach()
-  
+
 	cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} TARGETS_TO_ANALYZE_LIST ${TARGETS_TO_ANALYZE_LIST}")
 	set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesToAnalyze "${TARGETS_TO_ANALYZE_LIST}")
   set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies "${TARGETS_TO_ANALYZE_LIST}")
@@ -311,7 +311,7 @@ function (_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
 	# per config
 	foreach(CONFIG ${CONFIGS_LIST})
 		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
-		get_target_property(IMPORTED_LOCATION_${CONFIG_UCASE} ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_${CONFIG_UCASE}) 
+		get_target_property(IMPORTED_LOCATION_${CONFIG_UCASE} ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_${CONFIG_UCASE})
 		_csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME} csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
 	endforeach()
 
@@ -320,13 +320,13 @@ function (_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
 	foreach(CONFIG ${CONFIGS_LIST})
 		string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 		if(IMPORTED_LOCATION AND NOT IMPORTED_LOCATION_${CONFIG_UCASE})
-			# if imported location and not specific config, use it 
+			# if imported location and not specific config, use it
 			message(WARNING "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_${CONFIG_UCASE}, use IMPORTED_LOCATION for it")
 			set(IMPORTED_LOCATION_${CONFIG_UCASE} "${IMPORTED_LOCATION}")
 			_csCheckPathExistsAndAddToTargetProperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME} csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
 		endif()
 	endforeach()
-       
+
 endfunction()
 
 function (_csCheckPathExistsAndAddToTargetProperty PATH_VALUE TARGET_NAME TARGET_PROPERTY TARGET_TO_ANALYZE)
@@ -388,7 +388,7 @@ set(TARGET_TO_ANALYZE_LINKED_LIBS "")
 	# link depends
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} LINK_DEPENDS)
 	_cs_list_add_list_unique_values(TARGET_TO_ANALYZE_LINKED_LIBS "${tmp_list}")
-	
+
 
 	# link dependent
 	get_target_property(tmp_list ${TARGET_TO_ANALYZE} IMPORTED_LINK_DEPENDENT_LIBRARIES)

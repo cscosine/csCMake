@@ -1,5 +1,5 @@
 {
-  "version":  10,
+  "version": 10,
   "configurePresets": [
     {
       "name": "cs-host-windows",
@@ -17,7 +17,7 @@
       "displayName": "Host Window MSVC2022 x64",
       "description": "The Window Host Base Preset with MSVC2022 x64",
       "hidden": true,
-      "inherits": [ "cs-host-windows" ],
+      "inherits": ["cs-host-windows"],
       "generator": "Visual Studio 17 2022",
       "architecture": "x64"
     },
@@ -26,12 +26,12 @@
       "displayName": "Window toolset LLVM",
       "description": "The Window with toolset LLVM",
       "hidden": true,
-      "inherits": [ "cs-base-msvc2022-x64" ],
+      "inherits": ["cs-base-msvc2022-x64"],
       "toolset": "ClangCL"
     }
   ],
   "buildPresets": [
-     {
+    {
       "name": "cs-host-windows",
       "displayName": "Host Window ",
       "description": "The Window Host Base Preset",

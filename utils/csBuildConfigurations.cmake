@@ -34,7 +34,7 @@ endfunction()
 function(_cs_add_default_build_configuration CONFIG)
 	cs_get_specified_build_configurations(CONFIGS_LIST)
     cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
-	
+
     set(VALID_DEFAULT_CONFIGS "Debug;Release;RelWithDebInfo")
 
 	if(NOT ${CONFIG} IN_LIST VALID_DEFAULT_CONFIGS)
@@ -89,7 +89,7 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONF
 
     string(TOUPPER "${CONFIG}" CONFIG_UPPER)
     string(TOUPPER "${BASE_CONFIG}" BASE_CONFIG_UPPER)
-    
+
     # set the postfix
     set(CSCMAKE_${CONFIG_UPPER}_POSTFIX "${POSTFIX}" CACHE STRING "value for suffix in ${CONFIG} config" FORCE)
 
@@ -98,8 +98,8 @@ endfunction()
 
 # helper function to parse the cs_initialize_project arguments and add build types
 # accepts extra arguments to specify the available build configurations:
-# _cs_process_configurations( 
-#   DEFAULT_CONFIG Debug 
+# _cs_process_configurations(
+#   DEFAULT_CONFIG Debug
 #   DEFAULT_CONFIG Release
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
@@ -138,7 +138,7 @@ function(_cs_parse_additional_configurations)
 
         list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} MAPPED_TO_KEYWORD)
         math(EXPR I "${I} + 1")
-        
+
         list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} BASE_CONFIG_AND_FALLBACK)
         math(EXPR I "${I} + 1")
 
@@ -167,7 +167,7 @@ function(_cs_parse_additional_configurations)
     if(NOT ${MOD_SIZE} EQUAL 0)
         message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ${ARG_CUSTOM_CONFIG}")
     endif()
-	
+
     set(I 0)
     while(ARG_CUSTOM_CONFIG_SIZE GREATER I)
         list(GET ARG_CUSTOM_CONFIG ${I} CUSTOM_CONFIG)
@@ -175,10 +175,10 @@ function(_cs_parse_additional_configurations)
 
         list(GET ARG_CUSTOM_CONFIG ${I} BASED_ON_KEYWORD)
         math(EXPR I "${I} + 1")
-        
+
         list(GET ARG_CUSTOM_CONFIG ${I} BASE_CONFIG_AND_FALLBACK)
         math(EXPR I "${I} + 1")
-        
+
         list(GET ARG_CUSTOM_CONFIG ${I} POSTFIX_KEYWORD)
         math(EXPR I "${I} + 1")
 
@@ -216,7 +216,7 @@ function(_cs_parse_additional_configurations)
             set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/bin" CACHE STRING "RUNTIME OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
             set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib" CACHE STRING "LIBRARY OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
             set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE} "${CMAKE_BINARY_DIR}/lib" CACHE STRING "ARCHIVE OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
-        endif()	   
+        endif()
 	endwhile()
 
     # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with cs_add_library / cs_add_executable)
@@ -256,7 +256,7 @@ function(_cs_process_build_configurations_variables)
         OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt"
     )
     file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" VAR_FULL_LIST)
-    
+
     foreach(var ${VAR_FULL_LIST})
         if("${var}" MATCHES "<CONFIG>")
             if("${var}" MATCHES "<LANG>")
@@ -309,11 +309,11 @@ function(cs_print_all_configurations_variables ADD_MESSAGE)
   endforeach()
   message(STATUS "[cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION ${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
   message(STATUS "[cs_print_all_configurations_variables] end --------")
-  
+
 endfunction()
 
 function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
-  
+
   cs_get_build_configurations_variables(CONFIG_VAR_LIST)
   string(TOUPPER "${CONFIG_IN}" CONFIG)
 
@@ -325,5 +325,5 @@ function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
   # extra, CS variables
   message(STATUS "${PRINT_PREFIX} CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG}}")
   message(STATUS "${PRINT_PREFIX} CSCMAKE_${CONFIG}_POSTFIX = ${CSCMAKE_${CONFIG}_POSTFIX}")
-  
+
 endfunction()

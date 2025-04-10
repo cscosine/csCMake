@@ -1,5 +1,5 @@
 {
-  "version":  10,
+  "version": 10,
   "configurePresets": [
     {
       "name": "cs-host-linux",
@@ -17,7 +17,7 @@
       "displayName": "Linux gcc Debug",
       "description": "Linux gcc Debug",
       "hidden": true,
-      "inherits": [ "cs-host-linux" ],
+      "inherits": ["cs-host-linux"],
       "generator": "Ninja"
     },
     {
@@ -25,7 +25,7 @@
       "displayName": "Linux ninja multi config",
       "description": "Linux ninja multi config",
       "hidden": true,
-      "inherits": [ "cs-host-linux" ],
+      "inherits": ["cs-host-linux"],
       "generator": "Ninja Multi-Config"
     }
   ],
@@ -108,5 +108,5 @@
       "inherits": ["cs-linux-test-base"],
       "configuration": "Paranoid"
     }
-  ]  
+  ]
 }
