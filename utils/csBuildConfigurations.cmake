@@ -205,7 +205,7 @@ function(_cs_parse_additional_configurations)
 		_cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
 
         # for some reason, the output directory of custom configuration does not get set properly, therefore we need to set it explicitely
-        # TODO(sceriani) try to understand better this behavior, at the moment this is a workaround
+        # TODO(sc) try to understand better this behavior, at the moment this is a workaround
         get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
         if(GENERATOR_IS_MULTI_CONFIG)
             string(TOUPPER "${CUSTOM_CONFIG}" CUSTOM_CONFIG_UCASE)

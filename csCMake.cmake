@@ -57,7 +57,7 @@ macro(cs_initialize_project PROJECT_NAME)
 	# define a single output folder for binaries (dll and exe in win, .so and executables in linux)
 	# note: for some reason, this does not work / does not get propagated to custom config,
 	# therefore, _cs_parse_additional_configurations will set CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UCASE} for each custom config
-	# TODO(sceriani) try to understand better this behavior, at the moment this is a workaround
+	# TODO(sc) try to understand better this behavior, at the moment this is a workaround
 	get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 	if(GENERATOR_IS_MULTI_CONFIG)
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>" CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
