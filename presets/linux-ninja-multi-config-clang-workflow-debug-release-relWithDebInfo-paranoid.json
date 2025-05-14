@@ -1,6 +1,8 @@
 {
   "version": 10,
-  "include": ["base-linux-ninja-multi-config-clang.json"],
+  "include": [
+    "base-linux-ninja-multi-config-clang.json"
+  ],
   "workflowPresets": [
     {
       "name": "linux-ninja-multi-config-clang",

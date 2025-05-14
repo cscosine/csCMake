@@ -1,6 +1,8 @@
 {
   "version": 10,
-  "include": ["linux-ninja-workflow-debug-release.json"],
+  "include": [
+    "linux-ninja-workflow-debug-release.json"
+  ],
   "workflowPresets": [
     {
       "name": "linux-ninja-relWithDebInfo",

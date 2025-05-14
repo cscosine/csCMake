@@ -17,7 +17,9 @@
       "displayName": "Host Window MSVC2022 x64",
       "description": "The Window Host Base Preset with MSVC2022 x64",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "generator": "Visual Studio 17 2022",
       "architecture": "x64"
     },
@@ -26,7 +28,9 @@
       "displayName": "Window toolset LLVM",
       "description": "The Window with toolset LLVM",
       "hidden": true,
-      "inherits": ["cs-base-msvc2022-x64"],
+      "inherits": [
+        "cs-base-msvc2022-x64"
+      ],
       "toolset": "ClangCL"
     }
   ],
@@ -46,31 +50,41 @@
     {
       "name": "cs-windows-debug",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "configuration": "Debug"
     },
     {
       "name": "cs-windows-relWithDebInfo",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "configuration": "RelWithDebInfo"
     },
     {
       "name": "cs-windows-paranoid",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "configuration": "Paranoid"
     },
     {
       "name": "cs-windows-release",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "configuration": "Release"
     },
     {
       "name": "cs-windows-install",
       "hidden": true,
-      "inherits": ["cs-host-windows"],
+      "inherits": [
+        "cs-host-windows"
+      ],
       "targets": "install"
     }
   ],
@@ -88,25 +102,33 @@
     {
       "name": "cs-windows-test-base-multi-config-debug",
       "hidden": true,
-      "inherits": ["cs-windows-test-base"],
+      "inherits": [
+        "cs-windows-test-base"
+      ],
       "configuration": "Debug"
     },
     {
       "name": "cs-windows-test-base-multi-config-release",
       "hidden": true,
-      "inherits": ["cs-windows-test-base"],
+      "inherits": [
+        "cs-windows-test-base"
+      ],
       "configuration": "Release"
     },
     {
       "name": "cs-windows-test-base-multi-config-relWithDebInfo",
       "hidden": true,
-      "inherits": ["cs-windows-test-base"],
+      "inherits": [
+        "cs-windows-test-base"
+      ],
       "configuration": "RelWithDebInfo"
     },
     {
       "name": "cs-windows-test-base-multi-config-paranoid",
       "hidden": true,
-      "inherits": ["cs-windows-test-base"],
+      "inherits": [
+        "cs-windows-test-base"
+      ],
       "configuration": "Paranoid"
     }
   ]

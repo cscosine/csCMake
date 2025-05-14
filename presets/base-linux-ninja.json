@@ -1,6 +1,9 @@
 {
   "version": 10,
-  "include": ["base-presets-linux.json", "${sourceDir}/cmakeUserPath.json"],
+  "include": [
+    "base-presets-linux.json",
+    "${sourceDir}/cmakeUserPath.json"
+  ],
   "configurePresets": [
     {
       "name": "linux-ninja-standard-dir",
@@ -73,60 +76,88 @@
   "buildPresets": [
     {
       "name": "linux-ninja-debug",
-      "inherits": ["cs-host-linux"],
+      "inherits": [
+        "cs-host-linux"
+      ],
       "configurePreset": "linux-ninja-debug"
     },
     {
       "name": "linux-ninja-release",
-      "inherits": ["cs-host-linux"],
+      "inherits": [
+        "cs-host-linux"
+      ],
       "configurePreset": "linux-ninja-release"
     },
     {
       "name": "linux-ninja-relWithDebInfo",
-      "inherits": ["cs-host-linux"],
+      "inherits": [
+        "cs-host-linux"
+      ],
       "configurePreset": "linux-ninja-relWithDebInfo"
     },
     {
       "name": "linux-ninja-paranoid",
-      "inherits": ["cs-host-linux"],
+      "inherits": [
+        "cs-host-linux"
+      ],
       "configurePreset": "linux-ninja-paranoid"
     },
     {
       "name": "linux-ninja-debug-install",
-      "inherits": ["linux-ninja-debug", "cs-linux-install"]
+      "inherits": [
+        "linux-ninja-debug",
+        "cs-linux-install"
+      ]
     },
     {
       "name": "linux-ninja-release-install",
-      "inherits": ["linux-ninja-release", "cs-linux-install"]
+      "inherits": [
+        "linux-ninja-release",
+        "cs-linux-install"
+      ]
     },
     {
       "name": "linux-ninja-relWithDebInfo-install",
-      "inherits": ["linux-ninja-relWithDebInfo", "cs-linux-install"]
+      "inherits": [
+        "linux-ninja-relWithDebInfo",
+        "cs-linux-install"
+      ]
     },
     {
       "name": "linux-ninja-paranoid-install",
-      "inherits": ["linux-ninja-paranoid", "cs-linux-install"]
+      "inherits": [
+        "linux-ninja-paranoid",
+        "cs-linux-install"
+      ]
     }
   ],
   "testPresets": [
     {
       "name": "linux-ninja-debug-test",
-      "inherits": ["cs-linux-test-base"],
+      "inherits": [
+        "cs-linux-test-base"
+      ],
       "configurePreset": "linux-ninja-debug"
     },
     {
       "name": "linux-ninja-release-test",
-      "inherits": ["cs-linux-test-base"],
+      "inherits": [
+        "cs-linux-test-base"
+      ],
       "configurePreset": "linux-ninja-release"
     },
     {
       "name": "linux-ninja-relWithDebInfo-test",
-      "inherits": ["cs-linux-test-base"],
+      "inherits": [
+        "cs-linux-test-base"
+      ],
       "configurePreset": "linux-ninja-relWithDebInfo"
     },
     {
       "name": "linux-ninja-paranoid-test",
-      "inherits": ["cs-linux-test-base"],
+      "inherits": [
+        "cs-linux-test-base"
+      ],
       "configurePreset": "linux-ninja-paranoid"
     }
   ]

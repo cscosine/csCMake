@@ -1,6 +1,8 @@
 {
   "version": 10,
-  "include": ["base-msvc2022-x64-LLVM.json"],
+  "include": [
+    "base-msvc2022-x64-LLVM.json"
+  ],
   "workflowPresets": [
     {
       "name": "msvc2022-x64-LLVM",
