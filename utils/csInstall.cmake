@@ -48,14 +48,14 @@ function(cs_install_target TARGET_NAME EXPORT_NAME)
   cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
 	foreach(FILE ${FILES_TO_INSTALL})
     set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
-    
+
     # preserve subfolders structure
     get_filename_component(FILE_DIR "${FILE}" DIRECTORY)
     if(FILE_DIR)
       set(FILE_DIR "${FILE_DIR}/")
     endif()
     set(DEST_PATH ${INSTALL_FOLDER_EXPRESSION}/${DESTINATION_FOLDER}/${FILE_DIR})
-		
+
     install(FILES ${SOURCE_PATH} DESTINATION ${DEST_PATH})
     cs_debug_message("-- [cs_install_target] install ${SOURCE_PATH} to ${DEST_PATH}" true)
 	endforeach()
@@ -294,7 +294,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
       foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
         set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      find_dependency(${FIND_ARGS})\n")
       endforeach()
-      
+
       set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      SET(${EXPORT_NAME}_FIND_DONE True)\n")
 
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}    endif()\n")
