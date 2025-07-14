@@ -102,6 +102,8 @@ endmacro()
 # EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
 function (cs_finalize_project EXPORT_NAMESPACE)
 
+	#TODO(sc) add a parameter to avoid verbose printing
+
 	# print target and export info
 	cs_print_all_target()
 	cs_print_exported_list_details()
