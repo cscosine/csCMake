@@ -16,6 +16,7 @@
     },
     {
       "name": "linux-gcc-compiler",
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++"
       }
