@@ -21,7 +21,7 @@ endif()
 
 include(CMakeFindDependencyMacro)
 
-macro(find_dependency_for_component COMPONENT_NAME)
+macro(@EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component COMPONENT_NAME)
   message(STATUS "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
 @INJECTED_FIND_PACKAGES_CODE@
 endmacro()
@@ -39,7 +39,7 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
 		message(STATUS "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
     set(DEPENDENT_COMPONENT_LIST ${${COMPONENT}_DEPENDENT_EXPORTS})
     foreach(DEPENDENT_COMPONENT ${DEPENDENT_COMPONENT_LIST})
-      find_dependency_for_component(${DEPENDENT_COMPONENT})
+      @EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component(${DEPENDENT_COMPONENT})
       message(STATUS "[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
       include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${DEPENDENT_COMPONENT}Targets.cmake")
     endforeach()
@@ -47,7 +47,7 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
   endif()
 
   # and include the component
-  find_dependency_for_component(${COMPONENT})
+  @EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component(${COMPONENT})
   message(STATUS "[@EXPORT_NAMESPACE@Config] -- including ${COMPONENT}Targets.cmake")
   include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${COMPONENT}Targets.cmake")
 
