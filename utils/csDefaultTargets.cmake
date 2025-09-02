@@ -6,22 +6,26 @@ include(utils/csDebugMessage)
 # - contains include directory of the main folder
 # ${PROJECT_NAME}_csCMakeCompileOptionsDefault
 # - contain common compilation flags, e.g. multithread compilation in windows
-# - in particular, it contains the following specific targets
+# - in particular, it contains the following specific targets:
 # -- {PROJECT_NAME}MSVCParallelCompile with parallel compilation options for MSCV
-# best practice is to use ${PROJECT_NAME}_csCMakeCompileOptionsDefault as PRIVATE to avoid propagating compile options
-# all targets are installed to
+# ${PROJECT_NAME}_csCMakeCompileOptionsStrict
+# - contain common compilation flags, e.g. multithread compilation in windows
+# - in particular, it contains the following specific targets:
+# -- {PROJECT_NAME}MSVCParallelCompile with parallel compilation options for MSCV
+# -- {PROJECT_NAME}StrictCompilation with all the warning to errors etc...
+# all targets are installed too
 function(_cs_add_default_targets)
 
-  # create the base include
+  # create the base include, to be used in all project
   _cs_target_base_project_include_dir() # _csCMakeBaseInclude
 
+  #---------------------------------------------------
   # create MSVC parallel compilation flags
   _cs_target_msvc_parallel_compilation() # MSVCParallelCompile
-  # TODO(sc) add a target that manages the version and others...
+  # TODO(sc) add a target that manages the version file etc
 
   # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsDefault that includes the default ones. TARGET_NAME will contains the name
   _cs_target_create_default(_csCMakeCompileOptionsDefault INTERFACE TARGET_NAME)
-
   # add the selected targets
 	cs_target_link_libraries(${TARGET_NAME}
     INTERFACE
@@ -30,6 +34,19 @@ function(_cs_add_default_targets)
 
   _cs_target_create_default_finalize(_csCMakeCompileOptionsDefault)
 
+  #---------------------------------------------------
+  # create the strict compiler options
+  _cs_target_strict_compilation() # StrictCompilation
+
+  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsStrict that includes the strict ones. TARGET_NAME will contains the name
+  _cs_target_create_default(_csCMakeCompileOptionsStrict INTERFACE TARGET_NAME)
+  # add the selected targets
+	cs_target_link_libraries(${TARGET_NAME}
+    INTERFACE
+    ${PROJECT_NAME}::${PROJECT_NAME}StrictCompilation
+    ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile
+  )
+  _cs_target_create_default_finalize(_csCMakeCompileOptionsStrict)
 
 endfunction()
 
@@ -69,6 +86,35 @@ function(_cs_target_msvc_parallel_compilation)
   target_compile_options(${TARGET_NAME} INTERFACE "$<$<CXX_COMPILER_ID:MSVC>:/MP>")
 
   _cs_target_create_default_finalize(MSVCParallelCompile)
+
+endfunction()
+
+function(_cs_target_strict_compilation)
+
+  _cs_target_create_default(StrictCompilation INTERFACE TARGET_NAME)
+
+  # add options
+  target_compile_options(${TARGET_NAME} INTERFACE
+    # both GNU and Clang
+    $<$<CXX_COMPILER_ID:GNU,Clang>:
+          -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion
+          -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wfloat-equal
+          -Winit-self -Wuninitialized -Wunused -Wreorder
+          -Wcast-align -Wformat=2 -Wnull-dereference
+          -Wdouble-promotion -Wzero-as-null-pointer-constant
+          -Werror                        # Treat all warnings as errors
+    >
+    # GNU only
+    $<$<CXX_COMPILER_ID:GNU>:
+          -Wstrict-null-sentinel -Wlogical-op -Wduplicated-cond -Wduplicated-branches
+    >
+    # MSVC
+    $<$<CXX_COMPILER_ID:MSVC>:
+          /W4 /WX /permissive- /RTC1 /analyze /Zc:__cplusplus
+    >
+  )
+
+  _cs_target_create_default_finalize(StrictCompilation)
 
 endfunction()
 

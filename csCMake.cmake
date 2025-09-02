@@ -13,6 +13,8 @@ include(utils/csMSVCUtils)
 include(utils/csInstall)
 include(utils/csDefaultTargets)
 include(utils/csBuildConfigurations)
+include(utils/csCompileEachInstalledInclude)
+
 
 # store in a global variable the directory of csCMake, need to be invoked right after
 function(cs_set_base_path PATH)
