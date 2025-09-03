@@ -93,7 +93,7 @@ function(_cs_target_strict_compilation)
 
   _cs_target_create_default(StrictCompilation INTERFACE TARGET_NAME)
 
-  # add options
+  # add compile options
   target_compile_options(${TARGET_NAME} INTERFACE
     # both GNU and Clang
     $<$<CXX_COMPILER_ID:GNU,Clang>:
@@ -110,7 +110,46 @@ function(_cs_target_strict_compilation)
     >
     # MSVC
     $<$<CXX_COMPILER_ID:MSVC>:
-          /W4 /WX /permissive- /RTC1 /analyze /Zc:__cplusplus
+          /W4 /WX /permissive- /analyze /Zc:__cplusplus
+    >
+  )
+
+  # add sanitize options
+  target_compile_options(${TARGET_NAME} INTERFACE
+    # both GNU and Clang
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>>:
+      # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
+      -fsanitize=undefined
+      # -fsanitize=leak # mutually exclusive with thread
+      # -fsanitize=thread # mutually exclusive with address
+      # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
+      # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
+    >
+    # Clang additions
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>>:
+      #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
+      #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
+      # -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the very same flags
+    >
+    # MSVC
+    $<$<CXX_COMPILER_ID:MSVC>:
+      /RTC1
+    >
+  )
+  target_link_options(${TARGET_NAME} INTERFACE
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>>:
+        # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
+        -fsanitize=undefined
+        # -fsanitize=leak # mutually exclusive with thread
+        # -fsanitize=thread # mutually exclusive with address
+        # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
+        # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
+    >
+    # Clang additions
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>>:
+        #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
+        #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
+        #-fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
     >
   )
 
