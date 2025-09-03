@@ -14,6 +14,7 @@ include(utils/csInstall)
 include(utils/csDefaultTargets)
 include(utils/csBuildConfigurations)
 include(utils/csCompileEachInstalledInclude)
+include(utils/csClangTidy)
 
 
 # store in a global variable the directory of csCMake, need to be invoked right after
