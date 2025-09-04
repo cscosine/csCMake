@@ -1,15 +1,17 @@
 include_guard(GLOBAL)
 
-# Find clang-tidy executable
-find_program(CLANG_TIDY_EXE NAMES clang-tidy)
-if(NOT CLANG_TIDY_EXE)
-    MESSAGE(FATAL_ERROR "clang tidy executable not found, install it, e.g. with sudo apt install clang-tidy")
+if(UNIX)
+    # Find clang-tidy executable
+    find_program(CLANG_TIDY_EXE NAMES clang-tidy)
+    if(NOT CLANG_TIDY_EXE)
+        MESSAGE(FATAL_ERROR "clang tidy executable not found, install it, e.g. with sudo apt install clang-tidy")
+    endif()
 endif()
 
 function (cs_exec_clang_tidy TARGET_NAME)
     # Apply to a specific target
     set_target_properties(${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY ""
-    $<$<CXX_COMPILER_ID:Clang>:
+    $<$<AND:$<CXX_COMPILER_ID:Clang>,$<PLATFORM_ID:Linux>>:
          "${CLANG_TIDY_EXE};
                         -checks=*,
                         -warnings-as-errors=*,
