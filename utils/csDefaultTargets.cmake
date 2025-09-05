@@ -55,14 +55,13 @@ endfunction()
 # that allow to propagate include directories to the root of the project
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(_csCMakeBaseInclude INTERFACE TARGET_NAME)
-
   cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
 
-  # add include to root dir
-	target_include_directories(${TARGET_NAME}
-		INTERFACE
-			$<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  # add include to root dir, with subdir $<CONFIG> in installation if multiple config, with single folder if individual
+  target_include_directories(${TARGET_NAME}
+    INTERFACE
+      $<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   )
 
   # get the folder where files are generated

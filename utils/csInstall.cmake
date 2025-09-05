@@ -8,9 +8,16 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 function(cs_get_install_folder_suffix INSTALL_FOLDER_EXPRESSION)
-  # includes are installed per configuration, independently if we are with a multi generator or a single one
-  set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
-  set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
+  cs_get_specified_build_configurations(CONFIGS_LIST)
+  list(LENGTH CONFIGS_LIST N)
+  if(N GREATER 1)
+    # includes are installed per configuration, independently if we are with a multi generator or a single one
+    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
+    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
+  else()
+    set(FOLDER "${CMAKE_INSTALL_INCLUDEDIR}")
+    set(${INSTALL_FOLDER_EXPRESSION} "${FOLDER}" PARENT_SCOPE)
+  endif()
 endfunction()
 
 # create a global variable csExportedList collecting all the different EXPORT_NAME used
