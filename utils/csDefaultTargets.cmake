@@ -81,8 +81,12 @@ endfunction()
 function(_cs_target_msvc_parallel_compilation)
   _cs_target_create_default(MSVCParallelCompile INTERFACE TARGET_NAME)
 
-  # add /MP
-  target_compile_options(${TARGET_NAME} INTERFACE "$<$<CXX_COMPILER_ID:MSVC>:/MP>")
+  # add /MP and /Zc:__cplusplus
+  target_compile_options(${TARGET_NAME} INTERFACE
+    $<$<CXX_COMPILER_ID:MSVC>:
+      /MP  /Zc:__cplusplus
+    >
+  )
 
   _cs_target_create_default_finalize(MSVCParallelCompile)
 
@@ -109,7 +113,7 @@ function(_cs_target_strict_compilation)
     >
     # MSVC
     $<$<CXX_COMPILER_ID:MSVC>:
-          /W4 /WX /permissive- /analyze /Zc:__cplusplus
+          /W4 /WX /permissive-
     >
   )
 
@@ -129,10 +133,6 @@ function(_cs_target_strict_compilation)
       #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
       #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
       # -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the very same flags
-    >
-    # MSVC
-    $<$<CXX_COMPILER_ID:MSVC>:
-      /RTC1
     >
   )
   target_link_options(${TARGET_NAME} INTERFACE
