@@ -37,6 +37,7 @@ endfunction()
 
 # accepts extra arguments to specify the available build configurations:
 # cs_initialize_project(MyProject
+#   CXX_STANDARD 14/17/...
 #   DEFAULT_CONFIG Debug
 #   DEFAULT_CONFIG Release
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
@@ -78,7 +79,12 @@ macro(cs_initialize_project PROJECT_NAME)
 	cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${TEMP_VAR_LIST}")
 
 	# parse the additional configurations
-	_cs_parse_additional_configurations(${ARGN})
+	_cs_parse_additional_configurations(REQUIRED_CXX_STANDARD ${ARGN})
+
+	# set cmake standard
+	set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_EXTENSIONS OFF)
 
 	# check validity of requested config (if single generator, or set the build types to the requested configs)
 	_cs_process_configurations()

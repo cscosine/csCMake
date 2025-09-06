@@ -99,6 +99,7 @@ endfunction()
 # helper function to parse the cs_initialize_project arguments and add build types
 # accepts extra arguments to specify the available build configurations:
 # _cs_process_configurations(
+#   CXX_STANDARD 14/17/...
 #   DEFAULT_CONFIG Debug
 #   DEFAULT_CONFIG Release
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
@@ -106,17 +107,25 @@ endfunction()
 #   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
 #  note, make sure to use POSTFIX "" if no postfix has to be used
 # )
-function(_cs_parse_additional_configurations)
+function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
 	cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
 	set(OPTIONS "")
-	set(ONEVALUE "")
+	set(ONEVALUE CXX_STANDARD)
 	set(MULTIVALUE DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
 	cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
 
 	if(ARG_UNPARSED_ARGUMENTS)
 		message(FATAL_ERROR "[_cs_parse_additional_configurations] has unparsed arguments ${ARG_UNPARSED_ARGUMENTS}")
 	endif()
+
+	# If not set by caller, error
+	if (NOT ARG_CXX_STANDARD)
+			MESSAGE(FATAL_ERROR "USE cs_initialize_project(CXX_STANDARD XX)")
+	endif()
+
+    # return cxx standard
+    set(${REQUIRED_CXX_STANDARD} ${ARG_CXX_STANDARD} PARENT_SCOPE)
 
     # add default configurations
 	foreach(DEFAULT_CONFIG ${ARG_DEFAULT_CONFIG})
