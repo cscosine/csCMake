@@ -109,7 +109,6 @@ function(_cs_target_strict_compilation)
     >
     $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>>:
           -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-c++20-extensions # otherwise clang on msvc will not work
-          -Wno-reserved-macro-identifier
     >
     # GNU only
     $<$<CXX_COMPILER_ID:GNU>:
