@@ -107,6 +107,7 @@ function(_cs_target_strict_compilation)
           -Wdouble-promotion -Wzero-as-null-pointer-constant
           -Werror                        # Treat all warnings as errors
     >
+    # remove some on MSVC CLANG
     $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>>:
           -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-c++20-extensions # otherwise clang on msvc will not work
     >
@@ -122,8 +123,8 @@ function(_cs_target_strict_compilation)
 
   # add sanitize options
   target_compile_options(${TARGET_NAME} INTERFACE
-    # both GNU and Clang
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>>:
+    # both GNU and Clang but not on windows
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
       # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
       -fsanitize=undefined
       # -fsanitize=leak # mutually exclusive with thread
@@ -132,14 +133,14 @@ function(_cs_target_strict_compilation)
       # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
     >
     # Clang additions
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>>:
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
       #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
       #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
       # -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the very same flags
     >
   )
   target_link_options(${TARGET_NAME} INTERFACE
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>>:
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
         # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
         -fsanitize=undefined
         # -fsanitize=leak # mutually exclusive with thread
@@ -148,7 +149,7 @@ function(_cs_target_strict_compilation)
         # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
     >
     # Clang additions
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>>:
+    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
         #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
         #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
         #-fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
