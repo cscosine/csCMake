@@ -102,7 +102,7 @@ macro(cs_initialize_project PROJECT_NAME)
 
 	# enable generation of compile commands on ninja generators
 	if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
-		message(STATUS "[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
+		cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
 		set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 	endif()
 
@@ -114,7 +114,7 @@ function (cs_finalize_project EXPORT_NAMESPACE)
 
 	#TODO(sc) add a parameter to avoid verbose printing
 
-	# print target and export info
+	# print target and export info (in debug)
 	cs_print_all_target()
 	cs_print_exported_list_details()
 

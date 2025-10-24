@@ -1,4 +1,13 @@
-message(STATUS "[@EXPORT_NAMESPACE@Config] entry point")
+# option to print out messages as "STATUS" from this module
+OPTION(@EXPORT_NAMESPACE_SANITIZED@_DEBUG "activate the debug messages for @EXPORT_NAMESPACE@" OFF)
+
+function(@EXPORT_NAMESPACE_SANITIZED@_debug_message msg)
+	if(${@EXPORT_NAMESPACE_SANITIZED@_DEBUG})
+		MESSAGE(STATUS "${msg}")
+	endif()
+endfunction()
+
+@EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] entry point")
 
 get_filename_component(@EXPORT_NAMESPACE@_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(@EXPORT_NAMESPACE@_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../")
@@ -22,7 +31,7 @@ endif()
 include(CMakeFindDependencyMacro)
 
 macro(@EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component COMPONENT_NAME)
-  message(STATUS "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
+  @EXPORT_NAMESPACE_SANITIZED@_debug_message( "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
 @INJECTED_FIND_PACKAGES_CODE@
 endmacro()
 
@@ -36,11 +45,11 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
 
   if(${COMPONENT}_DEPENDENT_EXPORTS)
     # dependent component, add its dependencies and add it at the end
-		message(STATUS "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
+		@EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
     set(DEPENDENT_COMPONENT_LIST ${${COMPONENT}_DEPENDENT_EXPORTS})
     foreach(DEPENDENT_COMPONENT ${DEPENDENT_COMPONENT_LIST})
       @EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component(${DEPENDENT_COMPONENT})
-      message(STATUS "[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
+      @EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
       include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${DEPENDENT_COMPONENT}Targets.cmake")
     endforeach()
 
@@ -48,9 +57,9 @@ foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
 
   # and include the component
   @EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component(${COMPONENT})
-  message(STATUS "[@EXPORT_NAMESPACE@Config] -- including ${COMPONENT}Targets.cmake")
+  @EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] -- including ${COMPONENT}Targets.cmake")
   include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${COMPONENT}Targets.cmake")
 
 endforeach()
 
-message(STATUS "[@EXPORT_NAMESPACE@Config] exit point")
+@EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] exit point")

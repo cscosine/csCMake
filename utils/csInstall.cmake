@@ -307,7 +307,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}    if(\"${EXPORT_NAME}\" STREQUAL \"\${COMPONENT_NAME}\")\n")
 
       foreach(FIND_ARGS ${FIND_PACKAGES_LIST})
-        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      MESSAGE(STATUS \"[${EXPORT_NAMESPACE}Config] find_dependency(${FIND_ARGS})\")\n")
+        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      ${EXPORT_NAMESPACE_SANITIZED}_debug_message(\"[${EXPORT_NAMESPACE}Config] find_dependency(${FIND_ARGS})\")\n")
         set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}      find_dependency(${FIND_ARGS})\n")
       endforeach()
 
@@ -315,7 +315,7 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
 
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}    endif()\n")
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  else()\n")
-        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}   MESSAGE(STATUS \"[${EXPORT_NAMESPACE}Config] find_dependency for ${EXPORT_NAME} already satisfied\")\n")
+        set(INJECTED_FIND_PACKAGES_CODE "${INJECTED_FIND_PACKAGES_CODE}   ${EXPORT_NAMESPACE_SANITIZED}_debug_message(\"[${EXPORT_NAMESPACE}Config] find_dependency for ${EXPORT_NAME} already satisfied\")\n")
       set(INJECTED_FIND_PACKAGES_CODE  "${INJECTED_FIND_PACKAGES_CODE}  endif()\n")
     endif()
 	endforeach()
