@@ -121,40 +121,43 @@ function(_cs_target_strict_compilation)
     >
   )
 
-  # add sanitize options
-  target_compile_options(${TARGET_NAME} INTERFACE
-    # both GNU and Clang but not on windows
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
-      -fsanitize=undefined
-      # -fsanitize=leak # mutually exclusive with thread
-      # -fsanitize=thread # mutually exclusive with address
-      # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
-    >
-    # Clang additions
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
-      #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the very same flags
-    >
-  )
-  target_link_options(${TARGET_NAME} INTERFACE
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+  csGetConfigurationWithStrictFlags(CONFIGNAME)
+  if(CONFIGNAME)
+    # add sanitize options only for the specified configuration
+    target_compile_options(${TARGET_NAME} INTERFACE
+      # both GNU and Clang but not on windows
+      $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
         # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
         -fsanitize=undefined
         # -fsanitize=leak # mutually exclusive with thread
         # -fsanitize=thread # mutually exclusive with address
         # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
         # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
-    >
-    # Clang additions
-    $<$<AND:$<CONFIG:PARANOID>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+      >
+      # Clang additions
+      $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
         #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
         #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
-        #-fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
-    >
-  )
+        # -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the very same flags
+      >
+    )
+    target_link_options(${TARGET_NAME} INTERFACE
+      $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+          # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
+          -fsanitize=undefined
+          # -fsanitize=leak # mutually exclusive with thread
+          # -fsanitize=thread # mutually exclusive with address
+          # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
+          # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
+      >
+      # Clang additions
+      $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+          #-fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
+          #-fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
+          #-fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
+      >
+    )
+  endif()
 
   _cs_target_create_default_finalize(StrictCompilation)
 

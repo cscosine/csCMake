@@ -44,6 +44,7 @@ endfunction()
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
 #   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
+#   [STRICT_COMPILATION_ON_CONFIG ConfigName]
 # )
 #  note, make sure to use POSTFIX "" if no postfix
 macro(cs_initialize_project PROJECT_NAME)

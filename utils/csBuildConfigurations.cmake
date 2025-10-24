@@ -105,13 +105,14 @@ endfunction()
 #   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
 #   CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d"
 #   CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
+#   [STRICT_COMPILATION_ON_CONFIG ConfigName]
 #  note, make sure to use POSTFIX "" if no postfix has to be used
 # )
 function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
 	cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
 	set(OPTIONS "")
-	set(ONEVALUE CXX_STANDARD)
+	set(ONEVALUE CXX_STANDARD STRICT_COMPILATION_ON_CONFIG)
 	set(MULTIVALUE DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
 	cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
 
@@ -121,7 +122,7 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
 
 	# If not set by caller, error
 	if (NOT ARG_CXX_STANDARD)
-			MESSAGE(FATAL_ERROR "USE cs_initialize_project(CXX_STANDARD XX)")
+		MESSAGE(FATAL_ERROR "USE cs_initialize_project(CXX_STANDARD XX)")
 	endif()
 
     # return cxx standard
@@ -228,6 +229,17 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
         endif()
 	endwhile()
 
+    # check if the user want strict compilation flags for a specific configutation
+    if(ARG_STRICT_COMPILATION_ON_CONFIG)
+        # check such configuration exists
+        cs_get_specified_build_configurations(CONFIGS_LIST)
+        if(ARG_STRICT_COMPILATION_ON_CONFIG IN_LIST CONFIGS_LIST)
+            _csSetConfigurationWithStrictFlags(${ARG_STRICT_COMPILATION_ON_CONFIG})
+        else()
+            message(FATAL_ERROR "The value ${ARG_STRICT_COMPILATION_ON_CONFIG} of ${STRICT_COMPILATION_ON_CONFIG} is not a valid configuration in list ${CONFIGS_LIST}")
+        endif()
+    endif()
+
     # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with cs_add_library / cs_add_executable)
     set(TEMP_STRING "")
 	cs_get_specified_build_configurations(CONFIGS_LIST)
@@ -253,6 +265,15 @@ function(_cs_process_configurations)
 			message(FATAL_ERROR "[_cs_process_configurations] request to build with config ${CMAKE_BUILD_TYPE} which is not supported by this project")
 		endif()
 	endif()
+endfunction()
+
+function (_csSetConfigurationWithStrictFlags CONFIGNAME)
+    set_property(GLOBAL PROPERTY csCMakeConfigWithStrictFlags ${CONFIGNAME})
+endfunction()
+
+function (csGetConfigurationWithStrictFlags CONFIGNAME)
+	get_property(VAL GLOBAL PROPERTY csCMakeConfigWithStrictFlags)
+	set(${CONFIGNAME} ${VAL} PARENT_SCOPE)
 endfunction()
 
 # set a global property csCMakeConfigurationVariables
