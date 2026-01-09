@@ -1,4 +1,4 @@
-name: CI
+name: Trigger downstream repo cscosine/3rdPartyBaseLibs
 
 on:
   # 1️⃣ Push & PR
@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
+  trigger:
     runs-on: ubuntu-latest
 
     steps:
