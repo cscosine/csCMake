@@ -9,8 +9,8 @@ repos:
     hooks:
       - id: check-generated-project
         name: Check generated project consistency
-        entry: ../csProjectManager/hooks/project/check-generated-project.sh
-        language: system
+        entry: ../csProjectManager/hooks/project/check-generated-project.py
+        language: python
         pass_filenames: false
         always_run: true
       - id: check-no-unstaged

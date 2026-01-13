@@ -15,14 +15,6 @@ on:
         required: false
         default: "manual"
 
-  # 3️⃣ Scheduled trigger (weekly)
-  schedule:
-    - cron: "0 3 * * 1"   # Monday 03:00 UTC
-
-  # 4️⃣ Triggered by other repositories
-  repository_dispatch:
-    types: [ dependent-repo-change ]
-
 # 🔒 Prevent duplicate / overlapping runs
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
