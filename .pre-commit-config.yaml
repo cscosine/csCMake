@@ -16,6 +16,8 @@ repos:
         additional_dependencies:
           - GitPython
           - pre-commit
+          - requests
+          - keyring
 
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
