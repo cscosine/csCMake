@@ -11,7 +11,7 @@
       "binaryDir": "${sourceParentDir}/build/msvc2022-x64/${sourceDirName}",
       "installDir": "${sourceParentDir}/install/msvc2022-x64/${sourceDirName}",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/msvc2022-x64",
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/msvc2022-x64;${sourceParentDir}/libs/msvc2022-x64",
         "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
       }
     },

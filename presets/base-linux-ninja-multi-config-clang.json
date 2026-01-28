@@ -11,7 +11,7 @@
       "binaryDir": "${sourceParentDir}/build/linux-ninja-multi-config-clang/${sourceDirName}",
       "installDir": "${sourceParentDir}/install/linux-ninja-multi-config-clang/${sourceDirName}",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja-multi-config-clang",
+        "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/linux-ninja-multi-config-clang;${sourceParentDir}/libs/linux-ninja-multi-config-clang",
         "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake"
       }
     },

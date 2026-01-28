@@ -1,0 +1,41 @@
+name: Trigger downstream repo cscosine/csBaseLibs
+
+on:
+  # 1️⃣ Push & PR
+  push:
+    branches: [ "cs-main" ]
+  pull_request:
+    branches: [ "cs-main" ]
+
+  # 2️⃣ Manual trigger
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+        default: "manual"
+
+# 🔒 Prevent duplicate / overlapping runs
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Trigger downstream repo cscosine/csBaseLibs
+        run: |
+          curl --fail -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.ACTIONS_ORG_ACCESS }}" \
+            https://api.github.com/repos/cscosine/csBaseLibs/dispatches \
+            -d '{
+              "event_type": "dependent-repo-change",
+              "client_payload": {
+                "source_repo": "csCMake",
+                "commit": "${{ github.sha }}"
+              }
+            }'
