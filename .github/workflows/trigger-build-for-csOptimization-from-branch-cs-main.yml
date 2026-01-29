@@ -31,11 +31,12 @@ jobs:
           curl --fail -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.ACTIONS_ORG_ACCESS }}" \
-            https://api.github.com/repos/cscosine/csOptimization/dispatches \
+            https://api.github.com/repos/cscosine/csOptimization/actions/workflows/full-build.yml/dispatches \
             -d '{
-              "event_type": "dependent-repo-change",
-              "client_payload": {
+              "ref": "${{ github.ref_name }}",
+              "inputs": {
                 "source_repo": "csCMake",
-                "commit": "${{ github.sha }}"
+                "source_branch": "${{ github.ref_name }}",
+                "source_commit": "${{ github.sha }}"
               }
             }'
