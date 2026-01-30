@@ -18,6 +18,7 @@ repos:
           - pre-commit
           - requests
           - keyring
+          - jinja2
 
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
