@@ -1,0 +1,41 @@
+{
+  "version": 10,
+  "include": [
+    "base-msvc2026-x64.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "msvc2026-x64",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc2026-x64"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-debug"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-debug-install"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-release-install"
+        },
+        {
+          "type": "test",
+          "name": "msvc2026-x64-debug-test"
+        },
+        {
+          "type": "test",
+          "name": "msvc2026-x64-release-test"
+        }
+      ]
+    }
+  ]
+}

@@ -32,6 +32,27 @@
         "cs-base-msvc2022-x64"
       ],
       "toolset": "ClangCL"
+    },
+    {
+      "name": "cs-base-msvc2026-x64",
+      "displayName": "Host Window MSVC2026 x64",
+      "description": "The Window Host Base Preset with MSVC2026 x64",
+      "hidden": true,
+      "inherits": [
+        "cs-host-windows"
+      ],
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64"
+    },
+    {
+      "name": "cs-base-msvc2026-x64-LLVM",
+      "displayName": "Window toolset LLVM",
+      "description": "The Window with toolset LLVM",
+      "hidden": true,
+      "inherits": [
+        "cs-base-msvc2026-x64"
+      ],
+      "toolset": "ClangCL"
     }
   ],
   "buildPresets": [

@@ -1,0 +1,41 @@
+{
+  "version": 10,
+  "include": [
+    "base-msvc2026-x64-LLVM.json"
+  ],
+  "workflowPresets": [
+    {
+      "name": "msvc2026-x64-LLVM",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc2026-x64-LLVM"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-LLVM-debug"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-LLVM-release"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-LLVM-debug-install"
+        },
+        {
+          "type": "build",
+          "name": "msvc2026-x64-LLVM-release-install"
+        },
+        {
+          "type": "test",
+          "name": "msvc2026-x64-LLVM-debug-test"
+        },
+        {
+          "type": "test",
+          "name": "msvc2026-x64-LLVM-release-test"
+        }
+      ]
+    }
+  ]
+}
