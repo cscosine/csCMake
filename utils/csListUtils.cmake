@@ -1,33 +1,41 @@
 include_guard(GLOBAL)
 
 function(_cs_list_add_list_unique_values LIST_NAME VALUES)
-	if(VALUES)
-		set(OUTPUT_LIST  ${${LIST_NAME}})
-		foreach (VALUE IN ITEMS ${VALUES})
-			_cs_list_add_unique_value(OUTPUT_LIST ${VALUE})
-		endforeach()
-		set(${LIST_NAME} ${OUTPUT_LIST} PARENT_SCOPE)
-	endif()
+  if(VALUES)
+    set(OUTPUT_LIST ${${LIST_NAME}})
+    foreach(VALUE IN ITEMS ${VALUES})
+      _cs_list_add_unique_value(OUTPUT_LIST ${VALUE})
+    endforeach()
+    set(${LIST_NAME}
+        ${OUTPUT_LIST}
+        PARENT_SCOPE)
+  endif()
 endfunction()
 
 function(_cs_list_add_unique_value LIST_NAME VALUE)
-	set(OUTPUT_LIST  ${${LIST_NAME}})
-	if(NOT ${VALUE} IN_LIST OUTPUT_LIST)
-		list(APPEND OUTPUT_LIST ${VALUE})
-	endif()
-  set(${LIST_NAME} ${OUTPUT_LIST} PARENT_SCOPE)
+  set(OUTPUT_LIST ${${LIST_NAME}})
+  if(NOT ${VALUE} IN_LIST OUTPUT_LIST)
+    list(APPEND OUTPUT_LIST ${VALUE})
+  endif()
+  set(${LIST_NAME}
+      ${OUTPUT_LIST}
+      PARENT_SCOPE)
 endfunction()
 
-function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME VALUE)
-	get_target_property(LIST_VALUES ${TARGET_NAME} ${PROPERTY_NAME})
-	if(NOT ${VALUE} IN_LIST LIST_VALUES)
-		set_property(TARGET ${TARGET_NAME} APPEND PROPERTY ${PROPERTY_NAME} ${VALUE})
-	endif()
+function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME
+         VALUE)
+  get_target_property(LIST_VALUES ${TARGET_NAME} ${PROPERTY_NAME})
+  if(NOT ${VALUE} IN_LIST LIST_VALUES)
+    set_property(
+      TARGET ${TARGET_NAME}
+      APPEND
+      PROPERTY ${PROPERTY_NAME} ${VALUE})
+  endif()
 endfunction()
 
 function(_cs_add_to_global_property_unique_value PROPERTY_NAME VALUE)
-	get_property(LIST_VALUES GLOBAL PROPERTY ${PROPERTY_NAME})
-	if(NOT ${VALUE} IN_LIST LIST_VALUES)
-		set_property(GLOBAL APPEND PROPERTY ${PROPERTY_NAME} ${VALUE})
-	endif()
+  get_property(LIST_VALUES GLOBAL PROPERTY ${PROPERTY_NAME})
+  if(NOT ${VALUE} IN_LIST LIST_VALUES)
+    set_property(GLOBAL APPEND PROPERTY ${PROPERTY_NAME} ${VALUE})
+  endif()
 endfunction()

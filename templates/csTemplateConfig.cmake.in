@@ -1,6 +1,10 @@
 # option to print out messages as "STATUS" from this module
 OPTION(@EXPORT_NAMESPACE_SANITIZED@_DEBUG "activate the debug messages for @EXPORT_NAMESPACE@" OFF)
 
+# TODO function names and calls with @EXPORT_NAMESPACE_SANITIZED@ are problematic for cmake format
+# need to find alternatives that guarantees univoque naming across different packages
+# this is why @EXPORT_NAMESPACE_SANITIZED@ have been introduced, otherwise two libraries installed
+# will define the same macro and clash...
 function(@EXPORT_NAMESPACE_SANITIZED@_debug_message msg)
 	if(${@EXPORT_NAMESPACE_SANITIZED@_DEBUG})
 		MESSAGE(STATUS "${msg}")
