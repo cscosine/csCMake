@@ -10,29 +10,53 @@ if str(ROOT_DIR) not in sys.path:
 
 from csCMake.tools.utils.generate_cs_preset_variants import generate_from_template_single_config_generator_all
 
-TEMPLATE_PATH = ROOT_DIR / "csCMake" / "presets" / "template" / "cs-single-config-generator-ALL.json.template"
-OUTPUT_DIR = ROOT_DIR / "csCMake" / "presets" / "csv1"
 
 
 
 
-def generate_all_csv1_presets(
-    template_path: Path | str | None = TEMPLATE_PATH,
-    output_dir: Path | str | None = OUTPUT_DIR,
-) -> list[Path]:
-    ## -- single config generator ALL presets --    
+def generate_all_csv1_presets() -> list[Path]:
+    TEMPLATE_FOLDER_PATH_ = ROOT_DIR / "csCMake" / "presets" / "template" 
+    OUTPUT_DIR = ROOT_DIR / "csCMake" / "presets" / "csv1"
+
     DEFAULT_SUBSTITUTIONS = {
         "csVersion": "csv1",
         "host": "linux",
-        "os": "ubuntu24.04",
+        "osVersion": "ubuntu24.04",
         "architecture": "x64",
-        "architectureVariant": "generic",
+        "architectureVariant": "generic"
+    }
+
+    ## -- single config generator presets --    
+    SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS = {
+        **DEFAULT_SUBSTITUTIONS,
         "generator": "ninja",
     }
 
     generated: list[Path] = []
-    generated.append(generate_from_template_single_config_generator_all({**DEFAULT_SUBSTITUTIONS, "compiler": "gcc"}, template_path=template_path, output_dir=output_dir))
-    generated.append(generate_from_template_single_config_generator_all({**DEFAULT_SUBSTITUTIONS, "compiler": "clang"}, template_path=template_path, output_dir=output_dir))
+    for compiler in ["gcc", "clang"]:
+        # -ALL
+        generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+        # -base
+        generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+        # -configs
+        for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
+            generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+
+    # multi config genreator presets
+    MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
+        **DEFAULT_SUBSTITUTIONS,
+        "generator": "ninjamulticonfig",
+    }
+
+    for compiler in ["gcc", "clang"]:
+        # -ALL
+        generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+        # -base
+        generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+        # -configs
+        for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
+            generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+
     return generated
 
 
