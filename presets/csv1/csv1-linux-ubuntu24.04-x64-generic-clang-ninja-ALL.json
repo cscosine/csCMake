@@ -1,0 +1,9 @@
+{
+    "version": 10,
+    "include": [
+        "csv1-linux-ubuntu24.04-x64-generic-clang-ninja-debug.json",
+        "csv1-linux-ubuntu24.04-x64-generic-clang-ninja-release.json",
+        "csv1-linux-ubuntu24.04-x64-generic-clang-ninja-relwithdebinfo.json",
+        "csv1-linux-ubuntu24.04-x64-generic-clang-ninja-paranoid.json"
+    ]
+}

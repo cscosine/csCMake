@@ -1,0 +1,9 @@
+{
+    "version": 10,
+    "include": [
+        "${csVersion}-${host}-${os}-${architecture}-${architectureVariant}-${compiler}-${generator}-debug.json",
+        "${csVersion}-${host}-${os}-${architecture}-${architectureVariant}-${compiler}-${generator}-release.json",
+        "${csVersion}-${host}-${os}-${architecture}-${architectureVariant}-${compiler}-${generator}-relwithdebinfo.json",
+        "${csVersion}-${host}-${os}-${architecture}-${architectureVariant}-${compiler}-${generator}-paranoid.json"
+    ]
+}
