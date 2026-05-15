@@ -1,0 +1,9 @@
+{
+    "version": 10,
+    "include": [
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-debug.json",
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release.json",
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-relwithdebinfo.json",
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid.json"
+    ]
+}

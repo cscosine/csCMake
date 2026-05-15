@@ -1,0 +1,49 @@
+{
+  "version": 10,
+  "configurePresets": [
+    {
+      "name": "cs-compiler-linux-gcc",
+      "displayName": "GCC Compiler",
+      "description": "Use the GCC compiler",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "cs-compiler-linux-clang",
+      "displayName": "Clang Compiler",
+      "description": "Use the Clang compiler",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "cs-compiler-windows-msvc",
+      "displayName": "Windows MSVC standard toolset",
+      "description": "The Windows MSVC with standard toolset",
+      "hidden": true,
+      "$comment": "The standard toolset is used by default when the Visual Studio generator is selected"
+    },
+    {
+      "name": "cs-compiler-windows-msvcclang",
+      "displayName": "Windows MSVC toolset LLVM",
+      "description": "The Windows MSVC with toolset LLVM",
+      "hidden": true,
+      "toolset": "ClangCL"
+    },
+    {
+      "name": "cs-compiler-macos-appleclang",
+      "displayName": "MacOS Apple Clang Compiler",
+      "description": "Use the Apple Clang compiler",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "version": 10,
+  "configurePresets": [
+    {
+      "name": "cs-generator-ninja",
+      "displayName": "Ninja Generator",
+      "hidden": true,
+      "description": "Use the Ninja generator",
+      "generator": "Ninja"
+    },
+    {
+      "name": "cs-generator-ninja-multi-config",
+      "displayName": "Ninja Multi-Config Generator",
+      "hidden": true,
+      "description": "Use the Ninja Multi-Config generator",
+      "generator": "Ninja Multi-Config"
+    },
+    {
+      "name": "cs-generator-msvc2022",
+      "displayName": "MSVC2022 Generator",
+      "description": "Use the Visual Studio 17 2022 generator",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022"
+    },
+    {
+      "name": "cs-generator-msvc2026",
+      "displayName": "MSVC2026 Generator",
+      "description": "Use the Visual Studio 18 2026 generator",
+      "hidden": true,
+      "generator": "Visual Studio 18 2026"
+    },
+    {
+      "name": "cs-generator-msvc2026-architecture-x64",
+      "displayName": "X64 Architecture for generators (used for Visual Studio generators)",
+      "hidden": true,
+      "description": "Use the X64 architecture",
+      "architecture": "x64"
+    }
+  ]
+}

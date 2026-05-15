@@ -1,0 +1,64 @@
+{
+    "version": 10,
+    "include": [
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-base.json",
+        "../common/build-configurations.json",
+        "../common/test-configurations.json",
+        "../common/build-targets-install.json",
+        "../common/test-common.json"
+    ],
+    "buildPresets": [
+        {
+            "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug",
+            "displayName": "Build Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Debug",
+            "description": "Build preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Debug",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "build-configuration-debug"
+            ]
+        },
+        {
+            "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug",
+            "displayName": "Install Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Debug",
+            "description": "Install preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Debug",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "build-configuration-debug",
+                "build-target-install"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "test-configuration-debug",
+                "test-base"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "workflow-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig"
+                },
+                {
+                    "type": "build",
+                    "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-debug"
+                }
+            ]
+        }
+    ]
+}

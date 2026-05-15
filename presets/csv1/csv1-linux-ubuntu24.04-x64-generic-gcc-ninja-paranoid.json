@@ -1,0 +1,73 @@
+{
+    "version": 10,
+    "include": [
+        "${sourceDir}/csCMakeProjectSetup.json",
+        "../common/config-hosts.json",
+        "../common/config-generators.json",
+        "../common/config-compilers.json",
+        "../common/config-build-types.json",
+        "../common/build-targets-install.json",
+        "../common/test-common.json",
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "displayName": "Configure Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "description": "Configure preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "inherits": [
+                "cmake-configure-build-type-paranoid",
+                "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-base"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "displayName": "Build Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "description": "Build preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid"
+        },
+        {
+            "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "displayName": "Install Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "description": "Install preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "inherits": [
+                "build-target-install"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "inherits": [
+                "test-base"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "workflow-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid"
+                },
+                {
+                    "type": "build",
+                    "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid"
+                },
+                {
+                    "type": "build",
+                    "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid"
+                },
+                {
+                    "type": "test",
+                    "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-paranoid"
+                }
+            ]
+        }
+    ]
+}

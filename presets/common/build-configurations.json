@@ -1,0 +1,25 @@
+{
+    "version": 10,
+    "buildPresets": [
+        {
+            "name": "build-configuration-debug",
+            "hidden": true,
+            "configuration": "Debug"
+        },
+        {
+            "name": "build-configuration-release",
+            "hidden": true,
+            "configuration": "Release"
+        },
+        {
+            "name": "build-configuration-relWithDebInfo",
+            "hidden": true,
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "build-configuration-paranoid",
+            "hidden": true,
+            "configuration": "Paranoid"
+        }
+    ]
+}

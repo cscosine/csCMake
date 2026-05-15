@@ -1,0 +1,29 @@
+{
+    "version": 10,
+    "include": [
+        "${sourceDir}/csCMakeProjectSetup.json",
+        "../common/config-hosts.json",
+        "../common/config-generators.json",
+        "../common/config-compilers.json",
+        "../common/config-build-types.json",
+        "../common/build-targets-install.json",
+        "../common/test-common.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-base",
+            "hidden": true,
+            "displayName": "Configure Linux Ubuntu 24.04 x64 Generic GCC Ninja Base",
+            "description": "Configure preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Base",
+            "inherits": [
+                "cscmake-project-setup",
+                "cs-host-linux",
+                "cs-generator-ninja",
+                "cs-compiler-linux-gcc"
+            ],
+            "environment": {
+                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja"
+            }
+        }
+    ]
+}

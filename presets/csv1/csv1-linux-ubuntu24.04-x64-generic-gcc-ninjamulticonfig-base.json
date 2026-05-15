@@ -1,0 +1,26 @@
+{
+    "version": 10,
+    "include": [
+        "${sourceDir}/csCMakeProjectSetup.json",
+        "../common/config-hosts.json",
+        "../common/config-generators.json",
+        "../common/config-compilers.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "displayName": "Configure Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config",
+            "description": "Configure preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config",
+            "inherits": [
+                "cscmake-project-setup",
+                "cs-host-linux",
+                "cs-generator-ninja-multi-config",
+                "cs-compiler-linux-gcc"
+            ],
+            "environment": {
+                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig"
+            }
+        }
+    ]
+}

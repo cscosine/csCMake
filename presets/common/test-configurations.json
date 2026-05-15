@@ -1,0 +1,25 @@
+{
+    "version": 10,
+    "testPresets": [
+        {
+            "name": "test-configuration-debug",
+            "hidden": true,
+            "configuration": "Debug"
+        },
+        {
+            "name": "test-configuration-release",
+            "hidden": true,
+            "configuration": "Release"
+        },
+        {
+            "name": "test-configuration-relWithDebInfo",
+            "hidden": true,
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "test-configuration-paranoid",
+            "hidden": true,
+            "configuration": "Paranoid"
+        }
+    ]
+}

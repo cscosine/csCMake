@@ -1,0 +1,12 @@
+{
+    "version": 10,
+    "buildPresets": [
+        {
+            "name": "build-target-install",
+            "displayName": "Install",
+            "description": "A preset to install the project",
+            "hidden": true,
+            "targets": "install"
+        }
+    ]
+}

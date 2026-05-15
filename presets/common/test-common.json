@@ -1,0 +1,15 @@
+{
+    "version": 10,
+    "testPresets": [
+        {
+            "name": "test-base",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "stopOnFailure": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,64 @@
+{
+    "version": 10,
+    "include": [
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-base.json",
+        "../common/build-configurations.json",
+        "../common/test-configurations.json",
+        "../common/build-targets-install.json",
+        "../common/test-common.json"
+    ],
+    "buildPresets": [
+        {
+            "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid",
+            "displayName": "Build Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Paranoid",
+            "description": "Build preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "build-configuration-paranoid"
+            ]
+        },
+        {
+            "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid",
+            "displayName": "Install Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Paranoid",
+            "description": "Install preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Multi Config Paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "build-configuration-paranoid",
+                "build-target-install"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig",
+            "inherits": [
+                "test-configuration-paranoid",
+                "test-base"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "workflow-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig"
+                },
+                {
+                    "type": "build",
+                    "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid"
+                },
+                {
+                    "type": "build",
+                    "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid"
+                },
+                {
+                    "type": "test",
+                    "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninjamulticonfig-paranoid"
+                }
+            ]
+        }
+    ]
+}

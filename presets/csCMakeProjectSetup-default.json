@@ -1,0 +1,20 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "name": "cscmake-project-setup",
+            "displayName": "csCMake Project Setup",
+            "description": "A preset to set up environment variables for csCMake project presets",
+            "hidden": true,
+            "binaryDir": "${sourceParentDir}/build/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}/$env{CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
+            "installDir": "${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR};${sourceParentDir}/libs/$env{CS_CMAKE_CSV1_SUB_DIR}",
+                "CMAKE_MODULE_PATH": "$env{CS_CMAKE_ROOT}"
+            },
+            "environment": {
+                "CS_CMAKE_ROOT": "${sourceParentDir}/csCMake"
+            }
+        }
+    ]
+}

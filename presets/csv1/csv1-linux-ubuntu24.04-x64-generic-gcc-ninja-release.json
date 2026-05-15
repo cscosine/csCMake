@@ -1,0 +1,73 @@
+{
+    "version": 10,
+    "include": [
+        "${sourceDir}/csCMakeProjectSetup.json",
+        "../common/config-hosts.json",
+        "../common/config-generators.json",
+        "../common/config-compilers.json",
+        "../common/config-build-types.json",
+        "../common/build-targets-install.json",
+        "../common/test-common.json",
+        "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "displayName": "Configure Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "description": "Configure preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "inherits": [
+                "cmake-configure-build-type-release",
+                "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-base"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "displayName": "Build Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "description": "Build preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release"
+        },
+        {
+            "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "displayName": "Install Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "description": "Install preset for Linux Ubuntu 24.04 x64 Generic GCC Ninja Release",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "inherits": [
+                "build-target-install"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "configurePreset": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "inherits": [
+                "test-base"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "workflow-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release"
+                },
+                {
+                    "type": "build",
+                    "name": "build-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release"
+                },
+                {
+                    "type": "build",
+                    "name": "install-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release"
+                },
+                {
+                    "type": "test",
+                    "name": "test-csv1-linux-ubuntu24.04-x64-generic-gcc-ninja-release"
+                }
+            ]
+        }
+    ]
+}
