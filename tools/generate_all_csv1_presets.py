@@ -42,20 +42,39 @@ def generate_all_csv1_presets() -> list[Path]:
         for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
             generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
 
-    # multi config genreator presets
-    MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
+    # multi config generator presets in linux
+    LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
         **DEFAULT_SUBSTITUTIONS,
         "generator": "ninjamulticonfig",
     }
 
     for compiler in ["gcc", "clang"]:
         # -ALL
-        generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+        generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
         # -base
-        generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+        generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
         # -configs
         for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
-            generated.append(generate_from_template_single_config_generator_all({**MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+            generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+
+    # multi config generator presets in windows
+    LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
+        "csVersion": "csv1",
+        "host": "windows",
+        "osVersion": "11",
+        "architecture": "x64",
+        "architectureVariant": "generic",
+    }
+
+    for generator in ["msvc2022", "msvc2026"]:
+        for compiler in ["msvc", "msvcclang"]:
+            # -ALL
+            generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+            # -base
+            generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+            # -configs
+            for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
+                generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
 
     return generated
 
