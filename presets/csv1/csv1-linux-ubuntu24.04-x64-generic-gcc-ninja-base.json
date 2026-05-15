@@ -19,6 +19,7 @@
                 "cscmake-project-setup",
                 "cs-host-linux",
                 "cs-generator-ninja",
+                "cs-generator-ninja-architecture-x64",
                 "cs-compiler-linux-gcc"
             ],
             "environment": {

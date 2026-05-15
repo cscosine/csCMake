@@ -14,7 +14,8 @@
             "inherits": [
                 "cscmake-project-setup",
                 "cs-host-linux",
-                "cs-generator-ninja-multi-config",
+                "cs-generator-ninjamulticonfig",
+                "cs-generator-ninjamulticonfig-architecture-x64",
                 "cs-compiler-linux-gcc"
             ],
             "environment": {

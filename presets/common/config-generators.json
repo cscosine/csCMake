@@ -9,11 +9,35 @@
       "generator": "Ninja"
     },
     {
-      "name": "cs-generator-ninja-multi-config",
+      "name": "cs-generator-ninja-architecture-x64",
+      "hidden": true,
+      "description": "Use the X64 architecture",
+      "$comment": "ninja generator does not support architecture specification, but we can use this preset to ensure autogeneration"
+    },
+    {
+      "name": "cs-generator-ninja-architecture-arm64",
+      "hidden": true,
+      "description": "Use the ARM64 architecture",
+      "$comment": "ninja generator does not support architecture specification, but we can use this preset to ensure autogeneration"
+    },
+    {
+      "name": "cs-generator-ninjamulticonfig",
       "displayName": "Ninja Multi-Config Generator",
       "hidden": true,
       "description": "Use the Ninja Multi-Config generator",
       "generator": "Ninja Multi-Config"
+    },
+    {
+      "name": "cs-generator-ninjamulticonfig-architecture-x64",
+      "hidden": true,
+      "description": "Use the X64 architecture",
+      "$comment": "ninjamulticonfig generator does not support architecture specification, but we can use this preset to ensure autogeneration"
+    },
+    {
+      "name": "cs-generator-ninjamulticonfig-architecture-arm64",
+      "hidden": true,
+      "description": "Use the ARM64 architecture",
+      "$comment": "ninjamulticonfig generator does not support architecture specification, but we can use this preset to ensure autogeneration"
     },
     {
       "name": "cs-generator-msvc2022",
@@ -28,6 +52,13 @@
       "description": "Use the Visual Studio 18 2026 generator",
       "hidden": true,
       "generator": "Visual Studio 18 2026"
+    },
+    {
+      "name": "cs-generator-msvc2022-architecture-x64",
+      "displayName": "X64 Architecture for generators (used for Visual Studio generators)",
+      "hidden": true,
+      "description": "Use the X64 architecture",
+      "architecture": "x64"
     },
     {
       "name": "cs-generator-msvc2026-architecture-x64",
