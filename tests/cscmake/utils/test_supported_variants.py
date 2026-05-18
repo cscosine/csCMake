@@ -1,7 +1,7 @@
 from cscmake.utils.supported_variants import (
+    GeneratorType,
     get_supported_context_os_architecture_list,
     get_supported_context_os_architecture_list_string,
-    GeneratorType
 )
 
 
@@ -22,7 +22,7 @@ def test_get_supported_context_os_architecture_list():
     assert n_multi > 0
     assert n_multi < n_all
 
-    supported_list = get_supported_context_os_architecture_list("INVALID")
+    supported_list = get_supported_context_os_architecture_list("INVALID")  # type: ignore
     n_invalid = len(supported_list)
     assert n_invalid == 0
 
@@ -44,6 +44,6 @@ def test_get_supported_context_os_architecture_list_string():
     assert n_multi > 0
     assert n_multi < n_all
 
-    supported_list = get_supported_context_os_architecture_list_string("INVALID")
+    supported_list = get_supported_context_os_architecture_list_string("INVALID")  # type: ignore
     n_invalid = len(supported_list)
     assert n_invalid == 0
