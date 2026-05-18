@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 
 from csorchestrator.context.context_os_architecture_compiler_generator import cs_orchestrator_schema_version
+from csorchestrator.utils.presets.supported_variants import GeneratorType, get_supported_context_os_architecture_list
 
 from cscmake.utils.generate_cs_preset_variants import generate_from_template_single_config_generator_all
-from cscmake.utils.supported_variants import GeneratorType, get_supported_context_os_architecture_list
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
