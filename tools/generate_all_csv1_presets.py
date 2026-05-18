@@ -1,23 +1,29 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
 from csorchestrator.context.context_os_architecture_compiler_generator import cs_orchestrator_schema_version
 from csorchestrator.utils.presets.supported_variants import GeneratorType, get_supported_context_os_architecture_list
 
-from cscmake.utils.generate_cs_preset_variants import generate_from_template_single_config_generator_all
+from cscmake.utils.generate_cs_preset_variants import (
+    generate_from_template_single_config_generator_all,
+    load_template,
+    render_template,
+)
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 
-def generate_all_csv1_presets() -> list[Path]:
+def generate_all_csv1_presets() -> list[str]:
     TEMPLATE_FOLDER_PATH_ = ROOT_DIR / "csCMake" / "presets" / "template"
     OUTPUT_DIR = ROOT_DIR / "csCMake" / "presets" / "csv1"
 
-    generated: list[Path] = []
+    generated: list[str] = []
+    generated_ALL: list[str] = []
 
     build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
 
@@ -34,14 +40,15 @@ def generate_all_csv1_presets() -> list[Path]:
             "compiler": config.context_compiler_generator.compiler_family.value,
         }
         # -ALL
-        generated.append(
-            generate_from_template_single_config_generator_all(
-                subs,
-                template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template",
-                output_dir=OUTPUT_DIR,
-                output_filename_suffix="ALL",
-            )
+        all_filename = generate_from_template_single_config_generator_all(
+            subs,
+            template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template",
+            output_dir=OUTPUT_DIR,
+            output_filename_suffix="ALL",
         )
+        generated.append(all_filename)
+        generated_ALL.append(all_filename)
+
         # -base
         generated.append(
             generate_from_template_single_config_generator_all(
@@ -76,14 +83,15 @@ def generate_all_csv1_presets() -> list[Path]:
             "compiler": config.context_compiler_generator.compiler_family.value,
         }
         # -ALL
-        generated.append(
-            generate_from_template_single_config_generator_all(
-                {**subs},
-                template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template",
-                output_dir=OUTPUT_DIR,
-                output_filename_suffix="ALL",
-            )
+        all_filename = generate_from_template_single_config_generator_all(
+            {**subs},
+            template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template",
+            output_dir=OUTPUT_DIR,
+            output_filename_suffix="ALL",
         )
+        generated.append(all_filename)
+        generated_ALL.append(all_filename)
+
         # -base
         generated.append(
             generate_from_template_single_config_generator_all(
@@ -103,6 +111,27 @@ def generate_all_csv1_presets() -> list[Path]:
                     output_filename_suffix=buildConfig.lower(),
                 )
             )
+
+    # generate a sigle presets that includes all the *-ALL presets
+    csIncludeLines = ""
+    for i in range(len(generated_ALL) - 1):
+        filename = generated_ALL[i]
+        csIncludeLines += f'        "{filename}",\n'
+    if len(generated_ALL) > 0:
+        csIncludeLines += f'        "{generated_ALL[-1]}"'
+
+    cs_presets_all_json = "cs-presets-all.json"
+    template_path = TEMPLATE_FOLDER_PATH_ / str(cs_presets_all_json + ".template")
+    template_text = load_template(template_path)
+    rendered = render_template(template_text, {"csIncludeLines": csIncludeLines})
+
+    # Validate that the template produced valid JSON.
+    json.loads(rendered)
+
+    output_path = OUTPUT_DIR / cs_presets_all_json
+
+    output_path.write_text(rendered, encoding="utf-8")
+    generated.append(cs_presets_all_json)
 
     return generated
 

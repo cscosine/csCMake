@@ -7,9 +7,6 @@ from typing import Any, Dict, Mapping
 
 TEMPLATE_NAME = "cs-single-config-generator-ALL.json.template"
 
-DEFAULT_TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "presets" / "template" / TEMPLATE_NAME
-DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parents[1] / "presets" / "csv1"
-
 REQUIRED_SUBSTITUTIONS = [
     "csVersion",
     "host",
@@ -25,8 +22,8 @@ class AtTemplate(Template):
     delimiter = "@"
 
 
-def load_template(path: Path | str | None = None) -> str:
-    path = Path(path or DEFAULT_TEMPLATE_PATH)
+def load_template(path: Path | str) -> str:
+    path = Path(path)
     return path.read_text(encoding="utf-8")
 
 
@@ -55,7 +52,7 @@ def generate_from_template_single_config_generator_all(
     template_path: Path,
     output_dir: Path,
     output_filename_suffix: str,
-) -> Path:
+) -> str:
     validate_substitutions(substitutions)
     template_text = load_template(template_path)
     rendered = render_template(template_text, substitutions)
@@ -63,9 +60,10 @@ def generate_from_template_single_config_generator_all(
     # Validate that the template produced valid JSON.
     json.loads(rendered)
 
-    output_dir = Path(output_dir or DEFAULT_OUTPUT_DIR)
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / build_output_filename(substitutions, suffix=output_filename_suffix)
+    filename = build_output_filename(substitutions, suffix=output_filename_suffix)
+    output_path = output_dir / filename
 
     output_path.write_text(rendered, encoding="utf-8")
-    return output_path
+    return filename
