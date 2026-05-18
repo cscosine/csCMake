@@ -7,7 +7,7 @@ from csorchestrator.context.context_compiler_generator import GeneratorType
 from csorchestrator.context.context_os_architecture_compiler_generator import cs_orchestrator_schema_version
 
 from cscmake.utils.generate_cs_preset_variants import generate_from_template_single_config_generator_all
-from cscmake.utils.supported_variants import get_supported_context_os_architecture_list
+from cscmake.utils.supported_variants import get_supported_context_os_architecture_list, GeneratorType
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:

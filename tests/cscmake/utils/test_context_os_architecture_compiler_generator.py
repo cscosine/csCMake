@@ -2,7 +2,6 @@ from csorchestrator.context.context_compiler_generator import (
     Compiler,
     ContextCompilerGenerator,
     Generator,
-    GeneratorType,
 )
 from csorchestrator.context.context_os_architecture import OS, Architecture, ContextOsArchitecture
 from csorchestrator.context.context_os_architecture_compiler_generator import (
@@ -12,7 +11,9 @@ from csorchestrator.context.context_os_architecture_compiler_generator import (
 from cscmake.utils.supported_variants import (
     get_supported_context_os_architecture_list,
     get_supported_context_os_architecture_list_string,
+    GeneratorType
 )
+
 
 
 def test_basic_linux_ninja_clang():
