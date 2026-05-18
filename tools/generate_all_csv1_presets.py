@@ -10,73 +10,58 @@ if str(ROOT_DIR) not in sys.path:
 
 from csCMake.tools.utils.generate_cs_preset_variants import generate_from_template_single_config_generator_all
 
-
-
+from csorchestrator.context.context_os_architecture_compiler_generator import cs_orchestrator_schema_version, get_supported_context_os_architecture_list
+from csorchestrator.context.context_compiler_generator import    GeneratorType
 
 
 def generate_all_csv1_presets() -> list[Path]:
     TEMPLATE_FOLDER_PATH_ = ROOT_DIR / "csCMake" / "presets" / "template" 
     OUTPUT_DIR = ROOT_DIR / "csCMake" / "presets" / "csv1"
-
-    DEFAULT_SUBSTITUTIONS = {
-        "csVersion": "csv1",
-        "host": "linux",
-        "osVersion": "ubuntu24.04",
-        "architecture": "x64",
-        "architectureVariant": "generic"
-    }
-
-    ## -- single config generator presets --    
-    SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS = {
-        **DEFAULT_SUBSTITUTIONS,
-        "generator": "ninja",
-    }
-
+    
     generated: list[Path] = []
-    for compiler in ["gcc", "clang"]:
+
+    build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
+
+    single_configs = get_supported_context_os_architecture_list(generator_type=GeneratorType.SINGLE_CONFIG)
+
+    for config in single_configs:
+        subs = {
+            "csVersion": cs_orchestrator_schema_version,
+            "host": config.context_os_architecture.os.value,
+            "osVersion": config.context_os_architecture.os_version,
+            "architecture": config.context_os_architecture.architecture.value,
+            "architectureVariant": config.context_os_architecture.architecture_variant,
+            "generator": config.context_compiler_generator.build_generator.value,
+            "compiler": config.context_compiler_generator.compiler_family.value,
+        }
         # -ALL
-        generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+        generated.append(generate_from_template_single_config_generator_all(subs, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
         # -base
-        generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+        generated.append(generate_from_template_single_config_generator_all(subs, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
         # -configs
-        for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
-            generated.append(generate_from_template_single_config_generator_all({**SINGLE_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+        for buildConfig in build_configs:
+            generated.append(generate_from_template_single_config_generator_all({**subs, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
 
     # multi config generator presets in linux
-    LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
-        **DEFAULT_SUBSTITUTIONS,
-        "generator": "ninjamulticonfig",
-    }
+    multi_configs = get_supported_context_os_architecture_list(generator_type=GeneratorType.MULTI_CONFIG)
 
-    for compiler in ["gcc", "clang"]:
-        # -ALL
-        generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
-        # -base
-        generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
-        # -configs
-        for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
-            generated.append(generate_from_template_single_config_generator_all({**LINUX_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
-
-    # multi config generator presets in windows
-    
-    for windowsVersion in ["10", "11"]:
-        WINDOWS_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS = {
-            "csVersion": "csv1",
-            "host": "windows",
-            "osVersion": windowsVersion,
-            "architecture": "x64",
-            "architectureVariant": "generic",
+    for config in multi_configs:
+        subs = {
+            "csVersion": cs_orchestrator_schema_version,
+            "host": config.context_os_architecture.os.value,
+            "osVersion": config.context_os_architecture.os_version,
+            "architecture": config.context_os_architecture.architecture.value,
+            "architectureVariant": config.context_os_architecture.architecture_variant,
+            "generator": config.context_compiler_generator.build_generator.value,
+            "compiler": config.context_compiler_generator.compiler_family.value,
         }
-
-        for generator in ["msvc2022", "msvc2026"]:
-            for compiler in ["msvc", "msvcclang"]:
-                # -ALL
-                generated.append(generate_from_template_single_config_generator_all({**WINDOWS_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
-                # -base
-                generated.append(generate_from_template_single_config_generator_all({**WINDOWS_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
-                # -configs
-                for buildConfig in ["debug", "release", "paranoid", "relWithDebInfo"]:
-                    generated.append(generate_from_template_single_config_generator_all({**WINDOWS_MULTI_CONFIG_DEFAULT_SUBSTITUTIONS, "compiler": compiler, "buildConfig": buildConfig, "generator": generator}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
+        # -ALL
+        generated.append(generate_from_template_single_config_generator_all({**subs}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="ALL"))
+        # -base
+        generated.append(generate_from_template_single_config_generator_all({**subs}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template", output_dir=OUTPUT_DIR, output_filename_suffix="base"))
+        # -configs
+        for buildConfig in build_configs:
+            generated.append(generate_from_template_single_config_generator_all({**subs, "buildConfig": buildConfig}, template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template", output_dir=OUTPUT_DIR, output_filename_suffix=buildConfig.lower()))
 
     return generated
 
