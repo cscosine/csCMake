@@ -11,7 +11,7 @@
             },
             "environment": {
                 "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "debug"
-            }            
+            }
         },
         {
             "name": "cmake-configure-build-type-release",

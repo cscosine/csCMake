@@ -1,0 +1,155 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Commit message"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Create venv",
+      "type": "shell",
+      "command": "python -m venv .venv",
+      "problemMatcher": [],
+      "detail": "#Setup # Create a virtual environment in the project directory"
+    },
+    {
+      "label": "Install deps",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pip install -e .[dev]",
+      "problemMatcher": [],
+      "detail": "#Setup # Install development dependencies"
+    },
+    {
+      "label": "Pre-commit install",
+      "type": "shell",
+      "command": "pre-commit install",
+      "problemMatcher": [],
+      "detail": "#Setup # Install pre-commit hooks"
+    },
+    {
+      "label": "Pre-commit run (all files)",
+      "type": "shell",
+      "command": "pre-commit run --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hooks on all files"
+    },
+    {
+      "label": "Setup Project",
+      "dependsOn": [
+        "Create venv",
+        "Install deps",
+        "Pre-commit install"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "detail": "#Setup # Do all steps to set up the project (create venv, install dependencies, set up pre-commit hooks)"
+    },
+    {
+      "label": "Pytest",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest",
+      "problemMatcher": [],
+      "detail": "#Testing # Run pytest (fast)"
+    },
+    {
+      "label": "Pytest (coverage)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest --cov=csorchestrator --cov-branch --cov-report=html",
+      "problemMatcher": [],
+      "detail": "#Testing # Run pytest (all) with coverage"
+    },
+    {
+      "label": "Pytest (run-all)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest --run-all",
+      "problemMatcher": [],
+      "detail": "#Testing # Run pytest (all)"
+    },
+    {
+      "label": "Pytest (run-all & coverage)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest --cov=csorchestrator --cov-branch --cov-report=html --run-all",
+      "problemMatcher": [],
+      "detail": "#Testing # Run pytest (all) with coverage"
+    },
+    {
+      "label": "Git Stash Untracked",
+      "type": "shell",
+      "command": "git stash push --keep-index --include-untracked",
+      "problemMatcher": [],
+      "detail": "#Git # Stash untracked files"
+    },
+    {
+      "label": "Git Stash Pop",
+      "type": "shell",
+      "command": "git stash pop",
+      "problemMatcher": [],
+      "detail": "#Git # Pop last stashed changes"
+    },
+    {
+      "label": "Git Commit All",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "commit",
+        "-a",
+        "-m",
+        "${input:commitMessage}"
+      ],
+      "problemMatcher": [],
+      "detail": "#Git # Commit all changes"
+    },
+    {
+      "label": "Git Commit All - Skip Pre-Commit",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "commit",
+        "--no-verify",
+        "-a",
+        "-m",
+        "${input:commitMessage}"
+      ],
+      "problemMatcher": [],
+      "detail": "#Git # Commit all changes - Skip pre-commit hooks"
+    },
+    {
+      "label": "Git Commit Amend (all)",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "commit",
+        "-a",
+        "--amend",
+        "-m",
+        "${input:commitMessage}"
+      ],
+      "problemMatcher": [],
+      "detail": "#Git # Commit amend"
+    },
+    {
+      "label": "Git Push",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "push"
+      ],
+      "problemMatcher": [],
+      "detail": "#Git # Push changes"
+    },
+    {
+      "label": "Git Push --force-with-lease",
+      "type": "shell",
+      "command": "git",
+      "args": [
+        "push",
+        "--force-with-lease"
+      ],
+      "problemMatcher": [],
+      "detail": "#Git # Push changes"
+    }
+  ]
+}
