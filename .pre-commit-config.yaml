@@ -55,14 +55,15 @@ repos:
 
   - repo: local
     hooks:
-      - id: generate-csv1-presets
-        name: Generate CSV1 presets
-        entry: python
-        args: ["tools/generate_all_csv1_presets.py"]
-        language: python
-        additional_dependencies:
-        - ".[dev]"
-        pass_filenames: false
+      # TODO activate this hook once we can use csorchestrator as a dependency in pyproject.toml
+      # - id: generate-csv1-presets
+      #   name: Generate CSV1 presets
+      #   entry: python
+      #   args: ["tools/generate_all_csv1_presets.py"]
+      #   language: python
+      #   additional_dependencies:
+      #   - ".[dev]"
+      #   pass_filenames: false
 
       - id: no-unstaged-changes
         name: Fail if unstaged changes exist

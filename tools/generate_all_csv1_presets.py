@@ -119,9 +119,9 @@ def generate_all_csv1_presets() -> list[str]:
 
     # generate a sigle presets that includes all the *-ALL presets
 
-    # TODO when fixed get_supported_context_os_architecture_list,
-    # no need for set here, but can be kept
+    # no need for set here, is a single list, but let be defensive
     generated_ALL_set = sorted(list(set(generated_ALL)))
+
     csIncludeLines = ""
     for i in range(len(generated_ALL_set) - 1):
         filename = generated_ALL_set[i]

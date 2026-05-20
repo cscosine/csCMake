@@ -9,6 +9,8 @@ source .venv/bin/activate
 
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
+# TODO remove this once csOrchestrator is available in pip
+pip install -e ../../../csOrchestrator
 
 pre-commit install
 
