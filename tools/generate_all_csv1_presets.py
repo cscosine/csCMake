@@ -27,6 +27,9 @@ def generate_all_csv1_presets() -> list[str]:
 
     build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
 
+    # TODO: FIX this is returning multiple time the same config,
+    # bc the ContextOsArchitectureCompilerGeneratorConfig contains also BuildConfig
+
     single_configs = get_supported_context_os_architecture_list(generator_type=GeneratorType.SINGLE_CONFIG)
 
     for config in single_configs:
@@ -113,12 +116,16 @@ def generate_all_csv1_presets() -> list[str]:
             )
 
     # generate a sigle presets that includes all the *-ALL presets
+
+    # TODO when fixed get_supported_context_os_architecture_list,
+    # no need for set here, but can be kept
+    generated_ALL_set = list(set(generated_ALL))
     csIncludeLines = ""
-    for i in range(len(generated_ALL) - 1):
-        filename = generated_ALL[i]
+    for i in range(len(generated_ALL_set) - 1):
+        filename = generated_ALL_set[i]
         csIncludeLines += f'        "{filename}",\n'
-    if len(generated_ALL) > 0:
-        csIncludeLines += f'        "{generated_ALL[-1]}"'
+    if len(generated_ALL_set) > 0:
+        csIncludeLines += f'        "{generated_ALL_set[-1]}"'
 
     cs_presets_all_json = "cs-presets-all.json"
     template_path = TEMPLATE_FOLDER_PATH_ / str(cs_presets_all_json + ".template")

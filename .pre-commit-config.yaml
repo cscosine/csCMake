@@ -59,7 +59,9 @@ repos:
         name: Generate CSV1 presets
         entry: python
         args: ["tools/generate_all_csv1_presets.py"]
-        language: system
+        language: python
+        additional_dependencies:
+        - ".[dev]"
         pass_filenames: false
 
       - id: no-unstaged-changes
