@@ -41,6 +41,7 @@ def generate_all_csv1_presets() -> list[str]:
             "architectureVariant": config.context_os_architecture.architecture_variant,
             "generator": config.context_compiler_generator.build_generator.value,
             "compiler": config.context_compiler_generator.compiler_family.value,
+            "compiler_version": config.context_compiler_generator.compiler_version,
         }
         # -ALL
         all_filename = generate_from_template_single_config_generator_all(
@@ -84,6 +85,7 @@ def generate_all_csv1_presets() -> list[str]:
             "architectureVariant": config.context_os_architecture.architecture_variant,
             "generator": config.context_compiler_generator.build_generator.value,
             "compiler": config.context_compiler_generator.compiler_family.value,
+            "compiler_version": config.context_compiler_generator.compiler_version,
         }
         # -ALL
         all_filename = generate_from_template_single_config_generator_all(
@@ -119,7 +121,7 @@ def generate_all_csv1_presets() -> list[str]:
 
     # TODO when fixed get_supported_context_os_architecture_list,
     # no need for set here, but can be kept
-    generated_ALL_set = list(set(generated_ALL))
+    generated_ALL_set = sorted(list(set(generated_ALL)))
     csIncludeLines = ""
     for i in range(len(generated_ALL_set) - 1):
         filename = generated_ALL_set[i]

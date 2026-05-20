@@ -2,7 +2,7 @@
   "version": 10,
   "configurePresets": [
     {
-      "name": "cs-compiler-linux-gcc",
+      "name": "cs-compiler-linux-gcc-default",
       "displayName": "GCC Compiler",
       "description": "Use the GCC compiler",
       "hidden": true,
@@ -12,7 +12,7 @@
       }
     },
     {
-      "name": "cs-compiler-linux-clang",
+      "name": "cs-compiler-linux-clang-default",
       "displayName": "Clang Compiler",
       "description": "Use the Clang compiler",
       "hidden": true,
@@ -22,21 +22,21 @@
       }
     },
     {
-      "name": "cs-compiler-windows-msvc",
+      "name": "cs-compiler-windows-msvc-default",
       "displayName": "Windows MSVC standard toolset",
       "description": "The Windows MSVC with standard toolset",
       "hidden": true,
       "$comment": "The standard toolset is used by default when the Visual Studio generator is selected"
     },
     {
-      "name": "cs-compiler-windows-msvcclang",
+      "name": "cs-compiler-windows-msvcclang-default",
       "displayName": "Windows MSVC toolset LLVM",
       "description": "The Windows MSVC with toolset LLVM",
       "hidden": true,
       "toolset": "ClangCL"
     },
     {
-      "name": "cs-compiler-macos-appleclang",
+      "name": "cs-compiler-macos-appleclang-default",
       "displayName": "MacOS Apple Clang Compiler",
       "description": "Use the Apple Clang compiler",
       "hidden": true,

@@ -9,31 +9,31 @@
         "../common/config-build-types.json",
         "../common/build-targets-install.json",
         "../common/test-common.json",
-        "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-base.json"
+        "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-base.json"
     ],
     "configurePresets": [
         {
-            "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
-            "displayName": "Configure @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
-            "description": "Configure preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
+            "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
+            "displayName": "Configure @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Configure preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
             "inherits": [
                 "cmake-configure-build-type-@{buildConfig}",
-                "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-base"
+                "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-base"
             ]
         }
     ],
     "buildPresets": [
         {
-            "name": "build-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
-            "displayName": "Build @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
-            "description": "Build preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
-            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}"
+            "name": "build-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
+            "displayName": "Build @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Build preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
         },
         {
-            "name": "install-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
-            "displayName": "Install @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
-            "description": "Install preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler} @{generator} @{buildConfig}",
-            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
+            "name": "install-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
+            "displayName": "Install @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Install preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
             "inherits": [
                 "build-target-install"
             ]
@@ -41,8 +41,8 @@
     ],
     "testPresets": [
         {
-            "name": "test-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
-            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
+            "name": "test-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
+            "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
             "inherits": [
                 "test-base"
             ]
@@ -50,23 +50,23 @@
     ],
     "workflowPresets": [
         {
-            "name": "workflow-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}",
+            "name": "workflow-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
             "steps": [
                 {
                     "type": "configure",
-                    "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}"
+                    "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
                 },
                 {
                     "type": "build",
-                    "name": "build-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}"
+                    "name": "build-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
                 },
                 {
                     "type": "build",
-                    "name": "install-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}"
+                    "name": "install-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
                 },
                 {
                     "type": "test",
-                    "name": "test-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-@{buildConfig}"
+                    "name": "test-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
                 }
             ]
         }

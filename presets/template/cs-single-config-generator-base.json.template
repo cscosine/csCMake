@@ -12,19 +12,19 @@
     ],
     "configurePresets": [
         {
-            "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}-base",
+            "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-base",
             "hidden": true,
-            "displayName": "Configure @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler} @{generator} Base",
-            "description": "Configure preset for @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler} @{generator} Base",
+            "displayName": "Configure @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} Base",
+            "description": "Configure preset for @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} Base",
             "inherits": [
                 "cscmake-project-setup",
                 "cs-host-@{host}",
                 "cs-generator-@{generator}",
                 "cs-generator-@{generator}-architecture-@{architecture}",
-                "cs-compiler-@{host}-@{compiler}"
+                "cs-compiler-@{host}-@{compiler}-@{compiler_version}"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SUB_DIR": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{generator}"
+                "CS_CMAKE_CSV1_SUB_DIR": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}"
             }
         }
     ]

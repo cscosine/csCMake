@@ -14,6 +14,7 @@ REQUIRED_SUBSTITUTIONS = [
     "architecture",
     "architectureVariant",
     "compiler",
+    "compiler_version",
     "generator",
 ]
 
@@ -37,7 +38,7 @@ def build_output_filename(substitutions: Mapping[str, Any], suffix: str = "ALL")
     return (
         f"{values['csVersion']}-{values['host']}-{values['osVersion']}-"
         f"{values['architecture']}-{values['architectureVariant']}-"
-        f"{values['compiler']}-{values['generator']}-{suffix}.json"
+        f"{values['compiler']}-{values['compiler_version']}-{values['generator']}-{suffix}.json"
     )
 
 
