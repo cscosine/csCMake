@@ -29,95 +29,92 @@ def generate_all_csv1_presets() -> list[str]:
 
     build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
 
-    # TODO: FIX this is returning multiple time the same config,
-    # bc the ContextOsArchitectureCompilerGeneratorConfig contains also BuildConfig
+    configs = get_supported_context_os_architecture_list()
 
-    single_configs = get_supported_context_os_architecture_list(generator_type=GeneratorType.SINGLE_CONFIG)
-
-    for config in single_configs:
-        subs = {
-            "csVersion": cs_orchestrator_schema_version,
-            "host": config.context_os_architecture.os.value,
-            "osVersion": config.context_os_architecture.os_version,
-            "architecture": config.context_os_architecture.architecture.value,
-            "architectureVariant": config.context_os_architecture.architecture_variant,
-            "generator": config.context_compiler_generator.build_generator.value,
-            "compiler": config.context_compiler_generator.compiler_family.value,
-            "compiler_version": config.context_compiler_generator.compiler_version,
-        }
-        # -ALL
-        all_filename = generate_from_template_single_config_generator_all(
-            subs,
-            template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template",
-            output_dir=OUTPUT_DIR,
-            output_filename_suffix="ALL",
-        )
-        generated.append(all_filename)
-        generated_ALL.append(all_filename)
-
-        # -base
-        generated.append(
-            generate_from_template_single_config_generator_all(
+    for config in configs:
+        generator_type = config.context_compiler_generator.build_generator.generator_type
+        if generator_type == GeneratorType.SINGLE_CONFIG:
+            subs = {
+                "csVersion": cs_orchestrator_schema_version,
+                "host": config.context_os_architecture.os.value,
+                "osVersion": config.context_os_architecture.os_version,
+                "architecture": config.context_os_architecture.architecture.value,
+                "architectureVariant": config.context_os_architecture.architecture_variant,
+                "generator": config.context_compiler_generator.build_generator.generator.value,
+                "compiler": config.context_compiler_generator.compiler_family.value,
+                "compiler_version": config.context_compiler_generator.compiler_version,
+            }
+            # -ALL
+            all_filename = generate_from_template_single_config_generator_all(
                 subs,
-                template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-base.json.template",
+                template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-ALL.json.template",
                 output_dir=OUTPUT_DIR,
-                output_filename_suffix="base",
+                output_filename_suffix="ALL",
             )
-        )
-        # -configs
-        for buildConfig in build_configs:
+            generated.append(all_filename)
+            generated_ALL.append(all_filename)
+
+            # -base
             generated.append(
                 generate_from_template_single_config_generator_all(
-                    {**subs, "buildConfig": buildConfig},
-                    template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template",
+                    subs,
+                    template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-base.json.template",
                     output_dir=OUTPUT_DIR,
-                    output_filename_suffix=buildConfig.lower(),
+                    output_filename_suffix="base",
                 )
             )
-
-    # multi config generator presets in linux
-    multi_configs = get_supported_context_os_architecture_list(generator_type=GeneratorType.MULTI_CONFIG)
-
-    for config in multi_configs:
-        subs = {
-            "csVersion": cs_orchestrator_schema_version,
-            "host": config.context_os_architecture.os.value,
-            "osVersion": config.context_os_architecture.os_version,
-            "architecture": config.context_os_architecture.architecture.value,
-            "architectureVariant": config.context_os_architecture.architecture_variant,
-            "generator": config.context_compiler_generator.build_generator.value,
-            "compiler": config.context_compiler_generator.compiler_family.value,
-            "compiler_version": config.context_compiler_generator.compiler_version,
-        }
-        # -ALL
-        all_filename = generate_from_template_single_config_generator_all(
-            {**subs},
-            template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template",
-            output_dir=OUTPUT_DIR,
-            output_filename_suffix="ALL",
-        )
-        generated.append(all_filename)
-        generated_ALL.append(all_filename)
-
-        # -base
-        generated.append(
-            generate_from_template_single_config_generator_all(
+            # -configs
+            for buildConfig in build_configs:
+                generated.append(
+                    generate_from_template_single_config_generator_all(
+                        {**subs, "buildConfig": buildConfig},
+                        template_path=TEMPLATE_FOLDER_PATH_ / "cs-single-config-generator-config.json.template",
+                        output_dir=OUTPUT_DIR,
+                        output_filename_suffix=buildConfig.lower(),
+                    )
+                )
+        elif generator_type == GeneratorType.MULTI_CONFIG:
+            subs = {
+                "csVersion": cs_orchestrator_schema_version,
+                "host": config.context_os_architecture.os.value,
+                "osVersion": config.context_os_architecture.os_version,
+                "architecture": config.context_os_architecture.architecture.value,
+                "architectureVariant": config.context_os_architecture.architecture_variant,
+                "generator": config.context_compiler_generator.build_generator.generator.value,
+                "compiler": config.context_compiler_generator.compiler_family.value,
+                "compiler_version": config.context_compiler_generator.compiler_version,
+            }
+            # -ALL
+            all_filename = generate_from_template_single_config_generator_all(
                 {**subs},
-                template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template",
+                template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-ALL.json.template",
                 output_dir=OUTPUT_DIR,
-                output_filename_suffix="base",
+                output_filename_suffix="ALL",
             )
-        )
-        # -configs
-        for buildConfig in build_configs:
+            generated.append(all_filename)
+            generated_ALL.append(all_filename)
+
+            # -base
             generated.append(
                 generate_from_template_single_config_generator_all(
-                    {**subs, "buildConfig": buildConfig},
-                    template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template",
+                    {**subs},
+                    template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-base.json.template",
                     output_dir=OUTPUT_DIR,
-                    output_filename_suffix=buildConfig.lower(),
+                    output_filename_suffix="base",
                 )
             )
+            # -configs
+            for buildConfig in build_configs:
+                generated.append(
+                    generate_from_template_single_config_generator_all(
+                        {**subs, "buildConfig": buildConfig},
+                        template_path=TEMPLATE_FOLDER_PATH_ / "cs-multi-config-generator-config.json.template",
+                        output_dir=OUTPUT_DIR,
+                        output_filename_suffix=buildConfig.lower(),
+                    )
+                )
+        else:
+            raise ValueError(f"unsupported GeneratorType {generator_type.value}")
 
     # generate a sigle presets that includes all the *-ALL presets
 

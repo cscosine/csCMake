@@ -13,10 +13,6 @@
         "csv1-windows-v10-x64-generic-msvc-default-msvc2022-ALL.json",
         "csv1-windows-v10-x64-generic-msvc-default-msvc2026-ALL.json",
         "csv1-windows-v10-x64-generic-msvcclang-default-msvc2022-ALL.json",
-        "csv1-windows-v10-x64-generic-msvcclang-default-msvc2026-ALL.json",
-        "csv1-windows-v11-x64-generic-msvc-default-msvc2022-ALL.json",
-        "csv1-windows-v11-x64-generic-msvc-default-msvc2026-ALL.json",
-        "csv1-windows-v11-x64-generic-msvcclang-default-msvc2022-ALL.json",
-        "csv1-windows-v11-x64-generic-msvcclang-default-msvc2026-ALL.json"
+        "csv1-windows-v10-x64-generic-msvcclang-default-msvc2026-ALL.json"
     ]
 }
