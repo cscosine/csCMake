@@ -23,7 +23,7 @@ function(cs_extract_unique_folders_list_from_file_list OUT_LIST)
 endfunction()
 
 function(cs_get_generate_folder_common OUTPUT_FOLDER)
-  set(FOLDER "${CMAKE_BINARY_DIR}/csCMakeGenerated/")
+  set(FOLDER "${CMAKE_BINARY_DIR}/gen/")
   set(${OUTPUT_FOLDER}
       "${FOLDER}"
       PARENT_SCOPE)
@@ -36,7 +36,7 @@ function(cs_get_generate_folder_config OUTPUT_FOLDER)
 
   if(GENERATOR_IS_MULTI_CONFIG)
     # if multi-generator, use a -CONFIG folder
-    set(FOLDER "${CMAKE_BINARY_DIR}/csCMakeGenerated-$<CONFIG>/")
+    set(FOLDER "${CMAKE_BINARY_DIR}/gen-$<CONFIG>/")
     set(${OUTPUT_FOLDER}
         "${FOLDER}"
         PARENT_SCOPE)

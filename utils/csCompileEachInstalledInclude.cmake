@@ -25,7 +25,7 @@ function(cs_compileEachInstalledInclude TARGET_NAME LINK_TARGET)
 
     # prepare the cpp file name
     set(OUTPUT_FILE
-        "${SPECIFIC_FOLDER}/singleHeaderCompile/${DESTINATION_FOLDER}/${FILE_WE}.cpp"
+        "${SPECIFIC_FOLDER}/shc/${DESTINATION_FOLDER}/${FILE_WE}.cpp"
     )
     # prepare the single file inclusion
     set(FILE_INCLUSION_STRING
