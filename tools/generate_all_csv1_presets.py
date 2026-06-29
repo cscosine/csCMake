@@ -6,8 +6,21 @@ import json
 import sys
 from pathlib import Path
 
-from csorchestrator.context.context_os_architecture_compiler_generator import cs_orchestrator_schema_version
-from csorchestrator.utils.presets.supported_variants import GeneratorType, get_supported_context_os_architecture_list
+from csorchestrator.domain.context.context_os_architecture_compiler_generator import CS_ORCHESTRATOR_SCHEMA_VERSION
+from csorchestrator.domain.context.context_shortened_str import (
+    CS_ORCHESTRATOR_SCHEMA_VERSION_SHORT,
+    short_architecture,
+    short_architecture_variant,
+    short_compiler_family,
+    short_compiler_version,
+    short_generator,
+    short_os_name,
+    short_os_version,
+)
+from csorchestrator.frontend.cscmake_presets.supported_variants import (
+    GeneratorType,
+    get_supported_context_os_architecture_list,
+)
 
 from cscmake.utils.generate_cs_preset_variants import (
     generate_from_template_single_config_generator_all,
@@ -29,13 +42,15 @@ def generate_all_csv1_presets() -> list[str]:
 
     build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
 
-    configs = get_supported_context_os_architecture_list()
+    configs = get_supported_context_os_architecture_list(
+        use_ninja_for_windows=False, use_ninja=True, use_ninjamulti=True
+    )
 
     for config in configs:
         generator_type = config.context_compiler_generator.build_generator.generator_type
         if generator_type == GeneratorType.SINGLE_CONFIG:
             subs = {
-                "csVersion": cs_orchestrator_schema_version,
+                "csVersion": CS_ORCHESTRATOR_SCHEMA_VERSION,
                 "host": config.context_os_architecture.os.value,
                 "osVersion": config.context_os_architecture.os_version,
                 "architecture": config.context_os_architecture.architecture.value,
@@ -43,6 +58,22 @@ def generate_all_csv1_presets() -> list[str]:
                 "generator": config.context_compiler_generator.build_generator.generator.value,
                 "compiler": config.context_compiler_generator.compiler_family.value,
                 "compiler_version": config.context_compiler_generator.compiler_version,
+                # shortened values
+                "csVersion_short": CS_ORCHESTRATOR_SCHEMA_VERSION_SHORT,
+                "host_short": short_os_name(config.context_os_architecture.os),
+                "osVersion_short": short_os_version(
+                    config.context_os_architecture.os, config.context_os_architecture.os_version
+                ),
+                "architecture_short": short_architecture(config.context_os_architecture.architecture),
+                "architectureVariant_short": short_architecture_variant(
+                    config.context_os_architecture.architecture, config.context_os_architecture.architecture_variant
+                ),
+                "generator_short": short_generator(config.context_compiler_generator.build_generator.generator),
+                "compiler_short": short_compiler_family(config.context_compiler_generator.compiler_family),
+                "compiler_version_short": short_compiler_version(
+                    config.context_compiler_generator.compiler_family,
+                    config.context_compiler_generator.compiler_version,
+                ),
             }
             # -ALL
             all_filename = generate_from_template_single_config_generator_all(
@@ -75,7 +106,7 @@ def generate_all_csv1_presets() -> list[str]:
                 )
         elif generator_type == GeneratorType.MULTI_CONFIG:
             subs = {
-                "csVersion": cs_orchestrator_schema_version,
+                "csVersion": CS_ORCHESTRATOR_SCHEMA_VERSION,
                 "host": config.context_os_architecture.os.value,
                 "osVersion": config.context_os_architecture.os_version,
                 "architecture": config.context_os_architecture.architecture.value,
@@ -83,6 +114,22 @@ def generate_all_csv1_presets() -> list[str]:
                 "generator": config.context_compiler_generator.build_generator.generator.value,
                 "compiler": config.context_compiler_generator.compiler_family.value,
                 "compiler_version": config.context_compiler_generator.compiler_version,
+                # shortened values
+                "csVersion_short": CS_ORCHESTRATOR_SCHEMA_VERSION_SHORT,
+                "host_short": short_os_name(config.context_os_architecture.os),
+                "osVersion_short": short_os_version(
+                    config.context_os_architecture.os, config.context_os_architecture.os_version
+                ),
+                "architecture_short": short_architecture(config.context_os_architecture.architecture),
+                "architectureVariant_short": short_architecture_variant(
+                    config.context_os_architecture.architecture, config.context_os_architecture.architecture_variant
+                ),
+                "generator_short": short_generator(config.context_compiler_generator.build_generator.generator),
+                "compiler_short": short_compiler_family(config.context_compiler_generator.compiler_family),
+                "compiler_version_short": short_compiler_version(
+                    config.context_compiler_generator.compiler_family,
+                    config.context_compiler_generator.compiler_version,
+                ),
             }
             # -ALL
             all_filename = generate_from_template_single_config_generator_all(

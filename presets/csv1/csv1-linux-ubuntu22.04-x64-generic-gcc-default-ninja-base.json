@@ -24,7 +24,8 @@
                 "cs-compiler-linux-gcc-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja"
+                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja",
+                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu22.04x64ggdn"
             }
         }
     ]

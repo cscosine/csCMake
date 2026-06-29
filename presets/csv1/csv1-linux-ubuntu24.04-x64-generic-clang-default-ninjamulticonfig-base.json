@@ -21,7 +21,8 @@
             ],
             "environment": {
                 "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-x64-generic-clang-default-ninjamulticonfig"
+                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-x64-generic-clang-default-ninjamulticonfig",
+                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu24.04x64gcdnm"
             }
         }
     ]

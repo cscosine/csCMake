@@ -16,6 +16,15 @@ REQUIRED_SUBSTITUTIONS = [
     "compiler",
     "compiler_version",
     "generator",
+    # short
+    "csVersion_short",
+    "host_short",
+    "osVersion_short",
+    "architecture_short",
+    "architectureVariant_short",
+    "compiler_short",
+    "compiler_version_short",
+    "generator_short",
 ]
 
 
