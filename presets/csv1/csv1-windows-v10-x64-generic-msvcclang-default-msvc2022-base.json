@@ -14,6 +14,7 @@
             "description": "Configure preset for windows v10 x64 generic msvcclang-default msvc2022",
             "inherits": [
                 "cscmake-project-setup",
+                "cscmake-project-setup-windows-v10-x64-generic-msvcclang-default-msvc2022",
                 "cs-host-windows",
                 "cs-generator-msvc2022",
                 "cs-generator-msvc2022-architecture-x64",

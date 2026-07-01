@@ -18,6 +18,7 @@
             "description": "Configure preset for linux ubuntu22.04 x64 generic clang-default ninja Base",
             "inherits": [
                 "cscmake-project-setup",
+                "cscmake-project-setup-linux-ubuntu22.04-x64-generic-clang-default-ninja",
                 "cs-host-linux",
                 "cs-generator-ninja",
                 "cs-generator-ninja-architecture-x64",
