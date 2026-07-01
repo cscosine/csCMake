@@ -3,7 +3,20 @@ if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
   echo "Do not source this script. Run: ./setup.sh"
   return 1
 fi
-python3 -m venv .venv
+
+PYTHON="${1:-python3}"
+
+echo "Using Python: ${PYTHON}"
+
+# Check Python version >= 3.11
+if ! ${PYTHON} -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
+  echo "Error: Python 3.11 or newer is required."
+  echo "Found:"
+  ${PYTHON} --version
+  exit 1
+fi
+
+${PYTHON} -m venv .venv
 
 source .venv/bin/activate
 
