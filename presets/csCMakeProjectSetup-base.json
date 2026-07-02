@@ -9,7 +9,7 @@
             "binaryDir": "${sourceParentDir}/build/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}/$env{CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
             "installDir": "${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}",
             "cacheVariables": {
-                "CMAKE_PREFIX_PATH": "${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR};${sourceParentDir}/libs/$env{CS_CMAKE_CSV1_SUB_DIR}",
+                "CMAKE_PREFIX_PATH": "$env{CS_CMAKE_PREFIX_PATH_PREFIX};${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR};${sourceParentDir}/libs/$env{CS_CMAKE_CSV1_SUB_DIR};$env{CS_CMAKE_PREFIX_PATH_SUFFIX}",
                 "CMAKE_MODULE_PATH": "$env{CS_CMAKE_ROOT}"
             },
             "environment": {
