@@ -12,21 +12,21 @@
     ],
     "configurePresets": [
         {
-            "name": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja-base",
+            "name": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja-base",
             "hidden": true,
-            "displayName": "Configure linux ubuntu22.04 x64 generic gcc-default ninja Base",
-            "description": "Configure preset for linux ubuntu22.04 x64 generic gcc-default ninja Base",
+            "displayName": "Configure linux ubuntu24.04 arm64 generic clang-default ninja Base",
+            "description": "Configure preset for linux ubuntu24.04 arm64 generic clang-default ninja Base",
             "inherits": [
                 "cscmake-project-setup",
-                "cscmake-project-setup-linux-ubuntu22.04-x64-generic-gcc-default-ninja",
+                "cscmake-project-setup-linux-ubuntu24.04-arm64-generic-clang-default-ninja",
                 "cs-host-linux",
                 "cs-generator-ninja",
-                "cs-generator-ninja-architecture-x64",
-                "cs-compiler-linux-gcc-default"
+                "cs-generator-ninja-architecture-arm64",
+                "cs-compiler-linux-clang-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu22.04x64ggdn"
+                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja",
+                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu24.04a64gcdn"
             }
         }
     ]

@@ -14,25 +14,25 @@
             "$comment": "overriding the binaryDir to use a shorter path for the build directory, to avoid issues with long paths on Windows"
         },
         {
-            "name": "cscmake-project-setup-linux-ubuntu22.04-x64-generic-clang-default-ninja"
+            "name": "cscmake-project-setup-linux-ubuntu22.04-arm64-generic-clang-default-ninja"
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu22.04-x64-generic-clang-default-ninjamulticonfig"
         },
         {
-            "name": "cscmake-project-setup-linux-ubuntu22.04-x64-generic-gcc-default-ninja"
+            "name": "cscmake-project-setup-linux-ubuntu22.04-arm64-generic-gcc-default-ninja"
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu22.04-x64-generic-gcc-default-ninjamulticonfig"
         },
         {
-            "name": "cscmake-project-setup-linux-ubuntu24.04-x64-generic-clang-default-ninja"
+            "name": "cscmake-project-setup-linux-ubuntu24.04-arm64-generic-clang-default-ninja"
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu24.04-x64-generic-clang-default-ninjamulticonfig"
         },
         {
-            "name": "cscmake-project-setup-linux-ubuntu24.04-x64-generic-gcc-default-ninja"
+            "name": "cscmake-project-setup-linux-ubuntu24.04-arm64-generic-gcc-default-ninja"
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig"
