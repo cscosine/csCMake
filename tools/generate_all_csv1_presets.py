@@ -43,7 +43,10 @@ def generate_all_csv1_presets() -> list[str]:
     build_configs = ["debug", "release", "paranoid", "relWithDebInfo"]
 
     configs = get_supported_context_os_architecture_list(
-        use_ninja_for_windows=False, use_ninja=True, use_ninjamulti=True
+        use_ninja_for_windows=False,
+        use_ninja=True,
+        use_ninjamulti=True,
+        generate_all_combinations=True,
     )
 
     for config in configs:
