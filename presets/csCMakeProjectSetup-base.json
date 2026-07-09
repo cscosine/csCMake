@@ -6,14 +6,15 @@
             "displayName": "csCMake Project Setup",
             "description": "A preset to set up environment variables for csCMake project presets",
             "hidden": true,
-            "binaryDir": "${sourceParentDir}/build/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}/$env{CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
-            "installDir": "${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}",
+            "binaryDir": "$env{WORKSPACE_ROOT}/build/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}/$env{CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
+            "installDir": "$env{WORKSPACE_ROOT}/install/$env{CS_CMAKE_CSV1_SUB_DIR}/${sourceDirName}",
             "cacheVariables": {
-                "CMAKE_PREFIX_PATH": "$env{CS_CMAKE_PREFIX_PATH_PREFIX};${sourceParentDir}/install/$env{CS_CMAKE_CSV1_SUB_DIR};${sourceParentDir}/libs/$env{CS_CMAKE_CSV1_SUB_DIR};$env{CS_CMAKE_PREFIX_PATH_SUFFIX}",
+                "CMAKE_PREFIX_PATH": "$env{CS_CMAKE_PREFIX_PATH_PREFIX};$env{WORKSPACE_ROOT}/install/$env{CS_CMAKE_CSV1_SUB_DIR};$env{WORKSPACE_ROOT}/libs/$env{CS_CMAKE_CSV1_SUB_DIR};$env{CS_CMAKE_PREFIX_PATH_SUFFIX}",
                 "CMAKE_MODULE_PATH": "$env{CS_CMAKE_ROOT}"
             },
             "environment": {
-                "CS_CMAKE_ROOT": "${sourceParentDir}/csCMake"
+                "WORKSPACE_ROOT": "${sourceParentDir}",
+                "CS_CMAKE_ROOT": "$env{WORKSPACE_ROOT}/csCMake"
             }
         }
     ]
