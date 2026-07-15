@@ -1,7 +1,7 @@
 {
     "version": 10,
     "include": [
-        "csCMakeProjectSetup-base.json"
+        "csCMakeProjectSetup-base-standalone.json"
     ],
     "configurePresets": [
         {
@@ -9,11 +9,7 @@
             "displayName": "csCMake Project Setup",
             "description": "A preset to set up environment variables for csCMake project presets",
             "inherits": "cscmake-project-setup-base",
-            "hidden": true,
-            "environment": {
-                "WORKSPACE_ROOT": "${sourceDir}/workspace",
-                "CS_CMAKE_ROOT": "$env{WORKSPACE_ROOT}/csCMake"
-            }
+            "hidden": true
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu22.04-x64-generic-clang-default-ninja"
