@@ -1,0 +1,6 @@
+pytest==9.0
+pytest-cov==7.0
+mypy==1.0
+ruff==0.4
+pre-commit==4.0
+import-linter==2.0

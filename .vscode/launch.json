@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "\u25b6 Debug all tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "-s"
+      ],
+      "justMyCode": false
+    },
+    {
+      "name": "\ud83d\udcc1 tests/cscmake/utils tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/cscmake/utils"
+      ],
+      "justMyCode": false
+    },
+    {
+      "name": "\ud83d\udcc1 tests/cscmake/presets tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/cscmake/presets"
+      ],
+      "justMyCode": false
+    }
+  ]
+}
