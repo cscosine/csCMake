@@ -18,7 +18,7 @@ def test_matrix_has_one_entry_per_registry_variant() -> None:
     ]
 
     assert [e["variant"] for e in entries] == variants
-    assert len(entries) == 34
+    assert len(entries) == 42
     assert all(e["runner"] and e["generator_type"] in ("singleconfig", "multiconfig") for e in entries)
 
 
@@ -33,6 +33,8 @@ def test_matrix_has_one_entry_per_registry_variant() -> None:
         ("csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninjamulticonfig", "ubuntu-26.04-arm"),
         ("csv1-windows-v10-x64-generic-msvc-default-msvc2022", "windows-2022"),
         ("csv1-windows-v10-x64-generic-msvcclang-default-msvc2026", "windows-2025-vs2026"),
+        ("csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja", "windows-2022"),
+        ("csv1-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninjamulticonfig", "windows-2025-vs2026"),
         ("csv1-macos-macos15-arm64-generic-appleclang-default-ninja", "macos-15"),
         ("csv1-macos-macos26-arm64-generic-appleclang-default-xcode", "macos-26"),
     ],
@@ -56,3 +58,11 @@ def test_main_writes_github_output(
     key, value = out.read_text(encoding="utf-8").strip().split("=", 1)
     assert key == "matrix"
     assert json.loads(value) == matrix() == json.loads(capsys.readouterr().out)
+
+
+def test_msvc_dev_env_only_for_ninja_on_windows() -> None:
+    entries = {e["variant"]: e for e in matrix()["include"]}
+
+    assert entries["csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja"]["msvc_dev_env"] == "true"
+    assert entries["csv1-windows-v10-x64-generic-msvc-default-msvc2022"]["msvc_dev_env"] == "false"
+    assert entries["csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja"]["msvc_dev_env"] == "false"

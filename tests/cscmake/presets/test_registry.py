@@ -22,7 +22,7 @@ def test_default_matrix_matches_committed_presets() -> None:
     # filter by name, not glob("*-ALL.json"): globbing is case-insensitive on Windows (matches cs-presets-all.json)
     committed = {p.name.removesuffix("-ALL.json") for p in OUTPUT_DIR.glob("*.json") if p.name.endswith("-ALL.json")}
     assert ids == committed
-    assert len(ids) == 34
+    assert len(ids) == 42
 
 
 def test_committed_presets_are_up_to_date() -> None:
@@ -65,3 +65,29 @@ def test_macos_without_ninja_has_only_xcode() -> None:
         if c.context_os_architecture.os == OS.MACOS
     ]
     assert {c.context_compiler_generator.build_generator.generator for c in macos} == {Generator.XCODE}
+
+
+def test_windows_variants_visual_studio_and_ninja() -> None:
+    windows = {
+        create_context_os_architecture_compiler_generator_string(c)
+        for c in get_supported_context_os_architecture_list()
+        if c.context_os_architecture.os == OS.WINDOWS
+    }
+    ninja = {
+        f"csv1-windows-v10-x64-generic-{compiler}-{version}-{generator}"
+        for compiler in ("msvc", "msvcclang")
+        for version in ("msvc_2022_17", "msvc_2026_18")
+        for generator in ("ninja", "ninjamulticonfig")
+    }
+    visual_studio = {
+        f"csv1-windows-v10-x64-generic-{compiler}-default-{generator}"
+        for compiler in ("msvc", "msvcclang")
+        for generator in ("msvc2022", "msvc2026")
+    }
+    assert windows == ninja | visual_studio
+    without_ninja = {
+        create_context_os_architecture_compiler_generator_string(c)
+        for c in get_supported_context_os_architecture_list(use_ninja_for_windows=False)
+        if c.context_os_architecture.os == OS.WINDOWS
+    }
+    assert without_ninja == visual_studio

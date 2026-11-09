@@ -109,10 +109,34 @@
             "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-default-msvc2026"
         },
         {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-msvc_2022_17-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-msvc_2026_18-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-msvc_2022_17-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-msvc_2026_18-ninjamulticonfig"
+        },
+        {
             "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-default-msvc2022"
         },
         {
             "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-default-msvc2026"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-msvc_2022_17-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-msvc_2022_17-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninjamulticonfig"
         }
     ]
 }

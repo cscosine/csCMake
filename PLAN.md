@@ -528,3 +528,22 @@ variables, properties, preset environment variables, default targets) guides the
   each and a link between them, installed into one prefix, consumed with `find_package(outer)` (inner found through
   `find_dependency`, only the components needed); a nested configuration missing from the build → error.
 - README: "Nested csCMake projects"; `MIGRATION.md`: namespaced global property names.
+
+### 2026-11-10 (Windows Ninja variants, user request during 3b step 5)
+- csorchestrator-managed projects build Windows with Ninja (csqt6 CI: `csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja`,
+  MSVC environment from `TheMrMilchmann/setup-msvc-dev@v4`), but csCMake generated no preset for it: the registry's
+  `use_ninja_for_windows` switched Windows to *either* Visual Studio *or* Ninja (default Visual Studio).
+- Registry: Windows variants = Visual Studio generators + (`use_ninja_for_windows`, default on) Ninja / Ninja
+  Multi-Config with an explicit MSVC version: msvc / msvcclang × 2022_17 / 2026_18 → 8 variants (42 total); short
+  compiler versions `22` / `26`. Generator: compiler version lowercase in preset names (as in the variant id, e.g.
+  `csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja`); existing presets unchanged (48 files added).
+- `presets/common/config-compilers.json`: `cs-compiler-windows-{msvc,msvcclang}-msvc_{2022_17,2026_18}`: `cl` /
+  `clang-cl`, toolset `v143` / `v145` and architecture `x64` with `"strategy": "external"` (IDEs set up the developer
+  environment, plain `cmake` expects it).
+- CI: `ci_matrix.py` runner by MSVC version + `msvc_dev_env` matrix field; `smoke.yml` runs `setup-msvc-dev@v4` for
+  those jobs. Not run locally (Linux host): the GitHub smoke run is the first real test (to check: clang-cl on PATH
+  in the developer environment, `v145` toolset name for VS 2026).
+- Alignment note: csorchestrator's own registry copy still has the exclusive `use_ninja_for_windows`.
+- Nested projects in the smoke tests (user question): the configure tests cover csCMake's logic; a compiled nested
+  smoke project would add real builds on every generator (Visual Studio, Xcode), shared libraries and the debugger
+  environment across two projects → add with the remaining smoke gaps (shared libraries, ...), not required now.

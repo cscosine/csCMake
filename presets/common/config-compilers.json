@@ -36,6 +36,82 @@
       "toolset": "ClangCL"
     },
     {
+      "name": "cs-compiler-windows-msvc-msvc_2022_17",
+      "displayName": "Windows MSVC (cl), Visual Studio 2022",
+      "description": "MSVC (cl) of Visual Studio 2022, for the Ninja generators",
+      "hidden": true,
+      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "external"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "cs-compiler-windows-msvcclang-msvc_2022_17",
+      "displayName": "Windows MSVC LLVM (clang-cl), Visual Studio 2022",
+      "description": "MSVC LLVM (clang-cl) of Visual Studio 2022, for the Ninja generators",
+      "hidden": true,
+      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "external"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      }
+    },
+    {
+      "name": "cs-compiler-windows-msvc-msvc_2026_18",
+      "displayName": "Windows MSVC (cl), Visual Studio 2026",
+      "description": "MSVC (cl) of Visual Studio 2026, for the Ninja generators",
+      "hidden": true,
+      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "toolset": {
+        "value": "v145,host=x64",
+        "strategy": "external"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "cs-compiler-windows-msvcclang-msvc_2026_18",
+      "displayName": "Windows MSVC LLVM (clang-cl), Visual Studio 2026",
+      "description": "MSVC LLVM (clang-cl) of Visual Studio 2026, for the Ninja generators",
+      "hidden": true,
+      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "toolset": {
+        "value": "v145,host=x64",
+        "strategy": "external"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      }
+    },
+    {
       "name": "cs-compiler-macos-appleclang-default",
       "displayName": "MacOS Apple Clang Compiler",
       "description": "Use the Apple Clang compiler",

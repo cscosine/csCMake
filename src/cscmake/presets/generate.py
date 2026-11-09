@@ -80,7 +80,7 @@ def build_substitutions(ctx: ContextOsArchitectureCompilerGenerator) -> dict[str
         "architectureVariant": osa.architecture_variant,
         "generator": generator.value,
         "compiler": ccg.compiler_family.value,
-        "compiler_version": ccg.compiler_version,
+        "compiler_version": ccg.compiler_version.lower(),  # lowercase, as in the variant id
         # shortened values
         "csVersion_short": CS_SCHEMA_VERSION_SHORT,
         "host_short": short_os_name(osa.os),

@@ -112,7 +112,8 @@ project folder must be named like the package**.
 
 - **GitHub**: `.github/workflows/smoke.yml`. A first job turns the preset registry into the job matrix
   (`ci_matrix.py`: variant → runner, e.g. `ubuntu-24.04-arm`, `windows-2025-vs2026`, `macos-26`), then one job per
-  variant runs `run_smoke.py` (34 variants × 4 configurations: Linux, Windows, macOS arm64).
+  variant runs `run_smoke.py` (42 variants × 4 configurations: Linux, Windows with Visual Studio and Ninja
+  generators, macOS arm64). Windows Ninja jobs run in a Visual Studio developer environment (`setup-msvc-dev`).
 - **Locally**:
 
   ```bash

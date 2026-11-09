@@ -66,7 +66,9 @@ tests/                              # pytest suite
 - **Python ≥ 3.11** — only needed for the preset generator and development tooling
 - A C++ toolchain for the target platform:
   - Linux: GCC or Clang
-  - Windows: MSVC or MSVC + LLVM (ClangCL)
+  - Windows: MSVC or MSVC + LLVM (ClangCL), with the Visual Studio generators or Ninja / Ninja Multi-Config; the
+    Ninja presets are configured from a Visual Studio developer environment (Developer PowerShell, vcvars, or an IDE
+    using their external toolset and architecture)
   - macOS (Apple Silicon): Apple Clang, with Ninja, Ninja Multi-Config or Xcode
 
 ## Quick start

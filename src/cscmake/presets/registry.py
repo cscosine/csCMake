@@ -240,7 +240,7 @@ def get_supported_compilers_windows(use_ninja_for_windows: bool) -> list[tuple[C
 
 
 def get_supported_context_os_architecture_list(
-    use_ninja_for_windows: bool = False,
+    use_ninja_for_windows: bool = True,
     use_ninja: bool = True,
     use_ninjamulti: bool = True,
     generate_all_combinations: bool = True,
@@ -262,11 +262,13 @@ def get_supported_context_os_architecture_list(
 
     for os_version in get_supported_os_version_list(OS.WINDOWS):
         os_arch = ContextOsArchitecture(OS.WINDOWS, os_version, Architecture.X64, ARCHITECTURE_VARIANT_GENERIC)
-        generators = get_supported_generators_windows(use_ninja_for_windows, use_ninja, use_ninjamulti)
-        for compiler, version in get_supported_compilers_windows(use_ninja_for_windows):
-            for generator in generators:
-                ccg = ContextCompilerGenerator(compiler, version, generator)
-                ret.append(ContextOsArchitectureCompilerGenerator(os_arch, ccg))
+        # Visual Studio generators, then (use_ninja_for_windows) the Ninja ones with an explicit MSVC version
+        for ninja in [False, True] if use_ninja_for_windows else [False]:
+            generators = get_supported_generators_windows(ninja, use_ninja, use_ninjamulti)
+            for compiler, version in get_supported_compilers_windows(ninja):
+                for generator in generators:
+                    ccg = ContextCompilerGenerator(compiler, version, generator)
+                    ret.append(ContextOsArchitectureCompilerGenerator(os_arch, ccg))
 
     for os_version in get_supported_os_version_list(OS.MACOS):
         for arch in get_supported_architectures_macos():
@@ -367,5 +369,12 @@ def short_compiler_family(c: Compiler) -> str:
     return _SHORT_COMPILER[c]
 
 
+_SHORT_COMPILER_VERSION = {
+    COMPILER_VERSION_DEFAULT: "d",
+    COMPILER_VERSION_MSVC_2022_17: "22",
+    COMPILER_VERSION_MSVC_2026_18: "26",
+}
+
+
 def short_compiler_version(v: str) -> str:
-    return "d" if v == COMPILER_VERSION_DEFAULT else v
+    return _SHORT_COMPILER_VERSION.get(v, v)
