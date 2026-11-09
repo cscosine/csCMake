@@ -22,7 +22,7 @@ function(_cs_add_target_to_project_targets TARGET_NAME)
   get_target_property(TARGET_NAME_ALIAS ${TARGET_NAME} ALIASED_TARGET)
   if(NOT TARGET_NAME_ALIAS)
     # iterate on all specified configurations and add the target postfix
-    cs_get_specified_build_configurations(CONFIGS_LIST)
+    cs_get_build_configurations(CONFIGS_LIST)
     foreach(CONFIG ${CONFIGS_LIST})
       string(TOUPPER "${CONFIG}" CONFIG)
 
@@ -60,7 +60,7 @@ function(cs_finalize_target TARGET_NAME)
 endfunction()
 
 # return all targets added in csProjectTargets
-function(cs_get_all_targets OUTPUT_VARIABLE_NAME)
+function(cs_get_project_targets OUTPUT_VARIABLE_NAME)
   get_property(LIST_VALUES GLOBAL PROPERTY csProjectTargets)
   if(LIST_VALUES)
     # if exists
@@ -76,13 +76,13 @@ function(cs_get_all_targets OUTPUT_VARIABLE_NAME)
 endfunction()
 
 # Print (debug) the targets registered in the csProjectTargets global property.
-function(cs_print_all_target)
+function(cs_print_project_targets)
   set(TARGETS "")
-  cs_get_all_targets(TARGETS)
+  cs_get_project_targets(TARGETS)
   list(LENGTH TARGETS N)
   if(N GREATER 0)
-    cs_debug_message("cs_print_all_target ${TARGETS}")
+    cs_debug_message("cs_print_project_targets ${TARGETS}")
   else()
-    cs_debug_message("cs_print_all_target empty")
+    cs_debug_message("cs_print_project_targets empty")
   endif()
 endfunction()

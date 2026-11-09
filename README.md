@@ -135,9 +135,9 @@ cs_target_link_libraries(mylib
 )
 
 # optional helpers
-csUseOpenMPOnTarget(mylib PUBLIC)
-cs_exec_clang_tidy(mylib)                     # clang-tidy as a build step (Linux/Clang)
-cs_compileEachInstalledInclude(mylib mylib)   # compile every installed header standalone
+cs_target_use_openmp(mylib PUBLIC)
+cs_target_enable_clang_tidy(mylib)                     # clang-tidy as a build step (Linux/Clang)
+cs_target_check_installed_headers(mylib mylib)   # compile every installed header standalone
 
 # export the target within the given components; pass DEFAULT to include it in
 # the default component list

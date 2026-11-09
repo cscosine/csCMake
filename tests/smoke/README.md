@@ -12,7 +12,7 @@ install folder):
 
 | Project | Role | What it covers |
 |---|---|---|
-| `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_compileEachInstalledInclude` with the strict options |
+| `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with the strict options |
 | `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default targets (`_csCMakeBaseInclude`, `_csCMakeCompileOptionsDefault`) linked |
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); `csCMakeProjectSetup-shortBuildPath.json` (the others use `-default`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
@@ -45,7 +45,7 @@ flowchart BT
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
             text["csSmokeBase::text<br/>STATIC, Text.hpp/.cpp"]
             textTest["textTest<br/>(ctest)"]
-            shc["core_Core<br/>(cs_compileEachInstalledInclude)"]
+            shc["core_Core<br/>(cs_target_check_installed_headers)"]
         end
     end
     root --> common

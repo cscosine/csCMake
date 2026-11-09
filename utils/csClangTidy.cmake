@@ -9,7 +9,7 @@ if(UNIX)
 endif()
 
 # Run clang-tidy (all checks, warnings as errors) while compiling TARGET_NAME. Only active with Clang on Linux.
-function(cs_exec_clang_tidy TARGET_NAME)
+function(cs_target_enable_clang_tidy TARGET_NAME)
   # Apply to a specific target
   set_target_properties(
     ${TARGET_NAME}

@@ -18,22 +18,22 @@ include(utils/csClangTidy)
 include(utils/csOpenMP)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
-function(cs_set_base_path PATH)
+function(_cs_set_root_dir PATH)
   get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
   if(VAL)
     if(NOT VAL STREQUAL ${PATH})
       message(
         FATAL_ERROR
-          "[cs_set_base_path] csCMake has been included multiple times with different base paths. Check your configuration."
+          "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your configuration."
       )
     endif()
   endif()
   set_property(GLOBAL PROPERTY csCMakeBasePath ${PATH})
 endfunction()
-cs_set_base_path(${CMAKE_CURRENT_LIST_DIR})
+_cs_set_root_dir(${CMAKE_CURRENT_LIST_DIR})
 
 # get the stored base path
-function(cs_get_base_path PATH)
+function(_cs_get_root_dir PATH)
   get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
   set(${PATH}
       ${VAL}
@@ -87,7 +87,7 @@ macro(cs_initialize_project PROJECT_NAME)
 
   # initialize the default configuration list variables
   _cs_process_build_configurations_variables()
-  cs_get_build_configurations_variables(TEMP_VAR_LIST)
+  _cs_get_per_config_variables(TEMP_VAR_LIST)
   cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${TEMP_VAR_LIST}")
 
   # parse the additional configurations
@@ -102,7 +102,7 @@ macro(cs_initialize_project PROJECT_NAME)
   _cs_process_configurations()
 
   # print information on the csCMake configuration
-  cs_print_state_info("initial state")
+  cs_print_state("initial state")
 
   # join CMAKE_PREFIX_PATH
   set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
@@ -126,13 +126,13 @@ function(cs_finalize_project EXPORT_NAMESPACE)
   # TODO(sc) add a parameter to avoid verbose printing
 
   # print target and export info (in debug)
-  cs_print_all_target()
-  cs_print_exported_list_details()
+  cs_print_project_targets()
+  cs_print_components()
 
-  cs_print_state_info("final state")
+  cs_print_state("final state")
 
   set(TARGETS "")
-  cs_get_all_targets(TARGETS)
+  cs_get_project_targets(TARGETS)
 
   # finalize path recursion for dll dependencies
   _cs_recursive_analyze_targets_finalize("${TARGETS}")

@@ -13,7 +13,7 @@ function(_cs_path_list_normalize INPUT_LIST_NAME)
 endfunction()
 
 # Return in OUT_LIST the unique parent folders of the files passed as extra arguments.
-function(cs_extract_unique_folders_list_from_file_list OUT_LIST)
+function(_cs_unique_parent_dirs OUT_LIST)
   set(OUT_TMP "")
   foreach(FILE_PATH ${ARGN})
     get_filename_component(DIR_PATH "${FILE_PATH}" DIRECTORY)
@@ -25,7 +25,7 @@ function(cs_extract_unique_folders_list_from_file_list OUT_LIST)
 endfunction()
 
 # Return in OUTPUT_FOLDER the folder for generated files shared by all configurations (<build>/gen/).
-function(cs_get_generate_folder_common OUTPUT_FOLDER)
+function(cs_get_generated_dir OUTPUT_FOLDER)
   set(FOLDER "${CMAKE_BINARY_DIR}/gen/")
   set(${OUTPUT_FOLDER}
       "${FOLDER}"
@@ -34,7 +34,7 @@ endfunction()
 
 # Return in OUTPUT_FOLDER the folder for configuration-specific generated files: <build>/gen-$<CONFIG>/ with multi-
 # config generators, the common folder otherwise.
-function(cs_get_generate_folder_config OUTPUT_FOLDER)
+function(cs_get_generated_config_dir OUTPUT_FOLDER)
 
   get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
@@ -46,7 +46,7 @@ function(cs_get_generate_folder_config OUTPUT_FOLDER)
         PARENT_SCOPE)
   else()
     # if not multigenerator, just get the common folder
-    cs_get_generate_folder_common(FOLDER)
+    cs_get_generated_dir(FOLDER)
     set(${OUTPUT_FOLDER}
         "${FOLDER}"
         PARENT_SCOPE)

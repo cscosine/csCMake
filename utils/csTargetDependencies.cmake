@@ -70,7 +70,7 @@ function(_cs_recursive_analyze_target TARGET_NAME)
            OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "SHARED_LIBRARY")
            OR (${TARGET_TO_ANALYZE_TYPE} STREQUAL "INTERFACE_LIBRARY"))
           cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is imported, populate its library path")
-          _cspopulatetargetdependencies(${TARGET_NAME} ${TARGET_TO_ANALYZE})
+          _cs_add_imported_target_locations(${TARGET_NAME} ${TARGET_TO_ANALYZE})
         else()
 
         endif()
@@ -96,21 +96,21 @@ function(_cs_recursive_analyze_target TARGET_NAME)
   # print for debug purposes
 
   # per config
-  cs_get_specified_build_configurations(CONFIGS_LIST)
+  cs_get_build_configurations(CONFIGS_LIST)
   foreach(CONFIG ${CONFIGS_LIST})
 
-    cs_get_target_dependencies_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
+    _cs_get_target_direct_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
     cs_debug_message(
       "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependencies${CONFIG}: ${TARGET_TO_ANALYZE_DEPENDENCIES}")
 
   endforeach()
 
-  cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS)
+  _cs_get_target_linked_project_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS)
   cs_debug_message(
     "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS}"
   )
 
-  cs_get_target_dependencies_not_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS)
+  _cs_get_target_linked_non_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS)
   cs_debug_message(
     "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS}"
   )
@@ -120,7 +120,7 @@ function(_cs_recursive_analyze_target TARGET_NAME)
 endfunction()
 
 # return csTargetDependencies${CONFIG} for target
-function(cs_get_target_dependencies_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
+function(_cs_get_target_direct_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
   get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG})
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
@@ -134,7 +134,7 @@ function(cs_get_target_dependencies_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE
 endfunction()
 
 # return csTargetDependenciesNotImportedTargets for target
-function(cs_get_target_dependencies_not_imported_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
+function(_cs_get_target_linked_project_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
   get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesNotImportedTargets)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
@@ -148,7 +148,7 @@ function(cs_get_target_dependencies_not_imported_targets TARGET_NAME OUTPUT_VARI
 endfunction()
 
 # * csTargetDependenciesNonTargets
-function(cs_get_target_dependencies_not_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
+function(_cs_get_target_linked_non_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
   get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesNonTargets)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
@@ -162,7 +162,7 @@ function(cs_get_target_dependencies_not_targets TARGET_NAME OUTPUT_VARIABLE_NAME
 endfunction()
 
 # * csTargetDependencies, created in _cs_recursive_analyze_targets_finalize
-function(cs_get_target_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
+function(cs_get_target_project_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
   get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
@@ -232,9 +232,9 @@ function(_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   # print out final dependency list
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] concluded, print final state")
   foreach(TARGET_NAME IN ITEMS ${TARGETS_LIST_ORIGINAL})
-    cs_get_specified_build_configurations(CONFIGS_LIST)
+    cs_get_build_configurations(CONFIGS_LIST)
     foreach(CONFIG ${CONFIGS_LIST})
-      cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
+      cs_get_target_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
       cs_debug_message(
         "[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized : ${TARGET_TO_ANALYZE_DEPENDENCIES}"
       )
@@ -254,12 +254,12 @@ function(_cs_target_try_to_finalize TARGET_NAME)
     _cs_target_is_fully_finalized(${DEP_TARGET} DEP_TARGET_FINALIZED)
     if(DEP_TARGET_FINALIZED)
       # merge the two finalized list of target and dep target
-      cs_get_specified_build_configurations(CONFIGS_LIST)
+      cs_get_build_configurations(CONFIGS_LIST)
       foreach(CONFIG ${CONFIGS_LIST})
 
-        cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_LIB)
+        cs_get_target_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIB)
 
-        cs_get_target_dependencies_libraries_finalized(${DEP_TARGET} ${CONFIG} TARGET_LIB_DEP)
+        cs_get_target_runtime_libraries(${DEP_TARGET} ${CONFIG} TARGET_LIB_DEP)
 
         _cs_list_add_list_unique_values(TARGET_LIB "${TARGET_LIB_DEP}")
 
@@ -299,21 +299,21 @@ function(_cs_prepare_finalize_target TARGET_NAME)
   cs_debug_message("[_cs_prepare_finalize_target] process target: ${TARGET_NAME}")
 
   # copy on Finalized
-  cs_get_specified_build_configurations(CONFIGS_LIST)
+  cs_get_build_configurations(CONFIGS_LIST)
   foreach(CONFIG ${CONFIGS_LIST})
 
-    cs_get_target_dependencies_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIBS)
+    _cs_get_target_direct_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIBS)
     set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies${CONFIG}Finalized "${TARGET_LIBS}")
     cs_debug_message(
       "[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized: ${TARGET_LIBS}")
   endforeach()
 
   # retrieve targets to analyze
-  cs_get_target_dependencies_not_imported_targets(${TARGET_NAME} TARGET_NOT_IMPORTED)
+  _cs_get_target_linked_project_targets(${TARGET_NAME} TARGET_NOT_IMPORTED)
   cs_debug_message(
     "[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_NOT_IMPORTED}")
 
-  cs_get_target_dependencies_not_targets(${TARGET_NAME} TARGET_NON_TARGETS)
+  _cs_get_target_linked_non_targets(${TARGET_NAME} TARGET_NON_TARGETS)
   cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_NON_TARGETS}")
 
   # join the two list
@@ -347,7 +347,7 @@ function(_cs_prepare_finalize_target TARGET_NAME)
 endfunction()
 
 # return csTargetDependencies${CONFIG} for target
-function(cs_get_target_dependencies_libraries_finalized TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
+function(cs_get_target_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
   get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
@@ -363,14 +363,14 @@ endfunction()
 # Add the existing IMPORTED_LOCATION_<CONFIG> files of the imported target TARGET_TO_ANALYZE to the
 # csTargetDependencies<CONFIG> properties of TARGET_NAME, falling back to IMPORTED_LOCATION when the per-configuration
 # location is missing.
-function(_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
-  cs_get_specified_build_configurations(CONFIGS_LIST)
+function(_cs_add_imported_target_locations TARGET_NAME TARGET_TO_ANALYZE)
+  cs_get_build_configurations(CONFIGS_LIST)
 
   # per config
   foreach(CONFIG ${CONFIGS_LIST})
     string(TOUPPER "${CONFIG}" CONFIG_UCASE)
     get_target_property(IMPORTED_LOCATION_${CONFIG_UCASE} ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_${CONFIG_UCASE})
-    _cscheckpathexistsandaddtotargetproperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
+    _cs_add_existing_path_to_target_property(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
                                              csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
   endforeach()
 
@@ -381,10 +381,10 @@ function(_csPopulateTargetDependencies TARGET_NAME TARGET_TO_ANALYZE)
     if(IMPORTED_LOCATION AND NOT IMPORTED_LOCATION_${CONFIG_UCASE})
       # if imported location and not specific config, use it
       cs_debug_message(
-        "[_csPopulateTargetDependencies] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_${CONFIG_UCASE}, use IMPORTED_LOCATION for it"
+        "[_cs_add_imported_target_locations] target ${TARGET_TO_ANALYZE} has IMPORTED_LOCATION=${IMPORTED_LOCATION} but no IMPORTED_LOCATION_${CONFIG_UCASE}, use IMPORTED_LOCATION for it"
       )
       set(IMPORTED_LOCATION_${CONFIG_UCASE} "${IMPORTED_LOCATION}")
-      _cscheckpathexistsandaddtotargetproperty(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
+      _cs_add_existing_path_to_target_property(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
                                                csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
     endif()
   endforeach()
@@ -393,7 +393,7 @@ endfunction()
 
 # Append PATH_VALUE to the TARGET_PROPERTY of TARGET_NAME if the file exists, otherwise skip it (TARGET_TO_ANALYZE is
 # used for the debug message).
-function(_csCheckPathExistsAndAddToTargetProperty PATH_VALUE TARGET_NAME TARGET_PROPERTY TARGET_TO_ANALYZE)
+function(_cs_add_existing_path_to_target_property PATH_VALUE TARGET_NAME TARGET_PROPERTY TARGET_TO_ANALYZE)
   if(PATH_VALUE)
     # check file exist
     if(EXISTS ${PATH_VALUE})
@@ -410,7 +410,7 @@ endfunction()
 # (INTERFACE_)LINK_LIBRARIES, the legacy LINK_INTERFACE_LIBRARIES, the imported link interfaces and the link depends,
 # including their per-configuration variants.
 function(_cs_get_all_linked_libs TARGET_TO_ANALYZE TARGET_TO_ANALYZE_LINKED_LIBS_OUT)
-  cs_get_specified_build_configurations(CONFIGS_LIST)
+  cs_get_build_configurations(CONFIGS_LIST)
 
   set(TARGET_TO_ANALYZE_LINKED_LIBS "")
 

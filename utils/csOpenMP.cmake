@@ -3,7 +3,7 @@ include(utils/csFindPackage)
 
 # Enable OpenMP on TARGET with the given VISIBILITY (PUBLIC, PRIVATE or INTERFACE): /openmp and vcomp for ClangCL on
 # Windows, find_package(OpenMP) otherwise (recorded as PUBLIC dependency for the installed config).
-function(csUseOpenMPOnTarget TARGET VISIBILITY)
+function(cs_target_use_openmp TARGET VISIBILITY)
   if(NOT TARGET ${TARGET})
     message(FATAL_ERROR "Target '${TARGET}' does not exist")
   endif()

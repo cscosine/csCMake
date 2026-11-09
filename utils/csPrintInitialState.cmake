@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 
 # Print (debug) the csCMake state, tagged with HEADER_MESSAGE: module and prefix paths, install prefix, configurations
 # and their variables.
-function(cs_print_state_info HEADER_MESSAGE)
+function(cs_print_state HEADER_MESSAGE)
   # cmake-lint: disable=W0106
   # (the "ENV{CMAKE_PREFIX_PATH}" label below is intentional text, not a broken variable reference)
   cs_debug_message("--- csCMake ${HEADER_MESSAGE} state ---")
@@ -20,7 +20,7 @@ function(cs_print_state_info HEADER_MESSAGE)
   cs_debug_message("  CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
   cs_debug_message("  DEBUG_CONFIGURATIONS = ${DEBUG_CONFIGURATIONS}")
 
-  cs_get_specified_build_configurations(LIST)
+  cs_get_build_configurations(LIST)
   cs_debug_message("  csCMakeConfigurationTypes ${LIST}")
 
   cs_print_all_configurations_variables("[${HEADER_MESSAGE} state]")

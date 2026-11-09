@@ -19,7 +19,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | Path | Role |
 |------|------|
 | `csCMake.cmake` | Main entry point. `include(csCMake)` from a consumer `CMakeLists.txt`. Defines `cs_initialize_project` / `cs_finalize_project`. |
-| `utils/csAddLibraryExecutable.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_all_targets`. |
+| `utils/csAddLibraryExecutable.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
 | `utils/csTargetSources.cmake` | `cs_target_sources` — sources + install-aware variants. |
 | `utils/csTargetLinkLibraries.cmake` | `cs_target_link_libraries` — scoped linking with dependency analysis. |
 | `utils/csFindPackage.cmake` | `cs_find_package` — PUBLIC/PRIVATE propagation for install. |

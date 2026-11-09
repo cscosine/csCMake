@@ -10,11 +10,11 @@ function(_cs_set_vs_debugger_env_variable TARGETS_LIST)
   foreach(TARGET_NAME IN ITEMS ${TARGETS_LIST})
 
     set(P_CUMULATED "")
-    cs_get_specified_build_configurations(CONFIGS_LIST)
+    cs_get_build_configurations(CONFIGS_LIST)
     foreach(CONFIG ${CONFIGS_LIST})
       string(TOUPPER "${CONFIG}" CONFIG_UCASE)
-      cs_get_target_dependencies_libraries_finalized(${TARGET_NAME} ${CONFIG} TARGET_${CONFIG_UCASE}_DLLS)
-      cs_extract_unique_folders_list_from_file_list(TARGET_${CONFIG_UCASE}_FOLDERS ${TARGET_${CONFIG_UCASE}_DLLS})
+      cs_get_target_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_${CONFIG_UCASE}_DLLS)
+      _cs_unique_parent_dirs(TARGET_${CONFIG_UCASE}_FOLDERS ${TARGET_${CONFIG_UCASE}_DLLS})
 
       cs_debug_message(
         "[_cs_set_vs_debugger_env_variable] target: ${TARGET_NAME} PATH ${CONFIG_UCASE} ${TARGET_${CONFIG_UCASE}_FOLDERS}"

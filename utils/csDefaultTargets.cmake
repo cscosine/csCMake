@@ -45,15 +45,15 @@ endfunction()
 # to propagate include directories to the root of the project
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(_csCMakeBaseInclude INTERFACE TARGET_NAME)
-  cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
+  cs_get_install_include_dir(INSTALL_FOLDER_EXPRESSION)
 
   # add include to root dir, with subdir $<CONFIG> in installation if multiple config, with single folder if individual
   target_include_directories(${TARGET_NAME} INTERFACE $<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
                                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
   # get the folder where files are generated
-  cs_get_generate_folder_common(COMMON_FOLDER)
-  cs_get_generate_folder_config(CONFIG_FOLDER)
+  cs_get_generated_dir(COMMON_FOLDER)
+  cs_get_generated_config_dir(CONFIG_FOLDER)
 
   target_include_directories(${TARGET_NAME} INTERFACE $<BUILD_INTERFACE:${COMMON_FOLDER}>
                                                       $<BUILD_INTERFACE:${CONFIG_FOLDER}>)
@@ -124,7 +124,7 @@ function(_cs_target_strict_compilation)
               /permissive-
               >)
 
-  csgetconfigurationwithstrictflags(CONFIGNAME)
+  cs_get_strict_build_configuration(CONFIGNAME)
   if(CONFIGNAME)
     # add sanitize options only for the specified configuration
     target_compile_options(

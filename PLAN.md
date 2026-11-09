@@ -92,6 +92,10 @@ variables, properties, preset environment variables, default targets) guides the
 - **Branching**: csCMake `feature/productize` (from `dev`), one commit per sub-phase, review stop after each. Test bed:
   csfoundation (`workspace/`: csCMake, csCore, csCamera, csLie, csVisOpenGL; standalone layout) on `feature/productize`
   in each repo. When validated: merge (no squash) into `dev`, then migrate the other projects.
+- **CI on feature branches**: `ci.yml` / `smoke.yml` also run on push to `feature/**` (added 2026-11-09: manual
+  dispatch is only offered for workflows present on the default branch `main`, which has none). **Remove the
+  `feature/**` trigger when `feature/productize` is merged into `dev`** (or make `dev` the default branch and rely on
+  `workflow_dispatch`).
 - **3a — Naming and API surface** (behaviour unchanged, smoke results identical):
   - API classification (details reviewed together): *user* (initialize/finalize, add_library/executable,
     target_sources/link_libraries, find_package, install_target, quality helpers, generate folders), *advanced*
@@ -161,6 +165,23 @@ variables, properties, preset environment variables, default targets) guides the
 - **3e — Doc checks**: `cscmake-check-docs` (`src/cscmake/devtools`) + pre-commit hook: every public `cs_*` documented
   (and no stale entries), every variable/property in the reference, links/anchors resolve, tutorial snippets equal
   the smoke files.
+- **3m — macOS** (early, right after 3a step 1, so the smoke tests find the macOS issues before 3b hardening and the
+  docs): the registry has stubs only (`OS.MACOS`, `Compiler.APPLE_CLANG` + short `ac`, presets `cs-host-macos`,
+  `cs-compiler-macos-appleclang-default`; `get_supported_os_version_list(OS.MACOS)` returns `[]`, "TODO add MACOS").
+  - registry (decided 2026-11-09): **arm64 only** (no Intel Macs sold since 2023, macOS 27 is Apple Silicon only;
+    x64 can be added later as extra variants); macOS versions = the two most recent GitHub arm64 images at
+    implementation time (probably `macos15`, `macos26`; prefix like `ubuntu`); Apple Clang `default`; **three
+    generators**: Ninja, Ninja Multi-Config and **Xcode** (new `Generator.XCODE`, multi-config, short form to define,
+    `cs-generator-xcode` preset) → 2 versions × 3 generators = 6 variants (26 smoke jobs); short forms
+    (`short_os_version`); new variant ids are added, existing ids/presets stay byte-identical; tests (incl.
+    `registry.py` coverage of the `MACOS` branches).
+  - presets: host/compiler/generator presets for macOS (check what `presets/common` already has), regenerate.
+  - CI: `ci_matrix.py` runner labels (e.g. `macos-15`, `macos-26`; check the runner-images list), Ninja on the macOS
+    images (install step if missing), Xcode selected by the image, smoke on all macOS variants.
+  - expected csCMake issues (fix in 3b, or here if they block): `csClangTidy.cmake` `FATAL_ERROR` at include on UNIX
+    without clang-tidy (macOS has none by default), `.dylib`/RPATH of installed shared libraries, install-time
+    paths, sanitizer flags of the strict config with Apple Clang; Xcode generator: per-configuration output folders
+    and postfixes of custom configurations (Paranoid), `$<CONFIG>` install include folders.
 - **3f — Validation** (final gate before `dev`): csfoundation migrated on `feature/productize` and green; merge to `dev`; migrate other projects
   (optional `cscmake-migrate` search/replace helper from the `MIGRATION.md` table, to decide).
 
@@ -180,7 +201,7 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`, `csUseOpenMPOnTarget`.
 - [ ] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups.
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
-- [ ] macOS (no variants in the registry yet).
+- [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
 
 ### cscmake ↔ csorchestrator alignment (future)
 - [ ] csorchestrator keeps its own copy of the supported matrix (`frontend/cscmake_presets/supported_variants.py` + `domain/context/*`); `src/cscmake/presets/registry.py` is the source of truth. Prevent silent drift **without a code dependency in either direction**: csCMake is checked out next to projects (never pip-installed) and must not be checked out automatically by csorchestrator.
@@ -292,3 +313,11 @@ variables, properties, preset environment variables, default targets) guides the
   `cs_find_package` (PRIVATE not; not verified before), cmake-lint of every installed Config; test that every
   project folder is run. `tests/smoke/README.md`: what is tested, Mermaid graphs
   (to be moved/linked into `docs/advanced/` in 3d).
+
+### 2026-11-09 (Phase 3a step 1 — function renames)
+- 37 functions renamed to `cs_snake_case` / `_cs_snake_case` (case-insensitive replacement: some calls were written in
+  lowercase), no aliases; `cs_target_*` for functions acting on a target; "export" → "component" in the
+  introspection and internal names; internal functions with public names moved to `_cs_`. Map applied to the CMake
+  sources, the smoke projects, README.md, the skill and the smoke README (not to PLAN.md history).
+- `MIGRATION.md` started (functions; variables, properties, default targets/namespace to come).
+- Local: `pytest --run-all` 49 passed (4 host variants).
