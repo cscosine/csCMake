@@ -88,7 +88,7 @@ PROJECTS = (
     ),
 )
 
-# default targets created by cs_initialize_project, installed in the <namespace>_cscmake_common component
+# default targets created by cs_initialize_project, installed in the cscmake_common component
 DEFAULT_TARGETS = (
     "cscmake_base_include",
     "cscmake_compile_options",
@@ -222,9 +222,7 @@ def check_installed_config_dependencies(workspace: Path, variant: str, project: 
 
 def check_installed_default_targets(workspace: Path, variant: str, project: Project) -> None:
     """The default targets are installed as ``<namespace>::cscmake_*``: the same names used in the build tree."""
-    targets_file = (
-        installed_config(workspace, variant, project).parent / "targets" / f"{project.name}_cscmake_commonTargets.cmake"
-    )
+    targets_file = installed_config(workspace, variant, project).parent / "targets" / "cscmake_commonTargets.cmake"
     if not targets_file.is_file():
         raise SmokeError(f"installed default targets not found: {targets_file}")
     found = set(_ADD_LIBRARY.findall(targets_file.read_text(encoding="utf-8")))

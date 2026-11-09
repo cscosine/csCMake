@@ -150,7 +150,7 @@ The default targets have the same name in the build tree and once installed:
 | `<project>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::cscmake_compile_options_strict` |
 | `<project>::<project>MSVCParallelCompile` | `<namespace>::<project>MSVCParallelCompile` | `<namespace>::cscmake_msvc_parallel_compile` |
 | `<project>::<project>StrictCompilation` | `<namespace>::<project>StrictCompilation` | `<namespace>::cscmake_strict_warnings` |
-| component `<project>_csCMakeCommon` | | component `<namespace>_cscmake_common` |
+| component `<project>_csCMakeCommon` | | component `cscmake_common` |
 
 `<project>` is the name of the top `project()`.
 
@@ -194,3 +194,15 @@ csCMake prints debug messages only with the option on. An imported library whose
 
 Headers keep their path relative to the folder of `cs_initialize_project`. Nothing to change for a project built on
 its own; a csCMake project added with `add_subdirectory` installs its headers relative to its own folder.
+
+### Installed package configuration (`<namespace>Config.cmake`)
+
+| Old | New |
+|---|---|
+| unknown component: `FATAL_ERROR` | `<namespace>_<component>_FOUND` FALSE; if required, `<namespace>_FOUND` FALSE with `<namespace>_NOT_FOUND_MESSAGE` (`find_package(... REQUIRED)` fails, `OPTIONAL_COMPONENTS` and `QUIET` work) |
+| no per-component result | `<namespace>_<component>_FOUND` for every requested component |
+| `<component>_DEPENDENT_EXPORTS` | `<namespace>_<component>_DEPENDENCIES` |
+| `<namespace>_BASE_DIR` | unchanged: the install prefix of the package |
+
+Action: none for `find_package` users; code reading `<component>_DEPENDENT_EXPORTS` uses
+`<namespace>_<component>_DEPENDENCIES`.

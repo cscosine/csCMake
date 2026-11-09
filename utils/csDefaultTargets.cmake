@@ -8,7 +8,7 @@ include(utils/csDebugMessage)
 # * <namespace>::cscmake_compile_options: default compile options (cscmake_msvc_parallel_compile)
 # * <namespace>::cscmake_compile_options_strict: the default ones plus cscmake_strict_warnings
 #
-# All of them are installed in the <namespace>_cscmake_common component (a default component).
+# All of them are installed in the cscmake_common component (a default component).
 function(_cs_add_default_targets)
 
   # create the base include, to be used in all project
@@ -193,15 +193,11 @@ function(_cs_target_create_default target_sub_name target_type target_name_out)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize a default target created with _cs_target_create_default: install it in the <namespace>_cscmake_common
-# component (a default component) and run cs_finalize_target on it.
+# Finalize a default target created with _cs_target_create_default: install it in the cscmake_common component (a
+# default component) and run cs_finalize_target on it.
 function(_cs_target_create_default_finalize target_sub_name)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
-  cs_get_namespace(namespace)
-
-  # the namespace prefix keeps the component name unique when a consumer loads several csCMake packages (the generated
-  # Config sets <component>_DEPENDENT_EXPORTS globally, see PLAN.md 3b)
-  cs_install_target(${target_name} ${namespace}_cscmake_common DEFAULT)
+  cs_install_target(${target_name} cscmake_common DEFAULT)
 
   cs_finalize_target(${target_name})
 

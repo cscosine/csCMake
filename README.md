@@ -187,7 +187,7 @@ cs_find_package(mylib PUBLIC Eigen3 REQUIRED)
 ### Default targets
 
 `cs_initialize_project` creates a few convenience targets, installed in the
-`<namespace>_cscmake_common` component. They have the same name in the build
+`cscmake_common` component. They have the same name in the build
 tree and once installed:
 
 - `<namespace>::cscmake_base_include` — includes the project root and the

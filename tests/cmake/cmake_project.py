@@ -70,3 +70,19 @@ def configure(
         check=False,
     )
     return Configured(result.returncode, result.stdout + result.stderr)
+
+
+def install(project_dir: Path, body: str, prefix: Path, files: dict[str, str] | None = None) -> Configured:
+    """Configure ``HEADER + body`` (``files`` too), build and install it into ``prefix``; return the first failure."""
+    configured = configure(project_dir, body, files, args=[f"-DCMAKE_INSTALL_PREFIX={prefix.as_posix()}"])
+    if configured.returncode != 0:
+        return configured
+    output = configured.output
+    for command in (["--build", "."], ["--install", "."]):
+        result = subprocess.run(
+            ["cmake", *command], cwd=project_dir / "build", capture_output=True, text=True, check=False
+        )
+        output += result.stdout + result.stderr
+        if result.returncode != 0:
+            return Configured(result.returncode, output)
+    return Configured(0, output)

@@ -326,51 +326,36 @@ function(_cs_finalize_install export_namespace)
                      "${${export_name}_DEPENDENT_EXPORTS_SORTED}")
   endforeach()
 
-  # write all ${${EXPORT_NAME}_DEPENDENT_EXPORTS} in the cmake config
+  # the components each component depends on: <namespace>_<component>_DEPENDENCIES in the Config
   set(injected_export_dependencies "")
   foreach(export_name ${exports})
-    string(APPEND injected_export_dependencies "set(${export_name}_DEPENDENT_EXPORTS "
+    string(APPEND injected_export_dependencies "set(${export_namespace}_${export_name}_DEPENDENCIES "
            "\"${${export_name}_DEPENDENT_EXPORTS_SORTED}\")\n")
   endforeach()
+  string(STRIP "${injected_export_dependencies}" injected_export_dependencies)
 
   # create a sanitized version of EXPORT_NAMESPACE
   string(REPLACE "-" "_" export_namespace_sanitized "${export_namespace}")
 
-  # generate the main cmake for finding this package
+  # the find_dependency() calls of each component (body of <namespace>_find_dependency_for_component in the Config)
   set(injected_find_packages_code "")
+  set(debug_message "${export_namespace_sanitized}_debug_message")
   foreach(export_name ${exports})
     cs_get_component_find_packages(${export_name} find_packages_list)
-
-    # create a sanitized version of EXPORT_NAME
-    string(REPLACE "-" "_" export_name_sanitized "${export_name}")
-
     if(find_packages_list)
-      set(find_done "${export_namespace_sanitized}Config_${export_name_sanitized}_FIND_DONE")
-      set(debug_message "${export_namespace_sanitized}_debug_message")
-      string(APPEND injected_find_packages_code "  if(NOT ${find_done})\n"
-             "    if(\"${export_name}\" STREQUAL \"\${component_name}\")\n")
-
+      string(APPEND injected_find_packages_code "if(\"\${component_name}\" STREQUAL \"${export_name}\")\n")
       foreach(find_args ${find_packages_list})
         string(APPEND injected_find_packages_code
                "      ${debug_message}(\"[${export_namespace}Config] find_dependency(${find_args})\")\n"
                "      find_dependency(${find_args})\n")
       endforeach()
-
-      string(
-        APPEND
-        injected_find_packages_code
-        "      SET(${find_done} True)\n"
-        "    endif()\n"
-        "  else()\n"
-        "   ${debug_message}(\"[${export_namespace}Config] find_dependency for ${export_name} already satisfied\")\n"
-        "  endif()\n")
+      string(APPEND injected_find_packages_code "    endif()\n    ")
     endif()
   endforeach()
 
-  # always wrapped (also when empty): the template indents the placeholder line, so the first line has no leading spaces
-  # and an empty section does not leave a whitespace-only line in the generated Config.cmake
-  set(injected_find_packages_code
-      "# -- find packages section --\n${injected_find_packages_code}  # -- end find packages section --")
+  # the placeholder line of the template is indented: the first line has no leading spaces, the last one ends with the
+  # indentation of the next line
+  set(injected_find_packages_code "# -- find_dependency() per component --\n    ${injected_find_packages_code}# --")
 
   # get list of components when find_package without arguments is used
   cs_get_components(components_list)
@@ -404,7 +389,7 @@ function(_cs_finalize_install export_namespace)
 endfunction()
 
 # Generate <output_folder>/<export_namespace>Config.cmake from templates/csTemplateConfig.cmake.in, to be installed in
-# install_configdir. The other argument names are the @VAR@ placeholders of the template: do not rename them.
+# install_configdir (relative to the install prefix). The other argument names are @VAR@ placeholders of the template.
 function(
   _cs_configure_config_cmake
   output_folder
@@ -420,11 +405,15 @@ function(
   # * export_namespace, export_namespace_sanitized
   # * components_list, default_components_list
   # * injected_find_packages_code, injected_export_dependencies
+  # * config_dir_to_prefix
+
+  # path from the installed Config folder to the install prefix (e.g. ../../.. for lib/cmake/<namespace>) (computed
+  # against an absolute folder, the build folder: "/" is not absolute on Windows)
+  file(RELATIVE_PATH config_dir_to_prefix "${CMAKE_BINARY_DIR}/${install_configdir}" "${CMAKE_BINARY_DIR}")
 
   _cs_get_root_dir(base_path)
-  configure_package_config_file(
-    "${base_path}/templates/csTemplateConfig.cmake.in" "${output_folder}/${export_namespace}Config.cmake"
-    INSTALL_DESTINATION ${install_configdir})
+  configure_file("${base_path}/templates/csTemplateConfig.cmake.in" "${output_folder}/${export_namespace}Config.cmake"
+                 @ONLY)
 
 endfunction()
 

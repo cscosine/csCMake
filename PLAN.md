@@ -56,7 +56,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
 - [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
 - [x] (3b step 2) 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
-- [ ] Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
+- [x] (3b step 3) Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
 - [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
 - [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
 - [ ] The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
@@ -166,6 +166,10 @@ variables, properties, preset environment variables, default targets) guides the
     build configurations shared by the build tree (nested project checks compatibility, rule to decide); links to a
     target of another csCMake project of the same build → `find_dependency(<ns> COMPONENTS ...)` in the Config
     (design together); smoke test with a nested project;
+    internal names keyed by namespace: CMake export sets are global to the build tree, so two projects with a
+    component of the same name (e.g. `cscmake_common`, `core`) would clash on `<component>-targets` and on the
+    `CSCMAKE_COMPONENT_<component>_*` properties → `<namespace>_<component>-targets` and
+    `CSCMAKE_<namespace>_COMPONENT_<component>_*`, installed file and component name unchanged (`<component>`);
   - `cs_initialize_project` signature vs cmake-lint `E1122` (duplicate keyword): `DEFAULT_CONFIG Debug Release` (one
     multi-value keyword) is lint-clean, but several mapped/custom configurations repeat the `DEFAULT_CONFIG_MAPPED x
     MAPPED_TO y` / `CUSTOM_CONFIG x BASED_ON y POSTFIX z` groups → E1122 in consumer projects. Redesign the
@@ -474,3 +478,24 @@ variables, properties, preset environment variables, default targets) guides the
 - Docs rule (user, 2026-11-10): comments, README, docstrings and docs describe the current behaviour only; history in
   this changelog and in commit messages, `MIGRATION.md` as old → new tables and actions (CLAUDE.md rule). Comments,
   one error message, a test docstring and the MIGRATION namespace/behaviour sections rewritten accordingly.
+
+### 2026-11-10 (Phase 3b step 3 — generated package configuration)
+- Reproduced with configure tests installing two packages (`tests/cmake/test_package_config.py`, `install()` helper:
+  configure + build + install of a `LANGUAGES NONE` project): B's component `x` finds package A while B's Config loops
+  on its components; A's Config overwrote `core_DEPENDENT_EXPORTS` (both have a component `core`), B then skipped
+  `b_base` ("imported targets referenced but missing: B::b_base").
+- Template: per-component dependency lists `<ns>_<component>_DEPENDENCIES`; loop/work variables `<ns>_*` /
+  `_<ns>_*`, unset at the end (no leak, tested); unknown component → `<ns>_<component>_FOUND` FALSE, if required
+  `<ns>_FOUND` FALSE + `<ns>_NOT_FOUND_MESSAGE` (`OPTIONAL_COMPONENTS`, non-required and required cases tested);
+  `<ns>_<component>_FOUND` TRUE for loaded components; dependencies found once per component (namespaced list instead
+  of one global flag per component); injected `find_dependency` code = one `if` block per component.
+- `@PACKAGE_INIT@` not used (it expands CMake's helper macros, which fail our lint): `configure_file(@ONLY)`;
+  `<ns>_BASE_DIR` = Config folder + relative path to the prefix computed at install time (`@config_dir_to_prefix@`,
+  correct for any `CMAKE_INSTALL_LIBDIR`; tested).
+  Computed against the build folder (fix after the Windows CI run: `file(RELATIVE_PATH)` with `/` is not an
+  absolute path on Windows).
+- Common component `cscmake_common` (namespace prefix dropped: Config variables are namespaced). Nested projects:
+  internal export set / property names to key by namespace (step 5, user question).
+- `cscmake-cmake-template`: a placeholder inside a lowercase identifier gets a lowercase stand-in
+  (`_@NS@_components`), so lint naming checks apply to the template's private variables (tests).
+- `MIGRATION.md`: installed package configuration table.

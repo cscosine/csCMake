@@ -39,7 +39,7 @@ folder below it is its own `project()`. Each library is installed in its own com
 ```mermaid
 flowchart BT
     subgraph sol["csSmokeBaseSol (top project, folder csSmokeBase/)"]
-        common["csSmokeBase::cscmake_base_include<br/>csSmokeBase::cscmake_compile_options / _strict<br/>(component csSmokeBase_cscmake_common)"]
+        common["csSmokeBase::cscmake_base_include<br/>csSmokeBase::cscmake_compile_options / _strict<br/>(component cscmake_common)"]
         subgraph pkg["project csSmokeBase (csSmokeBase/csSmokeBase/)"]
             root["csSmokeBase::csSmokeBase<br/>INTERFACE"]
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
@@ -77,7 +77,7 @@ In both, headers are included relative to the top project folder, in the build t
 |---|---|
 | `csSmokeTop` (installed, every configuration, and ctest) | prints `mid-a(text(base-core)) mid-b(base-core)` |
 | unit tests `textTest`, `csSmokeMidATest`, `csSmokeMidBTest` | exit code 0 |
-| default targets in the installed `<Package>_cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include`, `_compile_options`, `_compile_options_strict`, `_msvc_parallel_compile`, `_strict_warnings` |
+| default targets in the installed `cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include`, `_compile_options`, `_compile_options_strict`, `_msvc_parallel_compile`, `_strict_warnings` |
 | `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only |
 
 ## What a smoke run does
