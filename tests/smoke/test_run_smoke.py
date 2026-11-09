@@ -17,6 +17,7 @@ from tests.smoke.run_smoke import (
     PRODUCER,
     SmokeError,
     find_variant,
+    line_ending,
     prepare_workspace,
     run_smoke,
     workflow_presets,
@@ -79,3 +80,15 @@ def _host_variants() -> list[str]:
 )
 def test_smoke_host_variant(variant: str, tmp_path: Path) -> None:
     run_smoke(variant, tmp_path)
+
+
+def test_line_ending_detection(tmp_path: Path) -> None:
+    unix, windows, mixed = tmp_path / "unix", tmp_path / "windows", tmp_path / "mixed"
+    unix.write_bytes(b"a\nb\n")
+    windows.write_bytes(b"a\r\nb\r\n")
+    mixed.write_bytes(b"a\r\nb\n")
+
+    assert line_ending(unix) == "unix"
+    assert line_ending(windows) == "windows"
+    with pytest.raises(SmokeError, match="mixed line endings"):
+        line_ending(mixed)

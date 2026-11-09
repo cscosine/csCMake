@@ -147,22 +147,40 @@ def check_installed_apps(workspace: Path, variant: str) -> None:
             )
 
 
+def line_ending(path: Path) -> str:
+    """Return the line ending of ``path`` ("unix" or "windows"); fail on mixed line endings."""
+    data = path.read_bytes()
+    crlf = data.count(b"\r\n")
+    lf_only = data.count(b"\n") - crlf
+    if crlf and lf_only:
+        raise SmokeError(f"mixed line endings in {path}: {crlf} CRLF and {lf_only} LF")
+    return "windows" if crlf else "unix"
+
+
 def lint_installed_config(workspace: Path, variant: str) -> None:
     """cmake-lint the installed csSmokeConfig.cmake with the repository configuration.
 
     C0103 (naming) is not checked: the names in a package config are dictated by CMake
     (``<Package>_FIND_COMPONENTS``, ...) and by the package/export names chosen by the user.
+
+    The file is written by CMake with the line endings of the build platform: they only have to be
+    consistent (checked here), and an LF copy is linted, because cmakelang 0.6.13 cannot lint CRLF
+    files (``line_ending: auto`` crashes, ``windows`` flags the last line).
     """
     config_file = install_dir(workspace, variant, PRODUCER) / "lib" / "cmake" / PRODUCER / f"{PRODUCER}Config.cmake"
     if not config_file.is_file():
         raise SmokeError(f"installed config not found: {config_file}")
+    print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
     lint_config = json.loads((REPO_ROOT / ".cmake-format.json").read_text(encoding="utf-8"))
     lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).append("C0103")
     with tempfile.TemporaryDirectory() as tmp:
         cfg = Path(tmp) / "cmake-format.json"
         cfg.write_text(json.dumps(lint_config), encoding="utf-8")
+        lf_copy = Path(tmp) / config_file.name
+        lf_copy.write_bytes(config_file.read_bytes().replace(b"\r\n", b"\n"))
+        print(f"linting an LF copy of {config_file}", flush=True)
         # -c last: it takes one or more values and would swallow the input file
-        run([sys.executable, "-m", "cmakelang.lint", config_file, "-c", cfg], cwd=workspace)
+        run([sys.executable, "-m", "cmakelang.lint", lf_copy, "-c", cfg], cwd=workspace)
 
 
 def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
