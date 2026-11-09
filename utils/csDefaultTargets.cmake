@@ -58,6 +58,18 @@ function(_cs_target_base_project_include_dir)
   target_include_directories(${TARGET_NAME} INTERFACE $<BUILD_INTERFACE:${COMMON_FOLDER}>
                                                       $<BUILD_INTERFACE:${CONFIG_FOLDER}>)
 
+  # create the folders now: an include folder must exist even when nothing is generated there (clang-cl reports a
+  # missing include folder, -Wmissing-include-dirs, an error with the strict options)
+  file(MAKE_DIRECTORY "${COMMON_FOLDER}")
+  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(GENERATOR_IS_MULTI_CONFIG)
+    cs_get_build_configurations(CONFIGS_LIST)
+    foreach(CONFIG ${CONFIGS_LIST})
+      string(REPLACE "$<CONFIG>" "${CONFIG}" CONFIG_FOLDER_OF_CONFIG "${CONFIG_FOLDER}")
+      file(MAKE_DIRECTORY "${CONFIG_FOLDER_OF_CONFIG}")
+    endforeach()
+  endif()
+
   _cs_target_create_default_finalize(_csCMakeBaseInclude)
 
 endfunction()

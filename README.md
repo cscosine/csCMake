@@ -67,7 +67,7 @@ tests/                              # pytest suite
 - A C++ toolchain for the target platform:
   - Linux: GCC or Clang
   - Windows: MSVC or MSVC + LLVM (ClangCL)
-  - macOS: Apple Clang
+  - macOS (Apple Silicon): Apple Clang, with Ninja, Ninja Multi-Config or Xcode
 
 ## Quick start
 

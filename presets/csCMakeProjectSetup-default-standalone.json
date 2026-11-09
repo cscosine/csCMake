@@ -37,6 +37,18 @@
             "name": "cscmake-project-setup-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig"
         },
         {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-x64-generic-clang-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-x64-generic-clang-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-x64-generic-gcc-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-x64-generic-gcc-default-ninjamulticonfig"
+        },
+        {
             "name": "cscmake-project-setup-linux-ubuntu22.04-arm64-generic-clang-default-ninja"
         },
         {
@@ -59,6 +71,36 @@
         },
         {
             "name": "cscmake-project-setup-linux-ubuntu24.04-arm64-generic-gcc-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-arm64-generic-clang-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-arm64-generic-clang-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-arm64-generic-gcc-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-linux-ubuntu26.04-arm64-generic-gcc-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-xcode"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos26-arm64-generic-appleclang-default-ninja"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos26-arm64-generic-appleclang-default-ninjamulticonfig"
+        },
+        {
+            "name": "cscmake-project-setup-macos-macos26-arm64-generic-appleclang-default-xcode"
         },
         {
             "name": "cscmake-project-setup-windows-v10-x64-generic-msvc-default-msvc2022"

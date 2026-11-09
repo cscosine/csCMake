@@ -29,10 +29,19 @@ UBUNTU_STRING_PREFIX = "ubuntu"
 class UbuntuVersions(Enum):
     UBUNTU_22_04 = UBUNTU_STRING_PREFIX + "22.04"
     UBUNTU_24_04 = UBUNTU_STRING_PREFIX + "24.04"
+    UBUNTU_26_04 = UBUNTU_STRING_PREFIX + "26.04"
 
 
 class WindowsVersions(Enum):
     WIN10 = "v10"
+
+
+MACOS_STRING_PREFIX = "macos"
+
+
+class MacOSVersions(Enum):
+    MACOS_15 = MACOS_STRING_PREFIX + "15"
+    MACOS_26 = MACOS_STRING_PREFIX + "26"
 
 
 class Architecture(Enum):
@@ -64,6 +73,7 @@ class Generator(Enum):
     NINJA_MULTI = "ninjamulticonfig"
     MSVC_17_2022 = "msvc2022"
     MSVC_18_2026 = "msvc2026"
+    XCODE = "xcode"
 
 
 class GeneratorType(Enum):
@@ -89,12 +99,14 @@ class GeneratorWithType:
     NINJA_MULTI: ClassVar[GeneratorWithType]
     MSVC_17_2022: ClassVar[GeneratorWithType]
     MSVC_18_2026: ClassVar[GeneratorWithType]
+    XCODE: ClassVar[GeneratorWithType]
 
 
 GeneratorWithType.NINJA = GeneratorWithType(Generator.NINJA, GeneratorType.SINGLE_CONFIG)
 GeneratorWithType.NINJA_MULTI = GeneratorWithType(Generator.NINJA_MULTI, GeneratorType.MULTI_CONFIG)
 GeneratorWithType.MSVC_17_2022 = GeneratorWithType(Generator.MSVC_17_2022, GeneratorType.MULTI_CONFIG)
 GeneratorWithType.MSVC_18_2026 = GeneratorWithType(Generator.MSVC_18_2026, GeneratorType.MULTI_CONFIG)
+GeneratorWithType.XCODE = GeneratorWithType(Generator.XCODE, GeneratorType.MULTI_CONFIG)
 
 
 @dataclass(frozen=True)
@@ -127,11 +139,11 @@ def get_supported_os_version_list(os: OS) -> list[str]:
     """Return the supported OS version strings for ``os``."""
     match os:
         case OS.LINUX:
-            return [UbuntuVersions.UBUNTU_22_04.value, UbuntuVersions.UBUNTU_24_04.value]
+            return [v.value for v in UbuntuVersions]
         case OS.WINDOWS:
             return [WindowsVersions.WIN10.value]
         case OS.MACOS:
-            return []  # TODO add MACOS support
+            return [v.value for v in MacOSVersions]
         case _:
             assert_never(os)
 
@@ -185,6 +197,27 @@ def get_supported_generators_windows(
     return lst
 
 
+def get_supported_generators_macos(use_ninja: bool, use_ninjamulti: bool) -> list[GeneratorWithType]:
+    """Return the macOS generators: the Ninja flavours (on request) and Xcode."""
+    lst: list[GeneratorWithType] = []
+    if use_ninja:
+        lst.append(GeneratorWithType.NINJA)
+    if use_ninjamulti:
+        lst.append(GeneratorWithType.NINJA_MULTI)
+    lst.append(GeneratorWithType.XCODE)
+    return lst
+
+
+def get_supported_architectures_macos() -> list[Architecture]:
+    """Return the supported macOS architectures: Apple Silicon only (no Intel Mac sold since 2023)."""
+    return [Architecture.ARM64]
+
+
+def get_supported_compilers_macos() -> list[Compiler]:
+    """Return the supported macOS compiler families."""
+    return [Compiler.APPLE_CLANG]
+
+
 def get_supported_compilers_linux() -> list[Compiler]:
     """Return the supported Linux compiler families."""
     return [Compiler.GCC, Compiler.CLANG]
@@ -235,7 +268,13 @@ def get_supported_context_os_architecture_list(
                 ccg = ContextCompilerGenerator(compiler, version, generator)
                 ret.append(ContextOsArchitectureCompilerGenerator(os_arch, ccg))
 
-    # TODO add MACOS support
+    for os_version in get_supported_os_version_list(OS.MACOS):
+        for arch in get_supported_architectures_macos():
+            os_arch = ContextOsArchitecture(OS.MACOS, os_version, arch, ARCHITECTURE_VARIANT_GENERIC)
+            for compiler in get_supported_compilers_macos():
+                for generator in get_supported_generators_macos(use_ninja, use_ninjamulti):
+                    ccg = ContextCompilerGenerator(compiler, COMPILER_VERSION_DEFAULT, generator)
+                    ret.append(ContextOsArchitectureCompilerGenerator(os_arch, ccg))
 
     return ret
 
@@ -275,6 +314,8 @@ def short_os_name(os: OS) -> str:
 def short_os_version(os: OS, version: str) -> str:
     if os == OS.LINUX:
         return version.replace(UBUNTU_STRING_PREFIX, UBUNTU_STRING_PREFIX[0])
+    if os == OS.MACOS:
+        return version.replace(MACOS_STRING_PREFIX, MACOS_STRING_PREFIX[0])
     return version
 
 
@@ -305,6 +346,7 @@ _SHORT_GENERATOR = {
     Generator.NINJA_MULTI: "nm",
     Generator.MSVC_17_2022: "ms22",
     Generator.MSVC_18_2026: "ms26",
+    Generator.XCODE: "xc",
 }
 
 

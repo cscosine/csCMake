@@ -126,8 +126,19 @@ variables, properties, preset environment variables, default targets) guides the
     `cmake -P`), `cs_print_target_properties` (`PROP_LIST`), `cs_print_exported_list_details` (prints the export list
     as default list), error messages naming nonexistent functions / undefined variables, unused argument of
     `_cs_sort_export_dependent_exports`, `INSTALL_CONFIGDIR` read from the caller scope, PDB destination `bin`;
-  - `csClangTidy.cmake` fails at include time on UNIX without clang-tidy → lazy lookup in `cs_exec_clang_tidy`
-    (and verify its property value);
+  - `cs_target_enable_clang_tidy` never ran clang-tidy (verified 2026-11-09): the generator expression is split into
+    several `set_target_properties` arguments, `CXX_CLANG_TIDY` ends up empty. Fixing it turns on `-checks=*` +
+    `-warnings-as-errors=*` for every project calling it → decide the check set (e.g. a `.clang-tidy` file) and
+    smoke-test it. (The include-time `FATAL_ERROR` without clang-tidy was fixed in 3m: lazy lookup.)
+    History: original implementation = `FATAL_ERROR` at `include(csCMake)` on any UNIX host without clang-tidy (so it
+    broke macOS and gcc-only Linux hosts) and a property that never ran it; 3m = looked up on the first call, only for
+    Clang on Linux (still `FATAL_ERROR` there if missing), no-op elsewhere (as the original generator expression).
+    **Wanted (user, 2026-11-09)**: configurable per build configuration, e.g. `cs_initialize_project(...
+    CLANG_TIDY_ON_CONFIG Paranoid)` (or a cache variable): in those configurations clang-tidy is **mandatory**
+    (`FATAL_ERROR` if not installed), in the others it is **skipped**. To design: generator expression
+    `$<CONFIG:...>` in `CXX_CLANG_TIDY` (check the CMake version supporting it), lookup at configure time when any
+    selected configuration is in the build (multi-config generators), which compilers (Clang only, or any compiler
+    with clang-tidy + compile_commands), the check set (`.clang-tidy`), smoke coverage.
   - `CMAKE_SOURCE_DIR` used for the relative install paths of headers (wrong when the csCMake project is itself a
     subproject) → the source dir of `cs_initialize_project`, stored in a global property. **Not** `PROJECT_SOURCE_DIR`:
     csfoundation subdirectories call `project()` again (`project(core ...)`), which would change the install layout;
@@ -321,3 +332,29 @@ variables, properties, preset environment variables, default targets) guides the
   sources, the smoke projects, README.md, the skill and the smoke README (not to PLAN.md history).
 - `MIGRATION.md` started (functions; variables, properties, default targets/namespace to come).
 - Local: `pytest --run-all` 49 passed (4 host variants).
+
+### 2026-11-09 (Phase 3m — macOS and Ubuntu 26.04 variants)
+- GitHub runner images checked (runner-images README): arm64 `macos-15` (Xcode 16.4 default), `macos-26`
+  (= `macos-latest`, Xcode 26.6), both with CMake 4.4.5 and Ninja 1.13.2, no clang-tidy; macOS 14 retired 2026-11-02.
+- Registry: `MacOSVersions` (`macos15`, `macos26`), arm64 only, Apple Clang, `Generator.XCODE` (multi-config, short
+  `xc`), Ninja / Ninja Multi-Config / Xcode → 6 new variants (26 total); short OS version `m15`/`m26`.
+  `presets/common/config-generators.json`: `cs-generator-xcode` (+ arm64 architecture placeholder). Regenerated: 36
+  new files, existing presets unchanged (5 files with additions only).
+- `ci_matrix.py`: `macos<version>` → `macos-<version>` runner. Tests: 26 variants, macOS ids/arch/generator types,
+  short forms, Xcode-only without Ninja.
+- `csClangTidy.cmake`: clang-tidy looked up on the first `cs_target_enable_clang_tidy` call and only for Clang on
+  Linux (was: `FATAL_ERROR` at `include(csCMake)` on any UNIX host without clang-tidy, e.g. macOS). Found while
+  checking: the function never set `CXX_CLANG_TIDY` (see 3b).
+- Ubuntu 26.04 added like 22.04 / 24.04 (user request): GitHub `ubuntu-26.04` / `ubuntu-26.04-arm` are GA (gcc 15.2,
+  clang + clang-tidy 20/21/22, CMake 4.4.5, Ninja 1.13.2) → 8 variants (gcc/clang × Ninja/Ninja Multi-Config ×
+  x64/arm64). Total 34 variants (34 smoke jobs); regenerated presets: additions only.
+- Fix after the first GitHub run (Xcode variants): `cs_target_check_installed_headers` generated its `.cpp` files in
+  `gen-$<CONFIG>/`, so the sources of the header-check targets varied by configuration, which the Xcode generator
+  rejects ("has source files which vary by configuration"). The content is the same in every configuration: written
+  once in the shared `gen/` folder (`file(GENERATE)` accepts the same output for all configurations).
+- Second fix (Windows clang-cl smoke after the first fix): `cscmake_base_include` publishes `gen/` and `gen-<Config>/`
+  as include folders but csCMake never created them; `gen-<Config>/` only existed because the header check wrote its
+  files there. clang-cl reports the missing folder (`-Wmissing-include-dirs`, an error with the strict options):
+  `_cs_target_base_project_include_dir` now creates them at configure time.
+- Not run locally (no Mac, host is Ubuntu 24.04): the macOS and Ubuntu 26.04 smoke jobs on GitHub are the first real
+  test.

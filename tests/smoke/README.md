@@ -110,8 +110,8 @@ project folder must be named like the package**.
 ## Where it runs
 
 - **GitHub**: `.github/workflows/smoke.yml`. A first job turns the preset registry into the job matrix
-  (`ci_matrix.py`: variant → runner, e.g. `ubuntu-24.04-arm`, `windows-2025-vs2026`), then one job per variant
-  runs `run_smoke.py` (20 variants × 4 configurations).
+  (`ci_matrix.py`: variant → runner, e.g. `ubuntu-24.04-arm`, `windows-2025-vs2026`, `macos-26`), then one job per
+  variant runs `run_smoke.py` (34 variants × 4 configurations: Linux, Windows, macOS arm64).
 - **Locally**:
 
   ```bash
@@ -130,5 +130,5 @@ project folder must be named like the package**.
 3. Format and lint its CMake files (`cmake-format -i`, `cmake-lint`), describe it in this file.
 
 Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,
-clang-tidy, OpenMP, the standalone setup, macOS, ...): see "Phase 2 — not covered by the smoke projects" in
+clang-tidy, OpenMP, the standalone setup, ...): see "Phase 2 — not covered by the smoke projects" in
 [PLAN.md](../../PLAN.md).

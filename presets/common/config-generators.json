@@ -40,6 +40,19 @@
       "$comment": "ninjamulticonfig generator does not support architecture specification, but we can use this preset to ensure autogeneration"
     },
     {
+      "name": "cs-generator-xcode",
+      "displayName": "Xcode Generator",
+      "hidden": true,
+      "description": "Use the Xcode generator",
+      "generator": "Xcode"
+    },
+    {
+      "name": "cs-generator-xcode-architecture-arm64",
+      "hidden": true,
+      "description": "Use the ARM64 architecture",
+      "$comment": "xcode generator does not support architecture specification (builds for the host), but we can use this preset to ensure autogeneration"
+    },
+    {
       "name": "cs-generator-msvc2022",
       "displayName": "MSVC2022 Generator",
       "description": "Use the Visual Studio 17 2022 generator",

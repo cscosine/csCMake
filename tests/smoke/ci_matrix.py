@@ -39,6 +39,9 @@ def runner(ctx: ContextOsArchitectureCompilerGenerator) -> str:
         return f"{label}-arm" if osa.architecture == Architecture.ARM64 else label
     if osa.os == OS.WINDOWS and osa.architecture == Architecture.X64 and generator in WINDOWS_RUNNERS:
         return WINDOWS_RUNNERS[generator]
+    if osa.os == OS.MACOS and osa.architecture == Architecture.ARM64 and osa.os_version.startswith("macos"):
+        # macos-<version> images are Apple Silicon (arm64); they ship Xcode, CMake and Ninja
+        return f"macos-{osa.os_version.removeprefix('macos')}"
     raise ValueError(f"no GitHub runner known for {create_context_os_architecture_compiler_generator_string(ctx)}")
 
 

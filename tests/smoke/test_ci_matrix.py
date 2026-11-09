@@ -18,7 +18,7 @@ def test_matrix_has_one_entry_per_registry_variant() -> None:
     ]
 
     assert [e["variant"] for e in entries] == variants
-    assert len(entries) == 20
+    assert len(entries) == 34
     assert all(e["runner"] and e["generator_type"] in ("singleconfig", "multiconfig") for e in entries)
 
 
@@ -29,8 +29,12 @@ def test_matrix_has_one_entry_per_registry_variant() -> None:
         ("csv1-linux-ubuntu24.04-x64-generic-clang-default-ninjamulticonfig", "ubuntu-24.04"),
         ("csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninjamulticonfig", "ubuntu-22.04-arm"),
         ("csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja", "ubuntu-24.04-arm"),
+        ("csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja", "ubuntu-26.04"),
+        ("csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninjamulticonfig", "ubuntu-26.04-arm"),
         ("csv1-windows-v10-x64-generic-msvc-default-msvc2022", "windows-2022"),
         ("csv1-windows-v10-x64-generic-msvcclang-default-msvc2026", "windows-2025-vs2026"),
+        ("csv1-macos-macos15-arm64-generic-appleclang-default-ninja", "macos-15"),
+        ("csv1-macos-macos26-arm64-generic-appleclang-default-xcode", "macos-26"),
     ],
 )
 def test_runner_labels(variant: str, expected: str) -> None:
