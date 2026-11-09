@@ -54,11 +54,29 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
 - [ ] `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
 - [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
-- [ ] No CMake-level tests → fixture project in Phase 2.
+- [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
 - [ ] 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
 - [ ] Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
-- [ ] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is now indented inside the macro, so the first injected line gets 2 extra spaces in the generated Config.cmake (cosmetic) → drop the leading spaces of the first line in `_cs_finalize_install`.
-- [ ] Phase 2 fixture: also run cmake-lint on the generated/installed `<Ns>Config.cmake` (today only the template is linted, not its expansion).
+- [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
+- [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
+- [ ] The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
+- [ ] cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
+
+### csCMake location (presets)
+- [ ] Evaluate making the csCMake location configurable. Today only two layouts are possible, both hard-coded:
+  - default: csCMake is a sibling of the project, `${sourceParentDir}/csCMake` (in the project's `CMakePresets.json` include, its `csCMakeProjectSetup.json` include, and `WORKSPACE_ROOT` / `CS_CMAKE_ROOT` in `csCMakeProjectSetup-base.json`);
+  - standalone: `<project>/workspace/csCMake` (`csCMakeProjectSetup-base-standalone.json`).
+  A preset `environment` overrides the process environment, so exporting `CS_CMAKE_ROOT` / `WORKSPACE_ROOT` has no effect; `CS_CMAKE_MODULE_PATH_*` / `CS_CMAKE_PREFIX_PATH_*` only add paths. A project can define its own `cscmake-project-setup` preset (own `CS_CMAKE_ROOT`/`WORKSPACE_ROOT`), but its `CMakePresets.json` include still assumes the sibling path.
+- [ ] Option to evaluate: a base setup whose root comes from the environment, e.g. `csCMakeProjectSetup-base-env.json` + `-default-env.json` using `$penv{CS_CMAKE_ROOT}` / `$penv{CS_CMAKE_WORKSPACE_ROOT}` (presets v7+ also allow `$penv{}` in `include`, so `CMakePresets.json` could include `$penv{CS_CMAKE_ROOT}/presets/csv1/cs-presets-all.json`). Presets have no default for unset variables, so this must be an additional variant, not a replacement of the zero-setup sibling layout.
+- [ ] The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmoke) and `csCMakeProjectSetup-default.json` (csSmokeConsumer).
+
+### Python code coverage
+- [ ] Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
+  - `presets/registry.py` 79%: non-default variant selection (`use_ninja_for_windows`, `use_ninja` / `use_ninjamulti` without `generate_all_combinations`), MSVC versions for Ninja on Windows, `MACOS` branches, `assert_never` fallbacks;
+  - `devtools/cmake_template.py` 90%: cmake-format failure, restored placeholders differing from the original, `TemplateError` reported by `main`, the `__main__` entry point;
+  - `presets/generate.py` 98%: the `__main__` entry point.
+- [ ] Then enforce it: `[tool.coverage.report] fail_under = 100` in `pyproject.toml` (CI already runs `pytest --cov=cscmake --cov-branch`); exclude only `if __name__ == "__main__":` blocks (`exclude_also`), no other `# pragma: no cover`.
+- Scope: only `src/cscmake` (`[tool.coverage.run] source = ["cscmake"]`). The CI helpers in `tests/smoke/` (`run_smoke.py`, `ci_matrix.py`) do **not** count for coverage (decided 2026-11-09).
 
 ### Tooling (cmakelang)
 - [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
@@ -69,11 +87,11 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 
 ### Phase 2 plan (agreed 2026-11-09)
 - **Smoke projects** in `tests/smoke/` (consumers of csCMake through the presets, exactly like real projects):
-  - `hello/` (export namespace `CsSmoke`): `cs_initialize_project` with Debug, Release, RelWithDebInfo (mapped) and Paranoid (custom) configs; static lib `hellolib` (`hello_lib()` prints `hello-lib`); executable `helloapp` (calls it, prints `hello-app`); ctest: unit test of the lib + run of `helloapp` with output regex `hello-lib.*hello-app`; installed with `cs_install_target` + `cs_finalize_project(CsSmoke)`.
-  - `consumer/`: separate project, `find_package(CsSmoke COMPONENTS hellolib REQUIRED)` from the install folder, links `CsSmoke::hellolib`, ctest checks its output. Proves the installed `CsSmokeConfig.cmake`.
-- **Driver** `tests/smoke/run_smoke.py` (stdlib only), used by CI and by a local pytest: lays out csCMake + `hello` + `consumer` as siblings (the presets expect `${sourceParentDir}/csCMake`), runs `cmake --workflow` (multi-config: `debug-release-relWithDebInfo-paranoid`; single-config: one workflow per config), runs the **installed** `helloapp` of each config (install layout + postfixes), builds/tests the consumer, runs cmake-lint on the installed `CsSmokeConfig.cmake`.
+  - `hello/` (export namespace `csSmoke`): `cs_initialize_project` with Debug, Release, RelWithDebInfo (mapped) and Paranoid (custom) configs; static lib `hellolib` (`hello_lib()` prints `hello-lib`); executable `helloapp` (calls it, prints `hello-app`); ctest: unit test of the lib + run of `helloapp` with output regex `hello-lib.*hello-app`; installed with `cs_install_target` + `cs_finalize_project(csSmoke)`.
+  - `consumer/`: separate project, `find_package(csSmoke COMPONENTS hellolib REQUIRED)` from the install folder, links `csSmoke::hellolib`, ctest checks its output. Proves the installed `csSmokeConfig.cmake`.
+- **Driver** `tests/smoke/run_smoke.py` (stdlib only), used by CI and by a local pytest: lays out csCMake + `hello` + `consumer` as siblings (the presets expect `${sourceParentDir}/csCMake`), runs `cmake --workflow` (multi-config: `debug-release-relWithDebInfo-paranoid`; single-config: one workflow per config), runs the **installed** `helloapp` of each config (install layout + postfixes), builds/tests the consumer, runs cmake-lint on the installed `csSmokeConfig.cmake`.
 - **CI** `.github/workflows/smoke.yml`, separate from `ci.yml`: a `matrix` job prints the matrix JSON from the registry (`tests/smoke/ci_matrix.py`: variant → generator type + runner label, e.g. `ubuntu-24.04-arm`, `windows-2025-vs2026`), the `smoke` job uses `fromJSON` → all **20** variants × **4** configs. CMake/Ninja from the runner images (as csfoundation/csorchestrator do); add a setup action only if a runner turns out too old.
-- **Local**: `tests/cmake/test_smoke.py` runs the driver for the host variant, marked `slow` + `requires("cmake")` via a new `conftest.py` (`--run-all`).
+- **Local**: `tests/smoke/test_run_smoke.py` runs the driver for the host variants, marked `slow` + `requires("cmake")` via a new `conftest.py` (`--run-all`).
 
 ### Phase 2 — not covered by the smoke projects (trace for full completion)
 - [ ] Shared libraries: Windows DLL export (`__declspec`/`GenerateExportHeader`), runtime dependency analysis (`csTargetDependencies`) and VS debugger PATH (`_cs_set_vs_debugger_env_variable`).
@@ -101,7 +119,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 |-------|--------|-------|
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
-| 2 | planned | Smoke projects + `smoke.yml`, see "Phase 2 plan" |
+| 2 | in review | Smoke projects + driver + `smoke.yml` implemented; 4 local variants (ubuntu22.04 x64 gcc/clang × ninja/ninjamulticonfig) pass; the other 16 (arm64, ubuntu24.04, Windows) only on GitHub. |
 | 3 | not started | Docs |
 | 4 | not started | CMake hardening |
 | 5 | not started | Release |
@@ -165,3 +183,11 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - Finding: `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` listed the 20 `cscmake-project-setup-<variant>` presets (inherited by every `-base` preset) by hand → could drift from the registry.
 - Now generated by `cscmake-generate-presets` from `presets/template/csCMakeProjectSetup-*.json.template` (`generate_project_setup_presets`, `--setup-output-dir`); `--check` and the pre-commit hook cover them. Output identical to the hand-written files except the added "autogenerated" `$comment` (JSON compared equal, same preset order). `csCMakeProjectSetup-base*.json` stay hand-written.
 - Tests: every variant has a setup preset in each file; every setup preset inherited by a `-base` preset exists; `--check` detects stale/missing setup files; committed files in sync; CLI tests never write into the repository.
+
+### 2026-11-09 (Phase 2 — smoke tests on the preset matrix)
+- `tests/smoke/csSmoke`: `cs_initialize_project` (Debug, Release, RelWithDebInfo mapped, Paranoid custom, postfix `dp`), static lib `hellolib` (+ `hellolibTest`), executable `helloapp` (ctest output regex `hello-lib[\r\n]+hello-app`), `cs_install_target`, `cs_finalize_project(csSmoke)`; uses `csCMakeProjectSetup-shortBuildPath.json`. `tests/smoke/csSmokeConsumer`: `cs_find_package(... csSmoke COMPONENTS hellolib REQUIRED CONFIG)` + ctest; uses `csCMakeProjectSetup-default.json`. Project folders are named after the package: `find_package` searches `<prefix>/<name>*/lib/cmake/<name>` and the install prefix is `install/<variant>/<sourceDirName>`.
+- `tests/smoke/run_smoke.py`: workspace with csCMake + both projects as siblings, `cmake --workflow` (multi-config: one `debug-release-relWithDebInfo-paranoid` workflow; single-config: one per config), installed `helloapp{,d,rd,dp}` output check, cmake-lint of the installed `csSmokeConfig.cmake`, GitHub log groups.
+- `tests/smoke/ci_matrix.py` + `.github/workflows/smoke.yml`: matrix generated from the registry (variant → runner: `ubuntu-XX.04[-arm]`, `windows-2022` for VS 2022, `windows-2025-vs2026` for VS 2026), 20 jobs, `fail-fast: false`; CMake/Ninja from the runner images.
+- Root `conftest.py`: `slow` (skipped unless `--run-all`) and `requires(tools)` markers, registered in `pyproject.toml`. Tests: matrix = registry, runner labels, `GITHUB_OUTPUT`; workflow presets exist in the generated presets; multi/single-config workflow selection; workspace layout; slow smoke test per host variant (`CSCMAKE_SMOKE_VARIANTS` overrides).
+- Fix found by the smoke lint: `_cs_finalize_install` left a whitespace-only line in the generated Config when no `find_dependency` was injected (and an extra indent on the first injected line) since the template formatting.
+- Local run: 46 tests incl. 4 smoke variants pass (`pytest --run-all`, ~35 s).

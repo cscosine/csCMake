@@ -376,10 +376,10 @@ function(_cs_finalize_install EXPORT_NAMESPACE)
     endif()
   endforeach()
 
-  if(INJECTED_FIND_PACKAGES_CODE)
-    set(INJECTED_FIND_PACKAGES_CODE
-        "  # -- find packages section --\n${INJECTED_FIND_PACKAGES_CODE}  # -- end find packages section --")
-  endif()
+  # always wrapped (also when empty): the template indents the placeholder line, so the first line has no leading spaces
+  # and an empty section does not leave a whitespace-only line in the generated Config.cmake
+  set(INJECTED_FIND_PACKAGES_CODE
+      "# -- find packages section --\n${INJECTED_FIND_PACKAGES_CODE}  # -- end find packages section --")
 
   # get list of components when find_package without arguments is used
   cs_get_exported_list(COMPONENTS_LIST)

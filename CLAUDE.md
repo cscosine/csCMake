@@ -20,7 +20,9 @@ Roadmap, open issues and session log: [PLAN.md](PLAN.md) — read it first.
 ```bash
 ./setup.sh                                          # .venv (python3.11+), pip install -e .[dev], pre-commit install
 source .venv/bin/activate
-python -m pytest                                    # tests (tests/ mirrors src/)
+python -m pytest                                    # fast tests (tests/ mirrors src/)
+python -m pytest --run-all                          # + slow CMake smoke builds (host variants)
+python tests/smoke/run_smoke.py --variant <id>      # smoke test one preset variant
 pre-commit run --all-files                          # ruff, mypy --strict, cmake-format/-lint, preset regen, ...
 cscmake-generate-presets                            # regenerate presets/csv1
 cscmake-generate-presets --check                    # verify presets/csv1 is in sync

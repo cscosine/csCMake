@@ -89,9 +89,11 @@ entries in `presets/common/build-configurations.json`.
 
 ### Adding tests
 - Python tests go in `tests/cscmake/<module>/test_*.py`.
-- CMake fixture project goes in `tests/fixture/` and is exercised by
-  `tests/cmake/test_fixture_project.py` via subprocess (configure/build/install).
-- There is no `conftest.py` and no custom markers yet; add them only when slow tests exist.
+- CMake smoke projects live in `tests/smoke/` (`csSmoke`, `csSmokeConsumer`), driven by
+  `tests/smoke/run_smoke.py --variant <id>`; CI runs it for every registry variant (`smoke.yml`,
+  matrix from `tests/smoke/ci_matrix.py`). New csCMake features should get coverage there.
+- Markers (root `conftest.py`): `@pytest.mark.slow` (skipped unless `--run-all`) and
+  `@pytest.mark.requires("cmake")` (skipped when the tool is not on PATH).
 
 ### Dependency hygiene
 - When adding a new dev dependency to `[project.optional-dependencies] dev` in
