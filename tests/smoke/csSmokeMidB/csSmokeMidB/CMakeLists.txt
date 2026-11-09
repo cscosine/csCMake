@@ -4,18 +4,17 @@ cs_add_library(csSmokeMidB::csSmokeMidB ALIAS csSmokeMidB)
 
 # PUBLIC: the find_package is propagated to the installed csSmokeMidBConfig.cmake (find_dependency)
 cs_find_package(
-  csSmokeMidB
-  PUBLIC
-  csSmokeBase
-  COMPONENTS
-  core
-  REQUIRED
-  CONFIG)
+  csSmokeMidB PUBLIC csSmokeBase
+  COMPONENTS core
+  REQUIRED CONFIG)
 
-cs_target_sources(csSmokeMidB PRIVATE csSmokeMidB.cpp PRIVATE_INSTALL csSmokeMidB.hpp)
+cs_target_sources(
+  csSmokeMidB
+  PRIVATE csSmokeMidB.cpp
+  PRIVATE_INSTALL csSmokeMidB.hpp)
 
 cs_target_link_libraries(csSmokeMidB PUBLIC csSmokeBase::core csSmokeMidB::cscmake_base_include
-                         csSmokeMidB::cscmake_compile_options)
+                                            csSmokeMidB::cscmake_compile_options)
 
 cs_install_target(csSmokeMidB csSmokeMidB DEFAULT)
 

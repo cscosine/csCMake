@@ -42,6 +42,9 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
   docstring comment block directly above it (C0111). Silence a finding only with a scoped
   `# cmake-lint: disable=<code>` as first line of the function body, plus a reason. Do not mix a file-level
   pragma with function-level ones in the same file: cmakelang 0.6.13 then ignores the function-level ones.
+- New or changed public `cs_*` command → update its signature in `.cmake-format.json` (`parse.additional_commands`),
+  so cmake-format lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+$`, arguments and locals
+  `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).
 - CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
   an empty `#` line between paragraphs and bullet lists (`* item`, preceded by an empty `#` line).
 - `*.cmake.in` templates: use `cscmake-cmake-template format|lint` (plain cmake-format cannot parse `@VAR@`).

@@ -15,24 +15,14 @@ project(
 include(csCMake)
 
 cs_initialize_project(
-  NAMESPACE
-  csSmokeMidB
-  CXX_STANDARD
-  17
-  DEFAULT_CONFIG
-  Debug
-  DEFAULT_CONFIG
-  Release
-  DEFAULT_CONFIG_MAPPED
-  RelWithDebInfo
-  MAPPED_TO
-  "RelWithDebInfo,Release,"
-  CUSTOM_CONFIG
-  Paranoid
-  BASED_ON
-  "Debug,Release,"
-  POSTFIX
-  "dp")
+  NAMESPACE csSmokeMidB
+  CXX_STANDARD 17
+  DEFAULT_CONFIG Debug Release
+  DEFAULT_CONFIG_MAPPED RelWithDebInfo
+  MAPPED_TO "RelWithDebInfo,Release,"
+  CUSTOM_CONFIG Paranoid
+  BASED_ON "Debug,Release,"
+  POSTFIX "dp")
 
 add_subdirectory(csSmokeMidB)
 

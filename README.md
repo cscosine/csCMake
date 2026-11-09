@@ -87,8 +87,7 @@ cs_initialize_project(
     NAMESPACE myApp
     CXX_STANDARD 17
     # select the default configurations supported by this project
-    DEFAULT_CONFIG Debug
-    DEFAULT_CONFIG Release
+    DEFAULT_CONFIG Debug Release
     # map a CMake build-type name onto an existing default configuration,
     # with a fallback list used when the exact mapping is unavailable
     DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"

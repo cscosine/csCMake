@@ -33,7 +33,7 @@ function(_cs_add_default_targets)
   # <namespace>::cscmake_compile_options_strict: the default compile options plus the strict warnings
   _cs_target_create_default(cscmake_compile_options_strict INTERFACE target_name)
   cs_target_link_libraries(${target_name} INTERFACE ${namespace}::cscmake_strict_warnings
-                           ${namespace}::cscmake_msvc_parallel_compile)
+                                                    ${namespace}::cscmake_msvc_parallel_compile)
   _cs_target_create_default_finalize(cscmake_compile_options_strict)
 
 endfunction()

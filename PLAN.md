@@ -60,7 +60,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
 - [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
 - [ ] The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
-- [ ] cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
+- [x] (Phase 3a step 5) cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
 
 ### csCMake location (presets)
 - [ ] Evaluate making the csCMake location configurable. Today only two layouts are possible, both hard-coded:
@@ -81,7 +81,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 ### Tooling (cmakelang)
 - [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
 - [ ] cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; only `csInstall.cmake` has a file-level pragma).
-- [ ] cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
+- [x] (Phase 3a step 5) cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
 - [x] (Phase 3a step 4) Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
 - [ ] cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
 - [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
@@ -150,7 +150,10 @@ variables, properties, preset environment variables, default targets) guides the
     variables;
   - `cs_finalize_target` **mandatory**: `cs_finalize_project` fails listing unfinalized targets and targets whose link
     properties changed after finalization; a `cmake_language(DEFER)` check fails if `cs_finalize_project` is not called;
-  - verbosity policy (no forced STATUS lines per call), silent skips → `WARNING`;
+  - verbosity policy (no forced STATUS lines per call), silent skips → `WARNING`; with it, re-enable lint `C0301`
+    (49 long lines, all string literals): `cs_debug_message(<text>...)` joining its arguments like `message()` makes them
+    splittable. `C0307` stays disabled: cmake-format and cmake-lint disagree on continuation indentation (2 findings),
+    the formatter is the authority on layout;
   - generated Config: namespaced variables (no `COMPONENT`, `${COMPONENT}_DEPENDENT_EXPORTS` clashes), the
     `@EXPORT_NAMESPACE_SANITIZED@` TODO, `<Pkg>_FOUND`/`OPTIONAL_COMPONENTS` semantics instead of `FATAL_ERROR`;
   - `cmake_minimum_required` in `csCMake.cmake` → version check (3.31, presets v10);
@@ -161,6 +164,11 @@ variables, properties, preset environment variables, default targets) guides the
     build configurations shared by the build tree (nested project checks compatibility, rule to decide); links to a
     target of another csCMake project of the same build → `find_dependency(<ns> COMPONENTS ...)` in the Config
     (design together); smoke test with a nested project;
+  - `cs_initialize_project` signature vs cmake-lint `E1122` (duplicate keyword): `DEFAULT_CONFIG Debug Release` (one
+    multi-value keyword) is lint-clean, but several mapped/custom configurations repeat the `DEFAULT_CONFIG_MAPPED x
+    MAPPED_TO y` / `CUSTOM_CONFIG x BASED_ON y POSTFIX z` groups → E1122 in consumer projects. Redesign the
+    configuration arguments (e.g. one group per keyword value, or a separate `cs_add_build_configuration(...)` call per
+    configuration);
   - from the former Phase 4: static MSVC runtime option, split `cs_finalize_project`, configurable csCMake location;
   - double-check (likely a non-issue, prove with a test): `cs_target_link_libraries` scope keywords.
 - **Chained-projects smoke test** (added before the renames, kept green through 3a/3b): mirror the csfoundation chain
@@ -173,7 +181,8 @@ variables, properties, preset environment variables, default targets) guides the
 - **3d — Docs**: `README.md` (pitch, quickstart, map), `AGENTS.md`, `MIGRATION.md`, `docs/user/` (quickstart,
   tutorials = smoke projects, reference of functions/user variables, troubleshooting), `docs/advanced/` (concepts and
   lifecycle, build configurations, target tracking, install/export, variables/properties reference, presets
-  internals, extending, conventions). Plain Markdown on GitHub, diagrams in Mermaid. Every user entry links its
+  internals, extending, conventions), "Formatting your CMake files" (consumers reuse the `cs_*` signatures: cmake-format
+  only finds `.cmake-format.*` in parent folders, csCMake is a sibling). Plain Markdown on GitHub, diagrams in Mermaid. Every user entry links its
   "under the hood" advanced section and vice versa.
 - **3e — Doc checks**: `cscmake-check-docs` (`src/cscmake/devtools`) + pre-commit hook: every public `cs_*` documented
   (and no stale entries), every variable/property in the reference, links/anchors resolve, tutorial snippets equal
@@ -215,6 +224,15 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups.
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
+
+### Project template with copier (future)
+- [ ] Consumer project scaffolding with copier (`copier copy` / `copier update`): `CMakePresets.json`,
+  `csCMakeProjectSetup.json`, top `CMakeLists.txt` (`cs_initialize_project(NAMESPACE ...)`), pre-commit config,
+  cmake-format/lint style. Split ownership: the **style policy** (line width, anchored lint patterns, disabled codes) in
+  the template repository (csCMake itself could take it via `copier update`); the **`cs_*` command signatures** stay in
+  csCMake (versioned with the API), e.g. `cmake-format/cscmake-commands.py`, loaded by the template's
+  `.cmake-format.py` from the csCMake checkout (two files: no merge conflicts on `copier update`; `.py` allows comments,
+  JSON does not).
 
 ### cscmake ↔ csorchestrator alignment (future)
 - [ ] csorchestrator keeps its own copy of the supported matrix (`frontend/cscmake_presets/supported_variants.py` + `domain/context/*`); `src/cscmake/presets/registry.py` is the source of truth. Prevent silent drift **without a code dependency in either direction**: csCMake is checked out next to projects (never pip-installed) and must not be checked out automatically by csorchestrator.
@@ -396,3 +414,15 @@ variables, properties, preset environment variables, default targets) guides the
   the cmakelang defaults.
 - Checks: `--warn-uninitialized` configure of csSmokeBase: no warning before or after; generated Configs differ only in
   the template-local names, installed targets files identical; `pytest --run-all` 56 passed (4 host variants).
+
+### 2026-11-09 (Phase 3a step 5 — anchored lint patterns, cs_* signatures for cmake-format)
+- `.cmake-format.json`: every cmake-lint name pattern set explicitly and anchored with `$` (cmakelang uses `re.match`:
+  `csCamelCase` used to pass `[0-9a-z_]+`); fixed the two dynamic locals with an upper-case suffix
+  (`target_${config_ucase}_folders_path`, ...).
+- `parse.additional_commands` for the public `cs_*` commands (keywords, flags, positional counts): cmake-format lays
+  out `cs_initialize_project(NAMESPACE x CXX_STANDARD 17 ...)` one keyword group per line instead of one token per line.
+  Reformatted smoke projects and `utils/`: whitespace/layout only (checked token by token).
+- CLAUDE.md: update the signatures with the public API; naming patterns.
+- `DEFAULT_CONFIG` declared multi-value: the smoke projects and README use `DEFAULT_CONFIG Debug Release` (the
+  repeated `DEFAULT_CONFIG` form is still accepted by `cs_initialize_project`, but cmake-lint reports E1122 with the
+  signature; caught by the pre-commit hook: my lint check had filtered `[C...]` codes only).
