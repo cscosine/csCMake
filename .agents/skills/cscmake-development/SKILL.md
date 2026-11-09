@@ -89,7 +89,8 @@ entries in `presets/common/build-configurations.json`.
 
 ### Adding tests
 - Python tests go in `tests/cscmake/<module>/test_*.py`.
-- CMake smoke projects live in `tests/smoke/` (`csSmoke`, `csSmokeConsumer`), driven by
+- CMake smoke projects live in `tests/smoke/` (described in `tests/smoke/README.md`: a chain of packages
+  `csSmokeBase` → `csSmokeMidA`/`csSmokeMidB` → `csSmokeTop`), driven by
   `tests/smoke/run_smoke.py --variant <id>`; CI runs it for every registry variant (`smoke.yml`,
   matrix from `tests/smoke/ci_matrix.py`). New csCMake features should get coverage there.
 - Markers (root `conftest.py`): `@pytest.mark.slow` (skipped unless `--run-all`) and

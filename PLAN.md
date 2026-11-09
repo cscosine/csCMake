@@ -13,9 +13,9 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 0 — Project plumbing** (port from csorchestrator: `.vscode/`, `pyproject.toml`, `conftest.py`, `constraints-minimum.txt`, `.pre-commit-config.yaml`, `setup.sh`/`setup.ps1`, CI workflow, agent skill)
 - [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook; amended: `csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` generated too). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
-- [ ] **Phase 3 — Docs** (README.md, AGENTS.md, docs/architecture.md, docs/utils-api.md, docs/presets.md)
-- [ ] **Phase 4 — CMake code hardening** (see Issues below)
-- [ ] **Phase 5 — Release** (version bump, tag, CHANGELOG entries)
+- [ ] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
+- [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
+- [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries)
 
 ## Governance
 
@@ -68,7 +68,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
   - standalone: `<project>/workspace/csCMake` (`csCMakeProjectSetup-base-standalone.json`).
   A preset `environment` overrides the process environment, so exporting `CS_CMAKE_ROOT` / `WORKSPACE_ROOT` has no effect; `CS_CMAKE_MODULE_PATH_*` / `CS_CMAKE_PREFIX_PATH_*` only add paths. A project can define its own `cscmake-project-setup` preset (own `CS_CMAKE_ROOT`/`WORKSPACE_ROOT`), but its `CMakePresets.json` include still assumes the sibling path.
 - [ ] Option to evaluate: a base setup whose root comes from the environment, e.g. `csCMakeProjectSetup-base-env.json` + `-default-env.json` using `$penv{CS_CMAKE_ROOT}` / `$penv{CS_CMAKE_WORKSPACE_ROOT}` (presets v7+ also allow `$penv{}` in `include`, so `CMakePresets.json` could include `$penv{CS_CMAKE_ROOT}/presets/csv1/cs-presets-all.json`). Presets have no default for unset variables, so this must be an additional variant, not a replacement of the zero-setup sibling layout.
-- [ ] The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmoke) and `csCMakeProjectSetup-default.json` (csSmokeConsumer).
+- [ ] The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmokeMidB) and `csCMakeProjectSetup-default.json` (the other chain projects).
 
 ### Python code coverage
 - [ ] Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
@@ -85,6 +85,84 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
 - [ ] cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
 - [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
+
+### Phase 3 plan (agreed 2026-11-09)
+Breaking change, **no deprecation aliases**: old names are removed, a `MIGRATION.md` (old → new table for functions,
+variables, properties, preset environment variables, default targets) guides the migration of the projects.
+- **Branching**: csCMake `feature/productize` (from `dev`), one commit per sub-phase, review stop after each. Test bed:
+  csfoundation (`workspace/`: csCMake, csCore, csCamera, csLie, csVisOpenGL; standalone layout) on `feature/productize`
+  in each repo. When validated: merge (no squash) into `dev`, then migrate the other projects.
+- **3a — Naming and API surface** (behaviour unchanged, smoke results identical):
+  - API classification (details reviewed together): *user* (initialize/finalize, add_library/executable,
+    target_sources/link_libraries, find_package, install_target, quality helpers, generate folders), *advanced*
+    (`cs_get_*`/`cs_print_*` introspection), *private* (`_cs_*`, everything else).
+  - Functions → `cs_snake_case` / `_cs_snake_case`, no aliases (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`,
+    `csGetConfigurationWithStrictFlags`, `_csPopulateTargetDependencies`, `_csCheckPathExistsAndAddToTargetProperty`,
+    `_csSetConfigurationWithStrictFlags`; internal ones with public names → `_cs_`).
+  - One prefix everywhere: `CSCMAKE_` for cache/normal/environment/preset variables (`CS_CMAKE_*`, `WORKSPACE_ROOT`,
+    `<project>_CS_CMAKE_DEBUG`, ...) and one scheme for global/target properties (`cs*` camelCase today).
+  - Namespace declared once: `cs_initialize_project(NAMESPACE <ns> CXX_STANDARD ...)` (no positional project name; an old
+    call fails as unparsed argument), `cs_finalize_project()` without argument. Real default-target names keep the
+    `<P>` (project name) prefix; `EXPORT_NAME` makes the in-build alias equal to the installed name
+    (`<ns>::cscmake_compile_options` in the build and after install; today `csCoreSol::csCoreSol_...` in the build vs
+    `csCore::csCoreSol...` installed). `<Ns>_BASE_DIR` of the generated Config is public (csImgTracker uses it).
+  - Debug option `<P>_CSCMAKE_DEBUG` per project (`<P>` = `PROJECT_NAME` at `cs_initialize_project`, grouped by
+    cmake-gui), defined in `cs_initialize_project` (today `${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG`, always the top-level
+    project, defined once at include time); the Config keeps `<Ns>_DEBUG` per package.
+  - Terminology: *component* everywhere (an install export = a `find_package(... COMPONENTS ...)` component):
+    `cs_install_target(<target> <component> [DEFAULT])`, `CSCMAKE_COMPONENT_*` properties, `cs_get_*component*`.
+  - Default targets (`<P>_csCMakeBaseInclude`, `<P>_csCMakeCompileOptionsDefault/Strict`, `<P>MSVCParallelCompile`,
+    `<P>StrictCompilation`, component `<P>_csCMakeCommon`): analyse and refactor the naming.
+  - Lowercase arguments/locals (with the template `@VAR@` placeholders), drop the temporary lint overrides, anchor the
+    cmake-lint name patterns with `$`, `additional_commands` for the `cs_*` signatures. `MIGRATION.md` started.
+- **3b — Hardening** (+ smoke coverage of every behaviour change and of what the docs show: shared lib, INTERFACE lib,
+  multi-component with PUBLIC `cs_find_package`, strict config, compile-each-header; clang-tidy/OpenMP "experimental"
+  until tested):
+  - bugs: quoted `foreach` in `_cs_target_try_to_finalize` (iterates once over the whole list, confirmed with
+    `cmake -P`), `cs_print_target_properties` (`PROP_LIST`), `cs_print_exported_list_details` (prints the export list
+    as default list), error messages naming nonexistent functions / undefined variables, unused argument of
+    `_cs_sort_export_dependent_exports`, `INSTALL_CONFIGDIR` read from the caller scope, PDB destination `bin`;
+  - `csClangTidy.cmake` fails at include time on UNIX without clang-tidy → lazy lookup in `cs_exec_clang_tidy`
+    (and verify its property value);
+  - `CMAKE_SOURCE_DIR` used for the relative install paths of headers (wrong when the csCMake project is itself a
+    subproject) → the source dir of `cs_initialize_project`, stored in a global property. **Not** `PROJECT_SOURCE_DIR`:
+    csfoundation subdirectories call `project()` again (`project(core ...)`), which would change the install layout;
+  - csCMake-owned cache variables not `FORCE`d (user `-D` honoured); `FORCE` only where csCMake must own the value
+    (`CMAKE_CONFIGURATION_TYPES`), documented;
+  - `cs_initialize_project(<name>)`: `FATAL_ERROR` if `<name>` differs from `PROJECT_NAME`; stays a macro, no leaked
+    variables;
+  - `cs_finalize_target` **mandatory**: `cs_finalize_project` fails listing unfinalized targets and targets whose link
+    properties changed after finalization; a `cmake_language(DEFER)` check fails if `cs_finalize_project` is not called;
+  - verbosity policy (no forced STATUS lines per call), silent skips → `WARNING`;
+  - generated Config: namespaced variables (no `COMPONENT`, `${COMPONENT}_DEPENDENT_EXPORTS` clashes), the
+    `@EXPORT_NAMESPACE_SANITIZED@` TODO, `<Pkg>_FOUND`/`OPTIONAL_COMPONENTS` semantics instead of `FATAL_ERROR`;
+  - `cmake_minimum_required` in `csCMake.cmake` → version check (3.31, presets v10);
+  - **nested csCMake projects** (a lib project `add_subdirectory`-ed into a target project): fails today
+    (`duplicated element Debug`, verified 2026-11-09: all state is in global properties). Current project tracked by a
+    variable set in `cs_initialize_project` (inherited by subdirectories, not tied to `PROJECT_NAME`); targets,
+    components and dependency data keyed by project; each `cs_finalize_project` installs only its own components;
+    build configurations shared by the build tree (nested project checks compatibility, rule to decide); links to a
+    target of another csCMake project of the same build → `find_dependency(<ns> COMPONENTS ...)` in the Config
+    (design together); smoke test with a nested project;
+  - from the former Phase 4: static MSVC runtime option, split `cs_finalize_project`, configurable csCMake location;
+  - double-check (likely a non-issue, prove with a test): `cs_target_link_libraries` scope keywords.
+- **Chained-projects smoke test** (added before the renames, kept green through 3a/3b): mirror the csfoundation chain
+  (csCore → csCamera → csImgTracker): `<X>Sol` top projects with a subproject named like the package, namespace ≠
+  project name, default targets linked, components depending on each other, a third project consuming two packages.
+  In 3b add two packages with the same component name (fails today: the generated Config sets
+  `${COMPONENT}_DEPENDENT_EXPORTS` globally, which is why csfoundation names components `csCameraAssert`, `<P>Sol_csCMakeCommon`, ...).
+- **3c — In-source docs**: one docstring format (signature, summary, arguments, *Reads*/*Writes*: variables, global
+  and target properties); rewrite the comments flattened by cmake-format; full variables/properties reference.
+- **3d — Docs**: `README.md` (pitch, quickstart, map), `AGENTS.md`, `MIGRATION.md`, `docs/user/` (quickstart,
+  tutorials = smoke projects, reference of functions/user variables, troubleshooting), `docs/advanced/` (concepts and
+  lifecycle, build configurations, target tracking, install/export, variables/properties reference, presets
+  internals, extending, conventions). Plain Markdown on GitHub, diagrams in Mermaid. Every user entry links its
+  "under the hood" advanced section and vice versa.
+- **3e — Doc checks**: `cscmake-check-docs` (`src/cscmake/devtools`) + pre-commit hook: every public `cs_*` documented
+  (and no stale entries), every variable/property in the reference, links/anchors resolve, tutorial snippets equal
+  the smoke files.
+- **3f — Validation** (final gate before `dev`): csfoundation migrated on `feature/productize` and green; merge to `dev`; migrate other projects
+  (optional `cscmake-migrate` search/replace helper from the `MIGRATION.md` table, to decide).
 
 ### Phase 2 plan (agreed 2026-11-09)
 - **Smoke projects** in `tests/smoke/` (consumers of csCMake through the presets, exactly like real projects):
@@ -121,8 +199,8 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | not started | Docs |
-| 4 | not started | CMake hardening |
+| 3 | in progress | Productize on `feature/productize`: plan agreed 2026-11-09; 3a (naming) next, rename table under review. |
+| 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
 ## CHANGELOG
@@ -193,3 +271,24 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - Fix found by the smoke lint: `_cs_finalize_install` left a whitespace-only line in the generated Config when no `find_dependency` was injected (and an extra indent on the first injected line) since the template formatting.
 - Local run: 46 tests incl. 4 smoke variants pass (`pytest --run-all`, ~35 s).
 - Fix after the first GitHub run (2026-11-09): all Windows smoke jobs failed only at the cmake-lint step of the installed `csSmokeConfig.cmake` (C0327, CRLF: the template was checked out with CRLF by `* text=auto`; configure, build, install, ctest and the installed apps were fine). `.gitattributes`: `eol=lf` for CMake sources; `run_smoke.py`: consistent line endings required (mixed → failure), lint of an LF copy (cmakelang CRLF bugs).
+
+### 2026-11-09 (Phase 3 — plan)
+- Inventory of `csCMake.cmake`, `utils/*.cmake`, the Config template and the presets (83 functions/macros: 48
+  public-named, 35 private); findings recorded in "Phase 3 plan". Breaking-change productization agreed: branch
+  `feature/productize`, csfoundation as test bed, no deprecation aliases, `MIGRATION.md`; breaking items of the old
+  Phase 4 moved into Phase 3, Phase 4 reduced to non-breaking internal quality.
+
+### 2026-11-09 (Phase 3 — chained-projects smoke test, before the renames)
+- `tests/smoke/csSmokeBase` (like csCore: `csSmokeBaseSol` top project, subprojects `csSmokeBase`, `core` INTERFACE
+  with `cs_compileEachInstalledInclude` + strict options, `text` STATIC depending on `core`), `csSmokeMidA` /
+  `csSmokeMidB` (like csCamera / csLie: `cs_find_package(... PUBLIC csSmokeBase COMPONENTS text|core ...)`, default
+  targets linked), `csSmokeTop` (consumes both: diamond on `csSmokeBase`). Records today's behaviour; must stay green
+  through 3a/3b.
+- `csSmoke` / `csSmokeConsumer` removed, superseded by the chain (2026-11-09): what only they covered moved into it —
+  `csSmokeMidB` uses the flat layout (single `project()` = namespace, no `Sol`) and `csCMakeProjectSetup-shortBuildPath.json`,
+  `csSmokeTop` finds `csSmokeMidB` PRIVATE. Dropped: a project installing nothing (empty Config).
+- `run_smoke.py`: `PROJECTS` in build order (expected `find_dependency` packages of the installed Config, installed
+  apps + expected output per project): checks that the installed Config propagates exactly the PUBLIC
+  `cs_find_package` (PRIVATE not; not verified before), cmake-lint of every installed Config; test that every
+  project folder is run. `tests/smoke/README.md`: what is tested, Mermaid graphs
+  (to be moved/linked into `docs/advanced/` in 3d).

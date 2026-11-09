@@ -13,9 +13,10 @@ from cscmake.presets.registry import (
 )
 from tests.smoke.run_smoke import (
     CONFIGS,
-    CONSUMER,
-    PRODUCER,
+    PROJECTS,
+    SMOKE_DIR,
     SmokeError,
+    config_find_dependencies,
     find_variant,
     line_ending,
     prepare_workspace,
@@ -50,9 +51,15 @@ def test_prepare_workspace_lays_out_siblings_and_cleans_leftovers(tmp_path: Path
 
     assert (tmp_path / "csCMake" / "csCMake.cmake").is_file()
     assert (tmp_path / "csCMake" / "presets" / "csv1" / "cs-presets-all.json").is_file()
-    assert (tmp_path / PRODUCER / "CMakePresets.json").is_file()
-    assert (tmp_path / CONSUMER / "CMakePresets.json").is_file()
+    for project in PROJECTS:
+        assert (tmp_path / project.name / "CMakePresets.json").is_file(), project.name
     assert not (tmp_path / "install").exists()
+
+
+def test_every_smoke_project_is_run() -> None:
+    """Every project folder in tests/smoke is part of PROJECTS (and vice versa)."""
+    folders = {p.name for p in SMOKE_DIR.iterdir() if (p / "CMakeLists.txt").is_file()}
+    assert folders == {project.name for project in PROJECTS}
 
 
 def _host_variants() -> list[str]:
@@ -92,3 +99,17 @@ def test_line_ending_detection(tmp_path: Path) -> None:
     assert line_ending(windows) == "windows"
     with pytest.raises(SmokeError, match="mixed line endings"):
         line_ending(mixed)
+
+
+def test_config_find_dependencies() -> None:
+    text = """
+macro(pkg_find_dependency_for_component COMPONENT_NAME)
+  if(NOT pkgConfig_a_FIND_DONE)
+      pkg_debug_message("[pkgConfig] find_dependency(csSmokeBase COMPONENTS text REQUIRED CONFIG)")
+      find_dependency(csSmokeBase COMPONENTS text REQUIRED CONFIG)
+      find_dependency(Eigen3)
+  endif()
+endmacro()
+"""
+    assert config_find_dependencies(text) == {"csSmokeBase", "Eigen3"}
+    assert config_find_dependencies("# nothing injected\n") == set()

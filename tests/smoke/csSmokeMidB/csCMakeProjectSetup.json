@@ -1,6 +1,6 @@
 {
   "version": 10,
-  "$comment": "short build paths (as csCore does): keeps Visual Studio builds clear of the 260 characters path limit",
+  "$comment": "short build paths: keep Visual Studio builds clear of the 260 characters path limit",
   "include": [
     "${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-shortBuildPath.json"
   ]
