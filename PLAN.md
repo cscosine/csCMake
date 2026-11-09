@@ -82,7 +82,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
 - [ ] cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; only `csInstall.cmake` has a file-level pragma).
 - [ ] cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
-- [ ] Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
+- [x] (Phase 3a step 4) Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
 - [ ] cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
 - [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
 
@@ -381,3 +381,18 @@ variables, properties, preset environment variables, default targets) guides the
   `<ns>_cscmake_common` (keeps the namespace prefix until the generated Config variables are namespaced in 3b).
 - Smoke projects migrated; `run_smoke.py` checks the installed default targets (`<ns>::cscmake_*` exactly).
   `MIGRATION.md`: namespace and default targets.
+
+### 2026-11-09 (Phase 3a step 4 — lowercase arguments and local variables)
+- Every function/macro argument and local variable of `csCMake.cmake` / `utils/*.cmake` lowercased (renamer working per
+  function: `${X}` references and bare tokens, never property names after `PROPERTY`/`PROPERTIES`, the third argument
+  of `get_target_property`, generator expressions, escaped `\${...}` or plain string text); `cmake_parse_arguments`
+  prefix `arg` (`arg_<KEYWORD>`). Hand-fixed: `cs_target_use_openmp(target_name visibility)` (`TARGET` keyword), short
+  or `_`-prefixed names (`i`→`idx`, `N`→`count`, `_values`→`values`, `_file`→`file_path`), locals only used bare
+  (`*_SIZE`), the keyword lists of `_cs_parse_additional_configurations` (lowercased by the renamer, caught by the
+  smoke configure).
+- Config template: `@VAR@` placeholders lowercase (= the arguments of `_cs_configure_config_cmake`), template-local
+  names lowercase (`component`, `component_name`, file-level `_dependent_component_list`, `_find_components_empty`).
+- `.cmake-format.json`: temporary `argument_var_pattern` / `local_var_pattern` overrides removed: cmake-lint clean with
+  the cmakelang defaults.
+- Checks: `--warn-uninitialized` configure of csSmokeBase: no warning before or after; generated Configs differ only in
+  the template-local names, installed targets files identical; `pytest --run-all` 56 passed (4 host variants).

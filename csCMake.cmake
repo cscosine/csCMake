@@ -18,25 +18,25 @@ include(utils/csClangTidy)
 include(utils/csOpenMP)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
-function(_cs_set_root_dir PATH)
-  get_property(VAL GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
-  if(VAL)
-    if(NOT VAL STREQUAL ${PATH})
+function(_cs_set_root_dir path)
+  get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
+  if(val)
+    if(NOT val STREQUAL ${path})
       message(
         FATAL_ERROR
           "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your configuration."
       )
     endif()
   endif()
-  set_property(GLOBAL PROPERTY CSCMAKE_ROOT_DIR ${PATH})
+  set_property(GLOBAL PROPERTY CSCMAKE_ROOT_DIR ${path})
 endfunction()
 _cs_set_root_dir(${CMAKE_CURRENT_LIST_DIR})
 
 # get the stored base path
-function(_cs_get_root_dir PATH)
-  get_property(VAL GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
-  set(${PATH}
-      ${VAL}
+function(_cs_get_root_dir path)
+  get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
+  set(${path}
+      ${val}
       PARENT_SCOPE)
 endfunction()
 
@@ -62,8 +62,8 @@ macro(cs_initialize_project)
   # this does not work / does not get propagated to custom config, therefore, _cs_parse_additional_configurations will
   # set CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UCASE} for each custom config TODO(sc) try to understand better this
   # behavior, at the moment this is a workaround
-  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if(GENERATOR_IS_MULTI_CONFIG)
+  get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(generator_is_multi_config)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
         "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
         CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
@@ -87,14 +87,14 @@ macro(cs_initialize_project)
 
   # initialize the default configuration list variables
   _cs_process_build_configurations_variables()
-  _cs_get_per_config_variables(TEMP_VAR_LIST)
-  cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${TEMP_VAR_LIST}")
+  _cs_get_per_config_variables(temp_var_list)
+  cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${temp_var_list}")
 
   # parse the additional configurations
-  _cs_parse_additional_configurations(REQUIRED_CXX_STANDARD ${ARGN})
+  _cs_parse_additional_configurations(required_cxx_standard ${ARGN})
 
   # set cmake standard
-  set(CMAKE_CXX_STANDARD ${REQUIRED_CXX_STANDARD})
+  set(CMAKE_CXX_STANDARD ${required_cxx_standard})
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -120,14 +120,14 @@ macro(cs_initialize_project)
   _cs_add_default_targets()
 endmacro()
 
-# Return in OUTPUT_VARIABLE_NAME the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed
+# Return in output_variable_name the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed
 # targets (<namespace>::<target>) and the name of the package (find_package(<namespace>)). It is the read-only variable
 # CSCMAKE_NAMESPACE, set by cs_initialize_project in its directory and inherited by the subdirectories.
-function(cs_get_namespace OUTPUT_VARIABLE_NAME)
+function(cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
     message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
   endif()
-  set(${OUTPUT_VARIABLE_NAME}
+  set(${output_variable_name}
       ${CSCMAKE_NAMESPACE}
       PARENT_SCOPE)
 endfunction()
@@ -141,7 +141,7 @@ function(cs_finalize_project)
         "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
     )
   endif()
-  cs_get_namespace(EXPORT_NAMESPACE)
+  cs_get_namespace(export_namespace)
 
   # TODO(sc) add a parameter to avoid verbose printing
 
@@ -151,16 +151,16 @@ function(cs_finalize_project)
 
   cs_print_state("final state")
 
-  set(TARGETS "")
-  cs_get_project_targets(TARGETS)
+  set(targets "")
+  cs_get_project_targets(targets)
 
   # finalize path recursion for dll dependencies
-  _cs_recursive_analyze_targets_finalize("${TARGETS}")
+  _cs_recursive_analyze_targets_finalize("${targets}")
 
   # set on visual studio env variable the path required
-  _cs_set_vs_debugger_env_variable("${TARGETS}")
+  _cs_set_vs_debugger_env_variable("${targets}")
 
   # finalize the installation: add the cmake/ dir with all cmake files required to find the exported targets
-  _cs_finalize_install(${EXPORT_NAMESPACE})
+  _cs_finalize_install(${export_namespace})
 
 endfunction()

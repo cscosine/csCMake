@@ -21,7 +21,7 @@ function(cs_print_target_properties tgt)
     return()
   endif()
 
-  foreach(prop ${PROP_LIST})
+  foreach(prop ${prop_list})
     string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" prop ${prop})
     get_property(
       propval

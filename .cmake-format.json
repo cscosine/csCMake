@@ -8,8 +8,6 @@
       "C0307"
     ],
     "macro_pattern": "[0-9a-z_]+",
-    "argument_var_pattern": "_?[A-Z][0-9A-Z_]*|_?[a-z][0-9a-z_]*",
-    "local_var_pattern": "_?[A-Z][0-9A-Z_]*|_?[a-z][0-9a-z_]*",
     "global_var_pattern": "\"?[A-Z][0-9A-Z_]*\"?$|\"\"$"
   },
   "markup": {
