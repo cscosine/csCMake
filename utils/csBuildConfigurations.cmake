@@ -134,13 +134,26 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
   set(OPTIONS "")
-  set(ONEVALUE CXX_STANDARD STRICT_COMPILATION_ON_CONFIG)
+  set(ONEVALUE NAMESPACE CXX_STANDARD STRICT_COMPILATION_ON_CONFIG)
   set(MULTIVALUE DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
   cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
 
   if(ARG_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "[_cs_parse_additional_configurations] has unparsed arguments ${ARG_UNPARSED_ARGUMENTS}")
+    message(
+      FATAL_ERROR
+        "[cs_initialize_project] unparsed arguments ${ARG_UNPARSED_ARGUMENTS} (the project name argument was replaced by NAMESPACE <namespace>, see MIGRATION.md)"
+    )
   endif()
+
+  # the namespace of the installed targets (<namespace>::<target>) and of the package (<namespace>Config.cmake)
+  if(NOT ARG_NAMESPACE)
+    message(FATAL_ERROR "[cs_initialize_project] NAMESPACE <namespace> is required")
+  endif()
+  # a variable, not a global property: set in the directory of cs_initialize_project (this is called by the macro) and
+  # inherited by its subdirectories, so a nested csCMake project has its own namespace
+  set(CSCMAKE_NAMESPACE
+      ${ARG_NAMESPACE}
+      PARENT_SCOPE)
 
   # If not set by caller, error
   if(NOT ARG_CXX_STANDARD)

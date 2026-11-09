@@ -15,6 +15,7 @@ project(
 include(csCMake)
 
 cs_initialize_project(
+  NAMESPACE
   csSmokeMidB
   CXX_STANDARD
   17
@@ -35,4 +36,4 @@ cs_initialize_project(
 
 add_subdirectory(csSmokeMidB)
 
-cs_finalize_project(csSmokeMidB)
+cs_finalize_project()

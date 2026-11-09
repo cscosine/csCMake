@@ -14,8 +14,8 @@ cs_find_package(
 
 cs_target_sources(csSmokeMidB PRIVATE csSmokeMidB.cpp PRIVATE_INSTALL csSmokeMidB.hpp)
 
-cs_target_link_libraries(csSmokeMidB PUBLIC csSmokeBase::core csSmokeMidB::csSmokeMidB_csCMakeBaseInclude
-                         csSmokeMidB::csSmokeMidB_csCMakeCompileOptionsDefault)
+cs_target_link_libraries(csSmokeMidB PUBLIC csSmokeBase::core csSmokeMidB::cscmake_base_include
+                         csSmokeMidB::cscmake_compile_options)
 
 cs_install_target(csSmokeMidB csSmokeMidB DEFAULT)
 

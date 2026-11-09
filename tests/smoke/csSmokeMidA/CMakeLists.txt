@@ -16,7 +16,8 @@ project(
 include(csCMake)
 
 cs_initialize_project(
-  csSmokeMidASol
+  NAMESPACE
+  csSmokeMidA
   CXX_STANDARD
   17
   DEFAULT_CONFIG
@@ -36,4 +37,4 @@ cs_initialize_project(
 
 add_subdirectory(csSmokeMidA)
 
-cs_finalize_project(csSmokeMidA)
+cs_finalize_project()

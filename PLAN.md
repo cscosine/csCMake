@@ -369,3 +369,15 @@ variables, properties, preset environment variables, default targets) guides the
   the configuration in upper case (`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, the getters upper-case their argument).
 - Caught by the smoke tests: the property regex also renamed the module path `include(utils/csTargetDependencies)`.
 - `MIGRATION.md`: variables and properties tables. Local: `pytest --run-all` 56 passed (4 host variants).
+
+### 2026-11-09 (Phase 3a step 3 — namespace in cs_initialize_project, default targets)
+- `cs_initialize_project(NAMESPACE <ns> CXX_STANDARD ...)` (the positional project name is gone; an old call fails with
+  a hint to `MIGRATION.md`), `cs_finalize_project()` without argument (same), `cs_get_namespace()`. The namespace is the variable
+  `CSCMAKE_NAMESPACE` (directory scope, inherited by subdirectories), not a global property: a nested csCMake project
+  gets its own (first piece of the 3b per-project state).
+- Default targets: real name `<project>_cscmake_*` (unique in the build tree), `EXPORT_NAME` `cscmake_*`, alias
+  `<ns>::cscmake_*`: the same name in the build tree and installed (`cscmake_base_include`, `cscmake_compile_options`,
+  `cscmake_compile_options_strict`, `cscmake_msvc_parallel_compile`, `cscmake_strict_warnings`); component
+  `<ns>_cscmake_common` (keeps the namespace prefix until the generated Config variables are namespaced in 3b).
+- Smoke projects migrated; `run_smoke.py` checks the installed default targets (`<ns>::cscmake_*` exactly).
+  `MIGRATION.md`: namespace and default targets.

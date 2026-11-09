@@ -82,7 +82,9 @@ project(myApp VERSION 1.0.0 LANGUAGES CXX)
 # make the csCMake directory visible to include()
 include(csCMake)
 
-cs_initialize_project(myApp
+cs_initialize_project(
+    # namespace of the installed targets (myApp::...) and package name (find_package(myApp))
+    NAMESPACE myApp
     CXX_STANDARD 17
     # select the default configurations supported by this project
     DEFAULT_CONFIG Debug
@@ -100,7 +102,7 @@ cs_initialize_project(myApp
 add_subdirectory(src)
 
 # remember to add this at the end of the main cmake file
-cs_finalize_project(myApp)
+cs_finalize_project()
 ```
 
 > When configuring through the csCMake presets, `CMAKE_MODULE_PATH` is set to the
@@ -130,8 +132,8 @@ cs_target_sources(mylib
 # are resolved automatically)
 cs_target_link_libraries(mylib
     PUBLIC
-        myApp::myApp_csCMakeBaseInclude          # project root include dir
-        myApp::myApp_csCMakeCompileOptionsStrict
+        myApp::cscmake_base_include              # project root include dir
+        myApp::cscmake_compile_options_strict
 )
 
 # optional helpers
@@ -185,21 +187,23 @@ cs_find_package(mylib PUBLIC Eigen3 REQUIRED)
 
 ### Default targets
 
-`cs_initialize_project` creates a few convenience targets, exported along with
-the project:
+`cs_initialize_project` creates a few convenience targets, installed in the
+`<namespace>_cscmake_common` component. They have the same name in the build
+tree and once installed:
 
-- `${PROJECT_NAME}_csCMakeBaseInclude` — includes the project root and the
+- `<namespace>::cscmake_base_include` — includes the project root and the
   generated folders (build-interface and install-interface aware).
-- `${PROJECT_NAME}_csCMakeCompileOptionsDefault` — common flags (e.g. MSVC
-  parallel compilation).
-- `${PROJECT_NAME}_csCMakeCompileOptionsStrict` — default flags plus strict
+- `<namespace>::cscmake_compile_options` — common flags (e.g. MSVC parallel
+  compilation).
+- `<namespace>::cscmake_compile_options_strict` — default flags plus strict
   compilation; if `STRICT_COMPILATION_ON_CONFIG` is set, the corresponding
   configuration also gets sanitizer flags (GCC/Clang on non-Windows).
-- `${PROJECT_NAME}MSVCParallelCompile` — MSVC parallel compilation flags.
+- `<namespace>::cscmake_msvc_parallel_compile`,
+  `<namespace>::cscmake_strict_warnings` — the building blocks of the two above.
 
 ### Install and export
 
-`cs_finalize_project(MyNamespace)` finalizes the whole project:
+`cs_finalize_project()` finalizes the whole project (namespace from `cs_initialize_project`):
 
 - recurses through targets to compute runtime dependencies (DLLs/libs) per
   configuration;

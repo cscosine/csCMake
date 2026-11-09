@@ -1,50 +1,47 @@
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# creates two targets that the user can use in target_link_libraries ${PROJECT_NAME}_csCMakeBaseInclude - contains
-# include directory of the main folder ${PROJECT_NAME}_csCMakeCompileOptionsDefault - contain common compilation flags,
-# e.g. multithread compilation in windows - in particular, it contains the following specific targets: --
-# {PROJECT_NAME}MSVCParallelCompile with parallel compilation options for MSCV
-# ${PROJECT_NAME}_csCMakeCompileOptionsStrict - contain common compilation flags, e.g. multithread compilation in
-# windows - in particular, it contains the following specific targets: -- {PROJECT_NAME}MSVCParallelCompile with
-# parallel compilation options for MSCV -- {PROJECT_NAME}StrictCompilation with all the warning to errors etc... all
-# targets are installed too
+# Create the default targets of the project, to be linked by the project targets. Same name in the build tree and once
+# installed, in the namespace given to cs_initialize_project:
+#
+# * <namespace>::cscmake_base_include: include folders (project source folder, generated files)
+# * <namespace>::cscmake_compile_options: default compile options (cscmake_msvc_parallel_compile)
+# * <namespace>::cscmake_compile_options_strict: the default ones plus cscmake_strict_warnings
+#
+# All of them are installed in the <namespace>_cscmake_common component (a default component).
 function(_cs_add_default_targets)
 
   # create the base include, to be used in all project
-  _cs_target_base_project_include_dir() # _csCMakeBaseInclude
+  _cs_target_base_project_include_dir() # cscmake_base_include
 
   # ---------------------------------------------------
   # create MSVC parallel compilation flags
-  _cs_target_msvc_parallel_compilation() # MSVCParallelCompile
+  _cs_target_msvc_parallel_compilation() # cscmake_msvc_parallel_compile
   # TODO(sc) add a target that manages the version file etc
 
-  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsDefault that includes the default ones.
-  # TARGET_NAME will contains the name
-  _cs_target_create_default(_csCMakeCompileOptionsDefault INTERFACE TARGET_NAME)
-  # add the selected targets
-  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
+  # <namespace>::cscmake_compile_options: the default compile options
+  _cs_target_create_default(cscmake_compile_options INTERFACE TARGET_NAME)
+  cs_get_namespace(NAMESPACE)
+  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${NAMESPACE}::cscmake_msvc_parallel_compile)
 
-  _cs_target_create_default_finalize(_csCMakeCompileOptionsDefault)
+  _cs_target_create_default_finalize(cscmake_compile_options)
 
   # ---------------------------------------------------
   # create the strict compiler options
-  _cs_target_strict_compilation() # StrictCompilation
+  _cs_target_strict_compilation() # cscmake_strict_warnings
 
-  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsStrict that includes the strict ones.
-  # TARGET_NAME will contains the name
-  _cs_target_create_default(_csCMakeCompileOptionsStrict INTERFACE TARGET_NAME)
-  # add the selected targets
-  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${PROJECT_NAME}::${PROJECT_NAME}StrictCompilation
-                           ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
-  _cs_target_create_default_finalize(_csCMakeCompileOptionsStrict)
+  # <namespace>::cscmake_compile_options_strict: the default compile options plus the strict warnings
+  _cs_target_create_default(cscmake_compile_options_strict INTERFACE TARGET_NAME)
+  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${NAMESPACE}::cscmake_strict_warnings
+                           ${NAMESPACE}::cscmake_msvc_parallel_compile)
+  _cs_target_create_default_finalize(cscmake_compile_options_strict)
 
 endfunction()
 
-# add a target named <ProjectName>_csCMakeBaseInclude, alias <ProjectName>::<ProjectName>_csCMakeBaseInclude that allow
-# to propagate include directories to the root of the project
+# Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project and the
+# folders of the generated files).
 function(_cs_target_base_project_include_dir)
-  _cs_target_create_default(_csCMakeBaseInclude INTERFACE TARGET_NAME)
+  _cs_target_create_default(cscmake_base_include INTERFACE TARGET_NAME)
   cs_get_install_include_dir(INSTALL_FOLDER_EXPRESSION)
 
   # add include to root dir, with subdir $<CONFIG> in installation if multiple config, with single folder if individual
@@ -70,26 +67,26 @@ function(_cs_target_base_project_include_dir)
     endforeach()
   endif()
 
-  _cs_target_create_default_finalize(_csCMakeBaseInclude)
+  _cs_target_create_default_finalize(cscmake_base_include)
 
 endfunction()
 
-# Create the ${PROJECT_NAME}MSVCParallelCompile interface target, adding /MP and /Zc:__cplusplus on MSVC.
+# Create the <namespace>::cscmake_msvc_parallel_compile interface target, adding /MP and /Zc:__cplusplus on MSVC.
 function(_cs_target_msvc_parallel_compilation)
-  _cs_target_create_default(MSVCParallelCompile INTERFACE TARGET_NAME)
+  _cs_target_create_default(cscmake_msvc_parallel_compile INTERFACE TARGET_NAME)
 
   # add /MP and /Zc:__cplusplus
   target_compile_options(${TARGET_NAME} INTERFACE $<$<CXX_COMPILER_ID:MSVC>: /MP /Zc:__cplusplus >)
 
-  _cs_target_create_default_finalize(MSVCParallelCompile)
+  _cs_target_create_default_finalize(cscmake_msvc_parallel_compile)
 
 endfunction()
 
-# Create the ${PROJECT_NAME}StrictCompilation interface target with the strict warning flags of each compiler (GCC,
+# Create the <namespace>::cscmake_strict_warnings interface target with the strict warning flags of each compiler (GCC,
 # Clang, ClangCL, MSVC), warnings treated as errors.
 function(_cs_target_strict_compilation)
 
-  _cs_target_create_default(StrictCompilation INTERFACE TARGET_NAME)
+  _cs_target_create_default(cscmake_strict_warnings INTERFACE TARGET_NAME)
 
   # add compile options
   target_compile_options(
@@ -176,15 +173,19 @@ function(_cs_target_strict_compilation)
       >)
   endif()
 
-  _cs_target_create_default_finalize(StrictCompilation)
+  _cs_target_create_default_finalize(cscmake_strict_warnings)
 
 endfunction()
 
-# create a empty target with coherent name, alias, export, etc...
+# Create the empty default target <project>_<TARGET_SUB_NAME> (unique in the build tree, also with several csCMake
+# projects) of type TARGET_TYPE, return its name in TARGET_NAME_OUT. It is exported as <TARGET_SUB_NAME> (EXPORT_NAME)
+# and aliased as <namespace>::<TARGET_SUB_NAME>: the same name in the build tree and once installed.
 function(_cs_target_create_default TARGET_SUB_NAME TARGET_TYPE TARGET_NAME_OUT)
-  set(TARGET_NAME ${PROJECT_NAME}${TARGET_SUB_NAME})
+  set(TARGET_NAME ${PROJECT_NAME}_${TARGET_SUB_NAME})
+  cs_get_namespace(NAMESPACE)
   cs_add_library(${TARGET_NAME} ${TARGET_TYPE})
-  cs_add_library(${PROJECT_NAME}::${TARGET_NAME} ALIAS ${TARGET_NAME})
+  set_target_properties(${TARGET_NAME} PROPERTIES EXPORT_NAME ${TARGET_SUB_NAME})
+  cs_add_library(${NAMESPACE}::${TARGET_SUB_NAME} ALIAS ${TARGET_NAME})
 
   # return the target name
   set(${TARGET_NAME_OUT}
@@ -192,13 +193,15 @@ function(_cs_target_create_default TARGET_SUB_NAME TARGET_TYPE TARGET_NAME_OUT)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize a default target created with _cs_target_create_default: install it in the ${PROJECT_NAME}_csCMakeCommon
-# export (default component) and run cs_finalize_target on it.
+# Finalize a default target created with _cs_target_create_default: install it in the <namespace>_cscmake_common
+# component (a default component) and run cs_finalize_target on it.
 function(_cs_target_create_default_finalize TARGET_SUB_NAME)
-  set(TARGET_NAME ${PROJECT_NAME}${TARGET_SUB_NAME})
+  set(TARGET_NAME ${PROJECT_NAME}_${TARGET_SUB_NAME})
+  cs_get_namespace(NAMESPACE)
 
-  # add to its own export
-  cs_install_target(${TARGET_NAME} ${PROJECT_NAME}_csCMakeCommon DEFAULT)
+  # the namespace prefix keeps the component name unique when a consumer loads several csCMake packages (the generated
+  # Config sets <component>_DEPENDENT_EXPORTS globally, see PLAN.md 3b)
+  cs_install_target(${TARGET_NAME} ${NAMESPACE}_cscmake_common DEFAULT)
 
   cs_finalize_target(${TARGET_NAME})
 

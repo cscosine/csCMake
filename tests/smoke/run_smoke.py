@@ -88,6 +88,15 @@ PROJECTS = (
     ),
 )
 
+# default targets created by cs_initialize_project, installed in the <namespace>_cscmake_common component
+DEFAULT_TARGETS = (
+    "cscmake_base_include",
+    "cscmake_compile_options",
+    "cscmake_compile_options_strict",
+    "cscmake_msvc_parallel_compile",
+    "cscmake_strict_warnings",
+)
+_ADD_LIBRARY = re.compile(r"^add_library\(\s*([^\s)]+)", re.MULTILINE)
 _FIND_DEPENDENCY = re.compile(r"^\s*find_dependency\(\s*([^\s)]+)", re.MULTILINE)
 
 
@@ -211,6 +220,20 @@ def check_installed_config_dependencies(workspace: Path, variant: str, project: 
         )
 
 
+def check_installed_default_targets(workspace: Path, variant: str, project: Project) -> None:
+    """The default targets are installed as ``<namespace>::cscmake_*``: the same names used in the build tree."""
+    targets_file = (
+        installed_config(workspace, variant, project).parent / "targets" / f"{project.name}_cscmake_commonTargets.cmake"
+    )
+    if not targets_file.is_file():
+        raise SmokeError(f"installed default targets not found: {targets_file}")
+    found = set(_ADD_LIBRARY.findall(targets_file.read_text(encoding="utf-8")))
+    expected = {f"{project.name}::{target}" for target in DEFAULT_TARGETS}
+    print(f"{targets_file.name}: {sorted(found)}", flush=True)
+    if found != expected:
+        raise SmokeError(f"{targets_file}: imported targets {sorted(found)}, expected {sorted(expected)}")
+
+
 def lint_installed_config(workspace: Path, variant: str, project: Project) -> None:
     """cmake-lint the installed ``<project>Config.cmake`` with the repository configuration.
 
@@ -246,6 +269,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
                 run(["cmake", "--workflow", workflow], cwd=workspace / project.name)
         with group(f"{project.name}: find_dependency in the installed {project.name}Config.cmake"):
             check_installed_config_dependencies(workspace, variant, project)
+            check_installed_default_targets(workspace, variant, project)
         if project.apps:
             with group(f"{project.name}: run the installed applications"):
                 check_installed_apps(workspace, variant, project)

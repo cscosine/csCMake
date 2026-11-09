@@ -6,7 +6,7 @@ cs_add_library(csSmokeBase::text ALIAS text)
 
 cs_target_sources(text PRIVATE Text.cpp PRIVATE_INSTALL Text.hpp)
 
-cs_target_link_libraries(text PUBLIC csSmokeBase::core csSmokeBaseSol::csSmokeBaseSol_csCMakeCompileOptionsDefault)
+cs_target_link_libraries(text PUBLIC csSmokeBase::core csSmokeBase::cscmake_compile_options)
 
 cs_install_target(text text)
 

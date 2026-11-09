@@ -16,7 +16,8 @@ project(
 include(csCMake)
 
 cs_initialize_project(
-  csSmokeBaseSol
+  NAMESPACE
+  csSmokeBase
   CXX_STANDARD
   17
   DEFAULT_CONFIG
@@ -36,4 +37,4 @@ cs_initialize_project(
 
 add_subdirectory(csSmokeBase)
 
-cs_finalize_project(csSmokeBase)
+cs_finalize_project()

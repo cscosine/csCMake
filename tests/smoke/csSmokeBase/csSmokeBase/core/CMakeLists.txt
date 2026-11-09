@@ -13,4 +13,4 @@ cs_install_target(core core)
 cs_finalize_target(core)
 
 # compile each installed header standalone, with the strict options
-cs_target_check_installed_headers(core csSmokeBaseSol::csSmokeBaseSol_csCMakeCompileOptionsStrict)
+cs_target_check_installed_headers(core csSmokeBase::cscmake_compile_options_strict)

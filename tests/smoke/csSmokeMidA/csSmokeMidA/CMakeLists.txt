@@ -15,8 +15,8 @@ cs_find_package(
 
 cs_target_sources(csSmokeMidA PRIVATE csSmokeMidA.cpp PRIVATE_INSTALL csSmokeMidA.hpp)
 
-cs_target_link_libraries(csSmokeMidA PUBLIC csSmokeBase::text csSmokeMidASol::csSmokeMidASol_csCMakeBaseInclude
-                         csSmokeMidASol::csSmokeMidASol_csCMakeCompileOptionsDefault)
+cs_target_link_libraries(csSmokeMidA PUBLIC csSmokeBase::text csSmokeMidA::cscmake_base_include
+                         csSmokeMidA::cscmake_compile_options)
 
 cs_install_target(csSmokeMidA csSmokeMidA DEFAULT)
 

@@ -121,6 +121,40 @@ directly (`get_property` / `get_target_property`); otherwise use the getter func
 | `csTargetDependencies` | `CSCMAKE_PROJECT_DEPENDENCIES` |
 | `csTargetDependenciesToAnalyze` | `_CSCMAKE_PENDING_DEPENDENCIES` (internal) |
 
-## Default targets and namespace
+## Namespace and default targets
 
-To come.
+### The namespace is given to `cs_initialize_project`
+
+The namespace (prefix of the installed targets `<namespace>::<target>`, name of the package `find_package(<namespace>)`)
+was the argument of `cs_finalize_project`; it is now the `NAMESPACE` argument of `cs_initialize_project`, which no
+longer takes the project name (it was only used in a debug message). `cs_finalize_project` takes no argument.
+
+```cmake
+# before
+cs_initialize_project(myAppSol CXX_STANDARD 17 ...)
+cs_finalize_project(myApp)
+
+# after
+cs_initialize_project(NAMESPACE myApp CXX_STANDARD 17 ...)
+cs_finalize_project()
+```
+
+An old call fails at configure time with a message pointing here. `cs_get_namespace(<out-var>)` returns the namespace (also in the read-only variable `CSCMAKE_NAMESPACE`, set in the
+directory of `cs_initialize_project` and its subdirectories).
+
+### Default targets
+
+The targets created by `cs_initialize_project` now have the **same name in the build tree and once installed**,
+`<namespace>::cscmake_*` (before: `<project>::<project>_csCMake*` in the build tree, `<namespace>::<project>_csCMake*`
+installed):
+
+| Old (build tree) | Old (installed) | New (both) |
+|---|---|---|
+| `<project>::<project>_csCMakeBaseInclude` | `<namespace>::<project>_csCMakeBaseInclude` | `<namespace>::cscmake_base_include` |
+| `<project>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::cscmake_compile_options` |
+| `<project>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::cscmake_compile_options_strict` |
+| `<project>::<project>MSVCParallelCompile` | `<namespace>::<project>MSVCParallelCompile` | `<namespace>::cscmake_msvc_parallel_compile` |
+| `<project>::<project>StrictCompilation` | `<namespace>::<project>StrictCompilation` | `<namespace>::cscmake_strict_warnings` |
+
+`<project>` is the name of the top `project()`. Their component is renamed from `<project>_csCMakeCommon` to
+`<namespace>_cscmake_common`.

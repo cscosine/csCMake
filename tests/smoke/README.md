@@ -13,7 +13,7 @@ install folder):
 | Project | Role | What it covers |
 |---|---|---|
 | `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with the strict options |
-| `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default targets (`_csCMakeBaseInclude`, `_csCMakeCompileOptionsDefault`) linked |
+| `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default targets (`csSmokeMidA::cscmake_base_include`, `csSmokeMidA::cscmake_compile_options`) linked |
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); `csCMakeProjectSetup-shortBuildPath.json` (the others use `-default`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
 
@@ -32,14 +32,14 @@ flowchart BT
 
 ### Inside `csSmokeBase`
 
-The top project `csSmokeBaseSol` calls `cs_initialize_project` and `cs_finalize_project(csSmokeBase)`; every
+The top project `csSmokeBaseSol` calls `cs_initialize_project(NAMESPACE csSmokeBase ...)` and `cs_finalize_project()`; every
 folder below it is its own `project()`. Each library is installed in its own component (export) of the
 `csSmokeBase` namespace.
 
 ```mermaid
 flowchart BT
     subgraph sol["csSmokeBaseSol (top project, folder csSmokeBase/)"]
-        common["csSmokeBaseSol_csCMakeBaseInclude<br/>csSmokeBaseSol_csCMakeCompileOptionsDefault / Strict<br/>(component csSmokeBaseSol_csCMakeCommon)"]
+        common["csSmokeBase::cscmake_base_include<br/>csSmokeBase::cscmake_compile_options / _strict<br/>(component csSmokeBase_cscmake_common)"]
         subgraph pkg["project csSmokeBase (csSmokeBase/csSmokeBase/)"]
             root["csSmokeBase::csSmokeBase<br/>INTERFACE"]
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
@@ -61,10 +61,10 @@ flowchart BT
 
 ```
 csSmokeMidA/                        Sol layout
-  CMakeLists.txt                    project(csSmokeMidASol), cs_initialize_project, cs_finalize_project(csSmokeMidA)
+  CMakeLists.txt                    project(csSmokeMidASol), cs_initialize_project(NAMESPACE csSmokeMidA ...)
   csSmokeMidA/CMakeLists.txt        project(csSmokeMidA): the library
 csSmokeMidB/                        flat layout
-  CMakeLists.txt                    project(csSmokeMidB), cs_initialize_project, cs_finalize_project(csSmokeMidB)
+  CMakeLists.txt                    project(csSmokeMidB), cs_initialize_project(NAMESPACE csSmokeMidB ...)
   csSmokeMidB/CMakeLists.txt        the library, no project()
 ```
 
@@ -77,6 +77,7 @@ In both, headers are included relative to the top project folder, in the build t
 |---|---|
 | `csSmokeTop` (installed, every configuration, and ctest) | prints `mid-a(text(base-core)) mid-b(base-core)` |
 | unit tests `textTest`, `csSmokeMidATest`, `csSmokeMidBTest` | exit code 0 |
+| default targets in the installed `<Package>_cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include`, `_compile_options`, `_compile_options_strict`, `_msvc_parallel_compile`, `_strict_warnings` |
 | `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only |
 
 ## What a smoke run does
@@ -88,7 +89,7 @@ flowchart TD
     ws["prepare the workspace<br/>csCMake copy + every project as siblings"] --> loop
     subgraph loop["for each project, in build order"]
         wf["cmake --workflow<br/>configure, build, install, ctest<br/>multi-config: 1 workflow with the 4 configs<br/>single-config: 1 workflow per config"]
-        deps["check the find_dependency calls<br/>of the installed &lt;Package&gt;Config.cmake"]
+        deps["check the find_dependency calls of the installed<br/>&lt;Package&gt;Config.cmake and the installed default targets"]
         apps["run the installed applications<br/>of every configuration (postfixes d, rd, dp)"]
         lint["cmake-lint the installed &lt;Package&gt;Config.cmake<br/>(consistent line endings, LF copy)"]
         wf --> deps --> apps --> lint

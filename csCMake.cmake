@@ -40,13 +40,13 @@ function(_cs_get_root_dir PATH)
       PARENT_SCOPE)
 endfunction()
 
-# accepts extra arguments to specify the available build configurations: cs_initialize_project(MyProject CXX_STANDARD
-# 14/17/... DEFAULT_CONFIG Debug DEFAULT_CONFIG Release DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO
-# "RelWithDebInfo,Release," CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2
-# BASED_ON Release POSTFIX "" [STRICT_COMPILATION_ON_CONFIG ConfigName] ) note, make sure to use POSTFIX "" if no
-# postfix
-macro(cs_initialize_project PROJECT_NAME)
-  cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
+# accepts extra arguments to specify the namespace and the available build configurations:
+# cs_initialize_project(NAMESPACE MyNamespace CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug DEFAULT_CONFIG Release
+# DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release," CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug
+# POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX "" [STRICT_COMPILATION_ON_CONFIG ConfigName] )
+# note, make sure to use POSTFIX "" if no postfix
+macro(cs_initialize_project)
+  cs_debug_message("cs_initialize_project ${ARGN}")
   # normalize paths
   _cs_path_list_normalize(CSCMAKE_PREFIX_PATH_HEAD)
   _cs_path_list_normalize(CMAKE_PREFIX_PATH)
@@ -120,8 +120,28 @@ macro(cs_initialize_project PROJECT_NAME)
   _cs_add_default_targets()
 endmacro()
 
-# EXPORT_NAMESPACE is the namespace added to exported targets, e.g. Eigen::Eigen3 Eigen is the namespace
-function(cs_finalize_project EXPORT_NAMESPACE)
+# Return in OUTPUT_VARIABLE_NAME the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed
+# targets (<namespace>::<target>) and the name of the package (find_package(<namespace>)). It is the read-only variable
+# CSCMAKE_NAMESPACE, set by cs_initialize_project in its directory and inherited by the subdirectories.
+function(cs_get_namespace OUTPUT_VARIABLE_NAME)
+  if(NOT CSCMAKE_NAMESPACE)
+    message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
+  endif()
+  set(${OUTPUT_VARIABLE_NAME}
+      ${CSCMAKE_NAMESPACE}
+      PARENT_SCOPE)
+endfunction()
+
+# Finalize the project, after every target: dependency analysis, Visual Studio debugger environment, installation of the
+# components in the namespace given to cs_initialize_project (<namespace>Config.cmake).
+function(cs_finalize_project)
+  if(ARGN)
+    message(
+      FATAL_ERROR
+        "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
+    )
+  endif()
+  cs_get_namespace(EXPORT_NAMESPACE)
 
   # TODO(sc) add a parameter to avoid verbose printing
 
