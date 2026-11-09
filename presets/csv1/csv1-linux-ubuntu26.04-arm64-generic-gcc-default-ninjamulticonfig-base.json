@@ -21,9 +21,9 @@
                 "cs-compiler-linux-gcc-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu26.04-arm64-generic-gcc-default-ninjamulticonfig",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu26.04a64ggdnm"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu26.04-arm64-generic-gcc-default-ninjamulticonfig",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1lu26.04a64ggdnm"
             }
         }
     ]

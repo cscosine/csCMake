@@ -3,9 +3,9 @@ include(utils/csDebugMessage)
 include(utils/csListUtils)
 include(utils/csDebugUtils)
 
-# target properties added by this function - csTargetDependencies${CONFIG}: list of dll necessary to the target, a
-# variable for each configuration is created - csTargetDependenciesNotImportedTargets: list of dependent targets that
-# are marked as not imported - csTargetDependenciesNonTargets: list of dependencies that are marked as non-target
+# target properties added by this function - CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>: list of dll necessary to the
+# target, a variable for each configuration is created - CSCMAKE_LINKED_PROJECT_TARGETS: list of dependent targets that
+# are marked as not imported - CSCMAKE_LINKED_NON_TARGETS: list of dependencies that are marked as non-target
 function(_cs_recursive_analyze_target TARGET_NAME)
   # cmake-lint: disable=R0915
   # get target type
@@ -57,8 +57,7 @@ function(_cs_recursive_analyze_target TARGET_NAME)
           cs_debug_message(
             "[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported (i.e., is defined in this project), add it to the list of non resolved recursive dependencies"
           )
-          _cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNotImportedTargets
-                                                  ${TARGET_TO_ANALYZE})
+          _cs_add_to_target_property_unique_value(${TARGET_NAME} CSCMAKE_LINKED_PROJECT_TARGETS ${TARGET_TO_ANALYZE})
         else()
           cs_debug_message(
             "[_cs_recursive_analyze_target] ${TARGET_TO_ANALYZE} is not imported, but is the base target to analyze, do not add it recursively"
@@ -81,7 +80,7 @@ function(_cs_recursive_analyze_target TARGET_NAME)
         cs_debug_message(
           "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, add it to the list of non resolved recursive dependencies"
         )
-        _cs_add_to_target_property_unique_value(${TARGET_NAME} csTargetDependenciesNonTargets ${TARGET_TO_ANALYZE})
+        _cs_add_to_target_property_unique_value(${TARGET_NAME} CSCMAKE_LINKED_NON_TARGETS ${TARGET_TO_ANALYZE})
       else()
         cs_debug_message(
           "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${TARGET_TO_ANALYZE} is not a target, but is the base target to analyze, do not add it recursively"
@@ -98,30 +97,33 @@ function(_cs_recursive_analyze_target TARGET_NAME)
   # per config
   cs_get_build_configurations(CONFIGS_LIST)
   foreach(CONFIG ${CONFIGS_LIST})
+    string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
     _cs_get_target_direct_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
     cs_debug_message(
-      "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependencies${CONFIG}: ${TARGET_TO_ANALYZE_DEPENDENCIES}")
+      "[_cs_recursive_analyze_target] ${TARGET_NAME} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${CONFIG_UCASE}: ${TARGET_TO_ANALYZE_DEPENDENCIES}"
+    )
 
   endforeach()
 
   _cs_get_target_linked_project_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS)
   cs_debug_message(
-    "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS}"
+    "[_cs_recursive_analyze_target] ${TARGET_NAME} CSCMAKE_LINKED_PROJECT_TARGETS: ${TARGET_TO_ANALYZE_DEPENDENCIES_NOT_IMPORTED_TARGETS}"
   )
 
   _cs_get_target_linked_non_targets(${TARGET_NAME} TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS)
   cs_debug_message(
-    "[_cs_recursive_analyze_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS}"
+    "[_cs_recursive_analyze_target] ${TARGET_NAME} CSCMAKE_LINKED_NON_TARGETS: ${TARGET_TO_ANALYZE_DEPENDENCIES_NON_TARGETS}"
   )
 
   cs_debug_message("[_cs_recursive_analyze_target] ${TARGET_NAME} end")
 
 endfunction()
 
-# return csTargetDependencies${CONFIG} for target
+# return CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> for target
 function(_cs_get_target_direct_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG})
+  string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+  get_target_property(_VALUES ${TARGET_NAME} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${CONFIG_UCASE})
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
         ${_VALUES}
@@ -133,9 +135,9 @@ function(_cs_get_target_direct_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIA
   endif()
 endfunction()
 
-# return csTargetDependenciesNotImportedTargets for target
+# return CSCMAKE_LINKED_PROJECT_TARGETS for target
 function(_cs_get_target_linked_project_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesNotImportedTargets)
+  get_target_property(_VALUES ${TARGET_NAME} CSCMAKE_LINKED_PROJECT_TARGETS)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
         ${_VALUES}
@@ -147,9 +149,9 @@ function(_cs_get_target_linked_project_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# * csTargetDependenciesNonTargets
+# * CSCMAKE_LINKED_NON_TARGETS
 function(_cs_get_target_linked_non_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesNonTargets)
+  get_target_property(_VALUES ${TARGET_NAME} CSCMAKE_LINKED_NON_TARGETS)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
         ${_VALUES}
@@ -161,9 +163,9 @@ function(_cs_get_target_linked_non_targets TARGET_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# * csTargetDependencies, created in _cs_recursive_analyze_targets_finalize
+# * CSCMAKE_PROJECT_DEPENDENCIES, created in _cs_recursive_analyze_targets_finalize
 function(cs_get_target_project_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies)
+  get_target_property(_VALUES ${TARGET_NAME} CSCMAKE_PROJECT_DEPENDENCIES)
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
         ${_VALUES}
@@ -175,18 +177,19 @@ function(cs_get_target_project_dependencies TARGET_NAME OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# * csTargetDependencies${CONFIG}Finalized: list of ${CONFIG} dll necessary to the target
-# * csTargetDependencies: list of other target of this project needed for this target during the execution a variable
-#   csTargetDependenciesToAnalyze is created as temporary, but it will be used as a "buffer", at exist it is empty
+# * CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>: list of <CONFIG> dll necessary to the target
+# * CSCMAKE_PROJECT_DEPENDENCIES: list of other target of this project needed for this target during the execution a
+#   variable _CSCMAKE_PENDING_DEPENDENCIES is created as temporary, but it will be used as a "buffer", at exist it is
+#   empty
 function(_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] targets: ${TARGETS_LIST}")
 
   # for each target,
   foreach(TARGET_NAME IN ITEMS ${TARGETS_LIST})
-    # * copy csTargetDependencies${CONFIG} to the Finalized copies
-    # * create a unique list of target csTargetDependenciesToAnalyze and csTargetDependencies as merge of
-    #   csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets, by selecting only what is effectively
-    #   a target and removing aliases
+    # * copy CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> to the Finalized copies
+    # * create a unique list of target _CSCMAKE_PENDING_DEPENDENCIES and CSCMAKE_PROJECT_DEPENDENCIES as merge of
+    #   CSCMAKE_LINKED_PROJECT_TARGETS and CSCMAKE_LINKED_NON_TARGETS, by selecting only what is effectively a target
+    #   and removing aliases
     _cs_prepare_finalize_target(${TARGET_NAME})
   endforeach()
 
@@ -234,9 +237,10 @@ function(_cs_recursive_analyze_targets_finalize TARGETS_LIST)
   foreach(TARGET_NAME IN ITEMS ${TARGETS_LIST_ORIGINAL})
     cs_get_build_configurations(CONFIGS_LIST)
     foreach(CONFIG ${CONFIGS_LIST})
+      string(TOUPPER "${CONFIG}" CONFIG_UCASE)
       cs_get_target_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_TO_ANALYZE_DEPENDENCIES)
       cs_debug_message(
-        "[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized : ${TARGET_TO_ANALYZE_DEPENDENCIES}"
+        "[_cs_recursive_analyze_targets_finalize] ${TARGET_NAME} CSCMAKE_RUNTIME_LIBRARIES_${CONFIG_UCASE} : ${TARGET_TO_ANALYZE_DEPENDENCIES}"
       )
     endforeach()
   endforeach()
@@ -244,10 +248,10 @@ function(_cs_recursive_analyze_targets_finalize TARGETS_LIST)
 
 endfunction()
 
-# Merge into the csTargetDependencies<CONFIG>Finalized properties of TARGET_NAME those of its already finalized
-# dependencies; the dependencies still pending are kept in csTargetDependenciesToAnalyze.
+# Merge into the CSCMAKE_RUNTIME_LIBRARIES_<CONFIG> properties of TARGET_NAME those of its already finalized
+# dependencies; the dependencies still pending are kept in _CSCMAKE_PENDING_DEPENDENCIES.
 function(_cs_target_try_to_finalize TARGET_NAME)
-  get_target_property(DEP_TARGETS ${TARGET_NAME} csTargetDependenciesToAnalyze)
+  get_target_property(DEP_TARGETS ${TARGET_NAME} _CSCMAKE_PENDING_DEPENDENCIES)
 
   set(PENDING_DEP_TARGETS "")
   foreach(DEP_TARGET IN ITEMS "${DEP_TARGETS}")
@@ -256,6 +260,7 @@ function(_cs_target_try_to_finalize TARGET_NAME)
       # merge the two finalized list of target and dep target
       cs_get_build_configurations(CONFIGS_LIST)
       foreach(CONFIG ${CONFIGS_LIST})
+        string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
         cs_get_target_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIB)
 
@@ -264,7 +269,7 @@ function(_cs_target_try_to_finalize TARGET_NAME)
         _cs_list_add_list_unique_values(TARGET_LIB "${TARGET_LIB_DEP}")
 
         # and set back
-        set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies${CONFIG}Finalized "${TARGET_LIB}")
+        set_property(TARGET ${TARGET_NAME} PROPERTY CSCMAKE_RUNTIME_LIBRARIES_${CONFIG_UCASE} "${TARGET_LIB}")
       endforeach()
 
     else()
@@ -273,13 +278,13 @@ function(_cs_target_try_to_finalize TARGET_NAME)
   endforeach()
 
   cs_debug_message("[_cs_target_try_to_finalize] target ${TARGET_NAME} pending dependencies ${PENDING_DEP_TARGETS}")
-  set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesToAnalyze "${PENDING_DEP_TARGETS}")
+  set_property(TARGET ${TARGET_NAME} PROPERTY _CSCMAKE_PENDING_DEPENDENCIES "${PENDING_DEP_TARGETS}")
 
 endfunction()
 
-# return true if the csTargetDependenciesToAnalyze of the target is empty
+# return true if the _CSCMAKE_PENDING_DEPENDENCIES of the target is empty
 function(_cs_target_is_fully_finalized TARGET_NAME TARGET_FINALIZED)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependenciesToAnalyze)
+  get_target_property(_VALUES ${TARGET_NAME} _CSCMAKE_PENDING_DEPENDENCIES)
   if(_VALUES)
     set(${TARGET_FINALIZED}
         False
@@ -291,30 +296,31 @@ function(_cs_target_is_fully_finalized TARGET_NAME TARGET_FINALIZED)
   endif()
 endfunction()
 
-# this function - copy csTargetDependencies${CONFIG} the csTargetDependencies${CONFIG}Finalized copy - merges the
-# csTargetDependenciesNotImportedTargets and csTargetDependenciesNonTargets and select valid targets, preparing the list
-# in both csTargetDependencies and csTargetDependenciesToAnalyze csTargetDependenciesToAnalyze will be consumed in
-# _cs_recursive_analyze_targets_finalize until is empty, while csTargetDependencies remain persistent
+# this function - copy CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> the CSCMAKE_RUNTIME_LIBRARIES_<CONFIG> copy - merges
+# the CSCMAKE_LINKED_PROJECT_TARGETS and CSCMAKE_LINKED_NON_TARGETS and select valid targets, preparing the list in both
+# CSCMAKE_PROJECT_DEPENDENCIES and _CSCMAKE_PENDING_DEPENDENCIES _CSCMAKE_PENDING_DEPENDENCIES will be consumed in
+# _cs_recursive_analyze_targets_finalize until is empty, while CSCMAKE_PROJECT_DEPENDENCIES remain persistent
 function(_cs_prepare_finalize_target TARGET_NAME)
   cs_debug_message("[_cs_prepare_finalize_target] process target: ${TARGET_NAME}")
 
   # copy on Finalized
   cs_get_build_configurations(CONFIGS_LIST)
   foreach(CONFIG ${CONFIGS_LIST})
+    string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
     _cs_get_target_direct_runtime_libraries(${TARGET_NAME} ${CONFIG} TARGET_LIBS)
-    set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies${CONFIG}Finalized "${TARGET_LIBS}")
+    set_property(TARGET ${TARGET_NAME} PROPERTY CSCMAKE_RUNTIME_LIBRARIES_${CONFIG_UCASE} "${TARGET_LIBS}")
     cs_debug_message(
-      "[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized: ${TARGET_LIBS}")
+      "[_cs_prepare_finalize_target] ${TARGET_NAME} CSCMAKE_RUNTIME_LIBRARIES_${CONFIG_UCASE}: ${TARGET_LIBS}")
   endforeach()
 
   # retrieve targets to analyze
   _cs_get_target_linked_project_targets(${TARGET_NAME} TARGET_NOT_IMPORTED)
   cs_debug_message(
-    "[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNotImportedTargets: ${TARGET_NOT_IMPORTED}")
+    "[_cs_prepare_finalize_target] ${TARGET_NAME} CSCMAKE_LINKED_PROJECT_TARGETS: ${TARGET_NOT_IMPORTED}")
 
   _cs_get_target_linked_non_targets(${TARGET_NAME} TARGET_NON_TARGETS)
-  cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} csTargetDependenciesNonTargets: ${TARGET_NON_TARGETS}")
+  cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} CSCMAKE_LINKED_NON_TARGETS: ${TARGET_NON_TARGETS}")
 
   # join the two list
   set(TARGETS_TO_ANALYZE_LIST_RAW "")
@@ -341,14 +347,15 @@ function(_cs_prepare_finalize_target TARGET_NAME)
   endforeach()
 
   cs_debug_message("[_cs_prepare_finalize_target] ${TARGET_NAME} TARGETS_TO_ANALYZE_LIST ${TARGETS_TO_ANALYZE_LIST}")
-  set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependenciesToAnalyze "${TARGETS_TO_ANALYZE_LIST}")
-  set_property(TARGET ${TARGET_NAME} PROPERTY csTargetDependencies "${TARGETS_TO_ANALYZE_LIST}")
+  set_property(TARGET ${TARGET_NAME} PROPERTY _CSCMAKE_PENDING_DEPENDENCIES "${TARGETS_TO_ANALYZE_LIST}")
+  set_property(TARGET ${TARGET_NAME} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES "${TARGETS_TO_ANALYZE_LIST}")
 
 endfunction()
 
-# return csTargetDependencies${CONFIG} for target
+# return CSCMAKE_RUNTIME_LIBRARIES_<CONFIG> (transitive) for target
 function(cs_get_target_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME)
-  get_target_property(_VALUES ${TARGET_NAME} csTargetDependencies${CONFIG}Finalized)
+  string(TOUPPER "${CONFIG}" CONFIG_UCASE)
+  get_target_property(_VALUES ${TARGET_NAME} CSCMAKE_RUNTIME_LIBRARIES_${CONFIG_UCASE})
   if(_VALUES)
     set(${OUTPUT_VARIABLE_NAME}
         ${_VALUES}
@@ -361,8 +368,8 @@ function(cs_get_target_runtime_libraries TARGET_NAME CONFIG OUTPUT_VARIABLE_NAME
 endfunction()
 
 # Add the existing IMPORTED_LOCATION_<CONFIG> files of the imported target TARGET_TO_ANALYZE to the
-# csTargetDependencies<CONFIG> properties of TARGET_NAME, falling back to IMPORTED_LOCATION when the per-configuration
-# location is missing.
+# CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> properties of TARGET_NAME, falling back to IMPORTED_LOCATION when the
+# per-configuration location is missing.
 function(_cs_add_imported_target_locations TARGET_NAME TARGET_TO_ANALYZE)
   cs_get_build_configurations(CONFIGS_LIST)
 
@@ -371,7 +378,7 @@ function(_cs_add_imported_target_locations TARGET_NAME TARGET_TO_ANALYZE)
     string(TOUPPER "${CONFIG}" CONFIG_UCASE)
     get_target_property(IMPORTED_LOCATION_${CONFIG_UCASE} ${TARGET_TO_ANALYZE} IMPORTED_LOCATION_${CONFIG_UCASE})
     _cs_add_existing_path_to_target_property(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
-                                             csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
+                                             CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${CONFIG_UCASE} ${TARGET_TO_ANALYZE})
   endforeach()
 
   # generic
@@ -385,7 +392,7 @@ function(_cs_add_imported_target_locations TARGET_NAME TARGET_TO_ANALYZE)
       )
       set(IMPORTED_LOCATION_${CONFIG_UCASE} "${IMPORTED_LOCATION}")
       _cs_add_existing_path_to_target_property(${IMPORTED_LOCATION_${CONFIG_UCASE}} ${TARGET_NAME}
-                                               csTargetDependencies${CONFIG} ${TARGET_TO_ANALYZE})
+                                               CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${CONFIG_UCASE} ${TARGET_TO_ANALYZE})
     endif()
   endforeach()
 

@@ -19,7 +19,7 @@ include(utils/csOpenMP)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
 function(_cs_set_root_dir PATH)
-  get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   if(VAL)
     if(NOT VAL STREQUAL ${PATH})
       message(
@@ -28,13 +28,13 @@ function(_cs_set_root_dir PATH)
       )
     endif()
   endif()
-  set_property(GLOBAL PROPERTY csCMakeBasePath ${PATH})
+  set_property(GLOBAL PROPERTY CSCMAKE_ROOT_DIR ${PATH})
 endfunction()
 _cs_set_root_dir(${CMAKE_CURRENT_LIST_DIR})
 
 # get the stored base path
 function(_cs_get_root_dir PATH)
-  get_property(VAL GLOBAL PROPERTY csCMakeBasePath)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   set(${PATH}
       ${VAL}
       PARENT_SCOPE)
@@ -48,13 +48,13 @@ endfunction()
 macro(cs_initialize_project PROJECT_NAME)
   cs_debug_message("cs_initialize_project ${PROJECT_NAME}")
   # normalize paths
-  _cs_path_list_normalize(CS_CMAKE_PREFIX_PATH_HEAD)
+  _cs_path_list_normalize(CSCMAKE_PREFIX_PATH_HEAD)
   _cs_path_list_normalize(CMAKE_PREFIX_PATH)
-  _cs_path_list_normalize(CS_CMAKE_PREFIX_PATH_TAIL)
+  _cs_path_list_normalize(CSCMAKE_PREFIX_PATH_TAIL)
 
-  _cs_path_list_normalize(CS_CMAKE_MODULE_PATH_HEAD)
+  _cs_path_list_normalize(CSCMAKE_MODULE_PATH_HEAD)
   _cs_path_list_normalize(CMAKE_MODULE_PATH)
-  _cs_path_list_normalize(CS_CMAKE_MODULE_PATH_TAIL)
+  _cs_path_list_normalize(CSCMAKE_MODULE_PATH_TAIL)
 
   _cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
@@ -105,8 +105,8 @@ macro(cs_initialize_project PROJECT_NAME)
   cs_print_state("initial state")
 
   # join CMAKE_PREFIX_PATH
-  set(CMAKE_PREFIX_PATH "${CS_CMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CS_CMAKE_PREFIX_PATH_TAIL}")
-  set(CMAKE_MODULE_PATH "${CS_CMAKE_MODULE_PATH_HEAD};${CMAKE_MODULE_PATH};${CS_CMAKE_MODULE_PATH_TAIL}")
+  set(CMAKE_PREFIX_PATH "${CSCMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CSCMAKE_PREFIX_PATH_TAIL}")
+  set(CMAKE_MODULE_PATH "${CSCMAKE_MODULE_PATH_HEAD};${CMAKE_MODULE_PATH};${CSCMAKE_MODULE_PATH_TAIL}")
 
   # enable cmake testing
   enable_testing()

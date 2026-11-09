@@ -12,7 +12,7 @@ Roadmap, open issues and session log: [PLAN.md](PLAN.md) — read it first.
   variant matrix, `src/cscmake/utils/generate_cs_preset_variants.py` renders `@{var}` templates,
   `src/cscmake/presets/generate.py` (`cscmake-generate-presets`) writes `presets/csv1/` from
   `presets/template/`.
-- csCMake is cloned next to consumer projects (`$WORKSPACE_ROOT/csCMake`); consumers include
+- csCMake is cloned next to consumer projects (`$CSCMAKE_WORKSPACE_ROOT/csCMake`); consumers include
   `presets/csv1/cs-presets-all.json` from their `CMakePresets.json`.
 
 ## Commands

@@ -2,21 +2,21 @@ include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# add a target as library and add to list csProjectTargets
+# add a target as library and add to list CSCMAKE_PROJECT_TARGETS
 function(cs_add_library TARGET_NAME)
   add_library("${TARGET_NAME}" ${ARGN})
   _cs_add_target_to_project_targets(${TARGET_NAME})
 endfunction()
 
-# add a target as executable and add to list csProjectTargets
+# add a target as executable and add to list CSCMAKE_PROJECT_TARGETS
 function(cs_add_executable TARGET_NAME)
   add_executable("${TARGET_NAME}" ${ARGN})
   _cs_add_target_to_project_targets(${TARGET_NAME})
 endfunction()
 
-# Register TARGET_NAME (unless it is an ALIAS) in the csProjectTargets global property, after setting on it the per-
-# configuration output postfix (CSCMAKE_<CONFIG>_POSTFIX) and the MSVC runtime library generator expression. Fails if
-# cs_initialize_project did not define them.
+# Register TARGET_NAME (unless it is an ALIAS) in the CSCMAKE_PROJECT_TARGETS global property, after setting on it the
+# per- configuration output postfix (CSCMAKE_<CONFIG>_POSTFIX) and the MSVC runtime library generator expression. Fails
+# if cs_initialize_project did not define them.
 function(_cs_add_target_to_project_targets TARGET_NAME)
   # add to list of targets if it is not an alias
   get_target_property(TARGET_NAME_ALIAS ${TARGET_NAME} ALIASED_TARGET)
@@ -49,7 +49,7 @@ function(_cs_add_target_to_project_targets TARGET_NAME)
       )
     endif()
 
-    _cs_add_to_global_property_unique_value(csProjectTargets ${TARGET_NAME})
+    _cs_add_to_global_property_unique_value(CSCMAKE_PROJECT_TARGETS ${TARGET_NAME})
   endif()
 endfunction()
 
@@ -59,9 +59,9 @@ function(cs_finalize_target TARGET_NAME)
   _cs_recursive_analyze_target(${TARGET_NAME})
 endfunction()
 
-# return all targets added in csProjectTargets
+# return all targets added in CSCMAKE_PROJECT_TARGETS
 function(cs_get_project_targets OUTPUT_VARIABLE_NAME)
-  get_property(LIST_VALUES GLOBAL PROPERTY csProjectTargets)
+  get_property(LIST_VALUES GLOBAL PROPERTY CSCMAKE_PROJECT_TARGETS)
   if(LIST_VALUES)
     # if exists
     set(${OUTPUT_VARIABLE_NAME}
@@ -75,7 +75,7 @@ function(cs_get_project_targets OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
-# Print (debug) the targets registered in the csProjectTargets global property.
+# Print (debug) the targets registered in the CSCMAKE_PROJECT_TARGETS global property.
 function(cs_print_project_targets)
   set(TARGETS "")
   cs_get_project_targets(TARGETS)

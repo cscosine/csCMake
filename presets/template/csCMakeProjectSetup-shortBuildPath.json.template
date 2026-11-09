@@ -11,7 +11,7 @@
             "description": "A preset to set up environment variables for csCMake project presets",
             "inherits": "cscmake-project-setup-base",
             "hidden": true,
-            "binaryDir": "$env{WORKSPACE_ROOT}/build/$env{CS_CMAKE_CSV1_SUB_DIR_SHORT}/${sourceDirName}/$env{CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
+            "binaryDir": "$env{CSCMAKE_WORKSPACE_ROOT}/build/$env{CSCMAKE_CSV1_SUB_DIR_SHORT}/${sourceDirName}/$env{CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
             "$comment": "overriding the binaryDir to use a shorter path for the build directory, to avoid issues with long paths on Windows"
         },
 @{csProjectSetupVariantPresets}

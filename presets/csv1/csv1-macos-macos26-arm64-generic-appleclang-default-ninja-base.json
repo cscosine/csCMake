@@ -25,8 +25,8 @@
                 "cs-compiler-macos-appleclang-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1mm26a64gacdn"
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1mm26a64gacdn"
             }
         }
     ]

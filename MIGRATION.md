@@ -64,11 +64,62 @@ Not part of the API any more: do not call them (they may change without notice).
 
 ## Variables
 
-To come.
+Every csCMake variable starts with `CSCMAKE_` (or `<project>_CSCMAKE_`).
+
+### Set in your presets or on the command line
+
+| Old | New | Kind |
+|---|---|---|
+| `WORKSPACE_ROOT` | `CSCMAKE_WORKSPACE_ROOT` | preset environment (`csCMakeProjectSetup-base*.json`) |
+| `CS_CMAKE_ROOT` | `CSCMAKE_ROOT` | preset environment |
+| `CS_CMAKE_PREFIX_PATH_PREFIX` / `CS_CMAKE_PREFIX_PATH_SUFFIX` | `CSCMAKE_PREFIX_PATH_PREFIX` / `CSCMAKE_PREFIX_PATH_SUFFIX` | environment, read by the presets |
+| `CS_CMAKE_CSV1_SUB_DIR`, `CS_CMAKE_CSV1_SUB_DIR_SHORT`, `CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | `CSCMAKE_CSV1_SUB_DIR`, `CSCMAKE_CSV1_SUB_DIR_SHORT`, `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | preset environment |
+| `CS_CMAKE_PREFIX_PATH_HEAD` / `CS_CMAKE_PREFIX_PATH_TAIL` | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | CMake variable (`-D`) |
+| `CS_CMAKE_MODULE_PATH_HEAD` / `CS_CMAKE_MODULE_PATH_TAIL` | `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | CMake variable (`-D`) |
+| `<project>_CS_CMAKE_DEBUG` | `<project>_CSCMAKE_DEBUG` | CMake option (`-D...=ON`) |
+
+`$env{WORKSPACE_ROOT}` / `$env{CS_CMAKE_ROOT}` references in your own preset files must be renamed too.
+
+Unchanged: `CSCMAKE_<CONFIG>_POSTFIX`, `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>`,
+`CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION`.
 
 ## Properties
 
-To come.
+Global and target properties set by csCMake are named `CSCMAKE_*`, with the build configuration in upper case where
+it is part of the name (like CMake's own `<CONFIG>` properties). You only need this table if your CMake code reads them
+directly (`get_property` / `get_target_property`); otherwise use the getter functions.
+
+### Global properties
+
+| Old | New |
+|---|---|
+| `csCMakeBasePath` | `CSCMAKE_ROOT_DIR` |
+| `csCMakeConfigurationTypes` | `CSCMAKE_BUILD_CONFIGURATIONS` |
+| `csCMakeConfigurationTypesDefault` | `CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS` |
+| `csCMakeConfigurationVariables` | `CSCMAKE_PER_CONFIG_VARIABLES` |
+| `csCMakeConfigWithStrictFlags` | `CSCMAKE_STRICT_BUILD_CONFIGURATION` |
+| `csProjectTargets` | `CSCMAKE_PROJECT_TARGETS` |
+| `csExportedList` | `CSCMAKE_COMPONENTS` |
+| `csExportedListDefault` | `CSCMAKE_DEFAULT_COMPONENTS` |
+| `csExported<component>Targets` | `CSCMAKE_COMPONENT_<component>_TARGETS` |
+| `csExported<component>FindPackages` | `CSCMAKE_COMPONENT_<component>_FIND_PACKAGES` |
+| `csExported<component>Depends` | `CSCMAKE_COMPONENT_<component>_DEPENDENCIES` |
+| `csExported<component>DependsSorted` | `CSCMAKE_COMPONENT_<component>_DEPENDENCIES_SORTED` |
+
+### Target properties
+
+| Old | New |
+|---|---|
+| `csFindPackage` | `CSCMAKE_FIND_PACKAGES` |
+| `csSourcesToInstall` | `CSCMAKE_SOURCES_TO_INSTALL` |
+| `csSourcesToInstallAbsolutePath` | `CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE` |
+| `csTargetExportedTo` | `CSCMAKE_COMPONENT` |
+| `csTargetDependencies<Config>` | `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>` |
+| `csTargetDependencies<Config>Finalized` | `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>` |
+| `csTargetDependenciesNotImportedTargets` | `CSCMAKE_LINKED_PROJECT_TARGETS` |
+| `csTargetDependenciesNonTargets` | `CSCMAKE_LINKED_NON_TARGETS` |
+| `csTargetDependencies` | `CSCMAKE_PROJECT_DEPENDENCIES` |
+| `csTargetDependenciesToAnalyze` | `_CSCMAKE_PENDING_DEPENDENCIES` (internal) |
 
 ## Default targets and namespace
 

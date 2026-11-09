@@ -21,9 +21,9 @@
                 "cs-compiler-linux-clang-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu26.04-x64-generic-clang-default-ninjamulticonfig",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu26.04x64gcdnm"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu26.04-x64-generic-clang-default-ninjamulticonfig",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1lu26.04x64gcdnm"
             }
         }
     ]

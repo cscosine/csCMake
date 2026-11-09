@@ -21,9 +21,9 @@
                 "cs-compiler-macos-appleclang-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-macos-macos15-arm64-generic-appleclang-default-ninjamulticonfig",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1mm15a64gacdnm"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-macos-macos15-arm64-generic-appleclang-default-ninjamulticonfig",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1mm15a64gacdnm"
             }
         }
     ]

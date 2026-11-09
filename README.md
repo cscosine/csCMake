@@ -285,18 +285,18 @@ centralizes the workspace layout and paths through environment variables:
 
 | Variable | Meaning |
 | -------- | ------- |
-| `WORKSPACE_ROOT` | root folder of the sources (`${sourceParentDir}`) |
-| `CS_CMAKE_ROOT` | path to the csCMake clone (`$env{WORKSPACE_ROOT}/csCMake`) |
-| `CS_CMAKE_PREFIX_PATH_PREFIX` / `CS_CMAKE_PREFIX_PATH_SUFFIX` | extra paths prepended/appended to `CMAKE_PREFIX_PATH` |
-| `CS_CMAKE_MODULE_PATH_HEAD` / `CS_CMAKE_MODULE_PATH_TAIL` | extra paths prepended/appended to `CMAKE_MODULE_PATH` (normalized by `cs_initialize_project`) |
-| `CS_CMAKE_CSV1_SUB_DIR` / `_SHORT` | sub-folder used to keep build/install paths short |
-| `CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | per-build-type sub-folder inside the build dir (`debug`, `release`, ...) |
+| `CSCMAKE_WORKSPACE_ROOT` | root folder of the sources (`${sourceParentDir}`) |
+| `CSCMAKE_ROOT` | path to the csCMake clone (`$env{CSCMAKE_WORKSPACE_ROOT}/csCMake`) |
+| `CSCMAKE_PREFIX_PATH_PREFIX` / `CSCMAKE_PREFIX_PATH_SUFFIX` | extra paths prepended/appended to `CMAKE_PREFIX_PATH` |
+| `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | extra paths prepended/appended to `CMAKE_MODULE_PATH` (normalized by `cs_initialize_project`) |
+| `CSCMAKE_CSV1_SUB_DIR` / `_SHORT` | sub-folder used to keep build/install paths short |
+| `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | per-build-type sub-folder inside the build dir (`debug`, `release`, ...) |
 
 Build and install folders follow a common layout:
 
 ```
-$WORKSPACE_ROOT/build/<variant>/<sourceDirName>/...     # build output
-$WORKSPACE_ROOT/install/<variant>/<sourceDirName>       # install output
+$CSCMAKE_WORKSPACE_ROOT/build/<variant>/<sourceDirName>/...     # build output
+$CSCMAKE_WORKSPACE_ROOT/install/<variant>/<sourceDirName>       # install output
 ```
 
 `csCMakeProjectSetup-shortBuildPath.json` provides an alternative base that uses

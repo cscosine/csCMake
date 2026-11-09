@@ -26,7 +26,7 @@ set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE
 
 # get the stored list of available build config (including default ones)
 function(cs_get_build_configurations CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypes)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
   set(${CONFIGS_LIST}
       ${VAL}
       PARENT_SCOPE)
@@ -34,7 +34,7 @@ endfunction()
 
 # get the stored list of available default build config
 function(cs_get_default_build_configurations CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypesDefault)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS)
   set(${CONFIGS_LIST}
       ${VAL}
       PARENT_SCOPE)
@@ -42,7 +42,7 @@ endfunction()
 
 # get all the CMAKE variables that belongs to a configuration
 function(_cs_get_per_config_variables CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationVariables)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES)
   set(${CONFIGS_LIST}
       ${VAL}
       PARENT_SCOPE)
@@ -74,8 +74,8 @@ function(_cs_add_default_build_configuration CONFIG)
     message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${CONFIG} in default list")
   endif()
 
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypesDefault ${CONFIGS_LIST_DEFAULT})
+  set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${CONFIGS_LIST})
+  set_property(GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS ${CONFIGS_LIST_DEFAULT})
 
 endfunction()
 
@@ -121,7 +121,7 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONF
       "${POSTFIX}"
       CACHE STRING "value for suffix in ${CONFIG} config" FORCE)
 
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
+  set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${CONFIGS_LIST})
 endfunction()
 
 # helper function to parse the cs_initialize_project arguments and add build types accepts extra arguments to specify
@@ -337,21 +337,21 @@ function(_cs_process_configurations)
 endfunction()
 
 # Store CONFIGNAME as the configuration built with strict compilation flags (global property
-# csCMakeConfigWithStrictFlags).
+# CSCMAKE_STRICT_BUILD_CONFIGURATION).
 function(_cs_set_strict_build_configuration CONFIGNAME)
-  set_property(GLOBAL PROPERTY csCMakeConfigWithStrictFlags ${CONFIGNAME})
+  set_property(GLOBAL PROPERTY CSCMAKE_STRICT_BUILD_CONFIGURATION ${CONFIGNAME})
 endfunction()
 
 # Return in CONFIGNAME the configuration built with strict compilation flags (STRICT_COMPILATION_ON_CONFIG of
 # cs_initialize_project), empty if none.
 function(cs_get_strict_build_configuration CONFIGNAME)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigWithStrictFlags)
+  get_property(VAL GLOBAL PROPERTY CSCMAKE_STRICT_BUILD_CONFIGURATION)
   set(${CONFIGNAME}
       ${VAL}
       PARENT_SCOPE)
 endfunction()
 
-# set a global property csCMakeConfigurationVariables highly inspired from
+# set a global property CSCMAKE_PER_CONFIG_VARIABLES highly inspired from
 # https://stackoverflow.com/questions/75823363/how-can-i-copy-all-build-type-parameters-from-an-existing-build-configuration-ty/75828118#75828118
 function(_cs_process_build_configurations_variables)
   execute_process(COMMAND ${CMAKE_COMMAND} --help-variable-list
@@ -388,7 +388,7 @@ function(_cs_process_build_configurations_variables)
     endif()
   endforeach()
 
-  set_property(GLOBAL PROPERTY csCMakeConfigurationVariables ${CONFIG_VAR_LIST})
+  set_property(GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES ${CONFIG_VAR_LIST})
 endfunction()
 
 # Create the configuration config_to_in as a copy of config_from_in: copy every per-<CONFIG> CMake variable and the MSVC

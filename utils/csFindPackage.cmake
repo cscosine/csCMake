@@ -13,9 +13,9 @@ macro(cs_find_package TARGET_NAME PROPAGATE_MODE)
   _cs_add_find_package_args_to_target("${TARGET_NAME}" "${PROPAGATE_MODE}" "${ARGN}")
 endmacro()
 
-# return the csFindPackage property of the target, i.e., a list, eventually empty
+# return the CSCMAKE_FIND_PACKAGES property of the target, i.e., a list, eventually empty
 function(cs_get_target_find_packages TARGET_NAME OUTPUT_VARIABLE_NAME)
-  get_target_property(LIST_VALUES ${TARGET_NAME} csFindPackage)
+  get_target_property(LIST_VALUES ${TARGET_NAME} CSCMAKE_FIND_PACKAGES)
   if(LIST_VALUES)
     # if exists
     set(${OUTPUT_VARIABLE_NAME}
@@ -41,13 +41,13 @@ function(cs_print_target_find_packages TARGET_NAME)
   endif()
 endfunction()
 
-# append to csFindPackage property of the target
+# append to CSCMAKE_FIND_PACKAGES property of the target
 function(_cs_add_find_package_args_to_target TARGET_NAME PROPAGATE_MODE)
   list(JOIN ARGN " " JOINED_ARGN)
   cs_debug_message("[csAddFindPackageArgsToTarget] target ${TARGET_NAME} arguments ${JOINED_ARGN}")
 
   if(PROPAGATE_MODE STREQUAL "PUBLIC")
-    _cs_add_to_target_property_unique_value("${TARGET_NAME}" csFindPackage "${JOINED_ARGN}")
+    _cs_add_to_target_property_unique_value("${TARGET_NAME}" CSCMAKE_FIND_PACKAGES "${JOINED_ARGN}")
   elseif(PROPAGATE_MODE STREQUAL "PRIVATE")
     # nothin to do
   else()

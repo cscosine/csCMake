@@ -10,7 +10,7 @@
                 "CMAKE_BUILD_TYPE": "Debug"
             },
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "debug"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "debug"
             }
         },
         {
@@ -22,7 +22,7 @@
                 "CMAKE_BUILD_TYPE": "Release"
             },
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "release"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "release"
             }
         },
         {
@@ -34,7 +34,7 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo"
             },
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "relWithDebInfo"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "relWithDebInfo"
             }
         },
         {
@@ -46,7 +46,7 @@
                 "CMAKE_BUILD_TYPE": "Paranoid"
             },
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "paranoid"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "paranoid"
             }
         }
     ]

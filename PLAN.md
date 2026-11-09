@@ -104,7 +104,9 @@ variables, properties, preset environment variables, default targets) guides the
     `csGetConfigurationWithStrictFlags`, `_csPopulateTargetDependencies`, `_csCheckPathExistsAndAddToTargetProperty`,
     `_csSetConfigurationWithStrictFlags`; internal ones with public names → `_cs_`).
   - One prefix everywhere: `CSCMAKE_` for cache/normal/environment/preset variables (`CS_CMAKE_*`, `WORKSPACE_ROOT`,
-    `<project>_CS_CMAKE_DEBUG`, ...) and one scheme for global/target properties (`cs*` camelCase today).
+    `<project>_CS_CMAKE_DEBUG`, ...) and one scheme for global/target properties (`cs*` camelCase today). Done in step 2,
+    plain renames; **3b**: merge the two prefix-path mechanisms (environment `CSCMAKE_PREFIX_PATH_PREFIX/SUFFIX` read
+    by the presets, CMake variables `CSCMAKE_PREFIX_PATH_HEAD/TAIL` read by `cs_initialize_project`) into one.
   - Namespace declared once: `cs_initialize_project(NAMESPACE <ns> CXX_STANDARD ...)` (no positional project name; an old
     call fails as unparsed argument), `cs_finalize_project()` without argument. Real default-target names keep the
     `<P>` (project name) prefix; `EXPORT_NAME` makes the in-build alias equal to the installed name
@@ -358,3 +360,12 @@ variables, properties, preset environment variables, default targets) guides the
   `_cs_target_base_project_include_dir` now creates them at configure time.
 - Not run locally (no Mac, host is Ubuntu 24.04): the macOS and Ubuntu 26.04 smoke jobs on GitHub are the first real
   test.
+
+### 2026-11-09 (Phase 3a step 2 — variables and properties renamed)
+- `CS_CMAKE_*` → `CSCMAKE_*`, `WORKSPACE_ROOT` → `CSCMAKE_WORKSPACE_ROOT`, `<project>_CS_CMAKE_DEBUG` →
+  `<project>_CSCMAKE_DEBUG` (CMake code, hand-written and template presets, regenerated presets: environment names only,
+  preset ids unchanged).
+- Global and target properties `cs*` → `CSCMAKE_*` (component terminology); per-configuration target properties use
+  the configuration in upper case (`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, the getters upper-case their argument).
+- Caught by the smoke tests: the property regex also renamed the module path `include(utils/csTargetDependencies)`.
+- `MIGRATION.md`: variables and properties tables. Local: `pytest --run-all` 56 passed (4 host variants).
