@@ -51,7 +51,8 @@ presets/
   template/                         # templates used to generate the matrix
   csCMakeProjectSetup*.json         # base "project setup" presets + per-host variants
 src/cscmake/                        # Python package (preset generation)
-tools/generate_all_csv1_presets.py  # entry point of the preset generator
+  presets/registry.py               #   supported variant matrix (single source of truth)
+  presets/generate.py               #   preset generator (cscmake-generate-presets)
 templates/csTemplateConfig.cmake.in # template of the installed <Ns>Config.cmake
 tests/                              # pytest suite
 ```
@@ -257,15 +258,20 @@ Regenerate it after editing the templates or when the supported platform and
 variant list changes:
 
 ```bash
-python tools/generate_all_csv1_presets.py
+cscmake-generate-presets           # regenerate in place (needs the dev venv, see Development)
+cscmake-generate-presets --check   # exit 1 if presets/csv1 is stale
 ```
 
-The generator is driven by **csOrchestrator**, which provides the list of
-supported OS/architecture/compiler/generator variants. Until it is published on
-PyPI it is installed from a relative path (see `setup.sh`).
+The supported OS/architecture/compiler/generator matrix is defined in
+`src/cscmake/presets/registry.py` and rendered by `src/cscmake/presets/generate.py`.
+The generator only needs the Python standard
+library (no third-party dependency) and runs without
+installing the package.
 
 > **Note:** generated files under `presets/csv1/` are committed and are not
-> meant to be edited by hand.
+> meant to be edited by hand. The `generate-csv1-presets` pre-commit hook
+> regenerates them whenever the templates, the registry or the generator
+> change; if it rewrites files, stage them and commit again.
 
 ## Project setup presets
 
@@ -299,15 +305,25 @@ Set up the environment with the provided scripts (creates a `.venv`, installs
 the package in editable mode plus dev dependencies, and installs pre-commit):
 
 ```bash
-./setup.sh          # Linux/macOS (uses python3)
-./setup.ps1         # Windows
+./setup.sh          # Linux/macOS (uses python3, or pass one: ./setup.sh python3.12)
+./setup.ps1         # Windows (uses python, or pass one)
 ```
+
+Keep the venv active when committing: the `generate-csv1-presets` and
+`import-linter` hooks, and the template cmake-format / cmake-lint hooks, run tools installed in it.
 
 Quality gates, driven by **pre-commit**:
 
 - `ruff` (lint + format, configured in `pyproject.toml`)
 - `mypy` in strict mode (the package ships `py.typed`)
-- `cmake-format` for the `utils/*.cmake` sources
+- `import-linter`: layer contracts in `pyproject.toml` (`presets` → `utils`)
+- `actionlint` for the GitHub workflows
+- `cmake-format` and `cmake-lint` for the CMake sources (`.cmake-format.json`,
+  120 columns, docstring comment required on every function/macro)
+- `cmake-format` / `cmake-lint` for the `templates/*.cmake.in` files too, through
+  `cscmake-cmake-template` (the `@VAR@` placeholders are swapped for parseable
+  stand-ins and restored afterwards)
+- `generate-csv1-presets`: regenerates `presets/csv1/` from the templates
 - generic hygiene checks (YAML/JSON validity, trailing whitespace, private
   keys, ...) plus a local hook that **fails on unstaged changes**
 

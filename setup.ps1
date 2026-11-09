@@ -1,13 +1,24 @@
 $ErrorActionPreference = "Stop"
 
-python -m venv .venv
+$Python = if ($args.Count -gt 0) { $args[0] } else { "python" }
+
+Write-Host "Using Python: $Python"
+
+# Check Python version >= 3.11
+& $Python -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Python 3.11 or newer is required."
+    Write-Host "Found:"
+    & $Python --version
+    exit 1
+}
+
+& $Python -m venv .venv
 
 .\.venv\Scripts\Activate.ps1
 
-python -m pip install --upgrade pip
-pip install -e ".[dev]"
-# TODO remove this once csOrchestrator is available in pip
-pip install -e ../../../csOrchestrator
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]"
 
 pre-commit install
 

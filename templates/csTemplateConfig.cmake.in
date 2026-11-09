@@ -1,14 +1,13 @@
 # option to print out messages as "STATUS" from this module
-OPTION(@EXPORT_NAMESPACE_SANITIZED@_DEBUG "activate the debug messages for @EXPORT_NAMESPACE@" OFF)
+option(@EXPORT_NAMESPACE_SANITIZED@_DEBUG "activate the debug messages for @EXPORT_NAMESPACE@" OFF)
 
-# TODO function names and calls with @EXPORT_NAMESPACE_SANITIZED@ are problematic for cmake format
-# need to find alternatives that guarantees univoque naming across different packages
-# this is why @EXPORT_NAMESPACE_SANITIZED@ have been introduced, otherwise two libraries installed
-# will define the same macro and clash...
+# TODO function names and calls with @EXPORT_NAMESPACE_SANITIZED@ are problematic for cmake format need to find
+# alternatives that guarantees univoque naming across different packages this is why @EXPORT_NAMESPACE_SANITIZED@ have
+# been introduced, otherwise two libraries installed will define the same macro and clash...
 function(@EXPORT_NAMESPACE_SANITIZED@_debug_message msg)
-	if(${@EXPORT_NAMESPACE_SANITIZED@_DEBUG})
-		MESSAGE(STATUS "${msg}")
-	endif()
+  if(${@EXPORT_NAMESPACE_SANITIZED@_DEBUG})
+    message(STATUS "${msg}")
+  endif()
 endfunction()
 
 @EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] entry point")
@@ -18,42 +17,49 @@ set(@EXPORT_NAMESPACE@_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../")
 cmake_path(SET @EXPORT_NAMESPACE@_BASE_DIR NORMALIZE "${@EXPORT_NAMESPACE@_BASE_DIR}")
 
 # list of all available components
-SET(@EXPORT_NAMESPACE@_COMPONENTS_LIST "@COMPONENTS_LIST@")
+set(@EXPORT_NAMESPACE@_COMPONENTS_LIST "@COMPONENTS_LIST@")
 
 # list of cross dependencies between components
 @INJECTED_EXPORT_DEPENDENCIES@
 
 # list of default components
-SET(@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST "@DEFAULT_COMPONENTS_LIST@")
+set(@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST "@DEFAULT_COMPONENTS_LIST@")
 
 # check the required components asked by the user, if empty set to default component list
-STRING(COMPARE EQUAL "${@EXPORT_NAMESPACE@_FIND_COMPONENTS}" "" FIND_COMPONENTS_EMPTY)
+string(COMPARE EQUAL "${@EXPORT_NAMESPACE@_FIND_COMPONENTS}" "" FIND_COMPONENTS_EMPTY)
 if(FIND_COMPONENTS_EMPTY)
- SET(@EXPORT_NAMESPACE@_FIND_COMPONENTS ${@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST})
+  set(@EXPORT_NAMESPACE@_FIND_COMPONENTS ${@EXPORT_NAMESPACE@_DEFAULT_COMPONENTS_LIST})
 endif()
 
 include(CMakeFindDependencyMacro)
 
+# find_dependency() the packages required by the component COMPONENT_NAME (code injected by csCMake at install time)
 macro(@EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component COMPONENT_NAME)
-  @EXPORT_NAMESPACE_SANITIZED@_debug_message( "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
-@INJECTED_FIND_PACKAGES_CODE@
+  @EXPORT_NAMESPACE_SANITIZED@_debug_message(
+    "[@EXPORT_NAMESPACE@Config] find_dependency_for_component ${COMPONENT_NAME}")
+  @INJECTED_FIND_PACKAGES_CODE@
 endmacro()
 
 # include required components recursively with dependencies
 foreach(COMPONENT ${@EXPORT_NAMESPACE@_FIND_COMPONENTS})
 
   if(NOT ${COMPONENT} IN_LIST @EXPORT_NAMESPACE@_COMPONENTS_LIST)
-		message(FATAL_ERROR "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} is not present in component list, available components are ${@EXPORT_NAMESPACE@_COMPONENTS_LIST}")
-	endif()
-
+    message(
+      FATAL_ERROR
+        "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} is not present in component list, available components are ${@EXPORT_NAMESPACE@_COMPONENTS_LIST}"
+    )
+  endif()
 
   if(${COMPONENT}_DEPENDENT_EXPORTS)
     # dependent component, add its dependencies and add it at the end
-		@EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too")
+    @EXPORT_NAMESPACE_SANITIZED@_debug_message(
+      "[@EXPORT_NAMESPACE@Config] Required components ${COMPONENT} depends on ${${COMPONENT}_DEPENDENT_EXPORTS}, import them too"
+    )
     set(DEPENDENT_COMPONENT_LIST ${${COMPONENT}_DEPENDENT_EXPORTS})
     foreach(DEPENDENT_COMPONENT ${DEPENDENT_COMPONENT_LIST})
       @EXPORT_NAMESPACE_SANITIZED@_find_dependency_for_component(${DEPENDENT_COMPONENT})
-      @EXPORT_NAMESPACE_SANITIZED@_debug_message("[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
+      @EXPORT_NAMESPACE_SANITIZED@_debug_message(
+        "[@EXPORT_NAMESPACE@Config] -- including dependent ${DEPENDENT_COMPONENT}Targets.cmake")
       include("${@EXPORT_NAMESPACE@_CMAKE_DIR}/targets/${DEPENDENT_COMPONENT}Targets.cmake")
     endforeach()
 

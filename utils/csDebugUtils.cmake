@@ -1,17 +1,16 @@
 include_guard(GLOBAL)
 
+# Print (debug) the properties set on the target tgt.
 function(cs_print_target_properties tgt)
   # Get all propreties that cmake supports
-  execute_process(COMMAND cmake --help-property-list
-                  OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
+  execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
 
   # Convert command output into a CMake list
   string(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
   string(REGEX REPLACE "\n" ";" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
 
   # Remove all LOCATION* properties, that are no more readable
-  list(FILTER CMAKE_PROPERTY_LIST EXCLUDE REGEX
-       "^LOCATION$|^LOCATION_|_LOCATION$")
+  list(FILTER CMAKE_PROPERTY_LIST EXCLUDE REGEX "^LOCATION$|^LOCATION_|_LOCATION$")
 
   # remove duplicates
   list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)

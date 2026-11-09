@@ -65,58 +65,43 @@ function(_cs_add_default_build_configuration CONFIG)
   if(NOT ${CONFIG} IN_LIST CONFIGS_LIST)
     list(APPEND CONFIGS_LIST ${CONFIG})
   else()
-    message(
-      FATAL_ERROR
-        "[cs_set_default_build_config] called with duplicated element ${CONFIG}"
-    )
+    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${CONFIG}")
   endif()
 
   if(NOT ${CONFIG} IN_LIST CONFIGS_LIST_DEFAULT)
     list(APPEND CONFIGS_LIST_DEFAULT ${CONFIG})
   else()
-    message(
-      FATAL_ERROR
-        "[cs_set_default_build_config] called with duplicated element ${CONFIG} in default list"
-    )
+    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${CONFIG} in default list")
   endif()
 
   set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypesDefault
-                               ${CONFIGS_LIST_DEFAULT})
+  set_property(GLOBAL PROPERTY csCMakeConfigurationTypesDefault ${CONFIGS_LIST_DEFAULT})
 
 endfunction()
 
 # add a default configuration that need a fallback mapping
-function(_cs_add_default_build_configuration_mapped CONFIG
-         BASE_CONFIG_AND_FALLBACK)
+function(_cs_add_default_build_configuration_mapped CONFIG BASE_CONFIG_AND_FALLBACK)
   _cs_add_default_build_configuration(${CONFIG})
 
   string(TOUPPER "${CONFIG}" CONFIG_UCASE)
 
   set("CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}"
       "${BASE_CONFIG_AND_FALLBACK}"
-      CACHE STRING
-            "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}"
-            FORCE)
+      CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}" FORCE)
   cs_debug_message(
-    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE} = ${BASE_CONFIG_AND_FALLBACK}"
-    True)
+    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE} = ${BASE_CONFIG_AND_FALLBACK}" True)
 
 endfunction()
 
 # add a custom configuration, based on a default one
-function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX
-         BASE_CONFIG_AND_FALLBACK)
+function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONFIG_AND_FALLBACK)
   cs_get_specified_build_configurations(CONFIGS_LIST)
   cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
 
   if(NOT ${CONFIG} IN_LIST CONFIGS_LIST)
     list(APPEND CONFIGS_LIST ${CONFIG})
   else()
-    message(
-      FATAL_ERROR
-        "[_cs_add_custom_build_configuration] called with duplicated element ${CONFIG}"
-    )
+    message(FATAL_ERROR "[_cs_add_custom_build_configuration] called with duplicated element ${CONFIG}")
   endif()
 
   if(NOT ${BASE_CONFIG} IN_LIST CONFIGS_LIST_DEFAULT)
@@ -125,8 +110,7 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX
         "[_cs_add_custom_build_configuration] element ${CONFIG} base on ${BASE_CONFIG}, which is not in default configs ${CONFIGS_LIST_DEFAULT}"
     )
   else()
-    cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG}
-                               "${BASE_CONFIG_AND_FALLBACK}")
+    cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG} "${BASE_CONFIG_AND_FALLBACK}")
   endif()
 
   string(TOUPPER "${CONFIG}" CONFIG_UPPER)
@@ -140,15 +124,13 @@ function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX
   set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
 endfunction()
 
-# helper function to parse the cs_initialize_project arguments and add build
-# types accepts extra arguments to specify the available build configurations:
-# _cs_process_configurations( CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug
-# DEFAULT_CONFIG Release DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO
-# "RelWithDebInfo,Release," CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX
-# "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
-# [STRICT_COMPILATION_ON_CONFIG ConfigName] note, make sure to use POSTFIX "" if
-# no postfix has to be used )
+# helper function to parse the cs_initialize_project arguments and add build types accepts extra arguments to specify
+# the available build configurations: _cs_process_configurations( CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug
+# DEFAULT_CONFIG Release DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release," CUSTOM_CONFIG
+# MyCustomConfig1 BASED_ON Debug POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
+# [STRICT_COMPILATION_ON_CONFIG ConfigName] note, make sure to use POSTFIX "" if no postfix has to be used )
 function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
+  # cmake-lint: disable=R0912,R0915
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
   set(OPTIONS "")
@@ -157,10 +139,7 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
   cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
 
   if(ARG_UNPARSED_ARGUMENTS)
-    message(
-      FATAL_ERROR
-        "[_cs_parse_additional_configurations] has unparsed arguments ${ARG_UNPARSED_ARGUMENTS}"
-    )
+    message(FATAL_ERROR "[_cs_parse_additional_configurations] has unparsed arguments ${ARG_UNPARSED_ARGUMENTS}")
   endif()
 
   # If not set by caller, error
@@ -206,8 +185,7 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
       set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
     else()
       string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
-      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK
-                     ${BASE_CONFIG_AND_FALLBACK})
+      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
     endif()
 
     if(NOT ${MAPPED_TO_KEYWORD} STREQUAL "MAPPED_TO")
@@ -220,8 +198,7 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
     cs_debug_message(
       "[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}"
     )
-    _cs_add_default_build_configuration_mapped(${DEFAULT_CONFIG_MAPPED}
-                                               "${BASE_CONFIG_AND_FALLBACK}")
+    _cs_add_default_build_configuration_mapped(${DEFAULT_CONFIG_MAPPED} "${BASE_CONFIG_AND_FALLBACK}")
 
   endwhile()
 
@@ -258,8 +235,7 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
       set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
     else()
       string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
-      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK
-                     ${BASE_CONFIG_AND_FALLBACK})
+      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
     endif()
 
     if(NOT ${BASED_ON_KEYWORD} STREQUAL "BASED_ON")
@@ -278,15 +254,11 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
     cs_debug_message(
       "[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}"
     )
-    _cs_add_custom_build_configuration(
-      ${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE}
-      "${BASE_CONFIG_AND_FALLBACK}")
+    _cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
 
-    # for some reason, the output directory of custom configuration does not get
-    # set properly, therefore we need to set it explicitely TODO(sc) try to
-    # understand better this behavior, at the moment this is a workaround
-    get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL
-                 PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    # for some reason, the output directory of custom configuration does not get set properly, therefore we need to set
+    # it explicitely TODO(sc) try to understand better this behavior, at the moment this is a workaround
+    get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
     if(GENERATOR_IS_MULTI_CONFIG)
       string(TOUPPER "${CUSTOM_CONFIG}" CUSTOM_CONFIG_UCASE)
       set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
@@ -325,9 +297,8 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
     endif()
   endif()
 
-  # finally, prepare the variable
-  # CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets
-  # added with cs_add_library / cs_add_executable)
+  # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with
+  # cs_add_library / cs_add_executable)
   set(TEMP_STRING "")
   cs_get_specified_build_configurations(CONFIGS_LIST)
   foreach(CONFIG ${CONFIGS_LIST})
@@ -337,27 +308,20 @@ function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
   endforeach()
   set(CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
       "${TEMP_STRING}"
-      CACHE
-        STRING
-        "final value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions"
-        FORCE)
+      CACHE STRING "final value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
 
-  # and set CMAKE_MSVC_RUNTIME_LIBRARY =
-  # CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION for generic targes
-  # (fallback)
+  # and set CMAKE_MSVC_RUNTIME_LIBRARY = CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION for generic targes (fallback)
   set(CMAKE_MSVC_RUNTIME_LIBRARY
       "${TEMP_STRING}"
-      CACHE
-        STRING
-        "default value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions"
-        FORCE)
+      CACHE STRING "default value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
 endfunction()
 
+# Apply the configurations requested in cs_initialize_project: on multi-config generators reset
+# CMAKE_CONFIGURATION_TYPES to them, on single-config generators fail if CMAKE_BUILD_TYPE is not one of them.
 function(_cs_process_configurations)
   cs_get_specified_build_configurations(CONFIGS_LIST)
 
-  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL
-               PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if(GENERATOR_IS_MULTI_CONFIG)
     set(CMAKE_CONFIGURATION_TYPES
         "${CONFIGS_LIST}"
@@ -372,10 +336,14 @@ function(_cs_process_configurations)
   endif()
 endfunction()
 
+# Store CONFIGNAME as the configuration built with strict compilation flags (global property
+# csCMakeConfigWithStrictFlags).
 function(_csSetConfigurationWithStrictFlags CONFIGNAME)
   set_property(GLOBAL PROPERTY csCMakeConfigWithStrictFlags ${CONFIGNAME})
 endfunction()
 
+# Return in CONFIGNAME the configuration built with strict compilation flags (STRICT_COMPILATION_ON_CONFIG of
+# cs_initialize_project), empty if none.
 function(csGetConfigurationWithStrictFlags CONFIGNAME)
   get_property(VAL GLOBAL PROPERTY csCMakeConfigWithStrictFlags)
   set(${CONFIGNAME}
@@ -386,11 +354,9 @@ endfunction()
 # set a global property csCMakeConfigurationVariables highly inspired from
 # https://stackoverflow.com/questions/75823363/how-can-i-copy-all-build-type-parameters-from-an-existing-build-configuration-ty/75828118#75828118
 function(_cs_process_build_configurations_variables)
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} --help-variable-list
-    OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt")
-  file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt"
-       VAR_FULL_LIST)
+  execute_process(COMMAND ${CMAKE_COMMAND} --help-variable-list
+                  OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt")
+  file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" VAR_FULL_LIST)
 
   foreach(var ${VAR_FULL_LIST})
     if("${var}" MATCHES "<CONFIG>")
@@ -412,8 +378,7 @@ function(_cs_process_build_configurations_variables)
           ASM_MARMASM
           ASM_MASM
           ASM-ATT)
-          # (supported languages list from
-          # https://cmake.org/cmake/help/latest/command/project.html)
+          # (supported languages list from https://cmake.org/cmake/help/latest/command/project.html)
           string(REPLACE "<LANG>" "${lang}" lang_var "${var}")
           list(APPEND CONFIG_VAR_LIST "${lang_var}")
         endforeach()
@@ -426,8 +391,10 @@ function(_cs_process_build_configurations_variables)
   set_property(GLOBAL PROPERTY csCMakeConfigurationVariables ${CONFIG_VAR_LIST})
 endfunction()
 
-function(cs_copy_configuration_type config_from_in config_to_in
-         BASE_CONFIG_AND_FALLBACK)
+# Create the configuration config_to_in as a copy of config_from_in: copy every per-<CONFIG> CMake variable and the MSVC
+# runtime library, and map imported targets of the new configuration onto BASE_CONFIG_AND_FALLBACK
+# (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>).
+function(cs_copy_configuration_type config_from_in config_to_in BASE_CONFIG_AND_FALLBACK)
   cs_get_build_configurations_variables(CONFIG_VAR_LIST)
 
   string(TOUPPER "${config_from_in}" config_from)
@@ -441,38 +408,31 @@ function(cs_copy_configuration_type config_from_in config_to_in
         CACHE STRING "value for custom build ${config_to}" FORCE)
     mark_as_advanced("${config_var_to}")
 
-    cs_debug_message(
-      "[cs_copy_configuration_type] ${config_var_to} = ${${config_var_from}}")
+    cs_debug_message("[cs_copy_configuration_type] ${config_var_to} = ${${config_var_from}}")
   endforeach()
 
   # TODO(sc) consider also DEBUG_CONFIGURATIONS global property  ?
 
   set("CMAKE_MAP_IMPORTED_CONFIG_${config_to}"
       "${BASE_CONFIG_AND_FALLBACK}"
-      CACHE STRING
-            "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}"
-            FORCE)
+      CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}" FORCE)
   cs_debug_message(
-    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}"
-    True)
+    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}" True)
 
   # set the MSVC Runtime Library based on the config to copy
   set(CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_to}
       "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_from}}"
-      CACHE
-        STRING
-        "The MSVC runtime library to use in ${config_to_in}, copied from ${config_from_in}"
-        FORCE)
+      CACHE STRING "The MSVC runtime library to use in ${config_to_in}, copied from ${config_from_in}" FORCE)
 
 endfunction()
 
+# Print (debug) the per-configuration variables of every configuration of the project, tagging each block with
+# ADD_MESSAGE.
 function(cs_print_all_configurations_variables ADD_MESSAGE)
   cs_get_specified_build_configurations(CONFIG_VAR_LIST)
-  cs_debug_message(
-    "[cs_print_all_configurations_variables] configs are ${CONFIG_VAR_LIST}")
+  cs_debug_message("[cs_print_all_configurations_variables] configs are ${CONFIG_VAR_LIST}")
   foreach(CONFIG ${CONFIG_VAR_LIST})
-    cs_debug_message(
-      "[cs_print_all_configurations_variables] CONFIG ${CONFIG} ${ADD_MESSAGE}")
+    cs_debug_message("[cs_print_all_configurations_variables] CONFIG ${CONFIG} ${ADD_MESSAGE}")
     cs_print_configuration_variables(${CONFIG} "  ")
     cs_debug_message("[cs_print_all_configurations_variables] -------")
   endforeach()
@@ -483,6 +443,7 @@ function(cs_print_all_configurations_variables ADD_MESSAGE)
 
 endfunction()
 
+# Print (debug) the per-configuration CMake and csCMake variables of CONFIG_IN, each line prefixed with PRINT_PREFIX.
 function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
 
   cs_get_build_configurations_variables(CONFIG_VAR_LIST)
@@ -494,10 +455,7 @@ function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
   endforeach()
 
   # extra, CS variables
-  cs_debug_message(
-    "${PRINT_PREFIX} CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG}}"
-  )
-  cs_debug_message(
-    "${PRINT_PREFIX} CSCMAKE_${CONFIG}_POSTFIX = ${CSCMAKE_${CONFIG}_POSTFIX}")
+  cs_debug_message("${PRINT_PREFIX} CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG}}")
+  cs_debug_message("${PRINT_PREFIX} CSCMAKE_${CONFIG}_POSTFIX = ${CSCMAKE_${CONFIG}_POSTFIX}")
 
 endfunction()

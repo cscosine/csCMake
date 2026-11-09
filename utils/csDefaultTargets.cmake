@@ -1,17 +1,14 @@
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# creates two targets that the user can use in target_link_libraries
-# ${PROJECT_NAME}_csCMakeBaseInclude - contains include directory of the main
-# folder ${PROJECT_NAME}_csCMakeCompileOptionsDefault - contain common
-# compilation flags, e.g. multithread compilation in windows - in particular, it
-# contains the following specific targets: -- {PROJECT_NAME}MSVCParallelCompile
-# with parallel compilation options for MSCV
-# ${PROJECT_NAME}_csCMakeCompileOptionsStrict - contain common compilation
-# flags, e.g. multithread compilation in windows - in particular, it contains
-# the following specific targets: -- {PROJECT_NAME}MSVCParallelCompile with
-# parallel compilation options for MSCV -- {PROJECT_NAME}StrictCompilation with
-# all the warning to errors etc... all targets are installed too
+# creates two targets that the user can use in target_link_libraries ${PROJECT_NAME}_csCMakeBaseInclude - contains
+# include directory of the main folder ${PROJECT_NAME}_csCMakeCompileOptionsDefault - contain common compilation flags,
+# e.g. multithread compilation in windows - in particular, it contains the following specific targets: --
+# {PROJECT_NAME}MSVCParallelCompile with parallel compilation options for MSCV
+# ${PROJECT_NAME}_csCMakeCompileOptionsStrict - contain common compilation flags, e.g. multithread compilation in
+# windows - in particular, it contains the following specific targets: -- {PROJECT_NAME}MSVCParallelCompile with
+# parallel compilation options for MSCV -- {PROJECT_NAME}StrictCompilation with all the warning to errors etc... all
+# targets are installed too
 function(_cs_add_default_targets)
 
   # create the base include, to be used in all project
@@ -22,12 +19,11 @@ function(_cs_add_default_targets)
   _cs_target_msvc_parallel_compilation() # MSVCParallelCompile
   # TODO(sc) add a target that manages the version file etc
 
-  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsDefault
-  # that includes the default ones. TARGET_NAME will contains the name
+  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsDefault that includes the default ones.
+  # TARGET_NAME will contains the name
   _cs_target_create_default(_csCMakeCompileOptionsDefault INTERFACE TARGET_NAME)
   # add the selected targets
-  cs_target_link_libraries(${TARGET_NAME} INTERFACE
-                           ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
+  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
 
   _cs_target_create_default_finalize(_csCMakeCompileOptionsDefault)
 
@@ -35,53 +31,50 @@ function(_cs_add_default_targets)
   # create the strict compiler options
   _cs_target_strict_compilation() # StrictCompilation
 
-  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsStrict
-  # that includes the strict ones. TARGET_NAME will contains the name
+  # create a final target with name ${PROJECT_NAME}_csCMakeCompileOptionsStrict that includes the strict ones.
+  # TARGET_NAME will contains the name
   _cs_target_create_default(_csCMakeCompileOptionsStrict INTERFACE TARGET_NAME)
   # add the selected targets
-  cs_target_link_libraries(
-    ${TARGET_NAME} INTERFACE ${PROJECT_NAME}::${PROJECT_NAME}StrictCompilation
-    ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
+  cs_target_link_libraries(${TARGET_NAME} INTERFACE ${PROJECT_NAME}::${PROJECT_NAME}StrictCompilation
+                           ${PROJECT_NAME}::${PROJECT_NAME}MSVCParallelCompile)
   _cs_target_create_default_finalize(_csCMakeCompileOptionsStrict)
 
 endfunction()
 
-# add a target named <ProjectName>_csCMakeBaseInclude, alias
-# <ProjectName>::<ProjectName>_csCMakeBaseInclude that allow to propagate
-# include directories to the root of the project
+# add a target named <ProjectName>_csCMakeBaseInclude, alias <ProjectName>::<ProjectName>_csCMakeBaseInclude that allow
+# to propagate include directories to the root of the project
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(_csCMakeBaseInclude INTERFACE TARGET_NAME)
   cs_get_install_folder_suffix(INSTALL_FOLDER_EXPRESSION)
 
-  # add include to root dir, with subdir $<CONFIG> in installation if multiple
-  # config, with single folder if individual
-  target_include_directories(
-    ${TARGET_NAME} INTERFACE $<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+  # add include to root dir, with subdir $<CONFIG> in installation if multiple config, with single folder if individual
+  target_include_directories(${TARGET_NAME} INTERFACE $<INSTALL_INTERFACE:${INSTALL_FOLDER_EXPRESSION}>
+                                                      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
   # get the folder where files are generated
   cs_get_generate_folder_common(COMMON_FOLDER)
   cs_get_generate_folder_config(CONFIG_FOLDER)
 
-  target_include_directories(
-    ${TARGET_NAME} INTERFACE $<BUILD_INTERFACE:${COMMON_FOLDER}>
-                             $<BUILD_INTERFACE:${CONFIG_FOLDER}>)
+  target_include_directories(${TARGET_NAME} INTERFACE $<BUILD_INTERFACE:${COMMON_FOLDER}>
+                                                      $<BUILD_INTERFACE:${CONFIG_FOLDER}>)
 
   _cs_target_create_default_finalize(_csCMakeBaseInclude)
 
 endfunction()
 
+# Create the ${PROJECT_NAME}MSVCParallelCompile interface target, adding /MP and /Zc:__cplusplus on MSVC.
 function(_cs_target_msvc_parallel_compilation)
   _cs_target_create_default(MSVCParallelCompile INTERFACE TARGET_NAME)
 
   # add /MP and /Zc:__cplusplus
-  target_compile_options(${TARGET_NAME} INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-                                                  /MP /Zc:__cplusplus >)
+  target_compile_options(${TARGET_NAME} INTERFACE $<$<CXX_COMPILER_ID:MSVC>: /MP /Zc:__cplusplus >)
 
   _cs_target_create_default_finalize(MSVCParallelCompile)
 
 endfunction()
 
+# Create the ${PROJECT_NAME}StrictCompilation interface target with the strict warning flags of each compiler (GCC,
+# Clang, ClangCL, MSVC), warnings treated as errors.
 function(_cs_target_strict_compilation)
 
   _cs_target_create_default(StrictCompilation INTERFACE TARGET_NAME)
@@ -136,46 +129,38 @@ function(_cs_target_strict_compilation)
     # add sanitize options only for the specified configuration
     target_compile_options(
       ${TARGET_NAME}
-      INTERFACE
-        # both GNU and Clang but not on windows
-        $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-        # -fsanitize=address # might cause false positives if 3rd parts are not
-        # compiled with the very same flags
-        -fsanitize=undefined
-        # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread #
-        # mutually exclusive with address -fsanitize=pointer-compare  # might
-        # cause false positives if 3rd parts are not compiled with the very same
-        # flags -fsanitize=pointer-subtract # might cause false positives if 3rd
-        # parts are not compiled with the very same flags
-        >
-        # Clang additions
-        $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-        # -fsanitize=integer # might cause false positives if 3rd parts are not
-        # compiled with the very same flags -fsanitize=nullability # might cause
-        # false positives if 3rd parts are not compiled with the very same flags
-        # -fsanitize=bounds  # might cause false positives if 3rd parts are not
-        # compiled with the very same flags
-        >)
+      INTERFACE # both GNU and Clang but not on windows
+                $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+                # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same
+                # flags
+                -fsanitize=undefined
+                # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread # mutually exclusive with address
+                # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very
+                # same flags -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled
+                # with the very same flags
+                >
+                # Clang additions
+                $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
+                # -fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same
+                # flags -fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very
+                # same flags -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the
+                # very same flags
+                >)
     target_link_options(
       ${TARGET_NAME}
       INTERFACE
       $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      # -fsanitize=address # might cause false positives if 3rd parts are not
-      # compiled with the very same flags
+      # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
       -fsanitize=undefined
-      # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread #
-      # mutually exclusive with address -fsanitize=pointer-compare  # might
-      # cause false positives if 3rd parts are not compiled with the very same
-      # flags -fsanitize=pointer-subtract # might cause false positives if 3rd
-      # parts are not compiled with the very same flags
+      # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread # mutually exclusive with address
+      # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
+      # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
       >
       # Clang additions
       $<$<AND:$<CONFIG:${CONFIGNAME}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      # -fsanitize=integer # might cause false positives if 3rd parts are not
-      # compiled with the very same flags -fsanitize=nullability # might cause
-      # false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=bounds # might cause false positives if 3rd parts are not
-      # compiled with the very same flags
+      # -fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
+      # -fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
+      # -fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
       >)
   endif()
 
@@ -195,6 +180,8 @@ function(_cs_target_create_default TARGET_SUB_NAME TARGET_TYPE TARGET_NAME_OUT)
       PARENT_SCOPE)
 endfunction()
 
+# Finalize a default target created with _cs_target_create_default: install it in the ${PROJECT_NAME}_csCMakeCommon
+# export (default component) and run cs_finalize_target on it.
 function(_cs_target_create_default_finalize TARGET_SUB_NAME)
   set(TARGET_NAME ${PROJECT_NAME}${TARGET_SUB_NAME})
 

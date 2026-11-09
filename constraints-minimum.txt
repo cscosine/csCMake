@@ -3,4 +3,5 @@ pytest-cov==7.0
 mypy==1.0
 ruff==0.4
 pre-commit==4.0
-import-linter==2.0
+import-linter==2.11
+cmakelang==0.6.13

@@ -14,6 +14,9 @@ function(cs_add_executable TARGET_NAME)
   _cs_add_target_to_project_targets(${TARGET_NAME})
 endfunction()
 
+# Register TARGET_NAME (unless it is an ALIAS) in the csProjectTargets global property, after setting on it the per-
+# configuration output postfix (CSCMAKE_<CONFIG>_POSTFIX) and the MSVC runtime library generator expression. Fails if
+# cs_initialize_project did not define them.
 function(_cs_add_target_to_project_targets TARGET_NAME)
   # add to list of targets if it is not an alias
   get_target_property(TARGET_NAME_ALIAS ${TARGET_NAME} ALIASED_TARGET)
@@ -25,9 +28,7 @@ function(_cs_add_target_to_project_targets TARGET_NAME)
 
       # postfix for file (d=debug, rd=relWithDebInfo, etc...)
       if(DEFINED CSCMAKE_${CONFIG}_POSTFIX)
-        set_target_properties(
-          ${TARGET_NAME} PROPERTIES ${CONFIG}_POSTFIX
-                                    "${CSCMAKE_${CONFIG}_POSTFIX}")
+        set_target_properties(${TARGET_NAME} PROPERTIES ${CONFIG}_POSTFIX "${CSCMAKE_${CONFIG}_POSTFIX}")
       else()
         message(
           FATAL_ERROR
@@ -39,10 +40,8 @@ function(_cs_add_target_to_project_targets TARGET_NAME)
 
     # path to allow execution inside visual studio
     if(DEFINED CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION)
-      set_target_properties(
-        ${TARGET_NAME}
-        PROPERTIES MSVC_RUNTIME_LIBRARY
-                   "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
+      set_target_properties(${TARGET_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY
+                                                      "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
     else()
       message(
         FATAL_ERROR
@@ -54,6 +53,8 @@ function(_cs_add_target_to_project_targets TARGET_NAME)
   endif()
 endfunction()
 
+# Finalize TARGET_NAME by running the recursive dependency analysis (_cs_recursive_analyze_target). Call it once, after
+# all the properties and links of the target are set.
 function(cs_finalize_target TARGET_NAME)
   _cs_recursive_analyze_target(${TARGET_NAME})
 endfunction()
@@ -74,6 +75,7 @@ function(cs_get_all_targets OUTPUT_VARIABLE_NAME)
   endif()
 endfunction()
 
+# Print (debug) the targets registered in the csProjectTargets global property.
 function(cs_print_all_target)
   set(TARGETS "")
   cs_get_all_targets(TARGETS)

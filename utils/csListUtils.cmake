@@ -1,5 +1,6 @@
 include_guard(GLOBAL)
 
+# Append each element of VALUES to the list variable LIST_NAME of the caller, skipping elements already present.
 function(_cs_list_add_list_unique_values LIST_NAME VALUES)
   if(VALUES)
     set(OUTPUT_LIST ${${LIST_NAME}})
@@ -12,6 +13,7 @@ function(_cs_list_add_list_unique_values LIST_NAME VALUES)
   endif()
 endfunction()
 
+# Append VALUE to the list variable LIST_NAME of the caller, unless already present.
 function(_cs_list_add_unique_value LIST_NAME VALUE)
   set(OUTPUT_LIST ${${LIST_NAME}})
   if(NOT ${VALUE} IN_LIST OUTPUT_LIST)
@@ -22,8 +24,8 @@ function(_cs_list_add_unique_value LIST_NAME VALUE)
       PARENT_SCOPE)
 endfunction()
 
-function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME
-         VALUE)
+# Append VALUE to the list property PROPERTY_NAME of TARGET_NAME, unless already present.
+function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME VALUE)
   get_target_property(LIST_VALUES ${TARGET_NAME} ${PROPERTY_NAME})
   if(NOT ${VALUE} IN_LIST LIST_VALUES)
     set_property(
@@ -33,6 +35,7 @@ function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME
   endif()
 endfunction()
 
+# Append VALUE to the global list property PROPERTY_NAME, unless already present.
 function(_cs_add_to_global_property_unique_value PROPERTY_NAME VALUE)
   get_property(LIST_VALUES GLOBAL PROPERTY ${PROPERTY_NAME})
   if(NOT ${VALUE} IN_LIST LIST_VALUES)

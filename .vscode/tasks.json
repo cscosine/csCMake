@@ -30,11 +30,100 @@
       "detail": "#Setup # Install pre-commit hooks"
     },
     {
-      "label": "Pre-commit run (all files)",
+      "label": "Pre-commit run ALL (all files)",
       "type": "shell",
       "command": "pre-commit run --all-files",
       "problemMatcher": [],
-      "detail": "#Pre-Commit # Run pre-commit hooks on all files"
+      "detail": "#Pre-Commit # Run pre-commit ALL hooks on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Pre-commit run mypy (all files)",
+      "type": "shell",
+      "command": "pre-commit run mypy --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hook mypy on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Pre-commit run ruff (all files)",
+      "type": "shell",
+      "command": "pre-commit run ruff --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hook ruff on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Pre-commit run ruff-format (all files)",
+      "type": "shell",
+      "command": "pre-commit run ruff-format --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hook ruff-format on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Pre-commit run import-linter (all files)",
+      "type": "shell",
+      "command": "pre-commit run import-linter --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hook import-linter on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Pre-commit run generate-csv1-presets (all files)",
+      "type": "shell",
+      "command": "pre-commit run generate-csv1-presets --all-files",
+      "problemMatcher": [],
+      "detail": "#Pre-Commit # Run pre-commit hook generate-csv1-presets on all files",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Generate csv1 presets",
+      "type": "shell",
+      "command": "cscmake-generate-presets",
+      "problemMatcher": [],
+      "detail": "#Presets # Regenerate presets/csv1 from presets/template",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Check csv1 presets",
+      "type": "shell",
+      "command": "cscmake-generate-presets --check",
+      "problemMatcher": [],
+      "detail": "#Presets # Fail if presets/csv1 is out of date",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     },
     {
       "label": "Setup Project",
@@ -57,23 +146,9 @@
     {
       "label": "Pytest (coverage)",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m pytest --cov=csorchestrator --cov-branch --cov-report=html",
+      "command": "${command:python.interpreterPath} -m pytest --cov=cscmake --cov-branch --cov-report=html",
       "problemMatcher": [],
-      "detail": "#Testing # Run pytest (all) with coverage"
-    },
-    {
-      "label": "Pytest (run-all)",
-      "type": "shell",
-      "command": "${command:python.interpreterPath} -m pytest --run-all",
-      "problemMatcher": [],
-      "detail": "#Testing # Run pytest (all)"
-    },
-    {
-      "label": "Pytest (run-all & coverage)",
-      "type": "shell",
-      "command": "${command:python.interpreterPath} -m pytest --cov=csorchestrator --cov-branch --cov-report=html --run-all",
-      "problemMatcher": [],
-      "detail": "#Testing # Run pytest (all) with coverage"
+      "detail": "#Testing # Run pytest with coverage"
     },
     {
       "label": "Git Stash Untracked",
@@ -150,6 +225,18 @@
       ],
       "problemMatcher": [],
       "detail": "#Git # Push changes"
+    },
+    {
+      "label": "import-linter show graph",
+      "type": "shell",
+      "command": "import-linter explore cscmake",
+      "problemMatcher": [],
+      "detail": "#import-linter # Show Graph",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     }
   ]
 }

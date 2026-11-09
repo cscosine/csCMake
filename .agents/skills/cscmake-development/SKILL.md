@@ -28,22 +28,28 @@ compile-option defaults, and CMake presets. It has two parts:
 | `utils/csBuildConfigurations.cmake` | Build-configuration registration, postfixes, MSVC runtime per config. |
 | `utils/csCompileEachInstalledInclude.cmake` | Compile every installed header standalone. |
 | `utils/csClangTidy.cmake` / `utils/csOpenMP.cmake` | Optional per-target helpers. |
-| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |
+| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). Format/lint with `cscmake-cmake-template`. |
+| `.cmake-format.json` | cmake-format / cmake-lint configuration (width, naming patterns, disabled codes). |
+| `src/cscmake/devtools/cmake_template.py` | `cscmake-cmake-template format\|lint`: cmakelang on `@VAR@` templates via parseable stand-ins. |
 | `presets/common/` | Reusable preset building blocks (hosts, compilers, generators, build types, tests). |
 | `presets/csv1/` | **Generated** preset matrix — do not edit by hand. |
 | `presets/template/` | `@VAR@` templates used to generate `presets/csv1/`. |
 | `src/cscmake/utils/generate_cs_preset_variants.py` | Template renderer (`@VAR@` delimiter) with JSON validation. |
-| `tools/generate_all_csv1_presets.py` | Entry point to regenerate the preset matrix. |
+| `src/cscmake/presets/registry.py` | Built-in variant matrix (OS/arch/compiler/generator) and short forms. |
+| `src/cscmake/presets/generate.py` | Preset generator; console script `cscmake-generate-presets` (`--check` to verify). |
 | `pyproject.toml` | Project metadata, ruff/mypy/pytest/coverage/import-linter config. |
 | `tests/` | pytest suite (mirrors `src/` layout). |
 
 ## Conventions
 
 - **CMake:** public functions `cs_*`, private helpers `_cs_`. File names `cs<Name>.cmake`.
+  Formatted and linted by cmake-format / cmake-lint (`.cmake-format.json`, line width 120); every
+  `function`/`macro` has a docstring comment block right above it. Long string literals are allowed
+  (C0301 off: cmake-format cannot wrap strings).
 - **Python:** strict mypy, ruff line-length 120, double quotes, docstrings on public functions.
 - **Commit style:** short imperative summary, e.g. `add presets for arm64`.
 - **Presets:** checked-in `presets/csv1/*.json` are generated. Never edit by hand.
-  Regenerate with `python tools/generate_all_csv1_presets.py`.
+  Regenerate with `cscmake-generate-presets`.
 
 ## Common tasks
 
@@ -56,13 +62,13 @@ source .venv/bin/activate
 
 ### Run quality gates
 ```bash
-pre-commit run --all-files   # ruff, ruff-format, mypy, cmake-format, import-linter, presets sync
+pre-commit run --all-files   # hygiene, ruff, ruff-format, actionlint, mypy, cmake-format, cmake-lint,
+                             # cmake-format/-lint (templates), generate-csv1-presets, import-linter
 ```
 
 ### Run tests
 ```bash
-pytest                     # fast tests (skips slow/git by default)
-pytest --run-all           # all tests
+pytest                     # all tests
 pytest --cov=cscmake       # with coverage
 ```
 
@@ -73,22 +79,18 @@ entries in `presets/common/build-configurations.json`.
 
 ### Add a new preset variant
 1. Update the variant registry in `src/cscmake/presets/registry.py` (built-in matrix).
-2. Run `python tools/generate_all_csv1_presets.py` to regenerate `presets/csv1/`.
+2. Run `cscmake-generate-presets` to regenerate `presets/csv1/`.
 3. Commit the regenerated presets (pre-commit `generate-csv1-presets` hook verifies sync).
 
-### csOrchestrator coupling
-- The preset generator previously imported `csorchestrator` (not on PyPI). It now uses a
-  built-in, zero-dependency variant registry in `cscmake.presets`.
-- An optional `--variants-source csorchestrator` flag exists for when csOrchestrator is
-  pip-installable; it is **not** the default.
-- Do not re-add a hard dependency on `csorchestrator` in `pyproject.toml` or `setup.sh`.
+### Runtime dependencies
+- The package and the preset generator use the Python standard library only.
+- Do not add runtime dependencies to `pyproject.toml` or extra installs to `setup.sh` / `setup.ps1`.
 
 ### Adding tests
 - Python tests go in `tests/cscmake/<module>/test_*.py`.
 - CMake fixture project goes in `tests/fixture/` and is exercised by
   `tests/cmake/test_fixture_project.py` via subprocess (configure/build/install).
-- Mark slow or git-dependent tests with `@pytest.mark.slow` / `@pytest.mark.git`; they
-  are skipped unless `--run-all` is passed.
+- There is no `conftest.py` and no custom markers yet; add them only when slow tests exist.
 
 ### Dependency hygiene
 - When adding a new dev dependency to `[project.optional-dependencies] dev` in
