@@ -240,12 +240,13 @@ def get_supported_context_os_architecture_list(
     return ret
 
 
-def create_context_os_architecture_compiler_generator_string(ctx: ContextOsArchitectureCompilerGenerator) -> str:
-    """Return the canonical id of ``ctx``, e.g. ``csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja``."""
+def create_context_os_architecture_compiler_generator_string_without_schema(
+    ctx: ContextOsArchitectureCompilerGenerator,
+) -> str:
+    """Return the id of ``ctx`` without the schema version, e.g. ``linux-ubuntu24.04-x64-generic-gcc-default-ninja``."""
     osa = ctx.context_os_architecture
     ccg = ctx.context_compiler_generator
     parts = [
-        CS_SCHEMA_VERSION,
         osa.os.value,
         osa.os_version,
         osa.architecture.value,
@@ -255,6 +256,11 @@ def create_context_os_architecture_compiler_generator_string(ctx: ContextOsArchi
         ccg.build_generator.generator.value,
     ]
     return "-".join(p.lower() for p in parts)
+
+
+def create_context_os_architecture_compiler_generator_string(ctx: ContextOsArchitectureCompilerGenerator) -> str:
+    """Return the canonical id of ``ctx``, e.g. ``csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja``."""
+    return f"{CS_SCHEMA_VERSION}-{create_context_os_architecture_compiler_generator_string_without_schema(ctx)}"
 
 
 # =========================================================

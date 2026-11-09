@@ -11,8 +11,8 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 ## Roadmap (phases)
 
 - [x] **Phase 0 — Project plumbing** (port from csorchestrator: `.vscode/`, `pyproject.toml`, `conftest.py`, `constraints-minimum.txt`, `.pre-commit-config.yaml`, `setup.sh`/`setup.ps1`, CI workflow, agent skill)
-- [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
-- [ ] **Phase 2 — Tests** (Python unit tests + CMake fixture project via subprocess + preset JSON walker test)
+- [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook; amended: `csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` generated too). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
+- [ ] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [ ] **Phase 3 — Docs** (README.md, AGENTS.md, docs/architecture.md, docs/utils-api.md, docs/presets.md)
 - [ ] **Phase 4 — CMake code hardening** (see Issues below)
 - [ ] **Phase 5 — Release** (version bump, tag, CHANGELOG entries)
@@ -67,6 +67,24 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
 - [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
 
+### Phase 2 plan (agreed 2026-11-09)
+- **Smoke projects** in `tests/smoke/` (consumers of csCMake through the presets, exactly like real projects):
+  - `hello/` (export namespace `CsSmoke`): `cs_initialize_project` with Debug, Release, RelWithDebInfo (mapped) and Paranoid (custom) configs; static lib `hellolib` (`hello_lib()` prints `hello-lib`); executable `helloapp` (calls it, prints `hello-app`); ctest: unit test of the lib + run of `helloapp` with output regex `hello-lib.*hello-app`; installed with `cs_install_target` + `cs_finalize_project(CsSmoke)`.
+  - `consumer/`: separate project, `find_package(CsSmoke COMPONENTS hellolib REQUIRED)` from the install folder, links `CsSmoke::hellolib`, ctest checks its output. Proves the installed `CsSmokeConfig.cmake`.
+- **Driver** `tests/smoke/run_smoke.py` (stdlib only), used by CI and by a local pytest: lays out csCMake + `hello` + `consumer` as siblings (the presets expect `${sourceParentDir}/csCMake`), runs `cmake --workflow` (multi-config: `debug-release-relWithDebInfo-paranoid`; single-config: one workflow per config), runs the **installed** `helloapp` of each config (install layout + postfixes), builds/tests the consumer, runs cmake-lint on the installed `CsSmokeConfig.cmake`.
+- **CI** `.github/workflows/smoke.yml`, separate from `ci.yml`: a `matrix` job prints the matrix JSON from the registry (`tests/smoke/ci_matrix.py`: variant → generator type + runner label, e.g. `ubuntu-24.04-arm`, `windows-2025-vs2026`), the `smoke` job uses `fromJSON` → all **20** variants × **4** configs. CMake/Ninja from the runner images (as csfoundation/csorchestrator do); add a setup action only if a runner turns out too old.
+- **Local**: `tests/cmake/test_smoke.py` runs the driver for the host variant, marked `slow` + `requires("cmake")` via a new `conftest.py` (`--run-all`).
+
+### Phase 2 — not covered by the smoke projects (trace for full completion)
+- [ ] Shared libraries: Windows DLL export (`__declspec`/`GenerateExportHeader`), runtime dependency analysis (`csTargetDependencies`) and VS debugger PATH (`_cs_set_vs_debugger_env_variable`).
+- [ ] INTERFACE / header-only libraries.
+- [ ] Several components with dependencies between exports; cyclic dependency detection (expected failure test).
+- [ ] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`).
+- [ ] `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`, `csUseOpenMPOnTarget`.
+- [ ] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups.
+- [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
+- [ ] macOS (no variants in the registry yet).
+
 ### cscmake ↔ csorchestrator alignment (future)
 - [ ] csorchestrator keeps its own copy of the supported matrix (`frontend/cscmake_presets/supported_variants.py` + `domain/context/*`); `src/cscmake/presets/registry.py` is the source of truth. Prevent silent drift **without a code dependency in either direction**: csCMake is checked out next to projects (never pip-installed) and must not be checked out automatically by csorchestrator.
   - csCMake: the generator also writes a committed manifest `presets/csv1/variants.json` (per variant: id, os/os_version/architecture/variant/compiler/compiler_version/generator/generator_type, short forms). Kept in sync by the `generate-csv1-presets` hook and the sync test — a data contract, not code.
@@ -82,8 +100,8 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
-| 1 | done | Signed off 2026-11-09. Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
-| 2 | not started | Tests |
+| 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
+| 2 | planned | Smoke projects + `smoke.yml`, see "Phase 2 plan" |
 | 3 | not started | Docs |
 | 4 | not started | CMake hardening |
 | 5 | not started | Release |
@@ -142,3 +160,8 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - `.pre-commit-config.yaml`: `cmake-lint` (upstream) + local `cmake-format-templates` / `cmake-lint-templates` (`language: system`, dev venv). `cmakelang>=0.6.13` dev dep, `cmakelang==0.6.13` in `constraints-minimum.txt`. import-linter: `presets | devtools` above `utils`.
 - `tests/cscmake/devtools/test_cmake_template.py`: protect/restore round trip on the real template, stand-in width and case, case-insensitive restore, error cases, committed template formatted + lint-clean, format idempotent, `main` format `--check`/write and lint report.
 - `.cmake-format.json` aligned with established conventions: removed `function_pattern` (same as the cmakelang default), `macro_pattern` now lowercase `[0-9a-z_]+` (CMake upstream style; cmakelang's UPPER_CASE macro default is not CMake practice). Argument/local-variable patterns kept as temporary overrides until the lowercase rename (Phase 4, see issues).
+
+### 2026-11-09 (Phase 1 amendment — project setup presets generated)
+- Finding: `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` listed the 20 `cscmake-project-setup-<variant>` presets (inherited by every `-base` preset) by hand → could drift from the registry.
+- Now generated by `cscmake-generate-presets` from `presets/template/csCMakeProjectSetup-*.json.template` (`generate_project_setup_presets`, `--setup-output-dir`); `--check` and the pre-commit hook cover them. Output identical to the hand-written files except the added "autogenerated" `$comment` (JSON compared equal, same preset order). `csCMakeProjectSetup-base*.json` stay hand-written.
+- Tests: every variant has a setup preset in each file; every setup preset inherited by a `-base` preset exists; `--check` detects stale/missing setup files; committed files in sync; CLI tests never write into the repository.

@@ -1,8 +1,14 @@
-"""Generate the csv1 CMake preset matrix under ``presets/csv1/`` from ``presets/template/``.
+"""Generate the csv1 CMake preset matrix from ``presets/template/``.
+
+Outputs:
+- ``presets/csv1/``: the per-variant presets and ``cs-presets-all.json``;
+- ``presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json``: the project setup
+  presets, with one ``cscmake-project-setup-<variant>`` preset per variant (inherited by the
+  ``-base`` presets of the matrix). The ``csCMakeProjectSetup-base*.json`` files are hand-written.
 
 Usage (from a csCMake checkout):
     cscmake-generate-presets            # regenerate in place
-    cscmake-generate-presets --check    # exit 1 if presets/csv1 is out of date
+    cscmake-generate-presets --check    # exit 1 if any generated file is out of date
     python -m cscmake.presets.generate  # same, without the console script
 
 Standard library only. Requires ``cscmake`` installed in editable mode (``./setup.sh``), since the
@@ -21,8 +27,10 @@ from typing import Any
 from cscmake.presets.registry import (
     CS_SCHEMA_VERSION,
     CS_SCHEMA_VERSION_SHORT,
+    Architecture,
     ContextOsArchitectureCompilerGenerator,
     GeneratorType,
+    create_context_os_architecture_compiler_generator_string_without_schema,
     get_supported_build_configs_for_generator_type,
     get_supported_context_os_architecture_list,
     short_architecture,
@@ -44,7 +52,14 @@ from cscmake.utils.generate_cs_preset_variants import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_DIR = REPO_ROOT / "presets" / "template"
 OUTPUT_DIR = REPO_ROOT / "presets" / "csv1"
+SETUP_OUTPUT_DIR = REPO_ROOT / "presets"
 CS_PRESETS_ALL_JSON = "cs-presets-all.json"
+PROJECT_SETUP_PRESETS = (
+    "csCMakeProjectSetup-default.json",
+    "csCMakeProjectSetup-default-standalone.json",
+    "csCMakeProjectSetup-shortBuildPath.json",
+)
+PROJECT_SETUP_PRESET_PREFIX = "cscmake-project-setup-"
 
 _TEMPLATE_PREFIX = {
     GeneratorType.SINGLE_CONFIG: "cs-single-config-generator",
@@ -131,20 +146,71 @@ def generate_all_csv1_presets(template_dir: Path = TEMPLATE_DIR, output_dir: Pat
     return generated
 
 
-def check_presets_up_to_date(template_dir: Path = TEMPLATE_DIR, output_dir: Path = OUTPUT_DIR) -> list[str]:
-    """Return the file names that differ between a fresh generation and ``output_dir``."""
+def project_setup_preset_name(ctx: ContextOsArchitectureCompilerGenerator) -> str:
+    """Return the name of the project setup preset of ``ctx``, inherited by its ``-base`` preset."""
+    return PROJECT_SETUP_PRESET_PREFIX + create_context_os_architecture_compiler_generator_string_without_schema(ctx)
+
+
+def _project_setup_sort_key(ctx: ContextOsArchitectureCompilerGenerator) -> tuple[str, int, str, str, str]:
+    osa = ctx.context_os_architecture
+    ccg = ctx.context_compiler_generator
+    return (
+        osa.os.value,
+        list(Architecture).index(osa.architecture),
+        osa.os_version,
+        ccg.compiler_family.value,
+        ccg.build_generator.generator.value,
+    )
+
+
+def generate_project_setup_presets(template_dir: Path = TEMPLATE_DIR, output_dir: Path = SETUP_OUTPUT_DIR) -> list[str]:
+    """Render the ``csCMakeProjectSetup-*.json`` files into ``output_dir``; return their names."""
+    contexts = sorted(get_supported_context_os_architecture_list(), key=_project_setup_sort_key)
+    presets = ",\n".join(
+        f'        {{\n            "name": "{project_setup_preset_name(ctx)}"\n        }}' for ctx in contexts
+    )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for name in PROJECT_SETUP_PRESETS:
+        rendered = render_template(
+            load_template(template_dir / f"{name}.template"), {"csProjectSetupVariantPresets": presets}
+        )
+        json.loads(rendered)  # validate
+        (output_dir / name).write_text(rendered, encoding="utf-8", newline="\n")
+    return list(PROJECT_SETUP_PRESETS)
+
+
+def check_presets_up_to_date(
+    template_dir: Path = TEMPLATE_DIR, output_dir: Path = OUTPUT_DIR, setup_output_dir: Path = SETUP_OUTPUT_DIR
+) -> list[str]:
+    """Return the file names that differ between a fresh generation and the output folders."""
     with tempfile.TemporaryDirectory() as tmp:
-        fresh_dir = Path(tmp)
+        fresh_dir = Path(tmp) / "csv1"
+        fresh_setup_dir = Path(tmp) / "setup"
         generate_all_csv1_presets(template_dir, fresh_dir)
+        generate_project_setup_presets(template_dir, fresh_setup_dir)
         fresh = {p.name: p.read_bytes() for p in fresh_dir.glob("*.json")}
+        fresh_setup = {name: (fresh_setup_dir / name).read_bytes() for name in PROJECT_SETUP_PRESETS}
     current = {p.name: p.read_bytes() for p in output_dir.glob("*.json")}
-    return sorted(name for name in fresh.keys() | current.keys() if fresh.get(name) != current.get(name))
+    current_setup = {
+        name: (setup_output_dir / name).read_bytes()
+        for name in PROJECT_SETUP_PRESETS
+        if (setup_output_dir / name).is_file()
+    }
+    stale = {name for name in fresh.keys() | current.keys() if fresh.get(name) != current.get(name)}
+    stale |= {name for name in PROJECT_SETUP_PRESETS if fresh_setup[name] != current_setup.get(name)}
+    return sorted(stale)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--template-dir", type=Path, default=TEMPLATE_DIR, help="templates (default: presets/template)")
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR, help="output folder (default: presets/csv1)")
+    parser.add_argument(
+        "--setup-output-dir",
+        type=Path,
+        default=SETUP_OUTPUT_DIR,
+        help="output folder of the csCMakeProjectSetup-*.json files (default: presets)",
+    )
     parser.add_argument("--check", action="store_true", help="do not write; exit 1 if the output folder is stale")
     parser.add_argument("-q", "--quiet", action="store_true", help="do not list generated files")
     args = parser.parse_args(argv)
@@ -155,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.check:
-        stale = check_presets_up_to_date(args.template_dir, args.output_dir)
+        stale = check_presets_up_to_date(args.template_dir, args.output_dir, args.setup_output_dir)
         for name in stale:
             print(f"Out of date: {name}")
         if stale:
@@ -164,6 +230,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     generated = generate_all_csv1_presets(args.template_dir, args.output_dir)
+    generated += generate_project_setup_presets(args.template_dir, args.setup_output_dir)
     if not args.quiet:
         for name in generated:
             print(f"Generated: {name}")

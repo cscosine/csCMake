@@ -49,7 +49,9 @@ presets/
                                     #   compilers, build types, hosts, targets...)
   csv1/                             # generated preset matrix (do not edit by hand)
   template/                         # templates used to generate the matrix
-  csCMakeProjectSetup*.json         # base "project setup" presets + per-host variants
+  csCMakeProjectSetup-base*.json    # base "project setup" presets (hand-written)
+  csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json
+                                    # project setup + one preset per variant (generated)
 src/cscmake/                        # Python package (preset generation)
   presets/registry.py               #   supported variant matrix (single source of truth)
   presets/generate.py               #   preset generator (cscmake-generate-presets)
@@ -268,8 +270,9 @@ The generator only needs the Python standard
 library (no third-party dependency) and runs without
 installing the package.
 
-> **Note:** generated files under `presets/csv1/` are committed and are not
-> meant to be edited by hand. The `generate-csv1-presets` pre-commit hook
+> **Note:** generated files under `presets/csv1/` and the
+> `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json`
+> files are committed and are not meant to be edited by hand. The `generate-csv1-presets` pre-commit hook
 > regenerates them whenever the templates, the registry or the generator
 > change; if it rewrites files, stage them and commit again.
 
