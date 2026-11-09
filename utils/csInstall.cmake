@@ -1,6 +1,7 @@
 include_guard(GLOBAL)
 # cmake-lint: disable=R0913
-# (only _cs_configure_config_cmake has more than 5 arguments: one per @VAR@ placeholder of the template)
+# (only _cs_configure_config_cmake has more than 5 arguments: the install folder plus one per @VAR@ placeholder of the
+# template)
 include(utils/csFindPackage)
 include(utils/csListUtils)
 include(utils/csPathUtils)
@@ -12,8 +13,8 @@ include(CMakePackageConfigHelpers)
 # Return in install_folder_expression the install folder for headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-
 # folder when the project has more than one configuration.
 function(cs_get_install_include_dir install_folder_expression)
-  cs_get_build_configurations(CONFIGS_LIST)
-  list(LENGTH CONFIGS_LIST count)
+  cs_get_build_configurations(configs_list)
+  list(LENGTH configs_list count)
   if(count GREATER 1)
     # includes are installed per configuration, independently if we are with a multi generator or a single one
     set(folder "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
@@ -97,7 +98,7 @@ function(cs_install_target target_name export_name)
     if((${target_type} STREQUAL "SHARED_LIBRARY" OR ${target_type} STREQUAL "EXECUTABLE"))
       install(
         FILES $<TARGET_PDB_FILE:${target_name}>
-        DESTINATION bin
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
         OPTIONAL)
     endif()
   endif()
@@ -320,7 +321,7 @@ function(_cs_finalize_install export_namespace)
 
   # then sort the dependencies in order to have independent exports before
   foreach(export_name ${exports})
-    _cs_sort_component_dependencies(${export_name} DEPENDENT_EXPORTS_SORTED)
+    _cs_sort_component_dependencies(${export_name})
     cs_get_component_dependencies_sorted(${export_name} ${export_name}_DEPENDENT_EXPORTS_SORTED)
     cs_debug_message(
       "[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (sorted) ${${export_name}_DEPENDENT_EXPORTS_SORTED}"
@@ -389,6 +390,7 @@ function(_cs_finalize_install export_namespace)
   # Write the Config.cmake file
   _cs_configure_config_cmake(
     ${output_folder}
+    ${install_configdir}
     ${export_namespace}
     ${export_namespace_sanitized}
     "${components_list}"
@@ -408,11 +410,12 @@ function(_cs_finalize_install export_namespace)
 
 endfunction()
 
-# Generate <output_folder>/<export_namespace>Config.cmake from templates/csTemplateConfig.cmake.in. The argument names
-# are the @VAR@ placeholders of the template: do not rename them.
+# Generate <output_folder>/<export_namespace>Config.cmake from templates/csTemplateConfig.cmake.in, to be installed in
+# install_configdir. The other argument names are the @VAR@ placeholders of the template: do not rename them.
 function(
   _cs_configure_config_cmake
   output_folder
+  install_configdir
   export_namespace
   export_namespace_sanitized
   components_list
@@ -424,9 +427,6 @@ function(
   # * export_namespace, export_namespace_sanitized
   # * components_list, default_components_list
   # * injected_find_packages_code, injected_export_dependencies
-
-  set(temp "${export_namespace}")
-  string(REPLACE "-" "_" export_namespace_sanitized "${temp}")
 
   _cs_get_root_dir(base_path)
   configure_package_config_file(
@@ -512,6 +512,6 @@ function(cs_print_components)
     )
   endforeach()
 
-  cs_get_components(exports_default)
-  cs_debug_message("[cs_print_components] default exported targets  ${exports_default}")
+  cs_get_default_components(exports_default)
+  cs_debug_message("[cs_print_components] default components: ${exports_default}")
 endfunction()

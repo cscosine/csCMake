@@ -43,16 +43,16 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 
 ### CMake code assessment (`csCMake.cmake` + `utils/*.cmake`)
 - [ ] `cmake_minimum_required(VERSION 3.31.5)` inside `csCMake.cmake` (non-standard in an included file; 3.31.5 is very new) → remove, add version guard.
-- [ ] `cs_target_link_libraries` mishandles scope keywords when not first in `ARGN` → parse/preserve scope.
+- [x] ~~`cs_target_link_libraries` mishandles scope keywords when not first in `ARGN`~~ → not an issue: keywords are kept in place, the result equals `target_link_libraries` (`tests/cmake/test_target_link_libraries.py`, 3b step 1).
 - [ ] `cs_target_sources` uses `CMAKE_SOURCE_DIR` for relative path → use `CMAKE_CURRENT_SOURCE_DIR`.
 - [ ] MSVC runtime hardcoded to `MultiThreaded*DLL` → add static-runtime option.
-- [ ] Error messages reference `_cs_add_custom_build_configuration` (doesn't exist) → align with real function names.
+- [x] (3b step 1) Error messages reference functions that do not exist / undefined variables → fixed.
 - [ ] Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
 - [ ] `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
 - [x] `templates/csTemplateConfig.cmake.in` breaks cmake-format (`@...@` substitution) → formatted/linted via `cscmake-cmake-template` (placeholder stand-ins).
 - [ ] Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
 - [ ] Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
-- [ ] `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
+- [x] (3b step 1) `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
 - [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
 - [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
 - [ ] 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
@@ -157,6 +157,8 @@ variables, properties, preset environment variables, default targets) guides the
   - generated Config: namespaced variables (no `COMPONENT`, `${COMPONENT}_DEPENDENT_EXPORTS` clashes), the
     `@EXPORT_NAMESPACE_SANITIZED@` TODO, `<Pkg>_FOUND`/`OPTIONAL_COMPONENTS` semantics instead of `FATAL_ERROR`;
   - `cmake_minimum_required` in `csCMake.cmake` → version check (3.31, presets v10);
+  - `cs_finalize_project` fails when `project()` has no `VERSION` (`write_basic_package_version_file`): clear error
+    from `cs_initialize_project`, or a default version (found by the 3b configure tests);
   - **nested csCMake projects** (a lib project `add_subdirectory`-ed into a target project): fails today
     (`duplicated element Debug`, verified 2026-11-09: all state is in global properties). Current project tracked by a
     variable set in `cs_initialize_project` (inherited by subdirectories, not tied to `PROJECT_NAME`); targets,
@@ -426,3 +428,21 @@ variables, properties, preset environment variables, default targets) guides the
 - `DEFAULT_CONFIG` declared multi-value: the smoke projects and README use `DEFAULT_CONFIG Debug Release` (the
   repeated `DEFAULT_CONFIG` form is still accepted by `cs_initialize_project`, but cmake-lint reports E1122 with the
   signature; caught by the pre-commit hook: my lint check had filtered `[C...]` codes only).
+
+### 2026-11-10 (Phase 3b step 1 — bugs)
+- New `tests/cmake/`: configure-only CMake tests (pytest writes a `LANGUAGES NONE` project including csCMake,
+  configures it with Ninja, reads `cstest_report(<key> <value>)`; ~0.1 s each, no compiler). Each test below fails on
+  the code before the fix.
+- `_cs_target_try_to_finalize`: quoted `foreach` → all but the first pending dependency were dropped, so a target
+  finalized before its project dependencies existed missed their runtime libraries (`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`,
+  the Visual Studio debugger PATH). Test with two imported shared libraries, app finalized first and last.
+- `cs_print_target_properties`: iterated an undefined variable (printed nothing); now `${CMAKE_COMMAND}`, `<CONFIG>`
+  expanded for every configuration of the project (was `CMAKE_BUILD_TYPE`, empty with multi-config), `<LANG>` → CXX.
+- `cs_print_components`: printed all components as "default".
+- Messages: labels/advice naming functions that do not exist (`cs_set_default_build_config`,
+  `csPrintFindPackagesForTarget`, `_csPopulatecsTargetDependencies`, ...), undefined variables
+  (`${strict_compilation_on_config}`, `${custom_config}` in the mapped-config loop), "USE cs_initialize_project(...)".
+- `csInstall.cmake`: `_cs_configure_config_cmake` gets the install folder as an argument (was read from the caller's
+  scope), no duplicate sanitizing; unused argument of `_cs_sort_component_dependencies` removed; PDB files installed to
+  `${CMAKE_INSTALL_BINDIR}` (was `bin`). Three upper-case locals missed by the step-4 renamer lowercased.
+- Checked, not a bug: `cs_target_link_libraries` scope keywords (test).

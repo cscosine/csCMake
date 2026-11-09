@@ -209,14 +209,14 @@ function(_cs_recursive_analyze_targets_finalize targets_list)
 
     cs_debug_message("[_cs_recursive_analyze_targets_finalize] analyze target ${target_name}")
 
-    _cs_target_is_fully_finalized(${target_name} TARGET_FINALIZED)
-    if(NOT TARGET_FINALIZED)
+    _cs_target_is_fully_finalized(${target_name} target_finalized)
+    if(NOT target_finalized)
       cs_debug_message("[_cs_recursive_analyze_targets_finalize] target ${target_name} is not finalized")
       # try to finalize
       _cs_target_try_to_finalize(${target_name})
       # and check the result
-      _cs_target_is_fully_finalized(${target_name} TARGET_FINALIZED)
-      if(NOT TARGET_FINALIZED)
+      _cs_target_is_fully_finalized(${target_name} target_finalized)
+      if(NOT target_finalized)
         cs_debug_message(
           "[_cs_recursive_analyze_targets_finalize] target ${target_name} is not finalized yet, readd it")
         _cs_list_add_unique_value(targets_list ${target_name})
@@ -254,9 +254,10 @@ function(_cs_target_try_to_finalize target_name)
   get_target_property(dep_targets ${target_name} _CSCMAKE_PENDING_DEPENDENCIES)
 
   set(pending_dep_targets "")
-  foreach(dep_target IN ITEMS "${dep_targets}")
-    _cs_target_is_fully_finalized(${dep_target} DEP_TARGET_FINALIZED)
-    if(DEP_TARGET_FINALIZED)
+  # unquoted: one iteration per pending dependency (quoted, the whole list was a single item)
+  foreach(dep_target IN ITEMS ${dep_targets})
+    _cs_target_is_fully_finalized(${dep_target} dep_target_finalized)
+    if(dep_target_finalized)
       # merge the two finalized list of target and dep target
       cs_get_build_configurations(configs_list)
       foreach(config ${configs_list})
@@ -407,7 +408,7 @@ function(_cs_add_existing_path_to_target_property path_value target_name target_
       _cs_add_to_target_property_unique_value(${target_name} ${target_property} ${path_value})
     else()
       cs_debug_message(
-        "[_csPopulatecsTargetDependencies] ${target_to_analyze} depends on ${path_value} but the file does not exists, skip"
+        "[_cs_add_existing_path_to_target_property] ${target_to_analyze} depends on ${path_value} but the file does not exists, skip"
       )
     endif()
   endif()

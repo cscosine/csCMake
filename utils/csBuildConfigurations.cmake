@@ -58,20 +58,21 @@ function(_cs_add_default_build_configuration config)
   if(NOT ${config} IN_LIST valid_default_configs)
     message(
       FATAL_ERROR
-        "[cs_set_default_build_config] called with invalid default config ${config}, choose one of ${valid_default_configs}"
+        "[cs_initialize_project] DEFAULT_CONFIG called with invalid default config ${config}, choose one of ${valid_default_configs}"
     )
   endif()
 
   if(NOT ${config} IN_LIST configs_list)
     list(APPEND configs_list ${config})
   else()
-    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${config}")
+    message(FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config}")
   endif()
 
   if(NOT ${config} IN_LIST configs_list_default)
     list(APPEND configs_list_default ${config})
   else()
-    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${config} in default list")
+    message(
+      FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config} in default list")
   endif()
 
   set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
@@ -89,7 +90,8 @@ function(_cs_add_default_build_configuration_mapped config base_config_and_fallb
       "${base_config_and_fallback}"
       CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_ucase}" FORCE)
   cs_debug_message(
-    "[_cs_copy_build_configuration] set CMAKE_MAP_IMPORTED_CONFIG_${config_ucase} = ${base_config_and_fallback}" True)
+    "[_cs_add_default_build_configuration_mapped] set CMAKE_MAP_IMPORTED_CONFIG_${config_ucase} = ${base_config_and_fallback}"
+    True)
 
 endfunction()
 
@@ -157,7 +159,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
 
   # If not set by caller, error
   if(NOT arg_CXX_STANDARD)
-    message(FATAL_ERROR "USE cs_initialize_project(CXX_STANDARD XX)")
+    message(FATAL_ERROR "[cs_initialize_project] CXX_STANDARD <standard> is required (e.g. CXX_STANDARD 17)")
   endif()
 
   # return cxx standard
@@ -167,7 +169,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
 
   # add default configurations
   foreach(default_config ${arg_DEFAULT_CONFIG})
-    cs_debug_message("adding default config ${default_config}")
+    cs_debug_message("[_cs_parse_additional_configurations] adding default config ${default_config}")
     _cs_add_default_build_configuration(${default_config})
   endforeach()
 
@@ -209,8 +211,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
     endif()
 
     cs_debug_message(
-      "[_cs_parse_additional_configurations] adding custom config ${custom_config} ${base_config} ${base_config_and_fallback}"
-    )
+      "[_cs_parse_additional_configurations] adding mapped config ${default_config_mapped} ${base_config_and_fallback}")
     _cs_add_default_build_configuration_mapped(${default_config_mapped} "${base_config_and_fallback}")
 
   endwhile()
@@ -305,7 +306,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
     else()
       message(
         FATAL_ERROR
-          "The value ${arg_STRICT_COMPILATION_ON_CONFIG} of ${strict_compilation_on_config} is not a valid configuration in list ${configs_list}"
+          "[cs_initialize_project] STRICT_COMPILATION_ON_CONFIG ${arg_STRICT_COMPILATION_ON_CONFIG} is not one of the configurations of the project: ${configs_list}"
       )
     endif()
   endif()

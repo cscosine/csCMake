@@ -32,8 +32,7 @@ function(_cs_add_target_to_project_targets target_name)
       else()
         message(
           FATAL_ERROR
-            "CSCMAKE_${config}_POSTFIX variable do not exists, have you properly added configurations via _cs_add_custom_build_configuration?"
-        )
+            "CSCMAKE_${config}_POSTFIX variable do not exists, call cs_initialize_project before adding targets")
       endif()
 
     endforeach()
@@ -45,7 +44,7 @@ function(_cs_add_target_to_project_targets target_name)
     else()
       message(
         FATAL_ERROR
-          "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, have you used properly cs_initialize_project?"
+          "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project before adding targets"
       )
     endif()
 

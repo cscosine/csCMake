@@ -337,7 +337,7 @@ Quality gates, driven by **pre-commit**:
 Run the tests and checks with:
 
 ```bash
-python -m pytest                    # fast tests
+python -m pytest                    # fast tests (incl. configure-only CMake tests in tests/cmake/)
 python -m pytest --run-all          # + CMake smoke builds for the variants of this machine
 python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
 python -m pytest --cov=cscmake
@@ -345,6 +345,10 @@ pre-commit run --all-files
 ```
 
 ### Smoke tests
+
+`tests/cmake/` holds configure-only CMake tests: pytest writes a small project
+using csCMake (`LANGUAGES NONE`, no compiler needed), configures it and checks
+the values it reports (target and global properties set by csCMake).
 
 `tests/smoke/` holds small projects that use csCMake exactly like real
 projects (through the presets, csCMake as a sibling folder): a chain of
