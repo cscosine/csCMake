@@ -47,6 +47,9 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
   `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).
 - CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
   an empty `#` line between paragraphs and bullet lists (`* item`, preceded by an empty `#` line).
+- Docs, code comments, README and test docstrings describe the current behaviour only (no "was", "no longer",
+  "not FORCE", "(was X)"). History goes in the PLAN.md CHANGELOG and commit messages; `MIGRATION.md` maps old → new as
+  tables and actions.
 - `*.cmake.in` templates: use `cscmake-cmake-template format|lint` (plain cmake-format cannot parse `@VAR@`).
 - The `no-unstaged-changes` pre-commit hook fails if anything is unstaged: stage before running hooks.
 - Hooks need the dev venv active (`generate-csv1-presets` and `import-linter` run tools installed in it).

@@ -26,8 +26,8 @@ function(cs_target_link_libraries target_name)
           if(aliased_linked_target)
             list(APPEND link_targets_list ${aliased_linked_target})
             cs_debug_message(
-              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a alias for project target ${aliased_linked_target}"
-            )
+              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a alias for project "
+              "target ${aliased_linked_target}")
           else()
             list(APPEND link_targets_list ${linked_target})
             cs_debug_message(
@@ -37,8 +37,8 @@ function(cs_target_link_libraries target_name)
       else()
         list(APPEND link_targets_list ${linked_target})
         cs_debug_message(
-          "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is not a target.\n Check your target creation order to remove this warning."
-        )
+          "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is not a target.\n Check "
+          "your target creation order to remove this warning.")
       endif()
     endif()
   endforeach()
@@ -46,8 +46,8 @@ function(cs_target_link_libraries target_name)
   # TODO(sc) if the target contains generator expression, we might need to skip it to avoid too many warning emitted
   # string(GENEX_STRIP "${FOO_POSSIBLY_RELATIVE_POSSIBLY_GENEX_PATH}" no_genex)
 
-  cs_debug_message("[cs_target_link_libraries] original  ${target_name} ${ARGN}" True)
-  cs_debug_message("[cs_target_link_libraries] converted ${target_name} ${link_targets_list}" True)
+  cs_debug_message("[cs_target_link_libraries] original  ${target_name} ${ARGN}")
+  cs_debug_message("[cs_target_link_libraries] converted ${target_name} ${link_targets_list}")
 
   target_link_libraries("${target_name}" ${link_targets_list})
 endfunction()

@@ -237,8 +237,8 @@ def check_installed_default_targets(workspace: Path, variant: str, project: Proj
 def lint_installed_config(workspace: Path, variant: str, project: Project) -> None:
     """cmake-lint the installed ``<project>Config.cmake`` with the repository configuration.
 
-    C0103 (naming) is not checked: the names in a package config are dictated by CMake
-    (``<Package>_FIND_COMPONENTS``, ...) and by the package/export names chosen by the user.
+    C0103 (naming) and C0301 (line length) are not checked: the names in a package config are dictated by CMake
+    (``<Package>_FIND_COMPONENTS``, ...) and by the package/component names chosen by the user.
 
     The file is written by CMake with the line endings of the build platform: they only have to be
     consistent (checked here), and an LF copy is linted, because cmakelang 0.6.13 cannot lint CRLF
@@ -247,7 +247,7 @@ def lint_installed_config(workspace: Path, variant: str, project: Project) -> No
     config_file = installed_config(workspace, variant, project)
     print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
     lint_config = json.loads((REPO_ROOT / ".cmake-format.json").read_text(encoding="utf-8"))
-    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).append("C0103")
+    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).extend(["C0103", "C0301"])
     with tempfile.TemporaryDirectory() as tmp:
         cfg = Path(tmp) / "cmake-format.json"
         cfg.write_text(json.dumps(lint_config), encoding="utf-8")

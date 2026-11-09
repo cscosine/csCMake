@@ -32,21 +32,21 @@ function(_cs_recursive_analyze_target target_name)
       get_target_property(aliased_target_to_analyze ${target_to_analyze} ALIASED_TARGET)
       if(aliased_target_to_analyze)
         cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} ALIAS ${aliased_target_to_analyze} TYPE ${target_to_analyze_type} IMPORTED ${target_to_analyze_imported}"
-        )
+          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} ALIAS "
+          "${aliased_target_to_analyze} TYPE ${target_to_analyze_type} IMPORTED ${target_to_analyze_imported}")
         set(target_to_analyze "${aliased_target_to_analyze}")
       else()
         cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} TYPE ${target_to_analyze_type} IMPORTED ${target_to_analyze_imported}"
-        )
+          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} TYPE ${target_to_analyze_type} "
+          "IMPORTED ${target_to_analyze_imported}")
       endif()
 
       # get all link libraries of the TARGET_TO_ANALYZE and add as recoursive dependecies to analyze
       set(target_to_analyze_linked_libs "")
       _cs_get_all_linked_libs(${target_to_analyze} target_to_analyze_linked_libs)
       cs_debug_message(
-        "[_cs_recursive_analyze_target] ${target_to_analyze} has the following dependencies to be further analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${target_to_analyze_linked_libs}"
-      )
+        "[_cs_recursive_analyze_target] ${target_to_analyze} has the following dependencies to be further "
+        "analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${target_to_analyze_linked_libs}")
       # add to continue the analysis loop
       _cs_list_add_list_unique_values(targets_to_analyze_list "${target_to_analyze_linked_libs}")
 
@@ -55,13 +55,13 @@ function(_cs_recursive_analyze_target target_name)
         # dependencies
         if(NOT ${target_to_analyze} STREQUAL ${target_name})
           cs_debug_message(
-            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported (i.e., is defined in this project), add it to the list of non resolved recursive dependencies"
-          )
+            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported (i.e., is defined in this "
+            "project), add it to the list of non resolved recursive dependencies")
           _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_PROJECT_TARGETS ${target_to_analyze})
         else()
           cs_debug_message(
-            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported, but is the base target to analyze, do not add it recursively"
-          )
+            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported, but is the base target to "
+            "analyze, do not add it recursively")
         endif()
       else()
         # if the target is a shared, interface or module library, add its paths
@@ -78,13 +78,13 @@ function(_cs_recursive_analyze_target target_name)
     else()
       if(NOT ${target_to_analyze} STREQUAL ${target_name})
         cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, add it to the list of non resolved recursive dependencies"
-        )
+          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, add it to the "
+          "list of non resolved recursive dependencies")
         _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_NON_TARGETS ${target_to_analyze})
       else()
         cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, but is the base target to analyze, do not add it recursively"
-        )
+          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, but is the "
+          "base target to analyze, do not add it recursively")
       endif()
     endif()
 
@@ -100,21 +100,18 @@ function(_cs_recursive_analyze_target target_name)
     string(TOUPPER "${config}" config_ucase)
 
     _cs_get_target_direct_runtime_libraries(${target_name} ${config} target_to_analyze_dependencies)
-    cs_debug_message(
-      "[_cs_recursive_analyze_target] ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase}: ${target_to_analyze_dependencies}"
-    )
+    cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase}: "
+                     "${target_to_analyze_dependencies}")
 
   endforeach()
 
   _cs_get_target_linked_project_targets(${target_name} target_to_analyze_dependencies_not_imported_targets)
-  cs_debug_message(
-    "[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: ${target_to_analyze_dependencies_not_imported_targets}"
-  )
+  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: "
+                   "${target_to_analyze_dependencies_not_imported_targets}")
 
   _cs_get_target_linked_non_targets(${target_name} target_to_analyze_dependencies_non_targets)
-  cs_debug_message(
-    "[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_NON_TARGETS: ${target_to_analyze_dependencies_non_targets}"
-  )
+  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_NON_TARGETS: "
+                   "${target_to_analyze_dependencies_non_targets}")
 
   cs_debug_message("[_cs_recursive_analyze_target] ${target_name} end")
 
@@ -240,8 +237,8 @@ function(_cs_recursive_analyze_targets_finalize targets_list)
       string(TOUPPER "${config}" config_ucase)
       cs_get_target_runtime_libraries(${target_name} ${config} target_to_analyze_dependencies)
       cs_debug_message(
-        "[_cs_recursive_analyze_targets_finalize] ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase} : ${target_to_analyze_dependencies}"
-      )
+        "[_cs_recursive_analyze_targets_finalize] ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase} : "
+        "${target_to_analyze_dependencies}")
     endforeach()
   endforeach()
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] end")
@@ -254,7 +251,7 @@ function(_cs_target_try_to_finalize target_name)
   get_target_property(dep_targets ${target_name} _CSCMAKE_PENDING_DEPENDENCIES)
 
   set(pending_dep_targets "")
-  # unquoted: one iteration per pending dependency (quoted, the whole list was a single item)
+  # ${dep_targets} unquoted: one iteration per pending dependency
   foreach(dep_target IN ITEMS ${dep_targets})
     _cs_target_is_fully_finalized(${dep_target} dep_target_finalized)
     if(dep_target_finalized)
@@ -389,8 +386,9 @@ function(_cs_add_imported_target_locations target_name target_to_analyze)
     if(imported_location AND NOT imported_location_${config_ucase})
       # if imported location and not specific config, use it
       cs_debug_message(
-        "[_cs_add_imported_target_locations] target ${target_to_analyze} has IMPORTED_LOCATION=${imported_location} but no IMPORTED_LOCATION_${config_ucase}, use IMPORTED_LOCATION for it"
-      )
+        "[_cs_add_imported_target_locations] target ${target_to_analyze} has "
+        "IMPORTED_LOCATION=${imported_location} but no IMPORTED_LOCATION_${config_ucase}, use IMPORTED_LOCATION "
+        "for it")
       set(imported_location_${config_ucase} "${imported_location}")
       _cs_add_existing_path_to_target_property(${imported_location_${config_ucase}} ${target_name}
                                                CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase} ${target_to_analyze})
@@ -407,9 +405,9 @@ function(_cs_add_existing_path_to_target_property path_value target_name target_
     if(EXISTS ${path_value})
       _cs_add_to_target_property_unique_value(${target_name} ${target_property} ${path_value})
     else()
-      cs_debug_message(
-        "[_cs_add_existing_path_to_target_property] ${target_to_analyze} depends on ${path_value} but the file does not exists, skip"
-      )
+      # not silent: the runtime dependencies (Visual Studio debugger PATH) would miss it
+      message(WARNING "[csCMake] ${target_name} depends on the imported target ${target_to_analyze}, whose file "
+                      "${path_value} does not exist: not added to its runtime libraries")
     endif()
   endif()
 endfunction()

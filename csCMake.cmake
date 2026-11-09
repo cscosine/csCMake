@@ -1,5 +1,13 @@
-cmake_minimum_required(VERSION 3.31.5)
 include_guard(GLOBAL)
+
+# csCMake needs CMake 3.31 (the csv1 presets use schema version 10); the including project declares its own
+# cmake_minimum_required. csCMake's functions and macros run with the 3.31 policies: they record the policy settings in
+# effect where they are defined (cmake_policy PUSH / VERSION / POP around the whole file).
+if(CMAKE_VERSION VERSION_LESS 3.31)
+  message(FATAL_ERROR "csCMake requires CMake 3.31 or newer (found ${CMAKE_VERSION})")
+endif()
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.31)
 
 include(utils/csPrintInitialState)
 include(utils/csPathUtils)
@@ -23,9 +31,8 @@ function(_cs_set_root_dir path)
   if(val)
     if(NOT val STREQUAL ${path})
       message(
-        FATAL_ERROR
-          "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your configuration."
-      )
+        FATAL_ERROR "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "
+                    "configuration.")
     endif()
   endif()
   set_property(GLOBAL PROPERTY CSCMAKE_ROOT_DIR ${path})
@@ -46,7 +53,24 @@ endfunction()
 # POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX "" [STRICT_COMPILATION_ON_CONFIG ConfigName] )
 # note, make sure to use POSTFIX "" if no postfix
 macro(cs_initialize_project)
+  # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
+  # temporaries are _cs_init_* and are unset at the end.
+
+  # debug messages of csCMake for this project: -D<project>_CSCMAKE_DEBUG=ON
+  option(${PROJECT_NAME}_CSCMAKE_DEBUG "csCMake: print the csCMake debug messages of ${PROJECT_NAME}" OFF)
+  set(_cscmake_debug_option ${PROJECT_NAME}_CSCMAKE_DEBUG)
   cs_debug_message("cs_initialize_project ${ARGN}")
+
+  if(NOT PROJECT_VERSION)
+    message(
+      FATAL_ERROR
+        "[cs_initialize_project] project(${PROJECT_NAME} VERSION <x.y.z> ...) is required: the version of the "
+        "installed package (<namespace>ConfigVersion.cmake)")
+  endif()
+
+  # the folder of the project: base of the relative install paths of the headers
+  set(CSCMAKE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
   # normalize paths
   _cs_path_list_normalize(CSCMAKE_PREFIX_PATH_HEAD)
   _cs_path_list_normalize(CMAKE_PREFIX_PATH)
@@ -58,43 +82,35 @@ macro(cs_initialize_project)
 
   _cs_path_list_normalize(CMAKE_INSTALL_PREFIX)
 
-  # define a single output folder for binaries (dll and exe in win, .so and executables in linux) note: for some reason,
-  # this does not work / does not get propagated to custom config, therefore, _cs_parse_additional_configurations will
-  # set CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UCASE} for each custom config TODO(sc) try to understand better this
-  # behavior, at the moment this is a workaround
-  get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if(generator_is_multi_config)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/bin/$<CONFIG>"
-        CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
-        CACHE STRING "LIBRARY OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
-        CACHE STRING "ARCHIVE OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+  # a single output folder for binaries (dll and exe in win, .so and executables in linux), kept if set by the user; the
+  # custom configurations get their own per-configuration folders in _cs_parse_additional_configurations
+  get_property(_cs_init_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(_cs_init_multi_config)
+    set(_cs_init_config_subfolder "/$<CONFIG>")
   else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/bin"
-        CACHE STRING "RUNTIME OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/lib"
-        CACHE STRING "LIBRARY OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-        "${CMAKE_BINARY_DIR}/lib"
-        CACHE STRING "ARCHIVE OUTPUT DIRECTORY for targets, with generator expressions" FORCE)
+    set(_cs_init_config_subfolder "")
+  endif()
+  if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin${_cs_init_config_subfolder}")
+  endif()
+  if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib${_cs_init_config_subfolder}")
+  endif()
+  if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib${_cs_init_config_subfolder}")
   endif()
 
   # initialize the default configuration list variables
   _cs_process_build_configurations_variables()
-  _cs_get_per_config_variables(temp_var_list)
-  cs_debug_message("[cs_initialize_project] _cs_process_build_configurations_variables ${temp_var_list}")
 
-  # parse the additional configurations
-  _cs_parse_additional_configurations(required_cxx_standard ${ARGN})
+  # parse the arguments: namespace (CSCMAKE_NAMESPACE), C++ standard, configurations
+  _cs_parse_additional_configurations(_cs_init_cxx_standard ${ARGN})
+
+  # the variables derived from the configurations (postfixes, imported config mapping, output folders, MSVC runtime)
+  _cs_apply_project_scope_variables()
 
   # set cmake standard
-  set(CMAKE_CXX_STANDARD ${required_cxx_standard})
+  set(CMAKE_CXX_STANDARD ${_cs_init_cxx_standard})
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -118,6 +134,10 @@ macro(cs_initialize_project)
   endif()
 
   _cs_add_default_targets()
+
+  unset(_cs_init_multi_config)
+  unset(_cs_init_config_subfolder)
+  unset(_cs_init_cxx_standard)
 endmacro()
 
 # Return in output_variable_name the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed
@@ -136,10 +156,8 @@ endfunction()
 # components in the namespace given to cs_initialize_project (<namespace>Config.cmake).
 function(cs_finalize_project)
   if(ARGN)
-    message(
-      FATAL_ERROR
-        "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
-    )
+    message(FATAL_ERROR "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
+                        "cs_initialize_project(NAMESPACE ...), see MIGRATION.md")
   endif()
   cs_get_namespace(export_namespace)
 
@@ -164,3 +182,5 @@ function(cs_finalize_project)
   _cs_finalize_install(${export_namespace})
 
 endfunction()
+
+cmake_policy(POP)

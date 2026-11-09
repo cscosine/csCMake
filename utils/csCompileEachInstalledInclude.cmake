@@ -9,7 +9,7 @@ function(cs_target_check_installed_headers target_name link_target)
   cs_get_generated_dir(generated_folder)
 
   # get the relative folder from the target folder to the base of the project
-  file(RELATIVE_PATH destination_folder ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+  file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
   # cleanup target name if aliased
   get_target_property(aliased_target_to_analyze ${target_name} ALIASED_TARGET)

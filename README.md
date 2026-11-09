@@ -62,7 +62,7 @@ tests/                              # pytest suite
 
 ## Requirements
 
-- **CMake ≥ 3.31.5** (`cmake_minimum_required(VERSION 3.31.5)`)
+- **CMake ≥ 3.31** (checked when `csCMake.cmake` is included; the csv1 presets use schema version 10)
 - **Python ≥ 3.11** — only needed for the preset generator and development tooling
 - A C++ toolchain for the target platform:
   - Linux: GCC or Clang
@@ -76,7 +76,7 @@ tests/                              # pytest suite
 The top-level `CMakeLists.txt` is reduced to the essential steps:
 
 ```cmake
-cmake_minimum_required(VERSION 3.31.5)
+cmake_minimum_required(VERSION 3.31)
 project(myApp VERSION 1.0.0 LANGUAGES CXX)
 
 # make the csCMake directory visible to include()
@@ -167,7 +167,7 @@ Details:
 - The exact `CMAKE_MAP_IMPORTED_CONFIG_*` mapping is generated for imported
   dependencies.
 - The MSVC runtime library is selected per configuration
-  (`CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` cache variables) and propagated to
+  (`CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` cache variables, overridable with `-D`) and propagated to
   every target as a generator expression.
 - Output is kept in a single predictable layout:
   - multi-config generators: `<build>/bin/<CONFIG>`, `<build>/lib/<CONFIG>`

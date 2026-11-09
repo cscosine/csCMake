@@ -42,12 +42,12 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] `cmake-lint` enabled on `csCMake.cmake` + `utils/*.cmake` and on templates (see 2026-11-09 CMake format/lint entry).
 
 ### CMake code assessment (`csCMake.cmake` + `utils/*.cmake`)
-- [ ] `cmake_minimum_required(VERSION 3.31.5)` inside `csCMake.cmake` (non-standard in an included file; 3.31.5 is very new) → remove, add version guard.
+- [x] (3b step 2) `cmake_minimum_required(VERSION 3.31.5)` inside `csCMake.cmake` (non-standard in an included file; 3.31.5 is very new) → remove, add version guard.
 - [x] ~~`cs_target_link_libraries` mishandles scope keywords when not first in `ARGN`~~ → not an issue: keywords are kept in place, the result equals `target_link_libraries` (`tests/cmake/test_target_link_libraries.py`, 3b step 1).
-- [ ] `cs_target_sources` uses `CMAKE_SOURCE_DIR` for relative path → use `CMAKE_CURRENT_SOURCE_DIR`.
+- [x] (3b step 2) `cs_target_sources` uses `CMAKE_SOURCE_DIR` for relative path → use `CMAKE_CURRENT_SOURCE_DIR`.
 - [ ] MSVC runtime hardcoded to `MultiThreaded*DLL` → add static-runtime option.
 - [x] (3b step 1) Error messages reference functions that do not exist / undefined variables → fixed.
-- [ ] Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
+- [x] (3b step 2) Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
 - [ ] `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
 - [x] `templates/csTemplateConfig.cmake.in` breaks cmake-format (`@...@` substitution) → formatted/linted via `cscmake-cmake-template` (placeholder stand-ins).
 - [ ] Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
@@ -55,7 +55,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 1) `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
 - [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
 - [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
-- [ ] 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
+- [x] (3b step 2) 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
 - [ ] Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
 - [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
 - [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
@@ -226,6 +226,12 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups.
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
+
+### Run scripts (future)
+- [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
+  `cs_finalize_project`, `file(GENERATE)` `<build>/run/<target>-$<CONFIG>.bat` / `.sh` from the target property
+  `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>` (folders of the DLLs, as for the Visual Studio debugger environment); maybe also
+  VS Code launch environments. No cache variable needed (derived per configure).
 
 ### Project template with copier (future)
 - [ ] Consumer project scaffolding with copier (`copier copy` / `copier update`): `CMakePresets.json`,
@@ -446,3 +452,25 @@ variables, properties, preset environment variables, default targets) guides the
   scope), no duplicate sanitizing; unused argument of `_cs_sort_component_dependencies` removed; PDB files installed to
   `${CMAKE_INSTALL_BINDIR}` (was `bin`). Three upper-case locals missed by the step-4 renamer lowercased.
 - Checked, not a bug: `cs_target_link_libraries` scope keywords (test).
+
+### 2026-11-10 (Phase 3b step 2 — behaviour)
+- `csCMake.cmake`: no `cmake_minimum_required` (it reset the including project's policies); `CMAKE_VERSION` ≥ 3.31
+  check, csCMake code inside `cmake_policy(PUSH)` / `VERSION 3.31` / `POP` (functions record the policies where they
+  are defined). README: CMake ≥ 3.31.
+- `cs_initialize_project`: error without `project(... VERSION ...)`; temporaries `_cs_init_*` unset (no leak);
+  `CSCMAKE_SOURCE_DIR` (directory variable) = base of the relative header install paths (was `CMAKE_SOURCE_DIR`, wrong
+  for a csCMake project added with `add_subdirectory`); debug option `<project>_CSCMAKE_DEBUG` defined here.
+- Cache policy: csCMake defaults are cache variables without `FORCE` (overridable with `-D`); values derived from the
+  arguments are project-scope normal variables, set at any depth with `_cs_set_in_project_scope` and applied by the
+  macro (`_cs_apply_project_scope_variables`); output folders kept if set; `CMAKE_CONFIGURATION_TYPES` stays `FORCE`.
+- Messages: `cs_debug_message(<text>...)` concatenates its arguments (no "force" argument), nothing printed by default
+  (44 csCMake lines per smoke configure before, 0 now); missing imported library file → `WARNING`; long strings split,
+  lint `C0301` enabled (skipped only for the installed Config, which contains user-chosen names); the injected Config
+  code built with `string(APPEND)` (generated text unchanged).
+- Tests (`tests/cmake/test_initialize_project.py`, 8, each fails before): missing `VERSION`, no leaked variables, derived
+  values not in the cache, `-D` overrides, debug option, missing imported file warning, header install path of a csCMake
+  subproject. Generated Configs of the smoke chain: only the two shortened template messages differ.
+- `MIGRATION.md`: behaviour tables and actions. PLAN: run scripts (future).
+- Docs rule (user, 2026-11-10): comments, README, docstrings and docs describe the current behaviour only; history in
+  this changelog and in commit messages, `MIGRATION.md` as old → new tables and actions (CLAUDE.md rule). Comments,
+  one error message, a test docstring and the MIGRATION namespace/behaviour sections rewritten accordingly.

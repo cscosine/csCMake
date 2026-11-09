@@ -22,7 +22,7 @@ function(cs_target_sources target_name)
   cmake_parse_arguments(arg "" "" "${keywords}" ${ARGN})
 
   # retrieve the relative install path
-  file(RELATIVE_PATH destination_folder ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_LIST_DIR})
+  file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
   cs_debug_message("[cs_target_sources] relative install path is ${destination_folder}")
 
   # get the different groups

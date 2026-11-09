@@ -44,17 +44,14 @@ endmacro()
 foreach(component ${@export_namespace@_FIND_COMPONENTS})
 
   if(NOT ${component} IN_LIST @export_namespace@_COMPONENTS_LIST)
-    message(
-      FATAL_ERROR
-        "[@export_namespace@Config] Required components ${component} is not present in component list, available components are ${@export_namespace@_COMPONENTS_LIST}"
-    )
+    message(FATAL_ERROR "[@export_namespace@Config] Required components ${component} is not present in component list, "
+                        "available components are ${@export_namespace@_COMPONENTS_LIST}")
   endif()
 
   if(${component}_DEPENDENT_EXPORTS)
     # dependent component, add its dependencies and add it at the end
     @export_namespace_sanitized@_debug_message(
-      "[@export_namespace@Config] Required components ${component} depends on ${${component}_DEPENDENT_EXPORTS}, import them too"
-    )
+      "[@export_namespace@Config] component ${component} depends on ${${component}_DEPENDENT_EXPORTS}")
     set(_dependent_component_list ${${component}_DEPENDENT_EXPORTS})
     foreach(dependent_component ${_dependent_component_list})
       @export_namespace_sanitized@_find_dependency_for_component(${dependent_component})

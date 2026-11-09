@@ -16,9 +16,8 @@ function(_cs_set_vs_debugger_env_variable targets_list)
       cs_get_target_runtime_libraries(${target_name} ${config} target_${config_ucase}_dlls)
       _cs_unique_parent_dirs(target_${config_ucase}_folders ${target_${config_ucase}_dlls})
 
-      cs_debug_message(
-        "[_cs_set_vs_debugger_env_variable] target: ${target_name} PATH ${config_ucase} ${target_${config_ucase}_folders}"
-      )
+      cs_debug_message("[_cs_set_vs_debugger_env_variable] target: ${target_name} PATH ${config_ucase} "
+                       "${target_${config_ucase}_folders}")
 
       set(target_${config_ucase}_folders_path "PATH=${target_${config_ucase}_folders}\n")
 

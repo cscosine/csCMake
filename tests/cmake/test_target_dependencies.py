@@ -35,7 +35,7 @@ cstest_report(app "${libs}")
 @pytest.mark.parametrize("app_first", [False, True], ids=["deps-first", "app-first"])
 def test_runtime_libraries_of_every_dependency(tmp_path: Path, app_first: bool) -> None:
     """app gets the shared libraries of both its dependencies, also when it is finalized before they exist
-    (resolved by cs_finalize_project; a quoted foreach dropped all but the first pending dependency)."""
+    (resolved by cs_finalize_project, one pending dependency at a time)."""
     body = "cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)\n"
     body += APP + IMPORTED if app_first else IMPORTED + APP
     result = configure(tmp_path, body + REPORT, {"libA.so": "", "libB.so": ""})

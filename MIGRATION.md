@@ -5,8 +5,6 @@ There are **no deprecated aliases**: the old names are removed, a project using 
 `Unknown CMake command "<old name>"`. Apply the tables below (plain search and replace: CMake command names are
 case-insensitive, look for every spelling).
 
-This file grows with every change of the release; the sections not yet filled are still to come.
-
 ## Functions
 
 Functions acting on a target are named `cs_target_*` (like CMake's `target_*`); every other public function is
@@ -51,7 +49,7 @@ Getters and debug printers of the csCMake state. An install export is called a *
 
 Not part of the API any more: do not call them (they may change without notice). If you need one, open an issue.
 
-| Old | Internal name now |
+| Old | Internal name |
 |---|---|
 | `cs_set_base_path` | `_cs_set_root_dir` |
 | `cs_get_base_path` | `_cs_get_root_dir` |
@@ -123,38 +121,76 @@ directly (`get_property` / `get_target_property`); otherwise use the getter func
 
 ## Namespace and default targets
 
-### The namespace is given to `cs_initialize_project`
+### Namespace
 
-The namespace (prefix of the installed targets `<namespace>::<target>`, name of the package `find_package(<namespace>)`)
-was the argument of `cs_finalize_project`; it is now the `NAMESPACE` argument of `cs_initialize_project`, which no
-longer takes the project name (it was only used in a debug message). `cs_finalize_project` takes no argument.
+| Old | New |
+|---|---|
+| `cs_initialize_project(<project> CXX_STANDARD ...)` | `cs_initialize_project(NAMESPACE <namespace> CXX_STANDARD ...)` |
+| `cs_finalize_project(<namespace>)` | `cs_finalize_project()` |
 
 ```cmake
-# before
-cs_initialize_project(myAppSol CXX_STANDARD 17 ...)
-cs_finalize_project(myApp)
-
-# after
 cs_initialize_project(NAMESPACE myApp CXX_STANDARD 17 ...)
+...
 cs_finalize_project()
 ```
 
-An old call fails at configure time with a message pointing here. `cs_get_namespace(<out-var>)` returns the namespace (also in the read-only variable `CSCMAKE_NAMESPACE`, set in the
-directory of `cs_initialize_project` and its subdirectories).
+The namespace is the prefix of the installed targets (`<namespace>::<target>`) and the package name
+(`find_package(<namespace>)`). `cs_get_namespace(<out-var>)` returns it; it is also the read-only variable
+`CSCMAKE_NAMESPACE` of the directory of `cs_initialize_project` and its subdirectories. A call with the old arguments
+fails at configure time with a message pointing here.
 
 ### Default targets
 
-The targets created by `cs_initialize_project` now have the **same name in the build tree and once installed**,
-`<namespace>::cscmake_*` (before: `<project>::<project>_csCMake*` in the build tree, `<namespace>::<project>_csCMake*`
-installed):
+The default targets have the same name in the build tree and once installed:
 
-| Old (build tree) | Old (installed) | New (both) |
+| Old (build tree) | Old (installed) | New |
 |---|---|---|
 | `<project>::<project>_csCMakeBaseInclude` | `<namespace>::<project>_csCMakeBaseInclude` | `<namespace>::cscmake_base_include` |
 | `<project>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::cscmake_compile_options` |
 | `<project>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::cscmake_compile_options_strict` |
 | `<project>::<project>MSVCParallelCompile` | `<namespace>::<project>MSVCParallelCompile` | `<namespace>::cscmake_msvc_parallel_compile` |
 | `<project>::<project>StrictCompilation` | `<namespace>::<project>StrictCompilation` | `<namespace>::cscmake_strict_warnings` |
+| component `<project>_csCMakeCommon` | | component `<namespace>_cscmake_common` |
 
-`<project>` is the name of the top `project()`. Their component is renamed from `<project>_csCMakeCommon` to
-`<namespace>_cscmake_common`.
+`<project>` is the name of the top `project()`.
+
+## Behaviour
+
+### Requirements
+
+| Requirement | Action |
+|---|---|
+| CMake 3.31 or newer (checked by `csCMake.cmake`) | `cmake_minimum_required(VERSION 3.31)` in your top `CMakeLists.txt` (csCMake does not set it) |
+| `project(<name> VERSION <x.y.z> ...)` (the version of the installed package) | add a `VERSION` if missing |
+
+### Cache variables and project variables
+
+Overridable with `-D<variable>=<value>` (cache variables):
+
+| Variable | Default |
+|---|---|
+| `CSCMAKE_DEBUG_POSTFIX`, `CSCMAKE_RELEASE_POSTFIX`, `CSCMAKE_RELWITHDEBINFO_POSTFIX` | `d`, none, `rd` |
+| `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` | `MultiThreadedDebugDLL` (Debug), `MultiThreadedDLL` |
+| per-configuration variables of a custom configuration (`CMAKE_CXX_FLAGS_<CUSTOM>`, ...) | copied from the configuration it is based on |
+| `CMAKE_{RUNTIME,LIBRARY,ARCHIVE}_OUTPUT_DIRECTORY` (+ `_<CUSTOM>`) | `<build>/bin`, `<build>/lib` (`/<config>` with multi-config generators) |
+
+Normal variables of the project scope, set by `cs_initialize_project` from its arguments: `CSCMAKE_<CUSTOM>_POSTFIX`
+(`POSTFIX`), `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>`, `CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION`,
+`CMAKE_MSVC_RUNTIME_LIBRARY`. `CMAKE_CONFIGURATION_TYPES` is set by csCMake.
+
+Action: configure in a fresh build folder (the cache of an existing one keeps entries of the previous version).
+
+### Debug messages
+
+| Old | New |
+|---|---|
+| `-D<top-level project>_CS_CMAKE_DEBUG=ON` | `-D<project>_CSCMAKE_DEBUG=ON`, `<project>` = the `project()` calling `cs_initialize_project` |
+| `cs_debug_message("<text>" True)` | `message(STATUS "<text>")` for text that must always be printed |
+| `cs_debug_message("<text>")` | unchanged; `cs_debug_message(<text>...)` concatenates its arguments like `message()` |
+
+csCMake prints debug messages only with the option on. An imported library whose file does not exist is a warning.
+
+### Installed headers
+
+Headers keep their path relative to the folder of `cs_initialize_project`. Nothing to change for a project built on
+its own; a csCMake project added with `add_subdirectory` installs its headers relative to its own folder.

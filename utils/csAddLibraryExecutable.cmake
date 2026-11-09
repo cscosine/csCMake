@@ -44,8 +44,8 @@ function(_cs_add_target_to_project_targets target_name)
     else()
       message(
         FATAL_ERROR
-          "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project before adding targets"
-      )
+          "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project "
+          "before adding targets")
     endif()
 
     _cs_add_to_global_property_unique_value(CSCMAKE_PROJECT_TARGETS ${target_name})

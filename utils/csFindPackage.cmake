@@ -53,7 +53,7 @@ function(_cs_add_find_package_args_to_target target_name propagate_mode)
   else()
     message(
       FATAL_ERROR
-        "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with PROPAGATE_MODE=${propagate_mode})"
-    )
+        "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with "
+        "PROPAGATE_MODE=${propagate_mode})")
   endif()
 endfunction()

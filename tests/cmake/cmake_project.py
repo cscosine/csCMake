@@ -40,8 +40,12 @@ class Configured:
         return value.split(";") if value else []
 
 
-def configure(project_dir: Path, body: str, files: dict[str, str] | None = None) -> Configured:
-    """Write ``HEADER + body`` as ``project_dir/CMakeLists.txt`` (plus ``files``), configure it with Ninja/Debug."""
+def configure(
+    project_dir: Path, body: str, files: dict[str, str] | None = None, args: list[str] | None = None
+) -> Configured:
+    """Write ``HEADER + body`` as ``project_dir/CMakeLists.txt`` (plus ``files``), configure it with Ninja/Debug.
+
+    ``args`` are extra ``cmake`` arguments (e.g. ``-D<var>=<value>``)."""
     project_dir.mkdir(parents=True, exist_ok=True)
     (project_dir / "CMakeLists.txt").write_text(HEADER + body, encoding="utf-8")
     for name, content in (files or {}).items():
@@ -59,6 +63,7 @@ def configure(project_dir: Path, body: str, files: dict[str, str] | None = None)
             "Ninja",
             "-DCMAKE_BUILD_TYPE=Debug",
             f"-DCMAKE_MODULE_PATH={REPO_ROOT.as_posix()}",
+            *(args or []),
         ],
         capture_output=True,
         text=True,

@@ -1,16 +1,18 @@
 include_guard(GLOBAL)
 
-# option to print out messages as "STATUS" from this module
-option(${CMAKE_PROJECT_NAME}_CSCMAKE_DEBUG "activate the debug of csCMake for the current project" OFF)
-
-# print message msg if ${CMAKE_PROJECT_NAME}_CSCMAKE_DEBUG is ON, or if a additional parameter at end is true
-function(cs_debug_message msg)
-  set(forced False)
-  if(ARGC EQUAL 2)
-    set(forced ${ARGV1})
+# Print the arguments, concatenated like message() does, as a STATUS message when the csCMake debug messages of the
+# current project are enabled (option <project>_CSCMAKE_DEBUG, defined by cs_initialize_project). Arguments are kept as
+# they are, also when they contain ";".
+function(cs_debug_message)
+  if(NOT _cscmake_debug_option OR NOT ${_cscmake_debug_option})
+    return()
   endif()
-
-  if(${forced} OR ${CMAKE_PROJECT_NAME}_CSCMAKE_DEBUG)
-    message(STATUS "${msg}")
-  endif()
+  # ARGV<n> one by one: ARGN would split the arguments containing ";"
+  set(text "")
+  set(index 0)
+  while(index LESS ARGC)
+    string(APPEND text "${ARGV${index}}")
+    math(EXPR index "${index} + 1")
+  endwhile()
+  message(STATUS "${text}")
 endfunction()

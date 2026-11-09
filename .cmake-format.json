@@ -4,7 +4,6 @@
   },
   "lint": {
     "disabled_codes": [
-      "C0301",
       "C0307"
     ],
     "function_pattern": "[0-9a-z_]+$",

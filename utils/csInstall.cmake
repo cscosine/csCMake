@@ -40,7 +40,7 @@ function(cs_install_target target_name export_name)
   set_target_properties(${target_name} PROPERTIES CSCMAKE_COMPONENT ${export_name})
 
   # get the relative folder from the target folder to the base of the project
-  file(RELATIVE_PATH destination_folder ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+  file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
   # add the EXPORT_NAME to the list of exports
   _cs_add_to_global_property_unique_value(CSCMAKE_COMPONENTS ${export_name})
@@ -72,7 +72,7 @@ function(cs_install_target target_name export_name)
     set(dest_path ${install_folder_expression}/${destination_folder}/${file_dir})
 
     install(FILES ${source_path} DESTINATION ${dest_path})
-    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}" true)
+    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}")
   endforeach()
 
   # retrieve the source files that have to be installed from a absolute path
@@ -81,7 +81,7 @@ function(cs_install_target target_name export_name)
     set(source_path ${file})
     set(dest_path ${install_folder_expression}/${destination_folder}/)
     install(FILES ${source_path} DESTINATION ${dest_path})
-    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}" true)
+    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}")
   endforeach()
 
   # install effectively the target
@@ -203,8 +203,8 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
   cs_get_component_dependencies(${export_name} next_elements_list)
   foreach(next_element ${next_elements_list})
     cs_debug_message(
-      "[_cs_check_component_cycles_recursive] -- for export ${export_name} call recursive on ${next_element} with visited list = ${visited_list}"
-    )
+      "[_cs_check_component_cycles_recursive] -- for export ${export_name} call recursive on ${next_element} "
+      "with visited list = ${visited_list}")
     _cs_check_component_cycles_recursive(${next_element} "${visited_list}")
   endforeach()
 
@@ -229,9 +229,8 @@ function(_cs_sort_component_dependencies export_name)
   set(dependent_exports_list ${dependent_exports_unsorted})
   list(LENGTH dependent_exports_list dependent_exports_list_size)
 
-  cs_debug_message(
-    "[_cs_sort_component_dependencies] -- initial list has ${dependent_exports_list_size} elements: ${dependent_exports_list}"
-  )
+  cs_debug_message("[_cs_sort_component_dependencies] -- initial list has ${dependent_exports_list_size} elements: "
+                   "${dependent_exports_list}")
 
   set(dependent_exports_sorted "")
   # loop
@@ -243,9 +242,8 @@ function(_cs_sort_component_dependencies export_name)
 
     # get the dependencies of the current element
     cs_get_component_dependencies(${current_element} current_element_dependent_exports)
-    cs_debug_message(
-      "[_cs_sort_component_dependencies] ---- analyze ${current_element}, it depends on: ${current_element_dependent_exports}"
-    )
+    cs_debug_message("[_cs_sort_component_dependencies] ---- analyze ${current_element}, it depends on: "
+                     "${current_element_dependent_exports}")
 
     # clean up and keep only the one not yet satisfied
     set(current_element_dependent_exports_clean "")
@@ -257,14 +255,15 @@ function(_cs_sort_component_dependencies export_name)
 
     list(LENGTH current_element_dependent_exports_clean current_element_dependent_exports_clean_size)
     cs_debug_message(
-      "[_cs_sort_component_dependencies] ---- analyze ${current_element}, cleaned up list of unsatisfied dependency has ${current_element_dependent_exports_clean_size} elements: ${current_element_dependent_exports_clean}"
-    )
+      "[_cs_sort_component_dependencies] ---- analyze ${current_element}, cleaned up list of unsatisfied "
+      "dependency has ${current_element_dependent_exports_clean_size} elements: "
+      "${current_element_dependent_exports_clean}")
 
     # finally add the element itself if is a leaf, or recursive add its dependencies and itself later
     if(current_element_dependent_exports_clean_size EQUAL 0)
       cs_debug_message(
-        "[_cs_sort_component_dependencies] ------ add ${current_element} to sorted list, is a leaf (no other dependencies)"
-      )
+        "[_cs_sort_component_dependencies] ------ add ${current_element} to sorted list, is a leaf (no other "
+        "dependencies)")
       _cs_list_add_unique_value(dependent_exports_sorted ${current_element})
     else()
       foreach(temp_element ${current_element_dependent_exports_clean})
@@ -273,8 +272,8 @@ function(_cs_sort_component_dependencies export_name)
         _cs_list_add_unique_value(dependent_exports_list ${temp_element})
       endforeach()
       cs_debug_message(
-        "[_cs_sort_component_dependencies] ------ add the original ${current_element} to the elements to be re-evaluated"
-      )
+        "[_cs_sort_component_dependencies] ------ add the original ${current_element} to the elements to be "
+        "re-evaluated")
       _cs_list_add_unique_value(dependent_exports_list ${current_element})
     endif()
 
@@ -323,17 +322,15 @@ function(_cs_finalize_install export_namespace)
   foreach(export_name ${exports})
     _cs_sort_component_dependencies(${export_name})
     cs_get_component_dependencies_sorted(${export_name} ${export_name}_DEPENDENT_EXPORTS_SORTED)
-    cs_debug_message(
-      "[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (sorted) ${${export_name}_DEPENDENT_EXPORTS_SORTED}"
-    )
+    cs_debug_message("[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (sorted) "
+                     "${${export_name}_DEPENDENT_EXPORTS_SORTED}")
   endforeach()
 
   # write all ${${EXPORT_NAME}_DEPENDENT_EXPORTS} in the cmake config
   set(injected_export_dependencies "")
   foreach(export_name ${exports})
-    set(injected_export_dependencies
-        "${injected_export_dependencies}set(${export_name}_DEPENDENT_EXPORTS \"${${export_name}_DEPENDENT_EXPORTS_SORTED}\")\n"
-    )
+    string(APPEND injected_export_dependencies "set(${export_name}_DEPENDENT_EXPORTS "
+           "\"${${export_name}_DEPENDENT_EXPORTS_SORTED}\")\n")
   endforeach()
 
   # create a sanitized version of EXPORT_NAMESPACE
@@ -348,29 +345,25 @@ function(_cs_finalize_install export_namespace)
     string(REPLACE "-" "_" export_name_sanitized "${export_name}")
 
     if(find_packages_list)
-      set(injected_find_packages_code
-          "${injected_find_packages_code}  if(NOT ${export_namespace_sanitized}Config_${export_name_sanitized}_FIND_DONE)\n"
-      )
-      set(injected_find_packages_code
-          "${injected_find_packages_code}    if(\"${export_name}\" STREQUAL \"\${component_name}\")\n")
+      set(find_done "${export_namespace_sanitized}Config_${export_name_sanitized}_FIND_DONE")
+      set(debug_message "${export_namespace_sanitized}_debug_message")
+      string(APPEND injected_find_packages_code "  if(NOT ${find_done})\n"
+             "    if(\"${export_name}\" STREQUAL \"\${component_name}\")\n")
 
       foreach(find_args ${find_packages_list})
-        set(injected_find_packages_code
-            "${injected_find_packages_code}      ${export_namespace_sanitized}_debug_message(\"[${export_namespace}Config] find_dependency(${find_args})\")\n"
-        )
-        set(injected_find_packages_code "${injected_find_packages_code}      find_dependency(${find_args})\n")
+        string(APPEND injected_find_packages_code
+               "      ${debug_message}(\"[${export_namespace}Config] find_dependency(${find_args})\")\n"
+               "      find_dependency(${find_args})\n")
       endforeach()
 
-      set(injected_find_packages_code
-          "${injected_find_packages_code}      SET(${export_namespace_sanitized}Config_${export_name_sanitized}_FIND_DONE True)\n"
-      )
-
-      set(injected_find_packages_code "${injected_find_packages_code}    endif()\n")
-      set(injected_find_packages_code "${injected_find_packages_code}  else()\n")
-      set(injected_find_packages_code
-          "${injected_find_packages_code}   ${export_namespace_sanitized}_debug_message(\"[${export_namespace}Config] find_dependency for ${export_name} already satisfied\")\n"
-      )
-      set(injected_find_packages_code "${injected_find_packages_code}  endif()\n")
+      string(
+        APPEND
+        injected_find_packages_code
+        "      SET(${find_done} True)\n"
+        "    endif()\n"
+        "  else()\n"
+        "   ${debug_message}(\"[${export_namespace}Config] find_dependency for ${export_name} already satisfied\")\n"
+        "  endif()\n")
     endif()
   endforeach()
 
@@ -508,8 +501,9 @@ function(cs_print_components)
     cs_get_component_dependencies(${export} depends_values)
     cs_get_component_dependencies_sorted(${export} depends_values_sorted)
     cs_debug_message(
-      "[cs_print_components] export ${export} contains the following targets: ${targets_values}, has the following find_packages: ${find_packages_values} and depends on those other exports: ${depends_values} (sorted as ${depends_values_sorted})"
-    )
+      "[cs_print_components] export ${export} contains the following targets: ${targets_values}, has the "
+      "following find_packages: ${find_packages_values} and depends on those other exports: ${depends_values} "
+      "(sorted as ${depends_values_sorted})")
   endforeach()
 
   cs_get_default_components(exports_default)
