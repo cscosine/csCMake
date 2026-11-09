@@ -81,8 +81,8 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| 0 | ready for review | `c399f7f` was partial; gaps completed 2026-11-09 (see CHANGELOG). Needs CI run on GitHub + sign-off. |
-| 1 | done | Signed off 2026-11-09. Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. CI on GitHub after push. |
+| 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
+| 1 | done | Signed off 2026-11-09. Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | not started | Tests |
 | 3 | not started | Docs |
 | 4 | not started | CMake hardening |
