@@ -52,10 +52,66 @@ function(_cs_add_target_to_project_targets target_name)
   endif()
 endfunction()
 
-# Finalize target_name by running the recursive dependency analysis (_cs_recursive_analyze_target). Call it once, after
-# all the properties and links of the target are set.
+# Finalize target_name: run the recursive dependency analysis (_cs_recursive_analyze_target) and record its links.
+# Mandatory for every target of cs_add_library / cs_add_executable, after its links are set: cs_finalize_project fails
+# for a target not finalized, or whose links changed after cs_finalize_target.
 function(cs_finalize_target target_name)
+  get_target_property(aliased ${target_name} ALIASED_TARGET)
+  if(aliased)
+    set(target_name ${aliased})
+  endif()
   _cs_recursive_analyze_target(${target_name})
+  _cs_target_links(${target_name} links)
+  set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
+endfunction()
+
+# Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES), as a single string.
+function(_cs_target_links target_name links_out)
+  set(links "")
+  foreach(property LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
+    get_target_property(values ${target_name} ${property})
+    if(NOT values)
+      set(values "")
+    endif()
+    string(APPEND links "${property}=${values} ")
+  endforeach()
+  set(${links_out}
+      "${links}"
+      PARENT_SCOPE)
+endfunction()
+
+# Fail (FATAL_ERROR) if a target of the project was not finalized with cs_finalize_target, or if its links changed after
+# cs_finalize_target (finalized too early: the dependency analysis missed the later links).
+function(_cs_check_targets_finalized)
+  cs_get_project_targets(targets)
+  set(not_finalized "")
+  set(changed "")
+  foreach(target_name ${targets})
+    get_property(
+      finalized
+      TARGET ${target_name}
+      PROPERTY _CSCMAKE_FINALIZED_LINKS
+      SET)
+    if(NOT finalized)
+      list(APPEND not_finalized ${target_name})
+    else()
+      get_target_property(recorded ${target_name} _CSCMAKE_FINALIZED_LINKS)
+      _cs_target_links(${target_name} current)
+      if(NOT "${recorded}" STREQUAL "${current}")
+        list(APPEND changed ${target_name})
+      endif()
+    endif()
+  endforeach()
+  if(not_finalized)
+    list(JOIN not_finalized ", " not_finalized)
+    message(FATAL_ERROR "[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its "
+                        "links: missing for ${not_finalized}")
+  endif()
+  if(changed)
+    list(JOIN changed ", " changed)
+    message(FATAL_ERROR "[cs_finalize_project] links added after cs_finalize_target: ${changed} (call "
+                        "cs_finalize_target after cs_target_link_libraries)")
+  endif()
 endfunction()
 
 # return all targets added in CSCMAKE_PROJECT_TARGETS

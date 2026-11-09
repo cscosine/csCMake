@@ -100,7 +100,7 @@ cs_initialize_project(
 # add libraries, executables...
 add_subdirectory(src)
 
-# remember to add this at the end of the main cmake file
+# mandatory, at the end of the CMakeLists.txt of cs_initialize_project (checked at the end of the file)
 cs_finalize_project()
 ```
 
@@ -144,7 +144,7 @@ cs_target_check_installed_headers(mylib mylib)   # compile every installed heade
 # the default component list
 cs_install_target(mylib myApp DEFAULT)
 
-# must be called after all target properties are set (runs dependency analysis)
+# mandatory for every target, after its links (dependency analysis; cs_finalize_project checks it)
 cs_finalize_target(mylib)
 ```
 
@@ -204,6 +204,8 @@ tree and once installed:
 
 `cs_finalize_project()` finalizes the whole project (namespace from `cs_initialize_project`):
 
+- checks that every target of `cs_add_library` / `cs_add_executable` was finalized with
+  `cs_finalize_target`, and that no link was added after it;
 - recurses through targets to compute runtime dependencies (DLLs/libs) per
   configuration;
 - sets the Visual Studio debugger environment variables for those dependencies;

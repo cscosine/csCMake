@@ -48,7 +48,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [ ] MSVC runtime hardcoded to `MultiThreaded*DLL` → add static-runtime option.
 - [x] (3b step 1) Error messages reference functions that do not exist / undefined variables → fixed.
 - [x] (3b step 2) Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
-- [ ] `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
+- [x] (3b step 4) `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
 - [x] `templates/csTemplateConfig.cmake.in` breaks cmake-format (`@...@` substitution) → formatted/linted via `cscmake-cmake-template` (placeholder stand-ins).
 - [ ] Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
 - [ ] Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
@@ -499,3 +499,16 @@ variables, properties, preset environment variables, default targets) guides the
 - `cscmake-cmake-template`: a placeholder inside a lowercase identifier gets a lowercase stand-in
   (`_@NS@_components`), so lint naming checks apply to the template's private variables (tests).
 - `MIGRATION.md`: installed package configuration table.
+
+### 2026-11-10 (Phase 3b step 4 — mandatory finalize calls)
+- `cs_finalize_target` records the target's links (`_CSCMAKE_FINALIZED_LINKS`, from `LINK_LIBRARIES` and
+  `INTERFACE_LINK_LIBRARIES`; aliases resolved). `cs_finalize_project` → `_cs_check_targets_finalized`: one error
+  listing the targets not finalized, one for the targets whose links changed after `cs_finalize_target`.
+- `cs_initialize_project` defers `_cs_check_project_finalized(<namespace> <source dir>)` to the end of its
+  `CMakeLists.txt` (`cmake_language(DEFER)`, values fixed with `EVAL`): fails without `cs_finalize_project()`
+  (global property `_CSCMAKE_PROJECT_FINALIZED_<namespace>`).
+- `cs_finalize_project` split: `_cs_check_targets_finalized`, `_cs_finalize_runtime_dependencies` (analysis + Visual
+  Studio debugger environment), `_cs_finalize_install`.
+- Tests: `tests/cmake/test_finalize.py` (complete project, target not finalized, links after finalize, missing
+  `cs_finalize_project`); the existing configure tests now finalize their targets and project. README, `MIGRATION.md`
+  (mandatory calls). csfoundation compliance is checked at its migration (3f).

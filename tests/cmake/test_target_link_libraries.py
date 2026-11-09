@@ -27,6 +27,10 @@ get_target_property(links with_cs INTERFACE_LINK_LIBRARIES)
 cstest_report(with_cs "${links}")
 get_target_property(links with_cmake INTERFACE_LINK_LIBRARIES)
 cstest_report(with_cmake "${links}")
+foreach(t a b with_cs)
+  cs_finalize_target(${t})
+endforeach()
+cs_finalize_project()
 """
 
 

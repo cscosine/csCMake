@@ -20,6 +20,8 @@ PROPERTIES = """
 cs_add_library(lib INTERFACE)
 set_target_properties(lib PROPERTIES INTERFACE_COMPILE_DEFINITIONS "CSTEST_FLAG=1" EXPORT_NAME exported_lib)
 cs_print_target_properties(lib)
+cs_finalize_target(lib)
+cs_finalize_project()
 """
 COMPONENTS = """
 cs_add_library(lib_default INTERFACE)
@@ -27,6 +29,9 @@ cs_install_target(lib_default comp_default DEFAULT)
 cs_add_library(lib_other INTERFACE)
 cs_install_target(lib_other comp_other)
 cs_print_components()
+cs_finalize_target(lib_default)
+cs_finalize_target(lib_other)
+cs_finalize_project()
 """
 
 

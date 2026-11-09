@@ -206,3 +206,12 @@ its own; a csCMake project added with `add_subdirectory` installs its headers re
 
 Action: none for `find_package` users; code reading `<component>_DEPENDENT_EXPORTS` uses
 `<namespace>_<component>_DEPENDENCIES`.
+
+### Mandatory calls
+
+| Call | Rule (checked at configure time) |
+|---|---|
+| `cs_finalize_target(<target>)` | for every target of `cs_add_library` / `cs_add_executable`, after its links; `cs_finalize_project` fails listing the targets not finalized and those with links added after `cs_finalize_target` |
+| `cs_finalize_project()` | at the end of the `CMakeLists.txt` of `cs_initialize_project`; configure fails at the end of that file without it |
+
+Action: add the missing calls, and move `cs_finalize_target` after the last `cs_target_link_libraries` of the target.

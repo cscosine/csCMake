@@ -135,6 +135,11 @@ macro(cs_initialize_project)
 
   _cs_add_default_targets()
 
+  # check at the end of this CMakeLists.txt that cs_finalize_project was called (the values are fixed now: deferred call
+  # arguments are evaluated when the call runs)
+  cmake_language(EVAL CODE "cmake_language(DEFER CALL _cs_check_project_finalized [[${CSCMAKE_NAMESPACE}]] "
+                 "[[${CMAKE_CURRENT_SOURCE_DIR}]])")
+
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
   unset(_cs_init_cxx_standard)
@@ -152,35 +157,43 @@ function(cs_get_namespace output_variable_name)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize the project, after every target: dependency analysis, Visual Studio debugger environment, installation of the
-# components in the namespace given to cs_initialize_project (<namespace>Config.cmake).
+# Finalize the project, at the end of the CMakeLists.txt of cs_initialize_project (mandatory, checked): check that every
+# target is finalized, finalize the runtime dependencies (dependency analysis, Visual Studio debugger environment) and
+# the installation of the components (<namespace>Config.cmake).
 function(cs_finalize_project)
   if(ARGN)
     message(FATAL_ERROR "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
                         "cs_initialize_project(NAMESPACE ...), see MIGRATION.md")
   endif()
   cs_get_namespace(export_namespace)
+  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${export_namespace} TRUE)
 
-  # TODO(sc) add a parameter to avoid verbose printing
-
-  # print target and export info (in debug)
+  # debug: targets, components, state
   cs_print_project_targets()
   cs_print_components()
-
   cs_print_state("final state")
 
-  set(targets "")
-  cs_get_project_targets(targets)
-
-  # finalize path recursion for dll dependencies
-  _cs_recursive_analyze_targets_finalize("${targets}")
-
-  # set on visual studio env variable the path required
-  _cs_set_vs_debugger_env_variable("${targets}")
-
-  # finalize the installation: add the cmake/ dir with all cmake files required to find the exported targets
+  _cs_check_targets_finalized()
+  _cs_finalize_runtime_dependencies()
   _cs_finalize_install(${export_namespace})
+endfunction()
 
+# Resolve the runtime dependencies of every target of the project: the shared libraries each one needs
+# (CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>) and, from them, the Visual Studio debugger environment (PATH).
+function(_cs_finalize_runtime_dependencies)
+  cs_get_project_targets(targets)
+  _cs_recursive_analyze_targets_finalize("${targets}")
+  _cs_set_vs_debugger_env_variable("${targets}")
+endfunction()
+
+# Deferred to the end of the CMakeLists.txt of cs_initialize_project: fail if cs_finalize_project was not called for the
+# namespace.
+function(_cs_check_project_finalized namespace source_dir)
+  get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace})
+  if(NOT finalized)
+    message(FATAL_ERROR "[cs_initialize_project] cs_finalize_project() is required at the end of "
+                        "${source_dir}/CMakeLists.txt (namespace ${namespace})")
+  endif()
 endfunction()
 
 cmake_policy(POP)
