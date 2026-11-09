@@ -12,7 +12,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 
 - [x] **Phase 0 — Project plumbing** (port from csorchestrator: `.vscode/`, `pyproject.toml`, `conftest.py`, `constraints-minimum.txt`, `.pre-commit-config.yaml`, `setup.sh`/`setup.ps1`, CI workflow, agent skill)
 - [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook; amended: `csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` generated too). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
-- [ ] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
+- [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [ ] **Phase 3 — Docs** (README.md, AGENTS.md, docs/architecture.md, docs/utils-api.md, docs/presets.md)
 - [ ] **Phase 4 — CMake code hardening** (see Issues below)
 - [ ] **Phase 5 — Release** (version bump, tag, CHANGELOG entries)
@@ -120,7 +120,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 |-------|--------|-------|
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
-| 2 | in review | Smoke projects + driver + `smoke.yml` implemented; 4 local variants (ubuntu22.04 x64 gcc/clang × ninja/ninjamulticonfig) pass; the other 16 (arm64, ubuntu24.04, Windows) only on GitHub. |
+| 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | not started | Docs |
 | 4 | not started | CMake hardening |
 | 5 | not started | Release |
