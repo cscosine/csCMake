@@ -183,10 +183,22 @@ function(_cs_parse_additional_configurations required_cxx_standard)
       ${arg_CXX_STANDARD}
       PARENT_SCOPE)
 
+  # the configurations belong to the build tree: the first csCMake project defines them; a nested project (added with
+  # add_subdirectory) uses some of them, defined the same way, and registers nothing (_cs_check_build_configuration)
+  get_property(
+    nested GLOBAL
+    PROPERTY CSCMAKE_BUILD_CONFIGURATIONS
+    SET)
+
   # add default configurations
   foreach(default_config ${arg_DEFAULT_CONFIG})
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${default_config} "default")
+      continue()
+    endif()
     cs_debug_message("[_cs_parse_additional_configurations] adding default config ${default_config}")
     _cs_add_default_build_configuration(${default_config})
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${default_config}_DEFINITION "default")
   endforeach()
 
   # add default configurations mapped
@@ -223,9 +235,15 @@ function(_cs_parse_additional_configurations required_cxx_standard)
                     "DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${arg_DEFAULT_CONFIG_MAPPED}")
     endif()
 
+    set(definition "mapped ${base_config_and_fallback}")
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${default_config_mapped} "${definition}")
+      continue()
+    endif()
     cs_debug_message(
       "[_cs_parse_additional_configurations] adding mapped config ${default_config_mapped} ${base_config_and_fallback}")
     _cs_add_default_build_configuration_mapped(${default_config_mapped} "${base_config_and_fallback}")
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${default_config_mapped}_DEFINITION "${definition}")
 
   endwhile()
 
@@ -274,9 +292,15 @@ function(_cs_parse_additional_configurations required_cxx_standard)
                     "MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected POSTFIX found ${postfix_keyword}")
     endif()
 
+    set(definition "custom ${base_config_and_fallback} postfix ${postfix_value}")
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${custom_config} "${definition}")
+      continue()
+    endif()
     cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${custom_config} ${base_config} "
                      "${base_config_and_fallback}")
     _cs_add_custom_build_configuration(${custom_config} ${base_config} ${postfix_value} "${base_config_and_fallback}")
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${custom_config}_DEFINITION "${definition}")
 
     # the output folders of a custom configuration are set explicitly: the ones without configuration suffix do not
     # apply to it (CMake uses the per-configuration ones copied from the base configuration). Kept if set by the user.
@@ -297,6 +321,17 @@ function(_cs_parse_additional_configurations required_cxx_standard)
       endif()
     endforeach()
   endwhile()
+
+  # a nested project: same strict configuration as the build, if given; the derived variables come from the scope of the
+  # project that defined the configurations (parent directory)
+  if(nested)
+    cs_get_strict_build_configuration(strict_config)
+    if(arg_STRICT_COMPILATION_ON_CONFIG AND NOT arg_STRICT_COMPILATION_ON_CONFIG STREQUAL strict_config)
+      message(FATAL_ERROR "[cs_initialize_project] STRICT_COMPILATION_ON_CONFIG ${arg_STRICT_COMPILATION_ON_CONFIG} "
+                          "of ${arg_NAMESPACE} differs from the one of the build: '${strict_config}'")
+    endif()
+    return()
+  endif()
 
   # check if the user want strict compilation flags for a specific configutation
   if(arg_STRICT_COMPILATION_ON_CONFIG)
@@ -325,6 +360,21 @@ function(_cs_parse_additional_configurations required_cxx_standard)
 
   # and CMAKE_MSVC_RUNTIME_LIBRARY for the targets not created by cs_add_library / cs_add_executable (fallback)
   _cs_set_in_project_scope(CMAKE_MSVC_RUNTIME_LIBRARY "${temp_string}")
+endfunction()
+
+# Fail if config, requested by the nested project namespace, is not a configuration of the build with the same
+# definition ("default", "mapped <fallbacks>", "custom <base and fallbacks> postfix <postfix>").
+function(_cs_check_build_configuration namespace config definition)
+  get_property(defined GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${config}_DEFINITION)
+  if(NOT defined)
+    cs_get_build_configurations(configs_list)
+    message(FATAL_ERROR "[cs_initialize_project] configuration ${config} of ${namespace} is not a configuration of "
+                        "the build (${configs_list}): the first csCMake project of the build defines them")
+  endif()
+  if(NOT defined STREQUAL definition)
+    message(FATAL_ERROR "[cs_initialize_project] configuration ${config} of ${namespace} is '${definition}', in "
+                        "the build it is '${defined}'")
+  endif()
 endfunction()
 
 # Apply the configurations requested in cs_initialize_project: on multi-config generators reset
@@ -365,6 +415,14 @@ endfunction()
 # set a global property CSCMAKE_PER_CONFIG_VARIABLES highly inspired from https://stackoverflow.com/q/75823363 (copy all
 # the build type parameters of a build configuration)
 function(_cs_process_build_configurations_variables)
+  # once per build tree (a nested csCMake project finds it done)
+  get_property(
+    done GLOBAL
+    PROPERTY CSCMAKE_PER_CONFIG_VARIABLES
+    SET)
+  if(done)
+    return()
+  endif()
   execute_process(COMMAND ${CMAKE_COMMAND} --help-variable-list
                   OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt")
   file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" var_full_list)

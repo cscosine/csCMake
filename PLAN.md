@@ -159,7 +159,7 @@ variables, properties, preset environment variables, default targets) guides the
   - `cmake_minimum_required` in `csCMake.cmake` → version check (3.31, presets v10);
   - `cs_finalize_project` fails when `project()` has no `VERSION` (`write_basic_package_version_file`): clear error
     from `cs_initialize_project`, or a default version (found by the 3b configure tests);
-  - **nested csCMake projects** (a lib project `add_subdirectory`-ed into a target project): fails today
+  - [x] (step 5) **nested csCMake projects** (a lib project `add_subdirectory`-ed into a target project): fails today
     (`duplicated element Debug`, verified 2026-11-09: all state is in global properties). Current project tracked by a
     variable set in `cs_initialize_project` (inherited by subdirectories, not tied to `PROJECT_NAME`); targets,
     components and dependency data keyed by project; each `cs_finalize_project` installs only its own components;
@@ -512,3 +512,19 @@ variables, properties, preset environment variables, default targets) guides the
 - Tests: `tests/cmake/test_finalize.py` (complete project, target not finalized, links after finalize, missing
   `cs_finalize_project`); the existing configure tests now finalize their targets and project. README, `MIGRATION.md`
   (mandatory calls). csfoundation compliance is checked at its migration (3f).
+
+### 2026-11-10 (Phase 3b step 5 — nested csCMake projects)
+- Decisions (recommended options, user "go"): the first csCMake project of the build defines the configurations, a
+  nested project uses a subset defined the same way; links between projects of the same build → automatic
+  `find_dependency(<ns> COMPONENTS <component> REQUIRED CONFIG)` (no version); configure tests (no smoke project).
+- Configurations: definitions recorded per configuration (`CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION`:
+  `default`, `mapped <fallbacks>`, `custom <base and fallbacks> postfix <postfix>`); a nested `cs_initialize_project`
+  checks its configurations against them (`_cs_check_build_configuration`) and registers nothing; same
+  `STRICT_COMPILATION_ON_CONFIG` if given; per-config variable list computed once per build tree.
+- Per-project state keyed by namespace: `CSCMAKE_<ns>_PROJECT_TARGETS`, `CSCMAKE_<ns>_[DEFAULT_]COMPONENTS`,
+  `CSCMAKE_<ns>_COMPONENT_<c>_*`, export sets `<ns>_<component>-targets` (installed files and component names
+  unchanged); target property `CSCMAKE_NAMESPACE`.
+- Tests (`tests/cmake/test_nested_projects.py`, both failing before): outer + nested inner with a component `core` in
+  each and a link between them, installed into one prefix, consumed with `find_package(outer)` (inner found through
+  `find_dependency`, only the components needed); a nested configuration missing from the build → error.
+- README: "Nested csCMake projects"; `MIGRATION.md`: namespaced global property names.

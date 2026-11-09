@@ -200,6 +200,17 @@ tree and once installed:
 - `<namespace>::cscmake_msvc_parallel_compile`,
   `<namespace>::cscmake_strict_warnings` — the building blocks of the two above.
 
+### Nested csCMake projects
+
+A csCMake project can be added with `add_subdirectory` to another one (e.g. a library developed together with the
+application using it), in one build tree:
+
+- each project has its own namespace, targets, components, debug option and installed package;
+- the build configurations belong to the build tree: the first csCMake project defines them, a nested project uses
+  some of them, defined the same way (configure fails otherwise);
+- a target linking a target of the other project makes its component `find_dependency()` that package in the
+  installed `<namespace>Config.cmake`.
+
 ### Install and export
 
 `cs_finalize_project()` finalizes the whole project (namespace from `cs_initialize_project`):

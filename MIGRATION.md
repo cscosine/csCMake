@@ -96,18 +96,19 @@ directly (`get_property` / `get_target_property`); otherwise use the getter func
 | `csCMakeConfigurationTypesDefault` | `CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS` |
 | `csCMakeConfigurationVariables` | `CSCMAKE_PER_CONFIG_VARIABLES` |
 | `csCMakeConfigWithStrictFlags` | `CSCMAKE_STRICT_BUILD_CONFIGURATION` |
-| `csProjectTargets` | `CSCMAKE_PROJECT_TARGETS` |
-| `csExportedList` | `CSCMAKE_COMPONENTS` |
-| `csExportedListDefault` | `CSCMAKE_DEFAULT_COMPONENTS` |
-| `csExported<component>Targets` | `CSCMAKE_COMPONENT_<component>_TARGETS` |
-| `csExported<component>FindPackages` | `CSCMAKE_COMPONENT_<component>_FIND_PACKAGES` |
-| `csExported<component>Depends` | `CSCMAKE_COMPONENT_<component>_DEPENDENCIES` |
-| `csExported<component>DependsSorted` | `CSCMAKE_COMPONENT_<component>_DEPENDENCIES_SORTED` |
+| `csProjectTargets` | `CSCMAKE_<namespace>_PROJECT_TARGETS` |
+| `csExportedList` | `CSCMAKE_<namespace>_COMPONENTS` |
+| `csExportedListDefault` | `CSCMAKE_<namespace>_DEFAULT_COMPONENTS` |
+| `csExported<component>Targets` | `CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS` |
+| `csExported<component>FindPackages` | `CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES` |
+| `csExported<component>Depends` | `CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES` |
+| `csExported<component>DependsSorted` | `CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED` |
 
 ### Target properties
 
 | Old | New |
 |---|---|
+| (none) | `CSCMAKE_NAMESPACE`: the namespace of the csCMake project of the target |
 | `csFindPackage` | `CSCMAKE_FIND_PACKAGES` |
 | `csSourcesToInstall` | `CSCMAKE_SOURCES_TO_INSTALL` |
 | `csSourcesToInstallAbsolutePath` | `CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE` |

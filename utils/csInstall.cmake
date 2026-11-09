@@ -29,10 +29,11 @@ function(cs_get_install_include_dir install_folder_expression)
   endif()
 endfunction()
 
-# create a global variable CSCMAKE_COMPONENTS collecting all the different export_name used create a global variable
-# CSCMAKE_COMPONENT_<export_name>_FIND_PACKAGES containing the list of find_package(ARGS...) that will be added to the
-# installed configuration file if DEFAULT is passed as additional arguments, the export_name will be added to the list
-# CSCMAKE_DEFAULT_COMPONENTS global variable add a target property CSCMAKE_COMPONENT with the name of the export
+# create a global variable CSCMAKE_<namespace>_COMPONENTS collecting all the different export_name used create a global
+# variable CSCMAKE_<namespace>_COMPONENT_<export_name>_FIND_PACKAGES containing the list of find_package(ARGS...) that
+# will be added to the installed configuration file if DEFAULT is passed as additional arguments, the export_name will
+# be added to the list CSCMAKE_<namespace>_DEFAULT_COMPONENTS global variable add a target property CSCMAKE_COMPONENT
+# with the name of the export
 function(cs_install_target target_name export_name)
   cs_debug_message("[cs_install_target] target ${target_name} export to ${export_name}")
 
@@ -43,14 +44,14 @@ function(cs_install_target target_name export_name)
   file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
   # add the EXPORT_NAME to the list of exports
-  _cs_add_to_global_property_unique_value(CSCMAKE_COMPONENTS ${export_name})
+  _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS ${export_name})
 
   # add the target to default list
   if(${ARGC} EQUAL 2)
     # nothing to do, do not
   elseif(${ARGC} EQUAL 3)
     if(${ARGV2} STREQUAL "DEFAULT")
-      _cs_add_to_global_property_unique_value(CSCMAKE_DEFAULT_COMPONENTS ${export_name})
+      _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS ${export_name})
     else()
       message(FATAL_ERROR "cs_install_target argument 3 should be DEFAULT or should be empty")
     endif()
@@ -87,7 +88,7 @@ function(cs_install_target target_name export_name)
   # install effectively the target
   install(
     TARGETS ${target_name}
-    EXPORT ${export_name}-targets
+    EXPORT ${CSCMAKE_NAMESPACE}_${export_name}-targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -104,19 +105,20 @@ function(cs_install_target target_name export_name)
   endif()
 
   # add the target to the list of target of this export
-  _cs_add_to_global_property_unique_value(CSCMAKE_COMPONENT_${export_name}_TARGETS ${target_name})
+  _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS ${target_name})
 
   # get all the find_packages propagated for this target
   cs_get_target_find_packages(${target_name} find_packages_list)
   foreach(find_package ${find_packages_list})
-    _cs_add_to_global_property_unique_value(CSCMAKE_COMPONENT_${export_name}_FIND_PACKAGES ${find_package})
+    _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES
+                                            ${find_package})
   endforeach()
 
 endfunction()
 
-# return the CSCMAKE_COMPONENTS global property
+# return the CSCMAKE_<namespace>_COMPONENTS global property
 function(cs_get_components output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_COMPONENTS)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS)
   if(list_values)
     # if exists
     set(${output_variable_name}
@@ -130,9 +132,9 @@ function(cs_get_components output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_DEFAULT_COMPONENTS global property
+# return the CSCMAKE_<namespace>_DEFAULT_COMPONENTS global property
 function(cs_get_default_components output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_DEFAULT_COMPONENTS)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS)
   if(list_values)
     # if exists
     set(${output_variable_name}
@@ -155,7 +157,7 @@ function(cs_get_target_component target_name output_variable_name)
 endfunction()
 
 # Compute the exports export_name depends on (the exports of the project targets its targets link to) and store them in
-# the CSCMAKE_COMPONENT_<export_name>_DEPENDENCIES global property.
+# the CSCMAKE_<namespace>_COMPONENT_<export_name>_DEPENDENCIES global property.
 function(_cs_populate_component_dependencies export_name)
   cs_get_component_targets(${export_name} targets_list)
   cs_debug_message(
@@ -168,11 +170,20 @@ function(_cs_populate_component_dependencies export_name)
 
     foreach(target_dep_name ${target_deps})
       cs_get_target_component(${target_dep_name} export_dep_name)
+
+      # a target of another csCMake project of the build (nested project): its package is a dependency of this component
+      get_target_property(dep_namespace ${target_dep_name} CSCMAKE_NAMESPACE)
+      if(dep_namespace AND NOT dep_namespace STREQUAL CSCMAKE_NAMESPACE)
+        _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES
+                                                "${dep_namespace} COMPONENTS ${export_dep_name} REQUIRED CONFIG")
+        continue()
+      endif()
       cs_debug_message(
         "[_cs_populate_component_dependencies] ---- subtarget ${target_dep_name} is exported to ${export_dep_name}")
       if(NOT ${export_dep_name} STREQUAL ${export_name})
         cs_debug_message("[_cs_populate_component_dependencies] ---- add ${export_dep_name}")
-        _cs_add_to_global_property_unique_value(CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES ${export_dep_name})
+        _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES
+                                                ${export_dep_name})
       else()
         cs_debug_message("[_cs_populate_component_dependencies] ---- subtarget is in my same export set")
       endif()
@@ -220,7 +231,7 @@ function(_cs_check_component_cycles export_name)
 endfunction()
 
 # Sort the dependent exports of export_name so that each export comes after the exports it depends on, and store the
-# result in the CSCMAKE_COMPONENT_<export_name>_DEPENDENCIES_SORTED global property.
+# result in the CSCMAKE_<namespace>_COMPONENT_<export_name>_DEPENDENCIES_SORTED global property.
 function(_cs_sort_component_dependencies export_name)
   cs_get_component_dependencies(${export_name} dependent_exports_unsorted)
   cs_debug_message("[_cs_sort_component_dependencies] -- for export ${export_name} sort ${dependent_exports_unsorted}")
@@ -282,7 +293,8 @@ function(_cs_sort_component_dependencies export_name)
   endwhile()
 
   cs_debug_message("[_cs_sort_component_dependencies] -- sort result: ${dependent_exports_sorted}")
-  set_property(GLOBAL PROPERTY CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES_SORTED "${dependent_exports_sorted}")
+  set_property(GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED
+                               "${dependent_exports_sorted}")
 endfunction()
 
 # Install the export sets of the project in the export_namespace namespace: install the <export>Targets.cmake files,
@@ -297,7 +309,7 @@ function(_cs_finalize_install export_namespace)
   # and install cmake files of them
   foreach(name ${exports})
     install(
-      EXPORT ${name}-targets
+      EXPORT ${CSCMAKE_NAMESPACE}_${name}-targets
       FILE ${name}Targets.cmake
       NAMESPACE ${export_namespace}::
       DESTINATION ${install_configdir}/targets)
@@ -417,9 +429,9 @@ function(
 
 endfunction()
 
-# return the CSCMAKE_COMPONENT_${export_name}_TARGETS global property
+# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_TARGETS global property
 function(cs_get_component_targets export_name output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_COMPONENT_${export_name}_TARGETS)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS)
   if(list_values)
     # if exists
     set(${output_variable_name}
@@ -433,9 +445,9 @@ function(cs_get_component_targets export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES global property
+# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_DEPENDENCIES global property
 function(cs_get_component_dependencies export_name output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES)
   if(list_values)
     # if exists
     set(${output_variable_name}
@@ -449,9 +461,9 @@ function(cs_get_component_dependencies export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES_SORTED global property
+# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_DEPENDENCIES_SORTED global property
 function(cs_get_component_dependencies_sorted export_name output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
   if(list_values)
     # if exists
     set(${output_variable_name}
@@ -465,9 +477,9 @@ function(cs_get_component_dependencies_sorted export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_COMPONENT_${export_name}_FIND_PACKAGES global property
+# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_FIND_PACKAGES global property
 function(cs_get_component_find_packages export_name output_variable_name)
-  get_property(list_values GLOBAL PROPERTY CSCMAKE_COMPONENT_${export_name}_FIND_PACKAGES)
+  get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
   if(list_values)
     # if exists
     set(${output_variable_name}
