@@ -249,11 +249,11 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
 
 ### Findings while writing the docs (3d step 4, to decide)
-- [ ] **Preset display names**: `presets/template/cs-single-config-generator-config.json.template` hard-codes
+- [x] (fixed, `252eed2`: `@{osVersion}`) **Preset display names**: `presets/template/cs-single-config-generator-config.json.template` hard-coded
   `Ubuntu 24.04` in the `displayName` / `description` of every single-config preset (Windows Ninja, macOS Ninja, every
   Ubuntu version: `cmake --list-presets` shows "Configure macos Ubuntu 24.04 ..."). Names and ids are not affected; the
   fix (`@{osVersion}` or the host description) changes the generated files.
-- [ ] **Visual Studio debugger `PATH`**: `_cs_set_vs_debugger_env_variable` sets `PATH=<folders of the runtime
+- [x] (fixed, `f95e2eb`: `PATH=<folders>;%PATH%`, nothing set without runtime libraries) **Visual Studio debugger `PATH`**: `_cs_set_vs_debugger_env_variable` set `PATH=<folders of the runtime
   libraries>` without `;%PATH%` (or `$(Path)`): check on Windows whether the debugged program loses the system `PATH`.
 
 ### Compile profiles and clang-tidy: ideas (future)
@@ -808,3 +808,45 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 - Pre-commit hook `check-docs` (on the CMake modules and `docs/reference`), so also in CI; tests
   (`test_check_docs.py`: the repository, each kind of problem on a small fake repository, name extraction, placeholders).
 - Documented in `docs/contributing/documentation.md` ("Completeness check"), `docs/contributing/code.md`, `CLAUDE.md`.
+
+### 2026-11-10 (Phase 3f step 1 — csfoundation: branches, csCore)
+- Branches `feature/productize` (local, not pushed) in csfoundation and in its workspace clone of csCore; the workspace
+  clone of csCMake on `feature/productize` (54cd066).
+- csCore migrated with the `MIGRATION.md` tables: `cs_initialize_project(NAMESPACE csCore ...)` (`DEFAULT_CONFIG Debug
+  Release`), `cs_finalize_project()`, layout `sibling-short`, `csCoreSol::csCoreSol_csCMakeBaseInclude` →
+  `csCore::cscmake_base_include`, links to `..._csCMakeCompileOptionsDefault` removed (`cscmake_default` applies),
+  `math`: `cs_target_use_compile_profiles(math cscmake_strict_warnings)`, `cs_compileEachInstalledInclude(<t>
+  ..._csCMakeCompileOptionsStrict)` → `cs_target_check_installed_headers(<t> COMPILE_PROFILES
+  cscmake_strict_warnings)`, `csAssert.cmake` (installed, used by the other projects): generated-folder getters renamed,
+  header check. `cs_exec_clang_tidy` removed: it never ran clang-tidy (3b finding), csCore has no `.clang-tidy`;
+  enabling clang-tidy is a separate decision.
+- Built and tested in the csfoundation workspace, Ubuntu 22.04, Ninja Multi-Config, the four configurations, fresh
+  configure: GCC (289 tests) and Clang (288 tests), all passed; no new warning with the strict profile.
+- Finding: `cmake --install` keeps the files of the old layout (`targets/csCoreSol_csCMakeCommonTargets.cmake`):
+  `MIGRATION.md` now says to install into an empty prefix.
+
+### 2026-11-10 (Phase 3f step 2 — csLie, csCamera, csVisOpenGL)
+- User rules for the migrated projects: install only the libraries consumers need (no tests, no samples); keep the
+  build path layout each project had (csCore `sibling-short`, the others `sibling`). Final pass test (user): `cd
+  csfoundation && rm -rf workspace && ./csfoundation_project.py && ./csfoundation_project.py generate-github-workflow`,
+  run once the branches are pushed (the orchestrator clones them from GitHub).
+- csCore: test executables no longer installed, their Catch2 `PRIVATE`; `testUtils` stays installed (the tests of
+  csLie and csCamera use it); TODO in its Readme: clang-tidy.
+- csLie, csCamera, csVisOpenGL: branches `feature/productize`, migrated as csCore. csLie's `STRICT_COMPILATION_ON_CONFIG
+  Paranoid` (UBSan in Paranoid for the targets linking the strict options: its header check) → profile
+  `csLie_paranoid` used by `cs_target_check_installed_headers`. Fixed while migrating: the tests of csLie and csCamera
+  called `cs_find_package(<library> PUBLIC csCore COMPONENTS testUtils ...)` on the library, so the installed Configs
+  required `testUtils` (and Catch2): now `PRIVATE` on the test target. The csVisOpenGL sample is finalized, not
+  installed.
+- csfoundation (branch `feature/productize`): `common_repo_ref = "feature/productize"`; `.vscode/settings.json`
+  `git.repositoryScanMaxDepth: 2` (Source Control lists the repositories of `workspace/`).
+- Built in order in the csfoundation workspace (GCC, Ninja Multi-Config, four configurations, fresh): csCore 289,
+  csLie 64, csCamera 4 tests passed; csVisOpenGL built (no tests). Installed Configs checked: no test dependency, no
+  test or sample installed.
+
+### 2026-11-10 (fixes before the merge, user)
+- `252eed2`: preset display names and descriptions of the single-config presets use the OS version of the variant
+  (names unchanged).
+- `f95e2eb`: Visual Studio debugger environment `PATH=<runtime library folders>;%PATH%` per configuration with runtime
+  libraries, unset otherwise (it emptied `PATH` for every target without imported DLLs); configure test
+  `test_visual_studio_debugger_path`. The debugger itself is checked on Windows only.

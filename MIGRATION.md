@@ -182,7 +182,9 @@ Normal variables of the project scope, set by `cs_initialize_project` from its a
 (`POSTFIX`), `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>`, `CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION`,
 `CMAKE_MSVC_RUNTIME_LIBRARY`. `CMAKE_CONFIGURATION_TYPES` is set by csCMake.
 
-Action: configure in a fresh build folder (the cache of an existing one keeps entries of the previous version).
+Action: configure in a fresh build folder (the cache of an existing one keeps entries of the previous version), e.g.
+`cmake --workflow --preset <preset> --fresh`, and install into an empty prefix (or delete the previous installation):
+`cmake --install` does not remove the files of the previous layout (e.g. `targets/<project>_csCMakeCommonTargets.cmake`).
 
 ### Debug messages
 
