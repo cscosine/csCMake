@@ -22,6 +22,13 @@ include(utils/csListUtils)
 #   The library gets the output name postfix of each configuration and the MSVC runtime library of the project, and is
 #   registered in the project (:command:`cs_finalize_target` is then mandatory for it). An ALIAS is created as with
 #   :command:`add_library` and not registered.
+#
+#   ``<target>``
+#     The name of the library.
+#
+#   ``<add_library arguments>``
+#     The other arguments of :command:`add_library`: the type (``STATIC``, ``SHARED``, ``INTERFACE``, ``OBJECT``, ...),
+#     the sources, or ``ALIAS <target>``.
 function(cs_add_library target_name)
   add_library("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
@@ -38,6 +45,12 @@ endfunction()
 #
 #   As :command:`cs_add_library`: output name postfixes, MSVC runtime library, registered in the project
 #   (:command:`cs_finalize_target` is mandatory).
+#
+#   ``<target>``
+#     The name of the executable.
+#
+#   ``<add_executable arguments>``
+#     The other arguments of :command:`add_executable`: the sources, or ``ALIAS <target>``.
 function(cs_add_executable target_name)
   add_executable("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
@@ -104,6 +117,9 @@ endfunction()
 #
 #   Mandatory for every target of :command:`cs_add_library` / :command:`cs_add_executable`, after its links:
 #   :command:`cs_finalize_project` fails for a target not finalized, or whose links changed afterwards.
+#
+#   ``<target>``
+#     A target of :command:`cs_add_library` or :command:`cs_add_executable` (an alias of one is accepted).
 #
 #   :Writes: :prop_tgt:`_CSCMAKE_FINALIZED_LINKS`
 function(cs_finalize_target target_name)
@@ -185,6 +201,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_project_targets(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_PROJECT_TARGETS`
 function(cs_get_project_targets output_variable_name)

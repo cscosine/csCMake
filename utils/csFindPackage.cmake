@@ -23,6 +23,16 @@ include(utils/csListUtils)
 #   :command:`find_package` arguments become a :command:`find_dependency` of the component of the target in the
 #   installed <namespace>Config.cmake; PRIVATE: found for the build only.
 #
+#   ``<target>``
+#     A target of the project.
+#
+#   ``PUBLIC``, ``PRIVATE``
+#     ``PUBLIC``: propagated to the installed package (:command:`find_dependency` when the component of the target is
+#     loaded); ``PRIVATE``: for the build only.
+#
+#   ``<find_package arguments>``
+#     The arguments of :command:`find_package`: the package name, then ``COMPONENTS``, ``REQUIRED``, ``CONFIG``, ...
+#
 #   :Writes: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 macro(cs_find_package target_name propagate_mode)
   cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
@@ -40,6 +50,12 @@ endmacro()
 #   .. code-block:: cmake
 #
 #     cs_get_target_find_packages(<target> <out-var>)
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 #
 #   :Reads: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 function(cs_get_target_find_packages target_name output_variable_name)
@@ -65,6 +81,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_print_target_find_packages(<target>)
+#
+#   ``<target>``
+#     A target of the project.
 function(cs_print_target_find_packages target_name)
   set(packages "")
   cs_get_target_find_packages("${target_name}" packages)

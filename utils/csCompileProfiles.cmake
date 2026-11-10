@@ -129,6 +129,12 @@ endfunction()
 #
 #   Applied by :command:`cs_finalize_target`.
 #
+#   ``<target>``
+#     A target of the project (an alias of one is accepted).
+#
+#   ``<profile>``
+#     Compile profiles (:command:`cs_add_compile_profile_rule`), applied after the default ones.
+#
 #   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
 function(cs_target_use_compile_profiles target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
@@ -149,6 +155,12 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_target_compile_profiles(<target> <out-var>)
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 #
 #   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
 function(cs_get_target_compile_profiles target_name profiles_out)

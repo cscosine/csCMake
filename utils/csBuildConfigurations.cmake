@@ -75,6 +75,9 @@ endfunction()
 #
 #     cs_get_build_configurations(<out-var>)
 #
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
 #   :Reads: :prop_gbl:`CSCMAKE_BUILD_CONFIGURATIONS`
 function(cs_get_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
@@ -91,6 +94,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_default_build_configurations(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 #
 #   :Reads: :prop_gbl:`CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS`
 function(cs_get_default_build_configurations configs_list)
@@ -555,6 +561,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_print_all_configurations_variables(<message>)
+#
+#   ``<message>``
+#     A text printed with the name of each configuration.
 function(cs_print_all_configurations_variables add_message)
   cs_get_build_configurations(config_var_list)
   cs_debug_message("[cs_print_all_configurations_variables] configs are ${config_var_list}")
@@ -577,6 +586,12 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_print_configuration_variables(<config> <prefix>)
+#
+#   ``<config>``
+#     A configuration of the build (any case).
+#
+#   ``<prefix>``
+#     A text printed at the start of each line.
 function(cs_print_configuration_variables config_in print_prefix)
 
   _cs_get_per_config_variables(config_var_list)

@@ -20,6 +20,12 @@ include(utils/csFindPackage)
 #
 #   ClangCL on Windows: /openmp and vcomp; otherwise ``find_package(OpenMP)`` (propagated to the installed
 #   package) and OpenMP::OpenMP_CXX.
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``PUBLIC``, ``PRIVATE``, ``INTERFACE``
+#     The scope of the OpenMP options and library, as in :command:`target_link_libraries`.
 function(cs_target_use_openmp target_name visibility)
   if(NOT TARGET ${target_name})
     message(FATAL_ERROR "Target '${target_name}' does not exist")

@@ -20,6 +20,12 @@ include(utils/csDebugMessage)
 #
 #   The scope keywords stay where they are; an ALIAS of a project target becomes the target itself, imported targets and
 #   names that are not targets are passed unchanged.
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<target_link_libraries arguments>``
+#     The other arguments of :command:`target_link_libraries`: scope keywords and libraries.
 function(cs_target_link_libraries target_name)
   cs_debug_message("[cs_target_link_libraries] ${target_name} ${ARGN}")
 

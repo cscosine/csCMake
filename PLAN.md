@@ -779,3 +779,9 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   needed before the files, also in pre-commit hooks).
 - `docs/contributing/code.md`: layout, CMake conventions, what a new or changed public command involves, checks.
 - Findings recorded above ("Findings while writing the docs").
+
+### 2026-11-10 (Phase 3d step 5 — argument lists in the reference)
+- Every public command with arguments has its argument list (definition list after the details) in its `#.rst:`
+  block: 37 commands (`cs_initialize_project`, `cs_add_compile_profile_rule`, `cs_target_sources` had one). "An alias
+  is accepted" only where the command resolves aliases (`cs_finalize_target`, `cs_target_use_compile_profiles`,
+  `cs_target_check_installed_headers`).

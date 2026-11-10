@@ -20,6 +20,9 @@ include_guard(GLOBAL)
 #   The arguments are concatenated like message() does (also when they contain ";") and printed as a STATUS message when
 #   the debug messages of the current project are enabled.
 #
+#   ``<text>``
+#     The message, its arguments concatenated as :command:`message` does.
+#
 #   :Reads: :variable:`_cscmake_debug_option`, :variable:`<project>_CSCMAKE_DEBUG`
 function(cs_debug_message)
   if(NOT _cscmake_debug_option OR NOT ${_cscmake_debug_option})

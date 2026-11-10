@@ -232,6 +232,9 @@ endmacro()
 #
 #     cs_get_namespace(<out-var>)
 #
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
 #   :Reads: :variable:`CSCMAKE_NAMESPACE`
 function(cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)

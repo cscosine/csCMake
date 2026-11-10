@@ -19,6 +19,9 @@ include_guard(GLOBAL)
 #
 #   Every property CMake knows (cmake --help-property-list), with <CONFIG> expanded to each configuration of the build
 #   and <LANG> to CXX.
+#
+#   ``<target>``
+#     A target.
 function(cs_print_target_properties tgt)
   cs_debug_message("cs_print_target_properties ${tgt}")
   if(NOT TARGET ${tgt})

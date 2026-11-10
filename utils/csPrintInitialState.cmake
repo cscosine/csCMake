@@ -17,6 +17,9 @@ include_guard(GLOBAL)
 #   .. code-block:: cmake
 #
 #     cs_print_state(<header>)
+#
+#   ``<header>``
+#     A text printed in the header of the output.
 function(cs_print_state header_message)
   # cmake-lint: disable=W0106
   # (the "ENV{CMAKE_PREFIX_PATH}" label below is intentional text, not a broken variable reference)

@@ -21,6 +21,13 @@ include_guard(GLOBAL)
 #   generated and built as a static library <target>_<header> linking <target>, with the default compile profiles of the
 #   project and the COMPILE_PROFILES given.
 #
+#   ``<target>``
+#     A target of the project (an alias of one is accepted).
+#
+#   ``COMPILE_PROFILES``
+#     Compile profiles of the generated libraries, in addition to the default ones of the project (e.g.
+#     ``cscmake_strict_warnings``).
+#
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :variable:`CSCMAKE_SOURCE_DIR`
 function(cs_target_check_installed_headers target_name)
   cmake_parse_arguments(arg "" "" "COMPILE_PROFILES" ${ARGN})

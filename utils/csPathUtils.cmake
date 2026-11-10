@@ -41,6 +41,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_generated_dir(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 function(cs_get_generated_dir output_folder)
   set(folder "${CMAKE_BINARY_DIR}/gen/")
   set(${output_folder}
@@ -57,6 +60,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_generated_config_dir(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 function(cs_get_generated_config_dir output_folder)
 
   get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

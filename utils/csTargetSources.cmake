@@ -96,6 +96,12 @@ endfunction()
 #
 #     cs_get_target_sources_to_install(<target> <out-var>)
 #
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`
 function(cs_get_target_sources_to_install target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL)
@@ -121,6 +127,12 @@ endfunction()
 #
 #     cs_get_target_sources_to_install_absolute_path(<target> <out-var>)
 #
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
@@ -145,6 +157,9 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_print_target_sources_to_install(<target>)
+#
+#   ``<target>``
+#     A target of the project.
 #
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_print_target_sources_to_install target_name)

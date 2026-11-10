@@ -196,6 +196,12 @@ endfunction()
 #
 #     cs_get_target_project_dependencies(<target> <out-var>)
 #
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
 #   :Reads: :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`
 function(cs_get_target_project_dependencies target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_PROJECT_DEPENDENCIES)
@@ -409,6 +415,15 @@ endfunction()
 #   .. code-block:: cmake
 #
 #     cs_get_target_runtime_libraries(<target> <config> <out-var>)
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<config>``
+#     A configuration of the build (any case: ``Debug``, ``DEBUG``).
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
 #
 #   :Reads: :prop_tgt:`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`
 function(cs_get_target_runtime_libraries target_name config output_variable_name)
