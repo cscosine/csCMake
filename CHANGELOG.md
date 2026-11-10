@@ -3,6 +3,20 @@
 The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
 Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
 
+## v0.4.0 (2026-11-10)
+
+The documentation site and the supported variants as data. No change of the `cs_*` commands or of the presets.
+
+### New
+
+- `presets/csv1/variants.json`: the supported variants as data (id, fields, short forms, generator type, build
+  configurations), generated with the presets, for tools that follow them.
+
+### Documentation
+
+- A new theme (Furo, light and dark), a landing page with what csCMake solves (examples with and without csCMake),
+  and a "Design decisions" page.
+
 ## v0.3.0 (2026-11-10)
 
 Fixes for projects consumed in configurations they were not built in, install RPATH, and gersemi as formatter. No

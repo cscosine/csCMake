@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cscmake"
-version = "0.3.0"
+version = "0.4.0"
 description = "cscmake facilities for C++ projects config, build, deployment"
 authors = [
   { name = "cscosine-dev", email = "cscosine@gmail.com" }
@@ -40,6 +40,8 @@ dev = [
     "sphinxcontrib-moderncmakedomain>=3.29",
     "myst-parser>=4.0",
     "sphinxcontrib-mermaid>=1.0",
+    "furo>=2024.8.6",
+    "sphinx-design>=0.6.1",
 ]
 
 # ===============================

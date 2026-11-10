@@ -5,7 +5,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 ## Vision & status
 
 - csCMake wraps CMake for common project setup: targets, deps, installs, compile-option defaults, CMake presets.
-- `main` is tagged `v0.1.0`. Active development is on `dev` (checked out here).
+- `main` is tagged `v0.4.0`. Active development is on `dev` (checked out here).
 - Goal: full maturity — working setup/config, tests, CI, docs (humans + agents), preset generation independent of csOrchestrator.
 
 ## Roadmap (phases)
@@ -14,8 +14,9 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook; amended: `csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` generated too). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [x] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
-- [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
+- [x] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
 - [x] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
+- [ ] **Phase 6 — API review before 1.0 (breaking, last chance)**: code review (reuse, antipatterns, unused commands), public API surface (core vs inspection utilities), the debug mechanism; see "Phase 6 — API review before 1.0"
 
 ## Governance
 
@@ -456,14 +457,73 @@ Decided (user, 2026-11-10): version **v0.2.0** (v1.0.0 when more projects are on
 `ci`, `smoke`, `docs` as reusable workflows (they drop their own tag trigger), then `publish`; `SHA256SUMS`; the Python
 package is not released; pre-release tags are GitHub pre-releases.
 
+### Phase 6 — API review before 1.0 (proposed, user 2026-11-10)
+All three steps can change the public API: they belong before the 1.0 stability promise, not after. 6a comes first:
+it shrinks what 6b and 6c have to organise.
+
+**6a. General code review (first).**
+- The whole CMake code (`csCMake.cmake`, `modules/`, the Config template): repeated code to factor (e.g. the
+  per-configuration loops, property get/append patterns, the argument checks), antipatterns (global or directory state
+  where a target property fits, `macro` where a `function` is enough, string building of lists, `PARENT_SCOPE`
+  chains, dead branches, workarounds for CMake versions below the minimum), naming and comments that no longer match.
+- Every public command no project uses (all but 9, see 6b): what it is for, who would call it; drop it if it has no
+  real use (MIGRATION entry), otherwise it goes to a tier in 6b.
+- Output: a findings list here (finding, file, proposal), agreed, then fixed in small steps; installed packages of the
+  smoke projects byte-identical except where a finding changes behaviour on purpose.
+
+**6b. Public API surface: core vs utilities.**
+- Today: ~43 public `cs_*` commands in one flat namespace. Consumers (csfoundation, trackers, scanned 2026-11-10)
+  use 9: `cs_initialize_project`, `cs_finalize_project`, `cs_add_library`, `cs_add_executable`, `cs_target_sources`,
+  `cs_target_link_libraries`, `cs_find_package`, `cs_install_target`, `cs_finalize_target`. The rest are getters
+  (`cs_get_*`, ~20, mostly used by csCMake itself), printers (`cs_print_*`, 7) and `cs_debug_message`.
+- Proposal, three tiers, each with a clear statement in the docs:
+  * **Core** (the lifecycle and the target commands, + compile profiles, OpenMP): what a project writes; stable.
+  * **Inspection / troubleshooting** (`cs_print_target_properties`, `cs_print_components`, `cs_print_project_targets`,
+    `cs_print_target_find_packages`, `cs_print_state`, ...): "use when a target, a link or a package does not do what
+    you expect"; one docs page "Troubleshooting" with when-to-use-what; output stable in content, not in format.
+  * **Queries** (`cs_get_*`): only those a project has a real use for stay public and stable; the others become
+    `_cs_*` (internal, free to change).
+- Steps: inventory table (command, tier, used by csCMake / projects, keep / internal / rename), agree it, then rename
+  with MIGRATION entries; reference split by tier (core pages first, a "Utilities" section).
+
+**6c. Debug mechanism.**
+- Today: a cache option `<project>_CSCMAKE_DEBUG` (on/off for the whole configure), `cs_debug_message` prints
+  `STATUS` lines, ~116 call sites with ad-hoc text and hand-made indentation (`"  "`), no structure; the generated
+  Config has its own `<Ns>_DEBUG`.
+- CMake has the pieces for a mature design (3.17+): log levels (`message(VERBOSE|DEBUG|TRACE)`, `--log-level`,
+  `CMAKE_MESSAGE_LOG_LEVEL`), `CMAKE_MESSAGE_INDENT` (a list: append on entry, automatically restored at function
+  exit), `CMAKE_MESSAGE_CONTEXT` + `--log-context` (`[myProject.cs_finalize_target.mylib]` prefixes, filterable).
+- Proposal (to agree):
+  * levels: `VERBOSE` what csCMake does (one line per target / component / package), `DEBUG` why (resolved
+    dependencies, components, generated files), `TRACE` everything (properties, paths);
+  * nesting: each `cs_*` command pushes its name on the context and indents its sub-steps (dependency walk shown
+    as a tree);
+  * scoping: the switch is a normal variable read at each message, so it can be set around a call
+    (`set(<project>_CSCMAKE_DEBUG ON)` ... `unset(...)`) or per target (a `CSCMAKE_DEBUG` target property); maybe
+    `cs_debug(PUSH <level>)` / `cs_debug(POP)`;
+  * the same conventions in the generated Config (`find_package` diagnostics: which components, which dependencies);
+  * a review of every message: says what happens and to what, no internal variable names without context;
+  * tests: configure with the switch and check the structure of the output (levels, context, indent).
+- Open question: keep `<project>_CSCMAKE_DEBUG` as the on switch (forcing the level), or rely on `--log-level`
+  only (standard, but global to all projects of the build).
+
+**Release before Phase 6:** `dev` -> `main` as **v0.4.0** (docs theme, landing page, `variants.json`): additive, no
+API change. 1.0.0 after Phase 6 and the migration of the remaining projects (csopencvcpu, csopencvcuda, csqt6).
+
+### Tracking after Phase 6 (decided: a TODO file, user 2026-11-10)
+PLAN.md (1200+ lines) is a session log more than a tracker; GitHub issues are too much for now. At 1.0 ("Clean first
+stable release"): open items -> one `TODO.md` (sections per area: API, debug, presets, docs, smoke, other projects;
+one checkbox line per item, a short note or a link to the design); decisions -> docs "Design decisions"; user-visible
+changes -> `CHANGELOG.md`; agent working rules stay in CLAUDE.md. Until then PLAN.md stays the tracker.
+
 ### Documentation appeal (future, user 2026-11-10)
-- [ ] Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
+- [x] (done) Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
   pydata-sphinx-theme as alternative).
-- [ ] Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
+- [x] (done) Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
   a package with components and its generated `<Package>Config.cmake`, Debug / Release side by side in one prefix, a
   custom Paranoid configuration with sanitizers, one preset per platform / compiler, DLLs found in the Visual Studio
   debugger, install RPATH; who it is for and when not to use it.
-- [ ] A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
+- [x] (done, `docs/advanced/design-decisions.md`) A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
   RPATH per target, include folders per configuration, gersemi + own linter, ...).
 
 ### Clean first stable release (future, user 2026-11-10, to decide)
@@ -504,7 +564,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 
 ### cscmake ↔ csorchestrator alignment (future)
 - [ ] csorchestrator keeps its own copy of the supported matrix (`frontend/cscmake_presets/supported_variants.py` + `domain/context/*`); `src/cscmake/presets/registry.py` is the source of truth. Prevent silent drift **without a code dependency in either direction**: csCMake is checked out next to projects (never pip-installed) and must not be checked out automatically by csorchestrator.
-  - csCMake: the generator also writes a committed manifest `presets/csv1/variants.json` (per variant: id, os/os_version/architecture/variant/compiler/compiler_version/generator/generator_type, short forms). Kept in sync by the `generate-csv1-presets` hook and the sync test — a data contract, not code.
+  - [x] (done 2026-11-10) csCMake: the generator also writes a committed manifest `presets/csv1/variants.json` (per variant: id, os/os_version/architecture/variant/compiler/compiler_version/generator/generator_type, short forms). Kept in sync by the `generate-csv1-presets` hook and the sync test — a data contract, not code.
   - csorchestrator: a test loads `variants.json` from an already-present csCMake checkout (sibling `../csCMake`, or a path given via env var / pytest option) and asserts its own `get_supported_context_os_architecture_list()` + `short_*` match it exactly. Skipped (not failed) when no checkout is found; never clones. In csorchestrator CI the checkout is an explicit workflow step (`actions/checkout` of csCMake at a pinned ref), not done by csorchestrator code.
   - Adding a variant in csCMake then makes csorchestrator's test fail until it catches up (or is pinned to the older ref).
 
@@ -520,7 +580,8 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a-4g done; 4h (gersemi + `cscmake-lint`, cmakelang removed, Python 3.15 in CI) under review; then sign-off. |
+| 4 | done | Signed off 2026-11-10: 4a-4h on `dev` (coverage, complexity, smoke gaps, install RPATH, side effects, `modules/` layout, gersemi + `cscmake-lint`, Python 3.15); released in v0.3.0 (release run green, 4 assets). |
+| 6 | proposed | API review before 1.0 (user 2026-11-10): 6a code review, 6b API tiers, 6c debug; to agree on the plan first. |
 | 5 | done | Signed off 2026-11-10: v0.2.0 released (package, docs, checksums; `release.yml` with `ci` / `smoke` / `docs` as reusable workflows), csfoundation `dev` green on third_party_base_libs `v0.1.0-rc5`; `feature/productize` branches deleted (19 repositories). Next release: v0.3.0. |
 
 ## CHANGELOG
@@ -1221,3 +1282,30 @@ package is not released; pre-release tags are GitHub pre-releases.
   checked merged into `origin/dev` first).
 - v0.3.0 (user): `pyproject.toml` 0.3.0, CHANGELOG "Unreleased" -> "v0.3.0" (fixes of 4c-4f and the include folders,
   install RPATH, gersemi, the `modules/` reorganisation); release from `main` as v0.2.0 (`dev` -> `main`, tag).
+
+### 2026-11-10 (v0.3.0 tag moved; documentation appeal)
+- v0.3.0: the Windows / Python 3.15 CI job failed installing gersemi (no wheel: its Rust backend built from source, and
+  Git Bash's `link.exe` came before MSVC's). Fix (user: split, explained): a Windows-only install step in `pwsh`,
+  Linux / macOS keep bash. The fix commit was amended on `dev` (force-push); rewriting `main` was refused by the
+  permission check, so `main` got a normal merge of the amended `dev` (Git combined the two fixes: corrected by a commit
+  taking `dev`'s `ci.yml`, `main` = `dev` again) and the tag `v0.3.0` was moved to it (`510bcdf`, not yet published
+  before).
+- Documentation appeal (user away, done alone; uncommitted for review): Furo theme (light / dark, "view / edit this
+  page" links to GitHub), sphinx-design (cards, tabs); dev deps `furo>=2024.8.6`, `sphinx-design>=0.6.1` (pinned in
+  the constraints). Landing page `docs/index.md`: what csCMake is, cards to the main entry points, what it solves with
+  three with / without csCMake examples (a package with components, configurations side by side with a custom one,
+  presets), the rest in short, who it is for and when not (not a package manager); the toctrees hidden there (they
+  drive the sidebar). New `docs/advanced/design-decisions.md` (the decisions worth keeping from this PLAN). README map,
+  CHANGELOG "Unreleased".
+
+### 2026-11-10 (variants manifest, csCMake side of the csorchestrator alignment)
+- `cscmake-generate-presets` also writes `presets/csv1/variants.json` (`variants_manifest`): per variant the id, every
+  field and its short form, the generator type and the build configurations of its workflow presets (42 variants).
+  Covered by `--check` / the `generate-csv1-presets` hook like the presets; test that every id has its `-ALL` preset.
+  Docs: presets internals. Next (csorchestrator): a test comparing its matrix to this file, then follow it.
+
+### 2026-11-10 (Phase 4 sign-off, Phase 6 proposed)
+- Phase 4 signed off: v0.3.0 release run green on GitHub (assets: package tar.gz / zip, docs zip, `SHA256SUMS`).
+- Phase 6 proposed (user): a general code review first (reuse, antipatterns, unused public commands dropped), public
+  API tiers (core / inspection / queries), a structured debug mechanism (log levels, context, indentation, scoped
+  switch), before 1.0. Tracking after 1.0: a `TODO.md`, not GitHub issues. v0.4.0 from `dev` (user): `pyproject.toml` 0.4.0, CHANGELOG "Unreleased" -> "v0.4.0" (variants.json, documentation site).

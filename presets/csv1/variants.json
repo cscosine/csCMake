@@ -1,0 +1,1187 @@
+{
+  "schema": "csv1",
+  "variants": [
+    {
+      "id": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-x64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-x64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-x64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-arm64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-arm64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu22.04-arm64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu22.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u22.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-x64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-x64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu24.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u24.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-x64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-x64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-arm64-generic-gcc-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-arm64-generic-gcc-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "gcc",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "g",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninjamulticonfig",
+      "host": "linux",
+      "osVersion": "ubuntu26.04",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "clang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "l",
+        "osVersion": "u26.04",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "c",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-default-msvc2022",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "default",
+      "generator": "msvc2022",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "d",
+        "generator": "ms22"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-default-msvc2026",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "default",
+      "generator": "msvc2026",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "d",
+        "generator": "ms26"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-default-msvc2022",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "default",
+      "generator": "msvc2022",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "d",
+        "generator": "ms22"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-default-msvc2026",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "default",
+      "generator": "msvc2026",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "d",
+        "generator": "ms26"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "msvc_2022_17",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "22",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninjamulticonfig",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "msvc_2022_17",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "22",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-msvc_2022_17-ninja",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "msvc_2022_17",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "22",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-msvc_2022_17-ninjamulticonfig",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "msvc_2022_17",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "22",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-msvc_2026_18-ninja",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "msvc_2026_18",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "26",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvc-msvc_2026_18-ninjamulticonfig",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvc",
+      "compiler_version": "msvc_2026_18",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "m",
+        "compiler_version": "26",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninja",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "msvc_2026_18",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "26",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninjamulticonfig",
+      "host": "windows",
+      "osVersion": "v10",
+      "architecture": "x64",
+      "architectureVariant": "generic",
+      "compiler": "msvcclang",
+      "compiler_version": "msvc_2026_18",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "w",
+        "osVersion": "v10",
+        "architecture": "x64",
+        "architectureVariant": "g",
+        "compiler": "mc",
+        "compiler_version": "26",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos15-arm64-generic-appleclang-default-ninja",
+      "host": "macos",
+      "osVersion": "macos15",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m15",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos15-arm64-generic-appleclang-default-ninjamulticonfig",
+      "host": "macos",
+      "osVersion": "macos15",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m15",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos15-arm64-generic-appleclang-default-xcode",
+      "host": "macos",
+      "osVersion": "macos15",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "xcode",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m15",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "xc"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja",
+      "host": "macos",
+      "osVersion": "macos26",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "ninja",
+      "generator_type": "singleconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m26",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "n"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos26-arm64-generic-appleclang-default-ninjamulticonfig",
+      "host": "macos",
+      "osVersion": "macos26",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "ninjamulticonfig",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m26",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "nm"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    },
+    {
+      "id": "csv1-macos-macos26-arm64-generic-appleclang-default-xcode",
+      "host": "macos",
+      "osVersion": "macos26",
+      "architecture": "arm64",
+      "architectureVariant": "generic",
+      "compiler": "appleclang",
+      "compiler_version": "default",
+      "generator": "xcode",
+      "generator_type": "multiconfig",
+      "short": {
+        "csVersion": "v1",
+        "host": "m",
+        "osVersion": "m26",
+        "architecture": "a64",
+        "architectureVariant": "g",
+        "compiler": "ac",
+        "compiler_version": "d",
+        "generator": "xc"
+      },
+      "build_configs": [
+        "debug",
+        "release",
+        "relWithDebInfo",
+        "paranoid",
+        "debug-release",
+        "debug-release-relWithDebInfo-paranoid"
+      ]
+    }
+  ]
+}

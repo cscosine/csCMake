@@ -9,3 +9,5 @@ sphinx==8.1.0
 sphinxcontrib-moderncmakedomain==3.29.0
 myst-parser==4.0.0
 sphinxcontrib-mermaid==1.0.0
+furo==2024.8.6
+sphinx-design==0.6.1

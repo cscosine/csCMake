@@ -32,6 +32,7 @@ from cscmake.presets.registry import (
     Architecture,
     ContextOsArchitectureCompilerGenerator,
     GeneratorType,
+    create_context_os_architecture_compiler_generator_string,
     create_context_os_architecture_compiler_generator_string_without_schema,
     get_supported_build_configs_for_generator_type,
     get_supported_context_os_architecture_list,
@@ -54,6 +55,8 @@ from cscmake.presets.render import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_DIR = REPO_ROOT / "presets" / "template"
 OUTPUT_DIR = REPO_ROOT / "presets" / "csv1"
+# the supported variants as data (variants_manifest), next to the presets; not a preset file: nothing includes it
+VARIANTS_JSON = "variants.json"
 SETUP_OUTPUT_DIR = REPO_ROOT / "presets"
 CS_PRESETS_ALL_JSON = "cs-presets-all.json"
 PROJECT_SETUP_PRESET = "csCMakeProjectSetup.json"
@@ -151,6 +154,8 @@ def generate_all_csv1_presets(template_dir: Path = TEMPLATE_DIR, output_dir: Pat
                 )
             )
 
+    generated.append(write_variants_manifest(output_dir))
+
     # a single preset file that includes all the *-ALL presets
     include_lines = ",\n".join(f'        "{f}"' for f in sorted(set(generated_all)))
     rendered = render_template(
@@ -215,6 +220,44 @@ def generate_project_setup_presets(template_dir: Path = TEMPLATE_DIR, output_dir
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8", newline="\n")
     return list(PROJECT_SETUP_PRESETS)
+
+
+def variants_manifest() -> dict[str, Any]:
+    """Return the supported variants as data: for tools that must follow the registry without importing csCMake.
+
+    One entry per variant: its id (as in the preset names), every field and its short form (as in the short build
+    folders), the generator type and the build configurations of the workflow presets.
+    """
+    variants = []
+    for ctx in get_supported_context_os_architecture_list():
+        subs = build_substitutions(ctx)
+        generator_type = ctx.context_compiler_generator.build_generator.generator_type
+        fields = [
+            "host",
+            "osVersion",
+            "architecture",
+            "architectureVariant",
+            "compiler",
+            "compiler_version",
+            "generator",
+        ]
+        variants.append(
+            {
+                "id": create_context_os_architecture_compiler_generator_string(ctx),
+                **{field: subs[field] for field in fields},
+                "generator_type": generator_type.value,
+                "short": {field: subs[f"{field}_short"] for field in ["csVersion", *fields]},
+                "build_configs": [c.value for c in get_supported_build_configs_for_generator_type(generator_type)],
+            }
+        )
+    return {"schema": CS_SCHEMA_VERSION, "variants": variants}
+
+
+def write_variants_manifest(output_dir: Path) -> str:
+    """Write ``variants.json`` (:func:`variants_manifest`) into ``output_dir``; return its file name."""
+    text = json.dumps(variants_manifest(), indent=2) + "\n"
+    (output_dir / VARIANTS_JSON).write_text(text, encoding="utf-8", newline="\n")
+    return VARIANTS_JSON
 
 
 def check_presets_up_to_date(
