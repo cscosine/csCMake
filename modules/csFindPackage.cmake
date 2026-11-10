@@ -37,6 +37,8 @@ include(modules/csInternal)
 macro(cs_find_package target_name propagate_mode)
   cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
 
+  # the mode is checked before find_package runs
+  _cs_check_find_package_mode("${target_name}" "${propagate_mode}")
   # this has to be a macro, because some find_package out variable needs to be visible to the caller
   find_package(${ARGN})
   _cs_add_find_package_args_to_target("${target_name}" "${propagate_mode}" "${ARGN}")
@@ -65,8 +67,14 @@ function(_cs_print_target_find_packages target_name)
   endif()
 endfunction()
 
-# Record the find_package arguments ARGN of target_name when propagate_mode is PUBLIC; fail if it is neither PUBLIC nor
-# PRIVATE.
+# Fail unless propagate_mode is PUBLIC or PRIVATE (cs_find_package, before find_package runs).
+function(_cs_check_find_package_mode target_name propagate_mode)
+  if(NOT propagate_mode MATCHES "^(PUBLIC|PRIVATE)$")
+    message(FATAL_ERROR "[cs_find_package] ${target_name}: the mode is PUBLIC or PRIVATE, got ${propagate_mode}")
+  endif()
+endfunction()
+
+# Record the find_package arguments ARGN of target_name when propagate_mode is PUBLIC.
 #
 # Writes:
 #
@@ -75,9 +83,6 @@ function(_cs_add_find_package_args_to_target target_name propagate_mode)
   list(JOIN ARGN " " joined_argn)
   cs_debug_message("[_cs_add_find_package_args_to_target] target ${target_name} arguments ${joined_argn}")
 
-  if(NOT propagate_mode MATCHES "^(PUBLIC|PRIVATE)$")
-    message(FATAL_ERROR "[cs_find_package] ${target_name}: the mode is PUBLIC or PRIVATE, got ${propagate_mode}")
-  endif()
   if(propagate_mode STREQUAL "PUBLIC")
     _cs_add_to_target_property_unique_value("${target_name}" CSCMAKE_FIND_PACKAGES "${joined_argn}")
   endif()

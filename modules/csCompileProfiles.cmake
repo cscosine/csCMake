@@ -337,7 +337,7 @@ endfunction()
 # Reads:
 #
 # * target property _CSCMAKE_CLANG_TIDY_CONDITIONS
-# * cache variable CLANG_TIDY_EXE: the clang-tidy executable (find_program)
+# * cache variable CSCMAKE_CLANG_TIDY_EXE: the clang-tidy executable (find_program)
 #
 # Writes:
 #
@@ -356,16 +356,16 @@ function(_cs_apply_clang_tidy target_name)
     endif()
     return()
   endif()
-  find_program(CLANG_TIDY_EXE NAMES clang-tidy)
-  if(NOT CLANG_TIDY_EXE OR NOT EXISTS "${CLANG_TIDY_EXE}")
+  find_program(CSCMAKE_CLANG_TIDY_EXE NAMES clang-tidy)
+  if(NOT CSCMAKE_CLANG_TIDY_EXE OR NOT EXISTS "${CSCMAKE_CLANG_TIDY_EXE}")
     message(
       FATAL_ERROR
       "[cs_finalize_target] clang-tidy is required: the compile profiles of ${target_name} run it in "
-      "this build (install it, or set CLANG_TIDY_EXE)"
+      "this build (install it, or set CSCMAKE_CLANG_TIDY_EXE)"
     )
   endif()
   list(JOIN terms "," joined)
-  set_property(TARGET ${target_name} PROPERTY CXX_CLANG_TIDY "$<$<OR:${joined}>:${CLANG_TIDY_EXE}>")
+  set_property(TARGET ${target_name} PROPERTY CXX_CLANG_TIDY "$<$<OR:${joined}>:${CSCMAKE_CLANG_TIDY_EXE}>")
 endfunction()
 
 # Return in out the conjunction of the two generator expression conditions ("" = always).
@@ -407,7 +407,7 @@ endfunction()
 # Variables
 # ^^^^^^^^^
 #
-# .. variable:: CLANG_TIDY_EXE
+# .. variable:: CSCMAKE_CLANG_TIDY_EXE
 #
 #   Cache variable: the clang-tidy executable (``find_program``), when a compile profile runs clang-tidy.
 #

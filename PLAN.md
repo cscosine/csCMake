@@ -130,7 +130,7 @@ Cleanup:
   instead of the command the user called; one wording.
 - [x] (done) C3 `_cs_add_target_to_project_targets` checks `CSCMAKE_<CONFIG>_POSTFIX` and the MSVC runtime variable per
   configuration to detect a missing `cs_initialize_project`: one check of `CSCMAKE_NAMESPACE` with a clear message.
-- [ ] (-> 6b) C4 `find_program(CLANG_TIDY_EXE ...)`: an unprefixed cache variable (could clash with a project's own):
+- [x] (6b-1) C4 `find_program(CLANG_TIDY_EXE ...)`: an unprefixed cache variable (could clash with a project's own):
   `CSCMAKE_CLANG_TIDY_EXE`, documented (MIGRATION).
 - [x] (done for the dead branch; the printers with D2) C5 dead code: the empty `elseif(propagate_mode STREQUAL "PRIVATE")` branch, `set(targets "")` before a getter,
   the `count GREATER 0` / `list(LENGTH)` dances in the printers.
@@ -163,6 +163,20 @@ Cleanup:
   (+ `cs_debug_message`, pending 6c): 22 instead of 43.
 
 Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public commands are the last 6a step.
+
+**6b plan (agreed, user 2026-11-11):**
+- [x] (done, under review) 6b-1: C4 `CLANG_TIDY_EXE` -> `CSCMAKE_CLANG_TIDY_EXE`; `cs_find_package` checks `PUBLIC` / `PRIVATE` before
+  `find_package` runs.
+- [ ] 6b-2 (D3): keep `cs_target_link_libraries`, and fail fast: links added after `cs_finalize_target` fail at the call.
+- [ ] 6b-3 (D4): `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|
+  ExactVersion)`, default `SameMajorVersion`.
+- [ ] 6b-4 (D6): `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (keywords after the target, like the
+  other `cs_target_*` commands and `install(... COMPONENT)`; breaking, MIGRATION); `cs_find_package(<target>
+  PUBLIC|PRIVATE ...)` kept (scope after the target, like `target_link_libraries`).
+- [ ] 6b-5 (D2): `cs_print_target(<target>)` and `cs_print_project()`, always printing, instead of
+  `cs_print_target_properties` / `cs_print_state` (MIGRATION); the 6c conventions later.
+- [ ] 6b-6: reference grouped by tier (core, features, queries, troubleshooting); the troubleshooting page says when to
+  use which printer.
 
 **6b. Public API surface: core vs utilities.**
 - Today: ~43 public `cs_*` commands in one flat namespace. Consumers (csfoundation, trackers, scanned 2026-11-10)
@@ -441,3 +455,9 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `cs_get_namespace`, `cs_get_default_build_configurations`, the 7 component getters, the 5 per-target getters, 6
   printers. Public: 22 (9 core, 5 features, 5 queries, 2 printers, `cs_debug_message`). MIGRATION rows with what to use;
   user docs (install, targets) no longer name them; csPackageConfig has no public command (its page: properties).
+
+### 2026-11-11 (Phase 6b — plan, 6b-1)
+- 6b plan agreed (user): D3 keep `cs_target_link_libraries` and fail fast; D4 `VERSION_COMPATIBILITY`, default
+  `SameMajorVersion`; D6 `cs_install_target(<target> COMPONENT <c> [DEFAULT])`, `cs_find_package` kept; D2 two
+  printers; reference by tier.
+- 6b-1: `CSCMAKE_CLANG_TIDY_EXE` (MIGRATION); `cs_find_package` checks its mode before `find_package` (test).

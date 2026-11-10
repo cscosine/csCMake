@@ -71,7 +71,7 @@ To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_D
   finalized.
 
 `[cs_finalize_target] clang-tidy is required: the compile profiles of <target> run it in this build`
-: Install clang-tidy, or give its path with `-DCLANG_TIDY_EXE=<path>`; or restrict the `CLANG_TIDY` rule to the
+: Install clang-tidy, or give its path with `-DCSCMAKE_CLANG_TIDY_EXE=<path>`; or restrict the `CLANG_TIDY` rule to the
   compilers and platforms where it is available.
 
 `[csCMake] clang-tidy (compile profiles) is not run with the <generator> generator`

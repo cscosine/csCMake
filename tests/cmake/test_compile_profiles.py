@@ -182,7 +182,7 @@ def test_clang_tidy_is_mandatory_where_the_rule_matches(tmp_path: Path, configs:
         tmp_path,
         _body(rules, "cs_target_use_compile_profiles(lib tidy)\n"),
         FILES,
-        args=["-DCLANG_TIDY_EXE=/nonexistent/clang-tidy"],
+        args=["-DCSCMAKE_CLANG_TIDY_EXE=/nonexistent/clang-tidy"],
     )
 
     if required:

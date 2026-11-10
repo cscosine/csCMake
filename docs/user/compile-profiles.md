@@ -54,7 +54,7 @@ samples) can set its own before creating its targets.
 
 A rule with `CLANG_TIDY` (or the profile `cscmake_clang_tidy`) runs clang-tidy on the sources of the target while
 compiling them, with the checks of the `.clang-tidy` file of the project. Where such a rule matches the build, the
-configure fails without clang-tidy (install it, or set `CLANG_TIDY_EXE`). The Visual Studio and Xcode generators do
+configure fails without clang-tidy (install it, or set `CSCMAKE_CLANG_TIDY_EXE`). The Visual Studio and Xcode generators do
 not run it: csCMake prints a warning.
 
 ## Profiles shipped with csCMake

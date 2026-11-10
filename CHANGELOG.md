@@ -18,6 +18,10 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 - A custom configuration creates cache entries only for the per-configuration variables defined for its base (e.g. 6
   instead of 65 for a C++ project: no empty `CMAKE_Fortran_FLAGS_PARANOID` ...).
 
+- The clang-tidy executable of the compile profiles: cache variable `CSCMAKE_CLANG_TIDY_EXE` (was `CLANG_TIDY_EXE`, a
+  name projects may use themselves).
+- `cs_find_package` checks its mode (`PUBLIC` / `PRIVATE`) before `find_package` runs.
+
 ### New
 
 - Compile profile rules take `LANGUAGES <language>...`: the source languages of their compile options and definitions,

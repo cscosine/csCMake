@@ -186,3 +186,18 @@ def test_many_paths_between_components_are_checked_once(tmp_path: Path) -> None:
     result = configure(tmp_path, "\n".join(lines) + "\n", timeout=60)
 
     assert result.returncode == 0, result.output
+
+
+def test_a_wrong_find_package_mode_fails_before_the_search(tmp_path: Path) -> None:
+    """The mode is checked first: the error names it, not the package that does not exist."""
+    body = """
+project(C VERSION 1.0.0 LANGUAGES NONE)
+cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
+cs_add_library(lib INTERFACE)
+cs_find_package(lib PUBLIK NotAPackage REQUIRED)
+"""
+    result = configure(tmp_path, body)
+
+    assert result.returncode != 0
+    assert "[cs_find_package] lib: the mode is PUBLIC or PRIVATE, got PUBLIK" in " ".join(result.output.split())
+    assert "NotAPackage" not in result.output
