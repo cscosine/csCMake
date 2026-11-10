@@ -850,3 +850,15 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 - `f95e2eb`: Visual Studio debugger environment `PATH=<runtime library folders>;%PATH%` per configuration with runtime
   libraries, unset otherwise (it emptied `PATH` for every target without imported DLLs); configure test
   `test_visual_studio_debugger_path`. The debugger itself is checked on Windows only.
+- csfoundation CI on the feature branch (user): its workflow runs on pushes to `main` / `dev` only, and the manual run
+  needs the workflow on the default branch (`main` has the older `csBaseLibs.yml`). `csfoundation_project.py` passes
+  `on_push_branches=["main", "dev", "feature/productize"]` to `create_default_orchestrator`, workflow regenerated
+  (`generate-github-workflow`, also the first check of the pass test). **When merging into `dev`**: remove
+  `feature/productize` there and set `common_repo_ref` back to `"dev"`, regenerate; remove `feature/**` from the csCMake
+  workflows. The local pass test was stopped (user: test in CI) after GCC and half of Clang, all passing.
+- csfoundation CI, Windows clang-cl: csCore `math/CMakeLists.txt` adds `-Wall` to `Angles.cpp` on clang-cl (where it
+  means `-Weverything`); the old strict target turned the C++98 compatibility warnings off for clang-cl, the new
+  `cscmake_warnings` (`/W4`) did not, so `/WX` made them errors. Fixed in csCMake (user: csCMake the source of truth,
+  production code unchanged): `cscmake_warnings` adds `-Wno-c++98-compat -Wno-c++98-compat-pedantic` on Clang and
+  AppleClang (clang-cl included); configure test `test_warnings_turn_off_the_cpp98_compatibility_warnings_on_clang`.
+  `-Wno-c++20-extensions` (old target) left out until a build needs it.

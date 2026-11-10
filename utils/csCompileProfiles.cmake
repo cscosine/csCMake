@@ -16,6 +16,7 @@
 #
 # ``cscmake_warnings``
 #   High warning level, the same essential checks on every compiler.
+#   Clang, AppleClang (also clang-cl): the C++98 compatibility warnings off.
 #
 # ``cscmake_warnings_as_errors``
 #   ``-Werror`` / ``/WX``.
@@ -465,6 +466,12 @@ function(_cs_add_cscmake_compile_profiles)
     COMPILERS GNU
     COMPILE_OPTIONS -Wstrict-null-sentinel -Wlogical-op -Wduplicated-cond -Wduplicated-branches
                     -Wmisleading-indentation)
+  # Clang: C++98 compatibility warnings, noise in a project at C++11 or later (on with -Weverything, and with -Wall on
+  # clang-cl, where it means -Weverything)
+  cs_add_compile_profile_rule(
+    PROFILE cscmake_warnings
+    COMPILERS Clang AppleClang
+    COMPILE_OPTIONS -Wno-c++98-compat -Wno-c++98-compat-pedantic)
   # MSVC and clang-cl (MSVC command line)
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings

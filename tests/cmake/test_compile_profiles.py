@@ -136,6 +136,20 @@ def test_hardening_levels(tmp_path: Path, profile: str, mode: str) -> None:
     )
 
 
+def test_warnings_turn_off_the_cpp98_compatibility_warnings_on_clang(tmp_path: Path) -> None:
+    result = configure(
+        tmp_path,
+        _body("", "cs_target_use_compile_profiles(lib cscmake_warnings)\n", " DEFAULT_COMPILE_PROFILES NONE"),
+        FILES,
+    )
+
+    assert result.returncode == 0, result.output
+    assert (
+        "$<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-c++98-compat;-Wno-c++98-compat-pedantic>"
+        in result.reports["COMPILE_OPTIONS"]
+    )
+
+
 def test_unknown_profile(tmp_path: Path) -> None:
     result = configure(tmp_path, _body("", "cs_target_use_compile_profiles(lib nope)\n"), FILES)
 

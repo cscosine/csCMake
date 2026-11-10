@@ -78,6 +78,7 @@ not run it: csCMake prints a warning.
 | implicit fallthrough in a switch | `-Wimplicit-fallthrough` | |
 | shadowed variables | `-Wshadow` | (`/W4`) |
 | old-style casts, `0` / `NULL` as pointer | `-Wold-style-cast -Wzero-as-null-pointer-constant` | |
+| C++98 compatibility (off) | Clang, AppleClang, clang-cl: `-Wno-c++98-compat -Wno-c++98-compat-pedantic` | |
 | uninitialized, unused, format | `-Winit-self -Wuninitialized -Wunused -Wformat=2` | |
 | other | `-Wfloat-equal -Wcast-align -Wnull-dereference`; GCC: `-Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wmisleading-indentation -Wstrict-null-sentinel` | `/w14296 /w14905 /w14906 /w14928 /w14640` |
 
