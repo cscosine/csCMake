@@ -19,6 +19,7 @@ dependencies = []
 cscmake-generate-presets = "cscmake.presets.generate:main"
 cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
 cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
+cscmake-check-docs = "cscmake.devtools.check_docs:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

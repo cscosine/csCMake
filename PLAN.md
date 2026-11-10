@@ -206,8 +206,9 @@ variables, properties, preset environment variables, default targets) guides the
   and publishing work. CLAUDE.md keeps the short rules and links to it.
 - **Versioned documentation**: decided (user): each release tag publishes its documentation with the release (see
   Phase 5 "Release package"); GitHub Pages shows the docs of `main`.
-- **3e — Doc checks**: references and anchors: `sphinx-build -W -n` (in `docs.yml`); still to add: every public `cs_*`
-  has a `.. command::` entry, every csCMake variable / property used in the code has an entry (a small check, in CI).
+- **3e — Doc checks** (done): references and anchors: `sphinx-build -W -n` (in `docs.yml`); completeness:
+  `cscmake-check-docs` (pre-commit hook, so also CI): every public `cs_*` has its `.. command::` block, every csCMake
+  variable / property used in the code has an entry and every entry is used, every documented module has its page.
   Tutorial snippets equal the smoke files by construction (`literalinclude`).
 - **3m — macOS** (early, right after 3a step 1, so the smoke tests find the macOS issues before 3b hardening and the
   docs): the registry has stubs only (`OS.MACOS`, `Compiler.APPLE_CLANG` + short `ac`, presets `cs-host-macos`,
@@ -326,7 +327,7 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b, 3c done; 3d (docs, steps 1-6) done, under review; next 3e (doc checks), 3f (csfoundation). Pages: Settings → Pages → Source "GitHub Actions" (user). |
+| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b, 3c, 3d done; 3e (doc checks) done, under review; next 3f (csfoundation). Pages: Settings → Pages → Source "GitHub Actions" (user). |
 | 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
@@ -796,3 +797,14 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   `CSCMAKE_STRICT_BUILD_CONFIGURATION`) now say "removed"; links to the docs instead of README sections; a pointer to
   the documentation of the new API.
 - Skill: the smoke projects are described in `docs/advanced/smoke-tests.md` and the tutorials.
+
+### 2026-11-10 (Phase 3e — documentation checks)
+- `cscmake-check-docs` (`src/cscmake/devtools/check_docs.py`, stdlib): every public `cs_*` function / macro has a
+  `.. command::` block of the same name right above it (and no block elsewhere); every csCMake variable / property used
+  by the code (`CSCMAKE_*`, `_CSCMAKE_*`, `<prefix>_CSCMAKE_*`; `${...}` parts as placeholders) matches a
+  `variable` / `prop_tgt` / `prop_gbl` entry (entry placeholders match anything) and every entry is used (names outside
+  this naming, `CLANG_TIDY_EXE`, as written); every module with a reference header has its `docs/reference` page.
+  Problems as `<file>:<line>: <message>`. On this repository: 42 commands, 50 entries, 53 names, no problem.
+- Pre-commit hook `check-docs` (on the CMake modules and `docs/reference`), so also in CI; tests
+  (`test_check_docs.py`: the repository, each kind of problem on a small fake repository, name extraction, placeholders).
+- Documented in `docs/contributing/documentation.md` ("Completeness check"), `docs/contributing/code.md`, `CLAUDE.md`.

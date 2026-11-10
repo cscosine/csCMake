@@ -28,6 +28,7 @@ cscmake-generate-presets                            # regenerate presets/csv1
 cscmake-generate-presets --check                    # verify presets/csv1 is in sync
 sphinx-build -W -n docs docs/_build/html            # documentation (reference from the #.rst: blocks); CI: docs.yml
 cscmake-update-cmake-inventory                      # refresh docs/_inventories (after changing CMAKE_DOCS_VERSION)
+cscmake-check-docs                                  # every public command, variable, property documented (pre-commit)
 ```
 
 ## Rules
@@ -88,5 +89,5 @@ cscmake-update-cmake-inventory                      # refresh docs/_inventories 
   `ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src tests && lint-imports
   && python -m pytest && cscmake-generate-presets --check && cmake-format --check csCMake.cmake utils/*.cmake
   && cmake-lint csCMake.cmake utils/*.cmake && cscmake-cmake-template format --check templates/*.cmake.in
-  && cscmake-cmake-template lint templates/*.cmake.in && sphinx-build -W -n -q docs docs/_build/html`.
+  && cscmake-cmake-template lint templates/*.cmake.in && cscmake-check-docs && sphinx-build -W -n -q docs docs/_build/html`.
 - Do not run CI locally (no recreating the CI matrix / minimum-deps venvs); the user runs CI on GitHub.

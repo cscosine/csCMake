@@ -84,6 +84,15 @@ repos:
         language: system
         files: \.cmake\.in$
 
+      # reference documentation complete: every public command, variable and property of the CMake modules has its
+      # #.rst: entry (cscmake.devtools.check_docs); requires the dev venv, like generate-csv1-presets
+      - id: check-docs
+        name: Check the reference documentation
+        entry: cscmake-check-docs
+        language: system
+        pass_filenames: false
+        files: ^(csCMake\.cmake|utils/.*\.cmake|docs/reference/.*)$
+
       # requires the dev venv, like generate-csv1-presets
       - id: import-linter
         name: Import Linter

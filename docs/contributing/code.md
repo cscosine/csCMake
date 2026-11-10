@@ -65,6 +65,7 @@ python -m pytest --run-all                # + smoke builds of the variants of th
 cscmake-generate-presets --check
 cmake-format --check csCMake.cmake utils/*.cmake && cmake-lint csCMake.cmake utils/*.cmake
 cscmake-cmake-template format --check templates/*.cmake.in && cscmake-cmake-template lint templates/*.cmake.in
+cscmake-check-docs
 sphinx-build -W -n docs docs/_build/html
 ```
 
@@ -77,6 +78,8 @@ sphinx-build -W -n docs docs/_build/html
 - `cmake-format` and `cmake-lint` for `csCMake.cmake` and `utils/`; for `templates/*.cmake.in` through
   `cscmake-cmake-template`, which swaps the `@VAR@` placeholders for parseable stand-ins and restores them;
 - `generate-csv1-presets`: regenerates the presets, and fails when that changes files (stage them and commit again);
+- `check-docs`: every public command, variable and property of the CMake modules is documented
+  (`cscmake-check-docs`, see [Contributing to the documentation](documentation.md#completeness-check));
 - `actionlint` for the GitHub workflows;
 - hygiene checks (YAML and JSON validity, whitespace, line endings, private keys, ...), and a hook that fails when
   changes are left unstaged.

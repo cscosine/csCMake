@@ -47,6 +47,20 @@ The `docs` workflow (`.github/workflows/docs.yml`):
 Release tags will also attach the built documentation to the GitHub Release (planned: `PLAN.md`, "Phase 5 — Release
 package").
 
+### Completeness check
+
+`cscmake-check-docs` (a pre-commit hook, also in CI through pre-commit) checks what the documentation build cannot
+see:
+
+- every public `cs_*` function or macro has a `.. command::` block of the same name right above it, and no
+  `.. command::` block is left elsewhere;
+- every csCMake variable or property the code uses (`CSCMAKE_*`, `_CSCMAKE_*`, `<prefix>_CSCMAKE_*`) has a
+  `.. variable::` / `.. prop_tgt::` / `.. prop_gbl::` entry, and every entry is used. A name built from variables
+  (`CSCMAKE_${config}_POSTFIX`) matches an entry with placeholders (`CSCMAKE_<CONFIG>_POSTFIX`);
+- every documented module has its `docs/reference/<module>.rst` page.
+
+It prints each problem as `<file>:<line>: <message>`.
+
 ## Documenting CMake code
 
 ### A module
