@@ -3,7 +3,9 @@
 The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
 Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
 
-## Unreleased
+## v0.4.0 (2026-11-10)
+
+The documentation site and the supported variants as data. No change of the `cs_*` commands or of the presets.
 
 ### New
 
