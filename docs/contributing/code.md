@@ -68,5 +68,19 @@ cscmake-cmake-template format --check templates/*.cmake.in && cscmake-cmake-temp
 sphinx-build -W -n docs docs/_build/html
 ```
 
-`pre-commit run --all-files` runs most of them on the staged files. CI (`.github/workflows/`) runs the checks and tests
+### Pre-commit hooks
+
+`pre-commit install` (done by `setup.sh`) runs on every commit, on the staged files:
+
+- `ruff` (lint and format) and `mypy` (strict) for Python; `import-linter` (layers of `src/cscmake`, in
+  `pyproject.toml`);
+- `cmake-format` and `cmake-lint` for `csCMake.cmake` and `utils/`; for `templates/*.cmake.in` through
+  `cscmake-cmake-template`, which swaps the `@VAR@` placeholders for parseable stand-ins and restores them;
+- `generate-csv1-presets`: regenerates the presets, and fails when that changes files (stage them and commit again);
+- `actionlint` for the GitHub workflows;
+- hygiene checks (YAML and JSON validity, whitespace, line endings, private keys, ...), and a hook that fails when
+  changes are left unstaged.
+
+`pre-commit run --all-files` runs them on every file. The documentation build is not a hook: build it before pushing a
+documentation change. CI (`.github/workflows/`) runs the checks and tests
 on Linux, Windows and macOS (`ci`), the smoke projects on every variant (`smoke`) and the documentation build (`docs`).

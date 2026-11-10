@@ -5,6 +5,9 @@ There are **no deprecated aliases**: the old names are removed, a project using 
 `Unknown CMake command "<old name>"`. Apply the tables below (plain search and replace: CMake command names are
 case-insensitive, look for every spelling).
 
+The documentation of the new API: the [user guide](docs/user/getting-started.md) and the reference (see
+[README](README.md#documentation)).
+
 ## Functions
 
 Functions acting on a target are named `cs_target_*` (like CMake's `target_*`); every other public function is
@@ -31,7 +34,7 @@ Getters and debug printers of the csCMake state. An install export is called a *
 | `cs_print_all_target` | `cs_print_project_targets` |
 | `cs_get_specified_build_configurations` | `cs_get_build_configurations` |
 | `cs_get_specified_build_configurations_default` | `cs_get_default_build_configurations` |
-| `csGetConfigurationWithStrictFlags` | `cs_get_strict_build_configuration` |
+| `csGetConfigurationWithStrictFlags` | removed: compile profiles choose the configurations (see "Compile options: compile profiles") |
 | `cs_get_install_folder_suffix` | `cs_get_install_include_dir` |
 | `cs_get_exported_list` | `cs_get_components` |
 | `cs_get_exported_list_default` | `cs_get_default_components` |
@@ -68,7 +71,7 @@ Every csCMake variable starts with `CSCMAKE_` (or `<project>_CSCMAKE_`).
 
 | Old | New | Kind |
 |---|---|---|
-| `WORKSPACE_ROOT` | `CSCMAKE_WORKSPACE_ROOT` | preset environment (`csCMakeProjectSetup-base*.json`) |
+| `WORKSPACE_ROOT` | `CSCMAKE_WORKSPACE_ROOT` | preset environment (set by the layouts, `presets/layout/*.json`) |
 | `CS_CMAKE_ROOT` | `CSCMAKE_ROOT` | preset environment |
 | `CS_CMAKE_PREFIX_PATH_PREFIX` / `CS_CMAKE_PREFIX_PATH_SUFFIX` | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | environment (passed by the presets) or `-D` |
 | `CS_CMAKE_CSV1_SUB_DIR`, `CS_CMAKE_CSV1_SUB_DIR_SHORT`, `CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | `CSCMAKE_CSV1_SUB_DIR`, `CSCMAKE_CSV1_SUB_DIR_SHORT`, `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | preset environment |
@@ -95,7 +98,7 @@ directly (`get_property` / `get_target_property`); otherwise use the getter func
 | `csCMakeConfigurationTypes` | `CSCMAKE_BUILD_CONFIGURATIONS` |
 | `csCMakeConfigurationTypesDefault` | `CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS` |
 | `csCMakeConfigurationVariables` | `CSCMAKE_PER_CONFIG_VARIABLES` |
-| `csCMakeConfigWithStrictFlags` | `CSCMAKE_STRICT_BUILD_CONFIGURATION` |
+| `csCMakeConfigWithStrictFlags` | removed (compile profiles) |
 | `csProjectTargets` | `CSCMAKE_<namespace>_PROJECT_TARGETS` |
 | `csExportedList` | `CSCMAKE_<namespace>_COMPONENTS` |
 | `csExportedListDefault` | `CSCMAKE_<namespace>_DEFAULT_COMPONENTS` |
@@ -228,7 +231,7 @@ Action: add the missing calls, and move `cs_finalize_target` after the last `cs_
 
 `csCMakeProjectSetup-base.json` / `-base-standalone.json` are replaced by `presets/csCMakeProjectSetup.json` (preset
 `cscmake-common-project-setup`); a project defining its own setup inherits it and sets `CSCMAKE_WORKSPACE_ROOT`,
-`CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (see README, "Project setup presets").
+`CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (see [Presets](docs/user/presets.md#layouts)).
 
 ### Compile options: compile profiles
 
@@ -240,6 +243,6 @@ Action: add the missing calls, and move `cs_finalize_target` after the last `cs_
 | `cs_exec_clang_tidy(<t>)` | a rule with `PROFILES cscmake_clang_tidy` (or `CLANG_TIDY`) with the configurations / compilers / platforms where it runs, used by `<t>`; checks in `.clang-tidy` |
 | `cs_compileEachInstalledInclude(<t> <ns>::<project>_csCMakeCompileOptionsStrict)` | `cs_target_check_installed_headers(<t> COMPILE_PROFILES cscmake_strict_warnings)` |
 
-`cs_get_strict_build_configuration` and the target property `CXX_CLANG_TIDY` set by `cs_exec_clang_tidy` are gone.
+`csGetConfigurationWithStrictFlags` and the target property `CXX_CLANG_TIDY` set by `cs_exec_clang_tidy` are gone.
 Differences: the warnings are private to each target (not propagated to consumers); clang-cl gets the MSVC-style
-`/W4 /permissive-` instead of the GCC-style list; MSVC gets the off-by-default warnings listed in the README.
+`/W4 /permissive-` instead of the GCC-style list; MSVC gets the off-by-default warnings listed in [Compile profiles](docs/user/compile-profiles.md).

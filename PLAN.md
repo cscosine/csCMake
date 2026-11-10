@@ -326,7 +326,7 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b done; 3c: reference in CMake's documentation format (Sphinx), under review; then 3d docs. Pages: Settings → Pages → Source "GitHub Actions" (user). |
+| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b, 3c done; 3d (docs, steps 1-6) done, under review; next 3e (doc checks), 3f (csfoundation). Pages: Settings → Pages → Source "GitHub Actions" (user). |
 | 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
@@ -785,3 +785,14 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   block: 37 commands (`cs_initialize_project`, `cs_add_compile_profile_rule`, `cs_target_sources` had one). "An alias
   is accepted" only where the command resolves aliases (`cs_finalize_target`, `cs_target_use_compile_profiles`,
   `cs_target_check_installed_headers`).
+
+### 2026-11-10 (Phase 3d step 6 — README, AGENTS.md, MIGRATION.md)
+- `README.md`: pitch, documentation map (site from `main`, the Markdown pages), quick start (workspace, the two preset
+  files, a `CMakeLists.txt`, one workflow command), what csCMake does (each item linked to its page), requirements,
+  layout, development. The details moved to the user guide (step 2); the pre-commit hooks list to
+  `docs/contributing/code.md`.
+- `AGENTS.md`: entry point for coding agents, pointing to `CLAUDE.md` (the rules), `PLAN.md`, the skill and the docs.
+- `MIGRATION.md`: the rows mapping to names removed in step 6a (`cs_get_strict_build_configuration`,
+  `CSCMAKE_STRICT_BUILD_CONFIGURATION`) now say "removed"; links to the docs instead of README sections; a pointer to
+  the documentation of the new API.
+- Skill: the smoke projects are described in `docs/advanced/smoke-tests.md` and the tutorials.

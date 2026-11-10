@@ -93,7 +93,8 @@ entries in `presets/common/build-configurations.json`.
 - CMake behaviour that can be checked at configure time (properties, generated values, error messages) goes in
   `tests/cmake/test_*.py`: `tests.cmake.cmake_project.configure()` writes a `LANGUAGES NONE` project including csCMake,
   configures it and returns what it reported with `cstest_report(<key> <value>)`. Fast, no compiler needed.
-- CMake smoke projects live in `tests/smoke/` (described in `tests/smoke/README.md`: a chain of packages
+- CMake smoke projects live in `tests/smoke/` (described in `docs/advanced/smoke-tests.md`, walked through in
+  `docs/tutorials/`: a chain of packages
   `csSmokeBase` → `csSmokeMidA`/`csSmokeMidB` → `csSmokeTop`), driven by
   `tests/smoke/run_smoke.py --variant <id>`; CI runs it for every registry variant (`smoke.yml`,
   matrix from `tests/smoke/ci_matrix.py`). New csCMake features should get coverage there.
