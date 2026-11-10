@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+from pathlib import Path
+
 from docutils import nodes
 from docutils.nodes import Element, Node, TextElement
+from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
 from sphinx.ext import intersphinx
@@ -43,6 +48,25 @@ nitpicky = True
 intersphinx_mapping = {"cmake": (docs_url(), inventory_path())}
 
 html_theme = "alabaster"
+
+# links from the pages to repository files outside docs/ (the smoke projects, ...) go to GitHub, at the commit built
+REPOSITORY_URL = "https://github.com/cscosine/csCMake"
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _source_revision() -> str:
+    """Return the commit being built: GITHUB_SHA in CI, else git HEAD, else main."""
+    if sha := os.environ.get("GITHUB_SHA"):
+        return sha
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=REPOSITORY_ROOT, capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "main"
+
+
+SOURCE_REVISION = _source_revision()
 html_title = "csCMake"
 
 
@@ -81,6 +105,19 @@ def _link_code_to_reference(app: Sphinx, doctree: nodes.document, docname: str) 
             literal.replace_self(make_refnode(app.builder, docname, target_doc, node_id, literal.deepcopy(), name))
 
 
+def _link_repository_files_to_github(app: Sphinx, doctree: nodes.document) -> None:
+    """Turn the links to repository files outside docs/ into links to GitHub (instead of downloads)."""
+    docs_dir = Path(app.srcdir).resolve()
+    source = Path(app.env.doc2path(app.env.docname)).resolve()
+    for download in list(doctree.findall(addnodes.download_reference)):
+        target = (source.parent / download["reftarget"]).resolve()
+        if docs_dir in target.parents or REPOSITORY_ROOT not in target.parents:
+            continue
+        relative = target.relative_to(REPOSITORY_ROOT).as_posix()
+        link = nodes.reference("", "", *download.children, refuri=f"{REPOSITORY_URL}/blob/{SOURCE_REVISION}/{relative}")
+        download.replace_self(link)
+
+
 def setup(app: Sphinx) -> None:
     """Properties described next to the code that writes them, and links to the CMake documentation."""
     # the domain creates these objects only from one document per property (CMake's own layout)
@@ -88,3 +125,5 @@ def setup(app: Sphinx) -> None:
         app.add_directive_to_domain("cmake", objtype, CMakeObject)
     app.connect("missing-reference", _resolve_in_cmake_inventory)
     app.connect("doctree-resolved", _link_code_to_reference)
+    # before the download collector (priority 500) registers them as downloads
+    app.connect("doctree-read", _link_repository_files_to_github, priority=400)

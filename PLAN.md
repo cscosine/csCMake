@@ -207,8 +207,8 @@ variables, properties, preset environment variables, default targets) guides the
 - **Versioned documentation**: decided (user): each release tag publishes its documentation with the release (see
   Phase 5 "Release package"); GitHub Pages shows the docs of `main`.
 - **3e — Doc checks**: references and anchors: `sphinx-build -W -n` (in `docs.yml`); still to add: every public `cs_*`
-  has a `.. command::` entry, every csCMake variable / property used in the code has an entry, tutorial snippets equal
-  the smoke files (a small check, in CI).
+  has a `.. command::` entry, every csCMake variable / property used in the code has an entry (a small check, in CI).
+  Tutorial snippets equal the smoke files by construction (`literalinclude`).
 - **3m — macOS** (early, right after 3a step 1, so the smoke tests find the macOS issues before 3b hardening and the
   docs): the registry has stubs only (`OS.MACOS`, `Compiler.APPLE_CLANG` + short `ac`, presets `cs-host-macos`,
   `cs-compiler-macos-appleclang-default`; `get_supported_os_version_list(OS.MACOS)` returns `[]`, "TODO add MACOS").
@@ -750,3 +750,13 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   links in the site too).
 - Pages write names as plain inline code (the MyST roles show as raw text on GitHub and in the VS Code preview, user
   feedback): `docs/conf.py` links inline code naming exactly one documented command / variable / property.
+
+### 2026-11-10 (Phase 3d step 3 — tutorials, smoke tests page)
+- `docs/tutorials/`: the smoke projects as tutorials, in build order (a package with components: csSmokeBase; using a
+  package, flat and `Sol` layouts: csSmokeMidB, csSmokeMidA; an application: csSmokeTop; other layouts: csSmokeEnv,
+  csSmokeStandalone). Files included with `literalinclude` (the tested code, always), each preceded by a link to the
+  file for GitHub readers.
+- `tests/smoke/README.md` → `docs/advanced/smoke-tests.md` (first advanced page); the README points to it and to the
+  tutorials (the smoke files keep referring to it).
+- `docs/conf.py`: links to repository files outside `docs/` become links to GitHub at the commit built (`GITHUB_SHA` in
+  CI, `git HEAD` locally) instead of downloads.

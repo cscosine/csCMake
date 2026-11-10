@@ -18,6 +18,20 @@ user/troubleshooting
 ```
 
 ```{toctree}
+:caption: Tutorials
+:maxdepth: 1
+
+tutorials/index
+```
+
+```{toctree}
+:caption: Advanced
+:maxdepth: 1
+
+advanced/smoke-tests
+```
+
+```{toctree}
 :caption: Reference
 :maxdepth: 1
 

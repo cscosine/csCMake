@@ -187,6 +187,20 @@ of a section page). Write them so that they also read well on GitHub:
   (`` {cmake:prop_tgt}`CSCMAKE_NAMESPACE` ``) chooses explicitly, but GitHub and the editors show it as raw text: avoid
   it in pages
 - a link to another page: a relative Markdown link to the `.md` file, e.g. [the documentation index](../index.md).
+- a link to a repository file outside `docs/` (a smoke project, a template): a relative Markdown link, e.g.
+  [the smoke driver](../../tests/smoke/run_smoke.py); on GitHub it opens the file, in the site it links to the file on
+  GitHub at the commit built (`_link_repository_files_to_github` in `docs/conf.py`). Not a `.md` file: MyST takes a
+  `.md` link for a page of the site (a broken reference);
+- code from the repository (the tutorials): include the file, so the page always shows the tested code, with a link to
+  the file before it for GitHub, where the include shows as a code block naming the file:
+
+  ````text
+  [`tests/smoke/csSmokeMidB/CMakeLists.txt`](../../tests/smoke/csSmokeMidB/CMakeLists.txt):
+
+  ```{literalinclude} ../../tests/smoke/csSmokeMidB/CMakeLists.txt
+  :language: cmake
+  ```
+  ````
 
 Pages describe the current behaviour only: history goes in the `PLAN.md` changelog and in the commit messages,
 `MIGRATION.md` maps old to new.
