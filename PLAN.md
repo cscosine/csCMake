@@ -456,6 +456,37 @@ Decided (user, 2026-11-10): version **v0.2.0** (v1.0.0 when more projects are on
 `ci`, `smoke`, `docs` as reusable workflows (they drop their own tag trigger), then `publish`; `SHA256SUMS`; the Python
 package is not released; pre-release tags are GitHub pre-releases.
 
+### Documentation appeal (future, user 2026-11-10)
+- [ ] Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
+  pydata-sphinx-theme as alternative).
+- [ ] Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
+  a package with components and its generated `<Package>Config.cmake`, Debug / Release side by side in one prefix, a
+  custom Paranoid configuration with sanitizers, one preset per platform / compiler, DLLs found in the Visual Studio
+  debugger, install RPATH; who it is for and when not to use it.
+- [ ] A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
+  RPATH per target, include folders per configuration, gersemi + own linter, ...).
+
+### Clean first stable release (future, user 2026-11-10, to decide)
+- User idea: after Phase 5, a full clean-up and a first clean release, without references to the past (PLAN removed).
+- Proposal: keep the repository and its history (blame, tags `v0.1.0` / `v0.2.0` used by third_party_base_libs and
+  csfoundation, Pages, CI); remove `PLAN.md` from the repository: decisions -> docs "Design decisions", user-visible
+  changes -> `CHANGELOG.md`, open items -> GitHub issues / project; MIGRATION "from 0.x to 1.0". Tag 1.0.0 (API
+  stability promise) once more projects use the API (csqt6, csopencvcpu, a tracker). A new single-commit repository
+  stays possible at the 1.0 moment (old one archived), same cost then as now.
+
+### Organisation: shared standards (future, user 2026-11-10, to decide)
+- Repositories: the copier template (adopted by every project), csCMake, csorchestrator, then the other projects; aligned
+  on the same standards.
+- Proposal: rules rendered into each repository, not fetched at build time (no code dependency between repositories):
+  `cs-template` (copier: presets includes, pre-commit, `.clang-format`, `.clang-tidy` tiers, gersemi config, `.vscode`,
+  shared CLAUDE.md / AGENTS.md rules, licence, CI stub; its docs are the human handbook: naming, versioning, branching,
+  releases, "no hidden side effects"); `cscosine/.github` (org profile, default CONTRIBUTING / SECURITY, issue and PR
+  templates, maybe reusable workflows); csCMake (CMake API, presets, `cs_*` signatures for the formatter, pinned by
+  tag); csorchestrator (builds, generated CI, releases; reads csCMake's variant list). The template pins compatible
+  csCMake / csorchestrator versions: updating the template aligns a project.
+- Order: finish csCMake (4h, Phase 5 sign-off) -> `cs-template` with csCMake as first adopter -> csorchestrator (and its
+  variant matrix from csCMake) -> the other projects one by one.
+
 ### Run scripts (future)
 - [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
   `cs_finalize_project`, `file(GENERATE)` `<build>/run/<target>-$<CONFIG>.bat` / `.sh` from the target property
