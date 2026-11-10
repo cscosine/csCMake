@@ -1,22 +1,44 @@
+# Targets of the project: cs_add_library, cs_add_executable, cs_finalize_target.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# add a target as library and add to list CSCMAKE_<namespace>_PROJECT_TARGETS
+# Add a library to the project, like add_library.
+#
+# cs_add_library(<target> <add_library arguments>...)
+#
+# The library gets the output name postfix of each configuration and the MSVC runtime library of the project, and is
+# registered in the project (cs_finalize_target is then mandatory for it). An ALIAS is created as with add_library and
+# not registered.
 function(cs_add_library target_name)
   add_library("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
 
-# add a target as executable and add to list CSCMAKE_<namespace>_PROJECT_TARGETS
+# Add an executable to the project, like add_executable.
+#
+# cs_add_executable(<target> <add_executable arguments>...)
+#
+# As cs_add_library: output name postfixes, MSVC runtime library, registered in the project (cs_finalize_target is
+# mandatory).
 function(cs_add_executable target_name)
   add_executable("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
 
-# Register target_name (unless it is an ALIAS) in the CSCMAKE_<namespace>_PROJECT_TARGETS global property, after setting
-# on it the per- configuration output postfix (CSCMAKE_<CONFIG>_POSTFIX) and the MSVC runtime library generator
-# expression. Fails if cs_initialize_project did not define them.
+# Register target_name in the project (unless it is an ALIAS): output name postfix of each configuration, MSVC runtime
+# library, namespace. Fails if cs_initialize_project was not called.
+#
+# Reads:
+#
+# * variable CSCMAKE_<CONFIG>_POSTFIX
+# * variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
+#
+# Writes:
+#
+# * target property <CONFIG>_POSTFIX, MSVC_RUNTIME_LIBRARY
+# * target property CSCMAKE_NAMESPACE: the namespace of the project of the target
+# * global property CSCMAKE_<namespace>_PROJECT_TARGETS: the targets of the project
 function(_cs_add_target_to_project_targets target_name)
   # add to list of targets if it is not an alias
   get_target_property(target_name_alias ${target_name} ALIASED_TARGET)
@@ -54,9 +76,16 @@ function(_cs_add_target_to_project_targets target_name)
   endif()
 endfunction()
 
-# Finalize target_name: run the recursive dependency analysis (_cs_recursive_analyze_target) and record its links.
-# Mandatory for every target of cs_add_library / cs_add_executable, after its links are set: cs_finalize_project fails
-# for a target not finalized, or whose links changed after cs_finalize_target.
+# Finalize a target: apply its compile profiles, analyze its runtime dependencies, record its links.
+#
+# cs_finalize_target(<target>)
+#
+# Mandatory for every target of cs_add_library / cs_add_executable, after its links: cs_finalize_project fails for a
+# target not finalized, or whose links changed afterwards.
+#
+# Writes:
+#
+# * target property _CSCMAKE_FINALIZED_LINKS: the links at finalization
 function(cs_finalize_target target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -75,7 +104,7 @@ function(cs_finalize_target target_name)
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
 endfunction()
 
-# Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES), as a single string.
+# Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES) as a single string.
 function(_cs_target_links target_name links_out)
   set(links "")
   foreach(property LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
@@ -90,8 +119,12 @@ function(_cs_target_links target_name links_out)
       PARENT_SCOPE)
 endfunction()
 
-# Fail (FATAL_ERROR) if a target of the project was not finalized with cs_finalize_target, or if its links changed after
-# cs_finalize_target (finalized too early: the dependency analysis missed the later links).
+# Fail if a target of the project was not finalized with cs_finalize_target, or if its links changed after it.
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_PROJECT_TARGETS
+# * target property _CSCMAKE_FINALIZED_LINKS
 function(_cs_check_targets_finalized)
   cs_get_project_targets(targets)
   set(not_finalized "")
@@ -124,7 +157,13 @@ function(_cs_check_targets_finalized)
   endif()
 endfunction()
 
-# return all targets added in CSCMAKE_<namespace>_PROJECT_TARGETS
+# Return the targets of the project (cs_add_library, cs_add_executable, the default target).
+#
+# cs_get_project_targets(<out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_PROJECT_TARGETS
 function(cs_get_project_targets output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS)
   if(list_values)
@@ -140,7 +179,9 @@ function(cs_get_project_targets output_variable_name)
   endif()
 endfunction()
 
-# Print (debug) the targets registered in the CSCMAKE_<namespace>_PROJECT_TARGETS global property.
+# Print the targets of the project (debug messages).
+#
+# cs_print_project_targets()
 function(cs_print_project_targets)
   set(targets "")
   cs_get_project_targets(targets)

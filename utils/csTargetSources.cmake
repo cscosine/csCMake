@@ -1,12 +1,35 @@
+# Sources of the targets, and the ones installed with them (headers): cs_target_sources.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# support the three types as in target_sources PRIVATE PUBLIC INTERFACE however, supports PRIVATE_INSTALL PUBLIC_INSTALL
-# INTERFACE_INSTALL to add the files to a list of file to be installed when the target is installed note: includes does
-# not need to be PUBLIC, therefore, normally only PRIVATE and PRIVATE_INSTALL are used it adds all headers to be
-# installed to the target a property CSCMAKE_SOURCES_TO_INSTALL so that can be easily retrieved
+# Add sources to a target, like target_sources, and queue the ones to install with it.
+#
+# cs_target_sources(<target> [PRIVATE|PUBLIC|INTERFACE <file>...] [PRIVATE_INSTALL|PUBLIC_INSTALL|INTERFACE_INSTALL
+# <file>...] [PRIVATE_INSTALL_ABSOLUTE_PATH|PUBLIC_INSTALL_ABSOLUTE_PATH|INTERFACE_INSTALL_ABSOLUTE_PATH <file>...])
+#
+# Every file is a source of the target in the build tree, with the given scope. The *_INSTALL files (usually headers,
+# relative to the current folder) are installed by cs_install_target, keeping their path relative to the folder of
+# cs_initialize_project; the *_INSTALL_ABSOLUTE_PATH files (absolute paths, e.g. generated headers) are installed in the
+# include folder of the current folder. Headers do not need to be PUBLIC: PRIVATE and PRIVATE_INSTALL are usual.
+#
+# Arguments:
+#
+# * target: a target of the project
+# * PRIVATE, PUBLIC, INTERFACE: sources, as in target_sources
+# * PRIVATE_INSTALL, PUBLIC_INSTALL, INTERFACE_INSTALL: sources installed with the target
+# * PRIVATE_INSTALL_ABSOLUTE_PATH, PUBLIC_INSTALL_ABSOLUTE_PATH, INTERFACE_INSTALL_ABSOLUTE_PATH: sources given by
+#   absolute path, installed with the target
+#
+# Reads:
+#
+# * variable CSCMAKE_SOURCE_DIR
+#
+# Writes:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL: the *_INSTALL files
+# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE: the *_INSTALL_ABSOLUTE_PATH files
 function(cs_target_sources target_name)
-  cs_debug_message("[cs_target_sources] target ${target_name} find ${ARGN}")
+  cs_debug_message("[cs_target_sources] target ${target_name}: ${ARGN}")
 
   # split arguments in groups according to keywords
   set(keywords
@@ -52,7 +75,13 @@ function(cs_target_sources target_name)
   endforeach()
 endfunction()
 
-# return the CSCMAKE_SOURCES_TO_INSTALL property of the target, i.e., a list, eventually empty
+# Return the sources of a target installed with it, relative to its folder.
+#
+# cs_get_target_sources_to_install(<target> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL
 function(cs_get_target_sources_to_install target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL)
   if(list_values)
@@ -68,7 +97,13 @@ function(cs_get_target_sources_to_install target_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE property of the target, i.e., a list, eventually empty
+# Return the sources of a target installed with it, given by absolute path.
+#
+# cs_get_target_sources_to_install_absolute_path(<target> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
 function(cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
   if(list_values)
@@ -84,7 +119,14 @@ function(cs_get_target_sources_to_install_absolute_path target_name output_varia
   endif()
 endfunction()
 
-# Print (debug) the sources of target_name queued for installation, as relative and as absolute paths.
+# Print the sources of a target installed with it (debug messages).
+#
+# cs_print_target_sources_to_install(<target>)
+#
+# Reads:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL
+# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
 function(cs_print_target_sources_to_install target_name)
   set(values "")
 

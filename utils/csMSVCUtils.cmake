@@ -1,8 +1,17 @@
+# Visual Studio debugger environment of the targets.
 include_guard(GLOBAL)
 include(utils/csPathUtils)
 
-# For each target of targets_list set VS_DEBUGGER_ENVIRONMENT, per configuration, so that the Visual Studio debugger
-# finds the runtime dependencies (PATH with the folders of the dependency DLLs).
+# Set the Visual Studio debugger environment of each target of targets_list, per configuration: PATH with the folders of
+# its runtime libraries.
+#
+# Reads:
+#
+# * target property CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>
+#
+# Writes:
+#
+# * target property VS_DEBUGGER_ENVIRONMENT, VS_DEBUGGER_ENVIRONMENT_<CONFIG>
 function(_cs_set_vs_debugger_env_variable targets_list)
   cs_debug_message("[_cs_set_vs_debugger_env_variable] targets: ${targets_list}")
 

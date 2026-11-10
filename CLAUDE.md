@@ -42,6 +42,13 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
   docstring comment block directly above it (C0111). Silence a finding only with a scoped
   `# cmake-lint: disable=<code>` as first line of the function body, plus a reason. Do not mix a file-level
   pragma with function-level ones in the same file: cmakelang 0.6.13 then ignores the function-level ones.
+- Docstrings (comment block right above each `function`/`macro`, and one line at the top of each module):
+  * public `cs_*`: one-line summary; the signature (`cs_x(<target> [KEYWORD <value>...])`); details paragraphs;
+    `Arguments:`, `Reads:`, `Writes:` sections as `* ` bullet lists (each section preceded by an empty `#` line);
+  * private `_cs_*`: one-line summary (+ details), `Reads:` / `Writes:` when it touches state;
+  * `Reads:` / `Writes:` bullets start with the kind — `variable`, `cache variable`, `environment variable`,
+    `global property`, `target property` — then the name (placeholders `<namespace>`, `<CONFIG>`, `<component>`),
+    then optionally `: <meaning>`. They are the source of the variables / properties reference.
 - New or changed public `cs_*` command → update its signature in `.cmake-format.json` (`parse.additional_commands`),
   so cmake-format lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+$`, arguments and locals
   `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).

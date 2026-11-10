@@ -1,3 +1,4 @@
+# Installation: components (cs_install_target), dependencies between them, the generated <namespace>Config.cmake.
 include_guard(GLOBAL)
 # cmake-lint: disable=R0913
 # (only _cs_configure_config_cmake has more than 5 arguments: the install folder plus one per @VAR@ placeholder of the
@@ -10,8 +11,10 @@ include(utils/csTargetDependencies)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Return in install_folder_expression the install folder for headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-
-# folder when the project has more than one configuration.
+# Return the install folder of the headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-folder when the project has
+# more than one configuration.
+#
+# cs_get_install_include_dir(<out-var>)
 function(cs_get_install_include_dir install_folder_expression)
   cs_get_build_configurations(configs_list)
   list(LENGTH configs_list count)
@@ -29,11 +32,25 @@ function(cs_get_install_include_dir install_folder_expression)
   endif()
 endfunction()
 
-# create a global variable CSCMAKE_<namespace>_COMPONENTS collecting all the different export_name used create a global
-# variable CSCMAKE_<namespace>_COMPONENT_<export_name>_FIND_PACKAGES containing the list of find_package(ARGS...) that
-# will be added to the installed configuration file if DEFAULT is passed as additional arguments, the export_name will
-# be added to the list CSCMAKE_<namespace>_DEFAULT_COMPONENTS global variable add a target property CSCMAKE_COMPONENT
-# with the name of the export
+# Install a target in a component of the package of the project.
+#
+# cs_install_target(<target> <component> [DEFAULT])
+#
+# The target, its PDB file (Windows) and its headers queued by cs_target_sources (*_INSTALL) are installed; the
+# component is a find_package(<namespace> COMPONENTS ...) component, DEFAULT adds it to the components loaded when none
+# is requested.
+#
+# Reads:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL, CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE, CSCMAKE_FIND_PACKAGES
+# * variable CSCMAKE_SOURCE_DIR, CSCMAKE_NAMESPACE
+#
+# Writes:
+#
+# * target property CSCMAKE_COMPONENT: the component of the target
+# * global property CSCMAKE_<namespace>_COMPONENTS, CSCMAKE_<namespace>_DEFAULT_COMPONENTS
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS,
+#   CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
 function(cs_install_target target_name export_name)
   cs_debug_message("[cs_install_target] target ${target_name} export to ${export_name}")
 
@@ -116,7 +133,13 @@ function(cs_install_target target_name export_name)
 
 endfunction()
 
-# return the CSCMAKE_<namespace>_COMPONENTS global property
+# Return the components of the project.
+#
+# cs_get_components(<out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_COMPONENTS
 function(cs_get_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS)
   if(list_values)
@@ -132,7 +155,13 @@ function(cs_get_components output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_<namespace>_DEFAULT_COMPONENTS global property
+# Return the default components of the project (loaded by find_package without COMPONENTS).
+#
+# cs_get_default_components(<out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_DEFAULT_COMPONENTS
 function(cs_get_default_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS)
   if(list_values)
@@ -148,7 +177,13 @@ function(cs_get_default_components output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_COMPONENT target property
+# Return the component of a target (cs_install_target).
+#
+# cs_get_target_component(<target> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_COMPONENT
 function(cs_get_target_component target_name output_variable_name)
   get_target_property(value ${target_name} CSCMAKE_COMPONENT)
   set(${output_variable_name}
@@ -156,8 +191,17 @@ function(cs_get_target_component target_name output_variable_name)
       PARENT_SCOPE)
 endfunction()
 
-# Compute the exports export_name depends on (the exports of the project targets its targets link to) and store them in
-# the CSCMAKE_<namespace>_COMPONENT_<export_name>_DEPENDENCIES global property.
+# Compute the components export_name depends on (the components of the project targets its targets link to); a target of
+# another csCMake project of the build adds a find_dependency of that package instead.
+#
+# Reads:
+#
+# * target property CSCMAKE_COMPONENT, CSCMAKE_NAMESPACE, CSCMAKE_PROJECT_DEPENDENCIES
+#
+# Writes:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
 function(_cs_populate_component_dependencies export_name)
   cs_get_component_targets(${export_name} targets_list)
   cs_debug_message(
@@ -197,8 +241,7 @@ function(_cs_populate_component_dependencies export_name)
     "[_cs_populate_component_dependencies] final result, EXPORT ${export_name} depends on EXPORTS ${dependent_exports}")
 endfunction()
 
-# Depth-first visit of the dependent exports of export_name; visited_list is the current path. Fails with FATAL_ERROR on
-# a cycle.
+# Depth-first visit of the components export_name depends on (visited_list: the current path); fail on a cycle.
 function(_cs_check_component_cycles_recursive export_name visited_list)
   cs_debug_message(
     "[_cs_check_component_cycles_recursive] -- for export ${export_name} with visited list = ${visited_list}")
@@ -221,7 +264,7 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
 
 endfunction()
 
-# Fail with FATAL_ERROR if the export dependencies reachable from export_name contain a cycle.
+# Fail if the dependencies between the components reachable from export_name contain a cycle.
 function(_cs_check_component_cycles export_name)
   cs_debug_message("[_cs_check_component_cycles] -- for export ${export_name}")
 
@@ -230,8 +273,11 @@ function(_cs_check_component_cycles export_name)
 
 endfunction()
 
-# Sort the dependent exports of export_name so that each export comes after the exports it depends on, and store the
-# result in the CSCMAKE_<namespace>_COMPONENT_<export_name>_DEPENDENCIES_SORTED global property.
+# Sort the components export_name depends on, each one after the ones it depends on.
+#
+# Writes:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
 function(_cs_sort_component_dependencies export_name)
   cs_get_component_dependencies(${export_name} dependent_exports_unsorted)
   cs_debug_message("[_cs_sort_component_dependencies] -- for export ${export_name} sort ${dependent_exports_unsorted}")
@@ -297,9 +343,8 @@ function(_cs_sort_component_dependencies export_name)
                                "${dependent_exports_sorted}")
 endfunction()
 
-# Install the export sets of the project in the export_namespace namespace: install the <export>Targets.cmake files,
-# resolve and sort the dependencies between exports (failing on cycles), then generate and install
-# <export_namespace>Config.cmake and <export_namespace>ConfigVersion.cmake.
+# Install the components of the project in the namespace export_namespace: their <component>Targets.cmake, the
+# dependencies between them (failing on cycles), <namespace>Config.cmake and <namespace>ConfigVersion.cmake.
 function(_cs_finalize_install export_namespace)
   # directory to install cmake files
   set(install_configdir ${CMAKE_INSTALL_LIBDIR}/cmake/${export_namespace})
@@ -429,7 +474,13 @@ function(
 
 endfunction()
 
-# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_TARGETS global property
+# Return the targets of a component.
+#
+# cs_get_component_targets(<component> <out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS
 function(cs_get_component_targets export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS)
   if(list_values)
@@ -445,7 +496,13 @@ function(cs_get_component_targets export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_DEPENDENCIES global property
+# Return the components a component depends on.
+#
+# cs_get_component_dependencies(<component> <out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
 function(cs_get_component_dependencies export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES)
   if(list_values)
@@ -461,7 +518,13 @@ function(cs_get_component_dependencies export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_DEPENDENCIES_SORTED global property
+# Return the components a component depends on, each one after the ones it depends on (computed by cs_finalize_project).
+#
+# cs_get_component_dependencies_sorted(<component> <out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
 function(cs_get_component_dependencies_sorted export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
   if(list_values)
@@ -477,7 +540,13 @@ function(cs_get_component_dependencies_sorted export_name output_variable_name)
   endif()
 endfunction()
 
-# return the CSCMAKE_<namespace>_COMPONENT_${export_name}_FIND_PACKAGES global property
+# Return the find_package arguments propagated by a component (find_dependency in the installed package).
+#
+# cs_get_component_find_packages(<component> <out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
 function(cs_get_component_find_packages export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
   if(list_values)
@@ -493,7 +562,9 @@ function(cs_get_component_find_packages export_name output_variable_name)
   endif()
 endfunction()
 
-# debug, print exported list and information cumulated per each export item
+# Print the components of the project with their targets, find_package arguments and dependencies (debug messages).
+#
+# cs_print_components()
 function(cs_print_components)
   cs_get_components(exports)
   foreach(export ${exports})

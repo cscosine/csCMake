@@ -1,3 +1,11 @@
+# Build configurations of the project (DEFAULT_CONFIG, DEFAULT_CONFIG_MAPPED, CUSTOM_CONFIG of cs_initialize_project).
+#
+# Writes:
+#
+# * cache variable CSCMAKE_DEBUG_POSTFIX, CSCMAKE_RELEASE_POSTFIX, CSCMAKE_RELWITHDEBINFO_POSTFIX: output name postfix
+#   of the default configurations ("d", "", "rd")
+# * cache variable CSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG, CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE,
+#   CSCMAKE_MSVC_RUNTIME_LIBRARY_RELWITHDEBINFO: MSVC runtime library of the default configurations
 include_guard(GLOBAL)
 
 # Defaults chosen by csCMake are cache variables: override them with -D<variable>=<value>. Values derived from the
@@ -27,16 +35,23 @@ set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE
     "MultiThreadedDLL"
     CACHE STRING "csCMake: MSVC runtime library in the Release configuration")
 
-# Record the normal variable var_name = value, to be set in the scope of the project (the directory of
-# cs_initialize_project) by _cs_apply_project_scope_variables: lets functions called at any depth by
-# cs_initialize_project set project-scope variables (PARENT_SCOPE only reaches one level).
+# Record the normal variable var_name = value, set in the project scope by _cs_apply_project_scope_variables (lets
+# functions called at any depth by cs_initialize_project set project variables).
+#
+# Writes:
+#
+# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
 function(_cs_set_in_project_scope var_name value)
   set_property(GLOBAL APPEND PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES ${var_name})
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name} "${value}")
 endfunction()
 
-# Set in the caller's scope the variables recorded by _cs_set_in_project_scope, then forget them. Called by the
-# cs_initialize_project macro, so the caller is the project scope.
+# Set in the caller's scope (cs_initialize_project: the project scope) the variables recorded by
+# _cs_set_in_project_scope, then forget them.
+#
+# Reads:
+#
+# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
 function(_cs_apply_project_scope_variables)
   get_property(var_names GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
   foreach(var_name ${var_names})
@@ -49,7 +64,13 @@ function(_cs_apply_project_scope_variables)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
 endfunction()
 
-# get the stored list of available build config (including default ones)
+# Return the build configurations of the build (default, mapped and custom ones).
+#
+# cs_get_build_configurations(<out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS
 function(cs_get_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
   set(${configs_list}
@@ -57,7 +78,13 @@ function(cs_get_build_configurations configs_list)
       PARENT_SCOPE)
 endfunction()
 
-# get the stored list of available default build config
+# Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
+#
+# cs_get_default_build_configurations(<out-var>)
+#
+# Reads:
+#
+# * global property CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
 function(cs_get_default_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS)
   set(${configs_list}
@@ -65,7 +92,11 @@ function(cs_get_default_build_configurations configs_list)
       PARENT_SCOPE)
 endfunction()
 
-# get all the CMAKE variables that belongs to a configuration
+# Return in configs_list the CMake variables with a <CONFIG> part (CMAKE_CXX_FLAGS_<CONFIG>, ...).
+#
+# Reads:
+#
+# * global property CSCMAKE_PER_CONFIG_VARIABLES
 function(_cs_get_per_config_variables configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES)
   set(${configs_list}
@@ -73,7 +104,11 @@ function(_cs_get_per_config_variables configs_list)
       PARENT_SCOPE)
 endfunction()
 
-# add a default configuration
+# Add the default configuration config (Debug, Release or RelWithDebInfo) to the build.
+#
+# Writes:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS, CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
 function(_cs_add_default_build_configuration config)
   cs_get_build_configurations(configs_list)
   cs_get_default_build_configurations(configs_list_default)
@@ -104,7 +139,11 @@ function(_cs_add_default_build_configuration config)
 
 endfunction()
 
-# add a default configuration that need a fallback mapping
+# Add the default configuration config with the configurations of imported targets to use (base_config_and_fallback).
+#
+# Writes:
+#
+# * variable CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>: project scope
 function(_cs_add_default_build_configuration_mapped config base_config_and_fallback)
   _cs_add_default_build_configuration(${config})
 
@@ -116,7 +155,12 @@ function(_cs_add_default_build_configuration_mapped config base_config_and_fallb
 
 endfunction()
 
-# add a custom configuration, based on a default one
+# Add the custom configuration config, a copy of base_config with its own postfix.
+#
+# Writes:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS
+# * variable CSCMAKE_<CONFIG>_POSTFIX: project scope
 function(_cs_add_custom_build_configuration config base_config postfix base_config_and_fallback)
   cs_get_build_configurations(configs_list)
   cs_get_default_build_configurations(configs_list_default)
@@ -144,8 +188,17 @@ function(_cs_add_custom_build_configuration config base_config postfix base_conf
   set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
 endfunction()
 
-# Parse the arguments of cs_initialize_project (see csCMake.cmake): namespace, C++ standard (returned in
-# required_cxx_standard), default compile profiles, build configurations.
+# Parse the arguments of cs_initialize_project: namespace, C++ standard (returned in required_cxx_standard), default
+# compile profiles, build configurations. A nested csCMake project checks its configurations against the build instead
+# of adding them.
+#
+# Writes:
+#
+# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES: caller scope
+# * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION: "default", "mapped <fallbacks>" or "custom <base
+#   and fallbacks> postfix <postfix>"
+# * variable CMAKE_<RUNTIME|LIBRARY|ARCHIVE>_OUTPUT_DIRECTORY_<CONFIG>: project scope, custom configurations, unless set
+# * variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION, CMAKE_MSVC_RUNTIME_LIBRARY: project scope
 function(_cs_parse_additional_configurations required_cxx_standard)
   # cmake-lint: disable=R0912,R0915
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
@@ -351,8 +404,12 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   _cs_set_in_project_scope(CMAKE_MSVC_RUNTIME_LIBRARY "${temp_string}")
 endfunction()
 
-# Fail if config, requested by the nested project namespace, is not a configuration of the build with the same
-# definition ("default", "mapped <fallbacks>", "custom <base and fallbacks> postfix <postfix>").
+# Fail if config, requested by the nested csCMake project namespace, is not a configuration of the build defined the
+# same way (definition).
+#
+# Reads:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION
 function(_cs_check_build_configuration namespace config definition)
   get_property(defined GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${config}_DEFINITION)
   if(NOT defined)
@@ -366,8 +423,12 @@ function(_cs_check_build_configuration namespace config definition)
   endif()
 endfunction()
 
-# Apply the configurations requested in cs_initialize_project: on multi-config generators reset
-# CMAKE_CONFIGURATION_TYPES to them, on single-config generators fail if CMAKE_BUILD_TYPE is not one of them.
+# Apply the configurations of the build: with multi-config generators set CMAKE_CONFIGURATION_TYPES, with single-config
+# ones fail if CMAKE_BUILD_TYPE is not one of them.
+#
+# Writes:
+#
+# * cache variable CMAKE_CONFIGURATION_TYPES: the configurations of the build (owned by csCMake)
 function(_cs_process_configurations)
   cs_get_build_configurations(configs_list)
 
@@ -386,8 +447,12 @@ function(_cs_process_configurations)
   endif()
 endfunction()
 
-# set a global property CSCMAKE_PER_CONFIG_VARIABLES highly inspired from https://stackoverflow.com/q/75823363 (copy all
-# the build type parameters of a build configuration)
+# Collect the CMake variables with a <CONFIG> part (cmake --help-variable-list), once per build tree; inspired by
+# https://stackoverflow.com/q/75823363.
+#
+# Writes:
+#
+# * global property CSCMAKE_PER_CONFIG_VARIABLES
 function(_cs_process_build_configurations_variables)
   # once per build tree (a nested csCMake project finds it done)
   get_property(
@@ -434,9 +499,14 @@ function(_cs_process_build_configurations_variables)
   set_property(GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES ${config_var_list})
 endfunction()
 
-# Create the configuration config_to_in as a copy of config_from_in: copy every per-<CONFIG> CMake variable and the MSVC
-# runtime library, and map imported targets of the new configuration onto base_config_and_fallback
-# (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>).
+# Create the configuration config_to_in as a copy of config_from_in: every per-<CONFIG> CMake variable and the MSVC
+# runtime library, imported targets mapped onto base_config_and_fallback.
+#
+# Writes:
+#
+# * cache variable <every per-<CONFIG> variable>_<CONFIG>: copy of the base configuration, overridable
+# * cache variable CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>: copy of the base configuration, overridable
+# * variable CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>: project scope
 function(_cs_copy_build_configuration config_from_in config_to_in base_config_and_fallback)
   _cs_get_per_config_variables(config_var_list)
 
@@ -469,8 +539,9 @@ function(_cs_copy_build_configuration config_from_in config_to_in base_config_an
 
 endfunction()
 
-# Print (debug) the per-configuration variables of every configuration of the project, tagging each block with
-# add_message.
+# Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
+#
+# cs_print_all_configurations_variables(<message>)
 function(cs_print_all_configurations_variables add_message)
   cs_get_build_configurations(config_var_list)
   cs_debug_message("[cs_print_all_configurations_variables] configs are ${config_var_list}")
@@ -485,7 +556,9 @@ function(cs_print_all_configurations_variables add_message)
 
 endfunction()
 
-# Print (debug) the per-configuration CMake and csCMake variables of config_in, each line prefixed with print_prefix.
+# Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
+#
+# cs_print_configuration_variables(<config> <prefix>)
 function(cs_print_configuration_variables config_in print_prefix)
 
   _cs_get_per_config_variables(config_var_list)

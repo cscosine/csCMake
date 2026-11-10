@@ -1,6 +1,7 @@
+# List helpers.
 include_guard(GLOBAL)
 
-# Append each element of values to the list variable list_name of the caller, skipping elements already present.
+# Append each element of values to the list variable list_name of the caller, skipping the ones already present.
 function(_cs_list_add_list_unique_values list_name values)
   if(values)
     set(output_list ${${list_name}})

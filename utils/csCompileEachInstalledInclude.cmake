@@ -1,10 +1,18 @@
+# Check that the installed headers of a target are self-contained: cs_target_check_installed_headers.
 include_guard(GLOBAL)
 
-# Check that every header of target_name queued for installation is self-contained: for each one generate a .cpp that
-# only includes it and build it as a static library linked to target_name, with the compile profiles given after
-# COMPILE_PROFILES (in addition to the default profiles of the project):
+# Check that each installed header of a target compiles on its own.
 #
 # cs_target_check_installed_headers(<target> [COMPILE_PROFILES <profile>...])
+#
+# For each header queued for installation (cs_target_sources ... *_INSTALL) a .cpp including only it is generated and
+# built as a static library <target>_<header> linking <target>, with the default compile profiles of the project and the
+# COMPILE_PROFILES given.
+#
+# Reads:
+#
+# * target property CSCMAKE_SOURCES_TO_INSTALL
+# * variable CSCMAKE_SOURCE_DIR
 function(cs_target_check_installed_headers target_name)
   cmake_parse_arguments(arg "" "" "COMPILE_PROFILES" ${ARGN})
   if(arg_UNPARSED_ARGUMENTS)

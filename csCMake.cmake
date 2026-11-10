@@ -1,3 +1,4 @@
+# csCMake: include(csCMake) from a project, then cs_initialize_project ... cs_finalize_project.
 include_guard(GLOBAL)
 
 # csCMake needs CMake 3.31 (the csv1 presets use schema version 10); the including project declares its own
@@ -25,7 +26,11 @@ include(utils/csCompileEachInstalledInclude)
 include(utils/csCompileProfiles)
 include(utils/csOpenMP)
 
-# store in a global variable the directory of csCMake, need to be invoked right after
+# Store the csCMake folder; fail if csCMake is included from two different folders.
+#
+# Writes:
+#
+# * global property CSCMAKE_ROOT_DIR: the csCMake folder
 function(_cs_set_root_dir path)
   get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   if(val)
@@ -39,7 +44,11 @@ function(_cs_set_root_dir path)
 endfunction()
 _cs_set_root_dir(${CMAKE_CURRENT_LIST_DIR})
 
-# get the stored base path
+# Return in path the csCMake folder.
+#
+# Reads:
+#
+# * global property CSCMAKE_ROOT_DIR
 function(_cs_get_root_dir path)
   get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   set(${path}
@@ -47,15 +56,45 @@ function(_cs_get_root_dir path)
       PARENT_SCOPE)
 endfunction()
 
-# Initialize the project (mandatory, after project(... VERSION ...)):
+# Initialize the project: namespace, C++ standard, build configurations, compile profiles, default target.
 #
 # cs_initialize_project(NAMESPACE <namespace> CXX_STANDARD <standard> [DEFAULT_CONFIG <config>...]
 # [DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"]... [CUSTOM_CONFIG <config> BASED_ON
 # "<config>,<fallback>," POSTFIX "<postfix>"]... [DEFAULT_COMPILE_PROFILES <profile>...|NONE])
 #
-# * DEFAULT_CONFIG: Debug, Release, RelWithDebInfo; DEFAULT_CONFIG_MAPPED: one of them, with its imported configuration
-#   mapping; CUSTOM_CONFIG: a copy of a default configuration with its own postfix (POSTFIX "" for none)
-# * DEFAULT_COMPILE_PROFILES: the compile profiles of every target (default cscmake_default)
+# Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project; cs_finalize_project() is then
+# required at the end of the same CMakeLists.txt (checked). A macro: the variables it sets belong to the project scope
+# (inherited by the subfolders).
+#
+# Arguments:
+#
+# * NAMESPACE: prefix of the installed targets (<namespace>::<target>) and package name (find_package(<namespace>))
+# * CXX_STANDARD: CMAKE_CXX_STANDARD of the project
+# * DEFAULT_CONFIG: configurations among Debug, Release, RelWithDebInfo
+# * DEFAULT_CONFIG_MAPPED: one of them, with the configurations of imported targets to use
+#   (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>)
+# * CUSTOM_CONFIG: a copy of a default configuration (BASED_ON, then fallbacks) with its own output name postfix
+#   (POSTFIX "" for none)
+# * DEFAULT_COMPILE_PROFILES: compile profiles of every target (default cscmake_default, NONE for none)
+#
+# Reads:
+#
+# * cache variable CSCMAKE_PREFIX_PATH_HEAD, CSCMAKE_PREFIX_PATH_TAIL: paths added before / after CMAKE_PREFIX_PATH
+# * cache variable CSCMAKE_MODULE_PATH_HEAD, CSCMAKE_MODULE_PATH_TAIL: paths added before / after CMAKE_MODULE_PATH
+#
+# Writes:
+#
+# * cache variable <project>_CSCMAKE_DEBUG: option, csCMake debug messages of the project
+# * variable CSCMAKE_NAMESPACE: the namespace (read-only)
+# * variable CSCMAKE_SOURCE_DIR: the folder of cs_initialize_project, base of the install paths of the headers
+# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES: the default compile profiles
+# * variable CMAKE_CXX_STANDARD, CMAKE_CXX_STANDARD_REQUIRED, CMAKE_CXX_EXTENSIONS
+# * variable CMAKE_PREFIX_PATH, CMAKE_MODULE_PATH: with the HEAD and TAIL paths
+# * variable CMAKE_RUNTIME_OUTPUT_DIRECTORY, CMAKE_LIBRARY_OUTPUT_DIRECTORY, CMAKE_ARCHIVE_OUTPUT_DIRECTORY:
+#   <build>/bin, <build>/lib (/<config> with multi-config generators), unless set
+# * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
+# * variable CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING: none with Xcode, unless set
+# * variable _cscmake_debug_option: name of the debug option of the project
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
   # temporaries are _cs_init_* and are unset at the end.
@@ -164,9 +203,13 @@ macro(_cs_set_generator_variables)
   endif()
 endmacro()
 
-# Return in output_variable_name the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed
-# targets (<namespace>::<target>) and the name of the package (find_package(<namespace>)). It is the read-only variable
-# CSCMAKE_NAMESPACE, set by cs_initialize_project in its directory and inherited by the subdirectories.
+# Return the namespace of the project (NAMESPACE of cs_initialize_project).
+#
+# cs_get_namespace(<out-var>)
+#
+# Reads:
+#
+# * variable CSCMAKE_NAMESPACE
 function(cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
     message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
@@ -176,9 +219,17 @@ function(cs_get_namespace output_variable_name)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize the project, at the end of the CMakeLists.txt of cs_initialize_project (mandatory, checked): check that every
-# target is finalized, finalize the runtime dependencies (dependency analysis, Visual Studio debugger environment) and
-# the installation of the components (<namespace>Config.cmake).
+# Finalize the project: check its targets, resolve their runtime dependencies, install its components and generate
+# <namespace>Config.cmake.
+#
+# cs_finalize_project()
+#
+# Mandatory, at the end of the CMakeLists.txt of cs_initialize_project (checked). Fails for the targets not finalized
+# with cs_finalize_target and for the ones whose links changed after it.
+#
+# Writes:
+#
+# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>: TRUE
 function(cs_finalize_project)
   if(ARGN)
     message(FATAL_ERROR "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
@@ -197,16 +248,20 @@ function(cs_finalize_project)
   _cs_finalize_install(${export_namespace})
 endfunction()
 
-# Resolve the runtime dependencies of every target of the project: the shared libraries each one needs
-# (CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>) and, from them, the Visual Studio debugger environment (PATH).
+# Resolve the runtime dependencies of every target of the project (CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>) and, from them,
+# the Visual Studio debugger environment.
 function(_cs_finalize_runtime_dependencies)
   cs_get_project_targets(targets)
   _cs_recursive_analyze_targets_finalize("${targets}")
   _cs_set_vs_debugger_env_variable("${targets}")
 endfunction()
 
-# Deferred to the end of the CMakeLists.txt of cs_initialize_project: fail if cs_finalize_project was not called for the
-# namespace.
+# Fail if cs_finalize_project was not called for namespace (deferred to the end of the CMakeLists.txt of
+# cs_initialize_project).
+#
+# Reads:
+#
+# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>
 function(_cs_check_project_finalized namespace source_dir)
   get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace})
   if(NOT finalized)

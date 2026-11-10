@@ -1,16 +1,15 @@
+# The default target of a project: <namespace>::cscmake_base_include.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# Create the default target of the project, to be linked by the project targets: <namespace>::cscmake_base_include
-# (include folders: project source folder, generated files), the same name in the build tree and once installed,
-# installed in the cscmake_common component (a default component). Compile options come from the compile profiles
-# (csCompileProfiles.cmake), applied by cs_finalize_target.
+# Create the default target of the project, <namespace>::cscmake_base_include (compile options come from the compile
+# profiles).
 function(_cs_add_default_targets)
   _cs_target_base_project_include_dir()
 endfunction()
 
-# Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project and the
-# folders of the generated files).
+# Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project, the
+# generated files folders, created at configure time).
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(cscmake_base_include INTERFACE target_name)
   cs_get_install_include_dir(install_folder_expression)
@@ -42,9 +41,12 @@ function(_cs_target_base_project_include_dir)
 
 endfunction()
 
-# Create the empty default target <project>_<target_sub_name> (unique in the build tree, also with several csCMake
-# projects) of type target_type, return its name in target_name_out. It is exported as <target_sub_name> (EXPORT_NAME)
-# and aliased as <namespace>::<target_sub_name>: the same name in the build tree and once installed.
+# Create the empty default target <project>_<target_sub_name> of type target_type (unique in the build tree), exported
+# as <target_sub_name> and aliased as <namespace>::<target_sub_name>; return its name in target_name_out.
+#
+# Writes:
+#
+# * target property EXPORT_NAME
 function(_cs_target_create_default target_sub_name target_type target_name_out)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
   cs_get_namespace(namespace)
@@ -58,8 +60,7 @@ function(_cs_target_create_default target_sub_name target_type target_name_out)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize a default target created with _cs_target_create_default: install it in the cscmake_common component (a
-# default component) and run cs_finalize_target on it.
+# Install the default target in the cscmake_common component (a default component) and finalize it.
 function(_cs_target_create_default_finalize target_sub_name)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
   cs_install_target(${target_name} cscmake_common DEFAULT)

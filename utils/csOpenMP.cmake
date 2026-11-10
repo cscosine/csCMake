@@ -1,8 +1,13 @@
+# OpenMP: cs_target_use_openmp.
 include_guard(GLOBAL)
 include(utils/csFindPackage)
 
-# Enable OpenMP on target_name with the given visibility (PUBLIC, PRIVATE or INTERFACE): /openmp and vcomp for ClangCL
-# on Windows, find_package(OpenMP) otherwise (recorded as PUBLIC dependency for the installed config).
+# Enable OpenMP on a target.
+#
+# cs_target_use_openmp(<target> PUBLIC|PRIVATE|INTERFACE)
+#
+# ClangCL on Windows: /openmp and vcomp; otherwise find_package(OpenMP) (propagated to the installed package) and
+# OpenMP::OpenMP_CXX.
 function(cs_target_use_openmp target_name visibility)
   if(NOT TARGET ${target_name})
     message(FATAL_ERROR "Target '${target_name}' does not exist")

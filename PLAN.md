@@ -290,7 +290,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | in progress | Productize on `feature/productize`: plan agreed 2026-11-09; 3a (naming) next, rename table under review. |
+| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b done; 3c step 1 (docstrings) done, next: variables / properties reference. |
 | 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
@@ -635,3 +635,11 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   Clang on Linux (`.clang-tidy`); header check with `cscmake_strict_warnings`. Tests: `test_compile_profiles.py`
   (conditions, nesting, defaults, static link options, unknown profile, clang-tidy mandatory / not in the build;
   skipped on Windows: they compile). README "Compile profiles" (profiles and warnings tables), `MIGRATION.md`.
+
+### 2026-11-10 (Phase 3c step 1 — docstrings)
+- One docstring format (`CLAUDE.md`): a header line at the top of each module; public `cs_*`: summary, signature,
+  details, `Arguments:` / `Reads:` / `Writes:` as `* ` bullet lists; private `_cs_*`: summary (+ details) and `Reads:` /
+  `Writes:` when it touches state. `Reads:` / `Writes:` bullets start with the kind (`variable`, `cache variable`,
+  `environment variable`, `global property`, `target property`) and are the source of the variables / properties
+  reference (next step).
+- Applied to `csCMake.cmake` and every `utils/*.cmake` module; the compile profiles overview moved to the module header.

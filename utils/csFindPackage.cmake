@@ -1,10 +1,19 @@
+# Dependencies found with find_package and propagated to the installed package: cs_find_package.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# propagate_mode: PUBLIC or PRIVATE - PUBLIC will propagate the very same line as a find_package in the cmake prepared
-# for installation - PROVATE will not propagate the very same line as a find_package in the cmake prepared for
-# installation
+# Find a package for a target, like find_package, and propagate it to the installed package if PUBLIC.
+#
+# cs_find_package(<target> PUBLIC|PRIVATE <find_package arguments>...)
+#
+# A macro: the variables of find_package are visible to the caller. PUBLIC: the same find_package arguments become a
+# find_dependency() of the component of the target in the installed <namespace>Config.cmake; PRIVATE: found for the
+# build only.
+#
+# Writes:
+#
+# * target property CSCMAKE_FIND_PACKAGES: the PUBLIC find_package arguments
 macro(cs_find_package target_name propagate_mode)
   cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
 
@@ -13,7 +22,13 @@ macro(cs_find_package target_name propagate_mode)
   _cs_add_find_package_args_to_target("${target_name}" "${propagate_mode}" "${ARGN}")
 endmacro()
 
-# return the CSCMAKE_FIND_PACKAGES property of the target, i.e., a list, eventually empty
+# Return the PUBLIC find_package arguments of a target (cs_find_package).
+#
+# cs_get_target_find_packages(<target> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_FIND_PACKAGES
 function(cs_get_target_find_packages target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_FIND_PACKAGES)
   if(list_values)
@@ -29,7 +44,9 @@ function(cs_get_target_find_packages target_name output_variable_name)
   endif()
 endfunction()
 
-# Print (debug) the find_package arguments recorded as PUBLIC for target_name (see cs_find_package).
+# Print the PUBLIC find_package arguments of a target (debug messages).
+#
+# cs_print_target_find_packages(<target>)
 function(cs_print_target_find_packages target_name)
   set(packages "")
   cs_get_target_find_packages("${target_name}" packages)
@@ -41,7 +58,12 @@ function(cs_print_target_find_packages target_name)
   endif()
 endfunction()
 
-# append to CSCMAKE_FIND_PACKAGES property of the target
+# Record the find_package arguments ARGN of target_name when propagate_mode is PUBLIC; fail if it is neither PUBLIC nor
+# PRIVATE.
+#
+# Writes:
+#
+# * target property CSCMAKE_FIND_PACKAGES
 function(_cs_add_find_package_args_to_target target_name propagate_mode)
   list(JOIN ARGN " " joined_argn)
   cs_debug_message("[_cs_add_find_package_args_to_target] target ${target_name} arguments ${joined_argn}")

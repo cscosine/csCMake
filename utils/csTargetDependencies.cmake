@@ -1,11 +1,17 @@
+# Runtime dependencies of the targets: the shared libraries each target needs, per configuration.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 include(utils/csDebugUtils)
 
-# target properties added by this function - CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>: list of dll necessary to the
-# target, a variable for each configuration is created - CSCMAKE_LINKED_PROJECT_TARGETS: list of dependent targets that
-# are marked as not imported - CSCMAKE_LINKED_NON_TARGETS: list of dependencies that are marked as non-target
+# Walk every library target_name links to, directly or not: record the targets of the project and the names that are not
+# targets, and the existing files of the imported shared libraries per configuration.
+#
+# Writes:
+#
+# * target property CSCMAKE_LINKED_PROJECT_TARGETS: targets of the project it links to
+# * target property CSCMAKE_LINKED_NON_TARGETS: names that are not targets (yet)
+# * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>: shared libraries of the imported targets
 function(_cs_recursive_analyze_target target_name)
   # cmake-lint: disable=R0915
   # get target type
@@ -117,7 +123,11 @@ function(_cs_recursive_analyze_target target_name)
 
 endfunction()
 
-# return CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<config> for target
+# Return in output_variable_name the shared libraries of the imported targets target_name links to, for config.
+#
+# Reads:
+#
+# * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>
 function(_cs_get_target_direct_runtime_libraries target_name config output_variable_name)
   string(TOUPPER "${config}" config_ucase)
   get_target_property(values ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase})
@@ -132,7 +142,11 @@ function(_cs_get_target_direct_runtime_libraries target_name config output_varia
   endif()
 endfunction()
 
-# return CSCMAKE_LINKED_PROJECT_TARGETS for target
+# Return in output_variable_name the targets of the project target_name links to.
+#
+# Reads:
+#
+# * target property CSCMAKE_LINKED_PROJECT_TARGETS
 function(_cs_get_target_linked_project_targets target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS)
   if(values)
@@ -146,7 +160,11 @@ function(_cs_get_target_linked_project_targets target_name output_variable_name)
   endif()
 endfunction()
 
-# * CSCMAKE_LINKED_NON_TARGETS
+# Return in output_variable_name the linked names of target_name that were not targets when it was finalized.
+#
+# Reads:
+#
+# * target property CSCMAKE_LINKED_NON_TARGETS
 function(_cs_get_target_linked_non_targets target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_LINKED_NON_TARGETS)
   if(values)
@@ -160,7 +178,14 @@ function(_cs_get_target_linked_non_targets target_name output_variable_name)
   endif()
 endfunction()
 
-# * CSCMAKE_PROJECT_DEPENDENCIES, created in _cs_recursive_analyze_targets_finalize
+# Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
+# cs_finalize_project.
+#
+# cs_get_target_project_dependencies(<target> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_PROJECT_DEPENDENCIES
 function(cs_get_target_project_dependencies target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_PROJECT_DEPENDENCIES)
   if(values)
@@ -174,10 +199,8 @@ function(cs_get_target_project_dependencies target_name output_variable_name)
   endif()
 endfunction()
 
-# * CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>: list of <CONFIG> dll necessary to the target
-# * CSCMAKE_PROJECT_DEPENDENCIES: list of other target of this project needed for this target during the execution a
-#   variable _CSCMAKE_PENDING_DEPENDENCIES is created as temporary, but it will be used as a "buffer", at exist it is
-#   empty
+# Resolve the runtime libraries of every target of targets_list: its own ones plus the ones of the targets of the
+# project it depends on, also when they were defined after it.
 function(_cs_recursive_analyze_targets_finalize targets_list)
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] targets: ${targets_list}")
 
@@ -245,8 +268,16 @@ function(_cs_recursive_analyze_targets_finalize targets_list)
 
 endfunction()
 
-# Merge into the CSCMAKE_RUNTIME_LIBRARIES_<CONFIG> properties of target_name those of its already finalized
-# dependencies; the dependencies still pending are kept in _CSCMAKE_PENDING_DEPENDENCIES.
+# Merge into the runtime libraries of target_name those of its pending dependencies already resolved; keep the others
+# pending.
+#
+# Reads:
+#
+# * target property _CSCMAKE_PENDING_DEPENDENCIES
+#
+# Writes:
+#
+# * target property CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>, _CSCMAKE_PENDING_DEPENDENCIES
 function(_cs_target_try_to_finalize target_name)
   get_target_property(dep_targets ${target_name} _CSCMAKE_PENDING_DEPENDENCIES)
 
@@ -280,7 +311,11 @@ function(_cs_target_try_to_finalize target_name)
 
 endfunction()
 
-# return true if the _CSCMAKE_PENDING_DEPENDENCIES of the target is empty
+# Return in target_finalized whether target_name has no pending dependency.
+#
+# Reads:
+#
+# * target property _CSCMAKE_PENDING_DEPENDENCIES
 function(_cs_target_is_fully_finalized target_name target_finalized)
   get_target_property(values ${target_name} _CSCMAKE_PENDING_DEPENDENCIES)
   if(values)
@@ -294,10 +329,14 @@ function(_cs_target_is_fully_finalized target_name target_finalized)
   endif()
 endfunction()
 
-# this function - copy CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> the CSCMAKE_RUNTIME_LIBRARIES_<CONFIG> copy - merges
-# the CSCMAKE_LINKED_PROJECT_TARGETS and CSCMAKE_LINKED_NON_TARGETS and select valid targets, preparing the list in both
-# CSCMAKE_PROJECT_DEPENDENCIES and _CSCMAKE_PENDING_DEPENDENCIES _CSCMAKE_PENDING_DEPENDENCIES will be consumed in
-# _cs_recursive_analyze_targets_finalize until is empty, while CSCMAKE_PROJECT_DEPENDENCIES remain persistent
+# Start the resolution of target_name: its runtime libraries are its direct ones, its pending dependencies the targets
+# among its linked project targets and non-targets.
+#
+# Writes:
+#
+# * target property CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>: runtime libraries, then completed
+# * target property CSCMAKE_PROJECT_DEPENDENCIES: targets of the project it depends on
+# * target property _CSCMAKE_PENDING_DEPENDENCIES: the ones not resolved yet
 function(_cs_prepare_finalize_target target_name)
   cs_debug_message("[_cs_prepare_finalize_target] process target: ${target_name}")
 
@@ -350,7 +389,14 @@ function(_cs_prepare_finalize_target target_name)
 
 endfunction()
 
-# return CSCMAKE_RUNTIME_LIBRARIES_<config> (transitive) for target
+# Return the shared libraries a target needs at run time for a configuration, also through its dependencies (resolved by
+# cs_finalize_project).
+#
+# cs_get_target_runtime_libraries(<target> <config> <out-var>)
+#
+# Reads:
+#
+# * target property CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>
 function(cs_get_target_runtime_libraries target_name config output_variable_name)
   string(TOUPPER "${config}" config_ucase)
   get_target_property(values ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase})
@@ -365,9 +411,8 @@ function(cs_get_target_runtime_libraries target_name config output_variable_name
   endif()
 endfunction()
 
-# Add the existing IMPORTED_LOCATION_<CONFIG> files of the imported target target_to_analyze to the
-# CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> properties of target_name, falling back to IMPORTED_LOCATION when the
-# per-configuration location is missing.
+# Add to the direct runtime libraries of target_name the existing files of the imported target target_to_analyze
+# (IMPORTED_LOCATION_<CONFIG>, else IMPORTED_LOCATION).
 function(_cs_add_imported_target_locations target_name target_to_analyze)
   cs_get_build_configurations(configs_list)
 
@@ -397,8 +442,8 @@ function(_cs_add_imported_target_locations target_name target_to_analyze)
 
 endfunction()
 
-# Append path_value to the target_property of target_name if the file exists, otherwise skip it (target_to_analyze is
-# used for the debug message).
+# Append path_value to the property target_property of target_name if the file exists; a warning otherwise
+# (target_to_analyze: the imported target, for the message).
 function(_cs_add_existing_path_to_target_property path_value target_name target_property target_to_analyze)
   if(path_value)
     # check file exist
@@ -412,9 +457,8 @@ function(_cs_add_existing_path_to_target_property path_value target_name target_
   endif()
 endfunction()
 
-# Return in target_to_analyze_linked_libs_out every library target_to_analyze links to, without duplicates:
-# (INTERFACE_)LINK_LIBRARIES, the legacy LINK_INTERFACE_LIBRARIES, the imported link interfaces and the link depends,
-# including their per-configuration variants.
+# Return in target_to_analyze_linked_libs_out every library target_to_analyze links to: link libraries and interfaces,
+# imported link interfaces, link dependencies, also per configuration.
 function(_cs_get_all_linked_libs target_to_analyze target_to_analyze_linked_libs_out)
   cs_get_build_configurations(configs_list)
 

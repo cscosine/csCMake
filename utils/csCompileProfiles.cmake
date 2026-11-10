@@ -1,23 +1,37 @@
-include_guard(GLOBAL)
-include(utils/csDebugMessage)
-include(utils/csListUtils)
-
 # Compile profiles: named sets of rules. A rule applies compile options, compile definitions, link options, clang-tidy
 # and other profiles (PROFILES) under conditions on the build configuration, the compiler, its command-line style and
 # the platform. Profiles are applied by cs_finalize_target: the default profiles of the project
 # (DEFAULT_COMPILE_PROFILES of cs_initialize_project) and the ones given to cs_target_use_compile_profiles. Compile
 # options and definitions are PRIVATE: consumers never get them. The link options of static and object libraries are
 # INTERFACE too: link requirements, e.g. the sanitizer runtime.
+include_guard(GLOBAL)
+include(utils/csDebugMessage)
+include(utils/csListUtils)
 
-# Add a rule to the compile profile PROFILE (created by its first rule):
+# Add a rule to a compile profile (created by its first rule).
 #
 # cs_add_compile_profile_rule(PROFILE <name> [CONFIGS <config>...] [COMPILERS <CMAKE_CXX_COMPILER_ID>...] [FRONTENDS
 # GNU|MSVC...] [PLATFORMS <CMAKE_SYSTEM_NAME>...] [COMPILE_OPTIONS <option>...] [COMPILE_DEFINITIONS <definition>...]
 # [LINK_OPTIONS <option>...] [PROFILES <profile>...] [CLANG_TIDY])
 #
-# * a condition not given matches anything; the conditions of the rule apply to the profiles of PROFILES too
-# * CLANG_TIDY: run clang-tidy (checks from the .clang-tidy file of the project); mandatory where the rule matches the
-#   build (cs_finalize_target fails without clang-tidy), not run by the Visual Studio and Xcode generators (warning)
+# A condition not given matches anything; the conditions of the rule apply to the profiles of PROFILES too. CLANG_TIDY
+# runs clang-tidy (checks from the .clang-tidy of the project): mandatory where the rule matches the build, not run by
+# the Visual Studio and Xcode generators (warning).
+#
+# Arguments:
+#
+# * PROFILE: name of the profile
+# * CONFIGS, COMPILERS, FRONTENDS, PLATFORMS: conditions (FRONTENDS: command-line style, GNU or MSVC)
+# * COMPILE_OPTIONS, COMPILE_DEFINITIONS: private to the targets
+# * LINK_OPTIONS: private, and interface for static and object libraries
+# * PROFILES: other profiles applied under the conditions of the rule
+# * CLANG_TIDY: run clang-tidy
+#
+# Writes:
+#
+# * global property CSCMAKE_COMPILE_PROFILES: the profiles
+# * global property CSCMAKE_COMPILE_PROFILE_<profile>_RULES: the rules of a profile
+# * global property _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>, _CSCMAKE_COMPILE_PROFILE_RULE_COUNT
 function(cs_add_compile_profile_rule)
   set(options CLANG_TIDY)
   set(onevalue PROFILE)
@@ -50,8 +64,15 @@ function(cs_add_compile_profile_rule)
   _cs_add_to_global_property_unique_value(CSCMAKE_COMPILE_PROFILES ${arg_PROFILE})
 endfunction()
 
-# Use the compile profiles given after target_name for the target, in addition to the default profiles of the project.
+# Use compile profiles for a target, in addition to the default profiles of the project.
+#
+# cs_target_use_compile_profiles(<target> <profile>...)
+#
 # Applied by cs_finalize_target.
+#
+# Writes:
+#
+# * target property CSCMAKE_COMPILE_PROFILES: the compile profiles of the target
 function(cs_target_use_compile_profiles target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -63,7 +84,14 @@ function(cs_target_use_compile_profiles target_name)
     PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
 endfunction()
 
-# Return in profiles_out the compile profiles of target_name: the default profiles of the project, then its own ones.
+# Return the compile profiles of a target: the default profiles of the project, then its own ones.
+#
+# cs_get_target_compile_profiles(<target> <out-var>)
+#
+# Reads:
+#
+# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES
+# * target property CSCMAKE_COMPILE_PROFILES
 function(cs_get_target_compile_profiles target_name profiles_out)
   set(profiles ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
   get_target_property(own ${target_name} CSCMAKE_COMPILE_PROFILES)
@@ -76,8 +104,8 @@ function(cs_get_target_compile_profiles target_name profiles_out)
       PARENT_SCOPE)
 endfunction()
 
-# Apply the compile profiles of target_name (called by cs_finalize_target). INTERFACE libraries are skipped: they have
-# nothing to compile.
+# Apply the compile profiles of target_name (called by cs_finalize_target); INTERFACE libraries are skipped (nothing to
+# compile).
 function(_cs_apply_compile_profiles target_name)
   get_target_property(type ${target_name} TYPE)
   if(type STREQUAL "INTERFACE_LIBRARY")
@@ -91,9 +119,16 @@ function(_cs_apply_compile_profiles target_name)
   _cs_apply_clang_tidy(${target_name})
 endfunction()
 
-# Apply the rules of profile to target_name under the generator expression condition ("" = always). static_match is
-# FALSE when the conditions above cannot match this build (configure time), allowed_configs the configurations they
-# allow ("" = any).
+# Apply the rules of profile to target_name under the generator expression condition ("" = always); static_match is
+# FALSE when the conditions above cannot match this build, allowed_configs the configurations they allow ("" = any).
+#
+# Reads:
+#
+# * global property CSCMAKE_COMPILE_PROFILE_<profile>_RULES, _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>
+#
+# Writes:
+#
+# * target property _CSCMAKE_CLANG_TIDY_CONDITIONS: conditions of the rules running clang-tidy
 function(_cs_apply_compile_profile target_name profile condition static_match allowed_configs)
   get_property(
     defined GLOBAL
@@ -131,9 +166,8 @@ function(_cs_apply_compile_profile target_name profile condition static_match al
   endforeach()
 endfunction()
 
-# Add the compile options, compile definitions and link options of rule to target_name, under condition. The link
-# options of a static or object library are also INTERFACE (exported too): whatever links it needs them (e.g. the
-# sanitizer runtime).
+# Add the compile options, definitions and link options of rule to target_name under condition; the link options of a
+# static or object library are also INTERFACE (link requirements, e.g. the sanitizer runtime).
 function(_cs_apply_compile_profile_rule_options target_name rule condition)
   foreach(field COMPILE_OPTIONS COMPILE_DEFINITIONS LINK_OPTIONS)
     get_property(values GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_${field})
@@ -201,8 +235,8 @@ function(_cs_compile_profile_rule_condition rule condition_out static_match_out)
       PARENT_SCOPE)
 endfunction()
 
-# Return in configs_out the configurations allowed by both lists ("" = any), and set the caller's static_match_var to
-# FALSE when none of them is a configuration of this build.
+# Return in configs_out the configurations allowed by both lists ("" = any); set the caller's static_match_var to FALSE
+# when none of them is a configuration of this build.
 function(_cs_intersect_configs allowed rule_configs configs_out static_match_var)
   if(NOT allowed)
     set(configs "${rule_configs}")
@@ -245,8 +279,18 @@ function(_cs_intersect_configs allowed rule_configs configs_out static_match_var
       PARENT_SCOPE)
 endfunction()
 
-# Set CXX_CLANG_TIDY of target_name when a rule of its profiles runs clang-tidy in this build: clang-tidy is then
-# required. The Visual Studio and Xcode generators do not run it (one warning per build).
+# Set CXX_CLANG_TIDY of target_name when a rule of its profiles runs clang-tidy in this build (clang-tidy then
+# required); the Visual Studio and Xcode generators do not run it (one warning per build).
+#
+# Reads:
+#
+# * target property _CSCMAKE_CLANG_TIDY_CONDITIONS
+# * cache variable CLANG_TIDY_EXE: the clang-tidy executable (find_program)
+#
+# Writes:
+#
+# * target property CXX_CLANG_TIDY
+# * global property _CSCMAKE_CLANG_TIDY_GENERATOR_WARNED
 function(_cs_apply_clang_tidy target_name)
   get_target_property(terms ${target_name} _CSCMAKE_CLANG_TIDY_CONDITIONS)
   if(NOT terms)
