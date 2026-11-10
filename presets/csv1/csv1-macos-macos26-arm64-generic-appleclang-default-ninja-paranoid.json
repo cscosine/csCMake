@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-paranoid",
-            "displayName": "Configure macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
-            "description": "Configure preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
+            "displayName": "Configure macos macos26 arm64 generic appleclang-default ninja paranoid",
+            "description": "Configure preset for macos macos26 arm64 generic appleclang-default ninja paranoid",
             "inherits": [
                 "cmake-configure-build-type-paranoid",
                 "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-macos-macos26-arm64-generic-appleclang-default-ninja-paranoid",
-            "displayName": "Build macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
-            "description": "Build preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
+            "displayName": "Build macos macos26 arm64 generic appleclang-default ninja paranoid",
+            "description": "Build preset for macos macos26 arm64 generic appleclang-default ninja paranoid",
             "configurePreset": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-paranoid"
         },
         {
             "name": "install-csv1-macos-macos26-arm64-generic-appleclang-default-ninja-paranoid",
-            "displayName": "Install macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
-            "description": "Install preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja paranoid",
+            "displayName": "Install macos macos26 arm64 generic appleclang-default ninja paranoid",
+            "description": "Install preset for macos macos26 arm64 generic appleclang-default ninja paranoid",
             "configurePreset": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-paranoid",
             "inherits": [
                 "build-target-install"

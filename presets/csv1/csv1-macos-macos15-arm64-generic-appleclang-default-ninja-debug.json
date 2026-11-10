@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-macos-macos15-arm64-generic-appleclang-default-ninja-debug",
-            "displayName": "Configure macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
-            "description": "Configure preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
+            "displayName": "Configure macos macos15 arm64 generic appleclang-default ninja debug",
+            "description": "Configure preset for macos macos15 arm64 generic appleclang-default ninja debug",
             "inherits": [
                 "cmake-configure-build-type-debug",
                 "csv1-macos-macos15-arm64-generic-appleclang-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-macos-macos15-arm64-generic-appleclang-default-ninja-debug",
-            "displayName": "Build macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
-            "description": "Build preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
+            "displayName": "Build macos macos15 arm64 generic appleclang-default ninja debug",
+            "description": "Build preset for macos macos15 arm64 generic appleclang-default ninja debug",
             "configurePreset": "csv1-macos-macos15-arm64-generic-appleclang-default-ninja-debug"
         },
         {
             "name": "install-csv1-macos-macos15-arm64-generic-appleclang-default-ninja-debug",
-            "displayName": "Install macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
-            "description": "Install preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja debug",
+            "displayName": "Install macos macos15 arm64 generic appleclang-default ninja debug",
+            "description": "Install preset for macos macos15 arm64 generic appleclang-default ninja debug",
             "configurePreset": "csv1-macos-macos15-arm64-generic-appleclang-default-ninja-debug",
             "inherits": [
                 "build-target-install"

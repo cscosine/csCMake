@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-relWithDebInfo",
-            "displayName": "Configure linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
-            "description": "Configure preset for linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
+            "displayName": "Configure linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
+            "description": "Configure preset for linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
             "inherits": [
                 "cmake-configure-build-type-relWithDebInfo",
                 "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-relWithDebInfo",
-            "displayName": "Build linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
-            "description": "Build preset for linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
+            "displayName": "Build linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
+            "description": "Build preset for linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
             "configurePreset": "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-relWithDebInfo"
         },
         {
             "name": "install-csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-relWithDebInfo",
-            "displayName": "Install linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
-            "description": "Install preset for linux Ubuntu 24.04 arm64 generic clang-default ninja relWithDebInfo",
+            "displayName": "Install linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
+            "description": "Install preset for linux ubuntu26.04 arm64 generic clang-default ninja relWithDebInfo",
             "configurePreset": "csv1-linux-ubuntu26.04-arm64-generic-clang-default-ninja-relWithDebInfo",
             "inherits": [
                 "build-target-install"

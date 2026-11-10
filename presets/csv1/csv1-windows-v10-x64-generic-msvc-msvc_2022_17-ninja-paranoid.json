@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-paranoid",
-            "displayName": "Configure windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
-            "description": "Configure preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "displayName": "Configure windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "description": "Configure preset for windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
             "inherits": [
                 "cmake-configure-build-type-paranoid",
                 "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-paranoid",
-            "displayName": "Build windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
-            "description": "Build preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "displayName": "Build windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "description": "Build preset for windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
             "configurePreset": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-paranoid"
         },
         {
             "name": "install-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-paranoid",
-            "displayName": "Install windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
-            "description": "Install preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "displayName": "Install windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
+            "description": "Install preset for windows v10 x64 generic msvc-msvc_2022_17 ninja paranoid",
             "configurePreset": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-paranoid",
             "inherits": [
                 "build-target-install"

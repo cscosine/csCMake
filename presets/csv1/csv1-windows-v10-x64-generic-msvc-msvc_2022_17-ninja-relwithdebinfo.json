@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-relWithDebInfo",
-            "displayName": "Configure windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
-            "description": "Configure preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "displayName": "Configure windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "description": "Configure preset for windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
             "inherits": [
                 "cmake-configure-build-type-relWithDebInfo",
                 "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-relWithDebInfo",
-            "displayName": "Build windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
-            "description": "Build preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "displayName": "Build windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "description": "Build preset for windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
             "configurePreset": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-relWithDebInfo"
         },
         {
             "name": "install-csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-relWithDebInfo",
-            "displayName": "Install windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
-            "description": "Install preset for windows Ubuntu 24.04 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "displayName": "Install windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
+            "description": "Install preset for windows v10 x64 generic msvc-msvc_2022_17 ninja relWithDebInfo",
             "configurePreset": "csv1-windows-v10-x64-generic-msvc-msvc_2022_17-ninja-relWithDebInfo",
             "inherits": [
                 "build-target-install"

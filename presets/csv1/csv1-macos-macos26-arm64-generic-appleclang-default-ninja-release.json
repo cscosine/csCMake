@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-release",
-            "displayName": "Configure macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
-            "description": "Configure preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
+            "displayName": "Configure macos macos26 arm64 generic appleclang-default ninja release",
+            "description": "Configure preset for macos macos26 arm64 generic appleclang-default ninja release",
             "inherits": [
                 "cmake-configure-build-type-release",
                 "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-macos-macos26-arm64-generic-appleclang-default-ninja-release",
-            "displayName": "Build macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
-            "description": "Build preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
+            "displayName": "Build macos macos26 arm64 generic appleclang-default ninja release",
+            "description": "Build preset for macos macos26 arm64 generic appleclang-default ninja release",
             "configurePreset": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-release"
         },
         {
             "name": "install-csv1-macos-macos26-arm64-generic-appleclang-default-ninja-release",
-            "displayName": "Install macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
-            "description": "Install preset for macos Ubuntu 24.04 arm64 generic appleclang-default ninja release",
+            "displayName": "Install macos macos26 arm64 generic appleclang-default ninja release",
+            "description": "Install preset for macos macos26 arm64 generic appleclang-default ninja release",
             "configurePreset": "csv1-macos-macos26-arm64-generic-appleclang-default-ninja-release",
             "inherits": [
                 "build-target-install"

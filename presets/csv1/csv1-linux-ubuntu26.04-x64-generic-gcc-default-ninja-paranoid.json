@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-paranoid",
-            "displayName": "Configure linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
-            "description": "Configure preset for linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
+            "displayName": "Configure linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
+            "description": "Configure preset for linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
             "inherits": [
                 "cmake-configure-build-type-paranoid",
                 "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-paranoid",
-            "displayName": "Build linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
-            "description": "Build preset for linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
+            "displayName": "Build linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
+            "description": "Build preset for linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
             "configurePreset": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-paranoid"
         },
         {
             "name": "install-csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-paranoid",
-            "displayName": "Install linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
-            "description": "Install preset for linux Ubuntu 24.04 x64 generic gcc-default ninja paranoid",
+            "displayName": "Install linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
+            "description": "Install preset for linux ubuntu26.04 x64 generic gcc-default ninja paranoid",
             "configurePreset": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-paranoid",
             "inherits": [
                 "build-target-install"

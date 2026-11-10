@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-debug",
-            "displayName": "Configure linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
-            "description": "Configure preset for linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
+            "displayName": "Configure linux ubuntu26.04 x64 generic gcc-default ninja debug",
+            "description": "Configure preset for linux ubuntu26.04 x64 generic gcc-default ninja debug",
             "inherits": [
                 "cmake-configure-build-type-debug",
                 "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-debug",
-            "displayName": "Build linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
-            "description": "Build preset for linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
+            "displayName": "Build linux ubuntu26.04 x64 generic gcc-default ninja debug",
+            "description": "Build preset for linux ubuntu26.04 x64 generic gcc-default ninja debug",
             "configurePreset": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-debug"
         },
         {
             "name": "install-csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-debug",
-            "displayName": "Install linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
-            "description": "Install preset for linux Ubuntu 24.04 x64 generic gcc-default ninja debug",
+            "displayName": "Install linux ubuntu26.04 x64 generic gcc-default ninja debug",
+            "description": "Install preset for linux ubuntu26.04 x64 generic gcc-default ninja debug",
             "configurePreset": "csv1-linux-ubuntu26.04-x64-generic-gcc-default-ninja-debug",
             "inherits": [
                 "build-target-install"
