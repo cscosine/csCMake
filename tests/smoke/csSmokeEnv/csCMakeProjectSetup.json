@@ -1,0 +1,6 @@
+{
+  "version": 10,
+  "include": [
+    "$penv{CSCMAKE_ROOT}/presets/layout/env.json"
+  ]
+}

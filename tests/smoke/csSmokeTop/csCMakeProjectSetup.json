@@ -1,6 +1,6 @@
 {
   "version": 10,
   "include": [
-    "${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-default.json"
+    "${sourceParentDir}/csCMake/presets/layout/sibling.json"
   ]
 }

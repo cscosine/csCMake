@@ -1,7 +1,7 @@
 {
   "version": 10,
-  "$comment": "short build paths: keep Visual Studio builds clear of the 260 characters path limit",
+  "$comment": "short build folder names: keep Visual Studio builds clear of the 260 characters path limit",
   "include": [
-    "${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-shortBuildPath.json"
+    "${sourceParentDir}/csCMake/presets/layout/sibling-short.json"
   ]
 }

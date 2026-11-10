@@ -30,8 +30,8 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
 
 ## Rules
 
-- `presets/csv1/*.json` and `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` are
-  generated — never edit by hand (the `csCMakeProjectSetup-base*.json` files are hand-written). Change the templates or the registry, then
+- `presets/csv1/*.json`, `presets/csCMakeProjectSetup.json` and `presets/layout/*.json` are generated — never edit by
+  hand (the layouts are the `LAYOUTS` table of `src/cscmake/presets/generate.py`). Change the templates or the registry, then
   regenerate and commit the output together. The `generate-csv1-presets` pre-commit hook enforces this.
 - Registry enum values and short forms end up in preset names/ids used by downstream projects:
   changing them renames presets. Generated output must stay byte-identical unless a rename is intended.

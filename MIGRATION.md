@@ -216,3 +216,16 @@ Action: none for `find_package` users; code reading `<component>_DEPENDENT_EXPOR
 | `cs_finalize_project()` | at the end of the `CMakeLists.txt` of `cs_initialize_project`; configure fails at the end of that file without it |
 
 Action: add the missing calls, and move `cs_finalize_target` after the last `cs_target_link_libraries` of the target.
+
+### Project setup presets (`csCMakeProjectSetup.json` of the project)
+
+| Old include | New include |
+|---|---|
+| `${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-default.json` | `${sourceParentDir}/csCMake/presets/layout/sibling.json` |
+| `${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-shortBuildPath.json` | `${sourceParentDir}/csCMake/presets/layout/sibling-short.json` |
+| `${sourceDir}/workspace/csCMake/presets/csCMakeProjectSetup-default-standalone.json` | `${sourceDir}/workspace/csCMake/presets/layout/standalone.json` |
+| (none) | `.../presets/layout/standalone-short.json`, `$penv{CSCMAKE_ROOT}/presets/layout/env.json`, `.../env-short.json` |
+
+`csCMakeProjectSetup-base.json` / `-base-standalone.json` are replaced by `presets/csCMakeProjectSetup.json` (preset
+`cscmake-common-project-setup`); a project defining its own setup inherits it and sets `CSCMAKE_WORKSPACE_ROOT`,
+`CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (see README, "Project setup presets").

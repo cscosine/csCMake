@@ -73,6 +73,7 @@ class Project:
     name: str  # folder name = package name = export namespace (find_package searches <prefix>/<name>*/...)
     find_dependencies: tuple[str, ...] = ()  # exactly the packages of find_dependency() in its installed Config
     apps: tuple[App, ...] = ()  # installed applications to run
+    standalone: bool = False  # standalone layout: its own workspace, <project>/workspace (csCMake copied there)
 
 
 # build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
@@ -86,6 +87,13 @@ PROJECTS = (
         find_dependencies=("csSmokeMidA",),
         apps=(App("csSmokeTop", ("mid-a(text(base-core)) mid-b(base-core)",)),),
     ),
+    # env layout: workspace and csCMake from CSCMAKE_WORKSPACE_ROOT / CSCMAKE_ROOT (cmake_environment)
+    Project(
+        "csSmokeEnv",
+        find_dependencies=("csSmokeBase",),
+        apps=(App("csSmokeEnvApp", ("env(text(base-core))",)),),
+    ),
+    Project("csSmokeStandalone", apps=(App("csSmokeStandaloneApp", ("standalone",)),), standalone=True),
 )
 
 # default targets created by cs_initialize_project, installed in the cscmake_common component
@@ -136,10 +144,19 @@ def group(title: str) -> Iterator[None]:
             print("::endgroup::", flush=True)
 
 
-def run(cmd: Sequence[str | Path], cwd: Path) -> None:
+def cmake_environment(workspace: Path) -> dict[str, str]:
+    """Process environment of the cmake calls: the workspace and csCMake for the projects using the env layout."""
+    return {
+        **os.environ,
+        "CSCMAKE_WORKSPACE_ROOT": workspace.as_posix(),
+        "CSCMAKE_ROOT": (workspace / "csCMake").as_posix(),
+    }
+
+
+def run(cmd: Sequence[str | Path], cwd: Path, env: dict[str, str] | None = None) -> None:
     printable = " ".join(str(c) for c in cmd)
     print(f"$ {printable}   (in {cwd})", flush=True)
-    result = subprocess.run([str(c) for c in cmd], cwd=cwd, check=False)
+    result = subprocess.run([str(c) for c in cmd], cwd=cwd, env=env, check=False)
     if result.returncode != 0:
         raise SmokeError(f"command failed with exit code {result.returncode}: {printable}")
 
@@ -149,26 +166,34 @@ def prepare_workspace(workspace: Path) -> None:
     workspace.mkdir(parents=True, exist_ok=True)
     for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install"):
         shutil.rmtree(workspace / name, ignore_errors=True)
+    copy_cscmake(workspace / "csCMake")
+    for project in PROJECTS:
+        shutil.copytree(SMOKE_DIR / project.name, workspace / project.name)
+        if project.standalone:
+            copy_cscmake(workspace / project.name / "workspace" / "csCMake")
+
+
+def copy_cscmake(target_dir: Path) -> None:
+    """Copy the csCMake files used by the projects (CSCMAKE_CONTENT) into ``target_dir``."""
     for item in CSCMAKE_CONTENT:
         source = REPO_ROOT / item
-        target = workspace / "csCMake" / item
+        target = target_dir / item
         if source.is_dir():
             shutil.copytree(source, target)
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-    for project in PROJECTS:
-        shutil.copytree(SMOKE_DIR / project.name, workspace / project.name)
 
 
-def install_dir(workspace: Path, variant: str, project: str) -> Path:
-    """Install folder of ``project``, as set by csCMakeProjectSetup-base.json."""
-    return workspace / "install" / variant / project
+def install_dir(workspace: Path, variant: str, project: Project) -> Path:
+    """Install folder of ``project``: install/<variant>/<project> of its workspace (csCMakeProjectSetup.json)."""
+    project_workspace = workspace / project.name / "workspace" if project.standalone else workspace
+    return project_workspace / "install" / variant / project.name
 
 
 def check_installed_apps(workspace: Path, variant: str, project: Project) -> None:
     """Run the installed applications of ``project`` in every configuration and check their output."""
-    bin_dir = install_dir(workspace, variant, project.name) / "bin"
+    bin_dir = install_dir(workspace, variant, project) / "bin"
     suffix = ".exe" if os.name == "nt" else ""
     for app_spec in project.apps:
         expected = list(app_spec.output)
@@ -198,7 +223,7 @@ def line_ending(path: Path) -> str:
 def installed_config(workspace: Path, variant: str, project: Project) -> Path:
     """Return the installed ``<project>Config.cmake``; fail if it is missing."""
     name = project.name
-    config_file = install_dir(workspace, variant, name) / "lib" / "cmake" / name / f"{name}Config.cmake"
+    config_file = install_dir(workspace, variant, project) / "lib" / "cmake" / name / f"{name}Config.cmake"
     if not config_file.is_file():
         raise SmokeError(f"installed config not found: {config_file}")
     return config_file
@@ -264,7 +289,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     for project in PROJECTS:
         for workflow in workflow_presets(ctx):
             with group(f"{project.name}: cmake --workflow {workflow}"):
-                run(["cmake", "--workflow", workflow], cwd=workspace / project.name)
+                run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
         with group(f"{project.name}: find_dependency in the installed {project.name}Config.cmake"):
             check_installed_config_dependencies(workspace, variant, project)
             check_installed_default_targets(workspace, variant, project)

@@ -14,8 +14,10 @@ install folder):
 |---|---|---|
 | `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with the strict options |
 | `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default targets (`csSmokeMidA::cscmake_base_include`, `csSmokeMidA::cscmake_compile_options`) linked |
-| `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); `csCMakeProjectSetup-shortBuildPath.json` (the others use `-default`) |
+| `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); preset layout `sibling-short` (Base, MidA, Top: `sibling`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
+| `csSmokeEnv` | application located by the environment | preset layout `env`: workspace and csCMake from `CSCMAKE_WORKSPACE_ROOT` / `CSCMAKE_ROOT` (set by `run_smoke.py`), also in the includes of its presets (`$penv{CSCMAKE_ROOT}/presets/...`); finds `csSmokeBase` there |
+| `csSmokeStandalone` | self-contained application | preset layout `standalone-short`: its own workspace `csSmokeStandalone/workspace/` with a copy of csCMake, build and install folders |
 
 All projects use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
 `RelWithDebInfo,Release`) and the custom Paranoid (based on `Debug,Release`), with postfixes `d`, none, `rd`, `dp`.
@@ -28,6 +30,8 @@ flowchart BT
     midB["csSmokeMidB<br/>(flat layout)"] -->|"PUBLIC find_package COMPONENTS core"| base
     top["csSmokeTop<br/>application"] -->|"PUBLIC find_package"| midA
     top -.->|"PRIVATE find_package"| midB
+    env["csSmokeEnv<br/>(env preset layout)"] -->|"PUBLIC find_package COMPONENTS text"| base
+    standalone["csSmokeStandalone<br/>(own workspace)"]
 ```
 
 ### Inside `csSmokeBase`
@@ -76,9 +80,11 @@ In both, headers are included relative to the top project folder, in the build t
 | Check | Expected |
 |---|---|
 | `csSmokeTop` (installed, every configuration, and ctest) | prints `mid-a(text(base-core)) mid-b(base-core)` |
+| `csSmokeEnvApp` (installed, every configuration, and ctest) | prints `env(text(base-core))` |
+| `csSmokeStandaloneApp` (installed in its own workspace, every configuration, and ctest) | prints `standalone` |
 | unit tests `textTest`, `csSmokeMidATest`, `csSmokeMidBTest` | exit code 0 |
 | default targets in the installed `cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include`, `_compile_options`, `_compile_options_strict`, `_msvc_parallel_compile`, `_strict_warnings` |
-| `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only |
+| `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`, `csSmokeEnv`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only; `csSmokeStandalone`: none |
 
 ## What a smoke run does
 
@@ -99,8 +105,9 @@ flowchart TD
 ```
 <workspace>/
   csCMake/                          csCMake.cmake, utils/, presets/, templates/ (copied from the checkout)
-  csSmokeBase/ ... csSmokeTop/      the projects (copied from tests/smoke/)
-  build/<variant>/<project>         created by the presets (short folder names with shortBuildPath)
+  csSmokeBase/ ... csSmokeEnv/      the projects (copied from tests/smoke/)
+  csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
+  build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)
   install/<variant>/<project>
 ```
 
@@ -132,5 +139,5 @@ project folder must be named like the package**.
 3. Format and lint its CMake files (`cmake-format -i`, `cmake-lint`), describe it in this file.
 
 Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,
-clang-tidy, OpenMP, the standalone setup, ...): see "Phase 2 — not covered by the smoke projects" in
+clang-tidy, OpenMP, ...): see "Phase 2 — not covered by the smoke projects" in
 [PLAN.md](../../PLAN.md).

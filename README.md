@@ -49,9 +49,8 @@ presets/
                                     #   compilers, build types, hosts, targets...)
   csv1/                             # generated preset matrix (do not edit by hand)
   template/                         # templates used to generate the matrix
-  csCMakeProjectSetup-base*.json    # base "project setup" presets (hand-written)
-  csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json
-                                    # project setup + one preset per variant (generated)
+  csCMakeProjectSetup.json          # common project setup + one preset per variant (generated)
+  layout/                           # project setup of each layout (generated)
 src/cscmake/                        # Python package (preset generation)
   presets/registry.py               #   supported variant matrix (single source of truth)
   presets/generate.py               #   preset generator (cscmake-generate-presets)
@@ -304,36 +303,57 @@ library (no third-party dependency) and runs without
 installing the package.
 
 > **Note:** generated files under `presets/csv1/` and the
-> `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json`
+> `presets/csCMakeProjectSetup.json` and `presets/layout/*.json`
 > files are committed and are not meant to be edited by hand. The `generate-csv1-presets` pre-commit hook
 > regenerates them whenever the templates, the registry or the generator
 > change; if it rewrites files, stage them and commit again.
 
 ## Project setup presets
 
-The `presets/csCMakeProjectSetup*.json` files define a hidden
-`cscmake-project-setup` (base) preset inherited by every generated preset. It
-centralizes the workspace layout and paths through environment variables:
+Every generated preset inherits `cscmake-project-setup`, defined by a **layout**: where the workspace and csCMake are,
+and long or short build folder names. A project chooses it in its `csCMakeProjectSetup.json`, next to its
+`CMakePresets.json`, by including one of the layouts of `presets/layout/`:
+
+| Layout | Workspace (`CSCMAKE_WORKSPACE_ROOT`) | csCMake (`CSCMAKE_ROOT`) | Build folder names |
+|---|---|---|---|
+| `sibling` | the parent folder of the project | `<workspace>/csCMake` | long (variant id) |
+| `sibling-short` | the parent folder of the project | `<workspace>/csCMake` | short |
+| `standalone` | `<project>/workspace` | `<workspace>/csCMake` | long |
+| `standalone-short` | `<project>/workspace` | `<workspace>/csCMake` | short |
+| `env` | environment variable `CSCMAKE_WORKSPACE_ROOT` | environment variable `CSCMAKE_ROOT` | long |
+| `env-short` | environment variable `CSCMAKE_WORKSPACE_ROOT` | environment variable `CSCMAKE_ROOT` | short |
+
+Short build folder names keep Visual Studio builds clear of the 260-character path limit. For example, csCMake next to
+the project:
+
+```jsonc
+// CMakePresets.json
+{ "version": 10, "include": ["${sourceParentDir}/csCMake/presets/csv1/cs-presets-all.json"] }
+// csCMakeProjectSetup.json
+{ "version": 10, "include": ["${sourceParentDir}/csCMake/presets/layout/sibling-short.json"] }
+```
+
+With the `env` layouts both includes start with `$penv{CSCMAKE_ROOT}/presets/...`; with the `standalone` ones with
+`${sourceDir}/workspace/csCMake/presets/...`. A project can also define its own `cscmake-project-setup`: include
+`presets/csCMakeProjectSetup.json`, inherit `cscmake-common-project-setup` and set the three environment values
+`CSCMAKE_WORKSPACE_ROOT`, `CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (as the files of `presets/layout/` do).
+
+Build and install folders:
+
+```
+$CSCMAKE_WORKSPACE_ROOT/build/<variant id or short form>/<sourceDirName>/...   # build output
+$CSCMAKE_WORKSPACE_ROOT/install/<variant id>/<sourceDirName>                   # install output
+```
+
+`CMAKE_PREFIX_PATH` contains `$CSCMAKE_WORKSPACE_ROOT/install/<variant id>` and `.../libs/<variant id>`. Other
+variables of the setup:
 
 | Variable | Meaning |
 | -------- | ------- |
-| `CSCMAKE_WORKSPACE_ROOT` | root folder of the sources (`${sourceParentDir}`) |
-| `CSCMAKE_ROOT` | path to the csCMake clone (`$env{CSCMAKE_WORKSPACE_ROOT}/csCMake`) |
 | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | extra paths prepended/appended to `CMAKE_PREFIX_PATH` by `cs_initialize_project`: environment variables (passed by the presets) or `-D` |
 | `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | the same for `CMAKE_MODULE_PATH` |
-| `CSCMAKE_CSV1_SUB_DIR` / `_SHORT` | sub-folder used to keep build/install paths short |
+| `CSCMAKE_CSV1_SUB_DIR` / `_SHORT` | variant folder names, long and short (set by the variant presets) |
 | `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | per-build-type sub-folder inside the build dir (`debug`, `release`, ...) |
-
-Build and install folders follow a common layout:
-
-```
-$CSCMAKE_WORKSPACE_ROOT/build/<variant>/<sourceDirName>/...     # build output
-$CSCMAKE_WORKSPACE_ROOT/install/<variant>/<sourceDirName>       # install output
-```
-
-`csCMakeProjectSetup-shortBuildPath.json` provides an alternative base that uses
-shorter path components (useful on Windows to stay clear of the 260-character
-path limit).
 
 ## Development
 

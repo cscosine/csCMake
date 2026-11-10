@@ -63,12 +63,12 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (Phase 3a step 5) cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
 
 ### csCMake location (presets)
-- [ ] Evaluate making the csCMake location configurable. Today only two layouts are possible, both hard-coded:
+- [x] (3b step 6d) Evaluate making the csCMake location configurable. Today only two layouts are possible, both hard-coded:
   - default: csCMake is a sibling of the project, `${sourceParentDir}/csCMake` (in the project's `CMakePresets.json` include, its `csCMakeProjectSetup.json` include, and `WORKSPACE_ROOT` / `CS_CMAKE_ROOT` in `csCMakeProjectSetup-base.json`);
   - standalone: `<project>/workspace/csCMake` (`csCMakeProjectSetup-base-standalone.json`).
   A preset `environment` overrides the process environment, so exporting `CS_CMAKE_ROOT` / `WORKSPACE_ROOT` has no effect; `CS_CMAKE_MODULE_PATH_*` / `CS_CMAKE_PREFIX_PATH_*` only add paths. A project can define its own `cscmake-project-setup` preset (own `CS_CMAKE_ROOT`/`WORKSPACE_ROOT`), but its `CMakePresets.json` include still assumes the sibling path.
-- [ ] Option to evaluate: a base setup whose root comes from the environment, e.g. `csCMakeProjectSetup-base-env.json` + `-default-env.json` using `$penv{CS_CMAKE_ROOT}` / `$penv{CS_CMAKE_WORKSPACE_ROOT}` (presets v7+ also allow `$penv{}` in `include`, so `CMakePresets.json` could include `$penv{CS_CMAKE_ROOT}/presets/csv1/cs-presets-all.json`). Presets have no default for unset variables, so this must be an additional variant, not a replacement of the zero-setup sibling layout.
-- [ ] The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmokeMidB) and `csCMakeProjectSetup-default.json` (the other chain projects).
+- [x] (3b step 6d) Option to evaluate: a base setup whose root comes from the environment, e.g. `csCMakeProjectSetup-base-env.json` + `-default-env.json` using `$penv{CS_CMAKE_ROOT}` / `$penv{CS_CMAKE_WORKSPACE_ROOT}` (presets v7+ also allow `$penv{}` in `include`, so `CMakePresets.json` could include `$penv{CS_CMAKE_ROOT}/presets/csv1/cs-presets-all.json`). Presets have no default for unset variables, so this must be an additional variant, not a replacement of the zero-setup sibling layout.
+- [x] (3b step 6d) The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmokeMidB) and `csCMakeProjectSetup-default.json` (the other chain projects).
 
 ### Python code coverage
 - [ ] Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
@@ -227,7 +227,7 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] Several components with dependencies between exports; cyclic dependency detection (expected failure test).
 - [ ] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`).
 - [ ] `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`, `csUseOpenMPOnTarget`.
-- [ ] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups.
+- [x] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups → preset layouts `standalone-short`, `sibling-short`, `env` in the smoke tests (3b step 6d).
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
 
@@ -564,3 +564,21 @@ variables, properties, preset environment variables, default targets) guides the
   configuration copies the runtime of its base. README "MSVC runtime library": defaults, the static-runtime command
   line (or preset `cacheVariables`), same runtime for every library linked into one executable. Configure test: the
   override reaches `MSVC_RUNTIME_LIBRARY` of the targets, also for Paranoid (based on Debug).
+
+### 2026-11-10 (Phase 3b step 6d — csCMake location: preset layouts)
+- The two hand-written bases differed only in two environment values, and the three generated setup files repeated
+  the per-variant presets. Now: `presets/csCMakeProjectSetup.json` (generated, once): `cscmake-common-project-setup`
+  (build/install folders, search paths from the environment values `CSCMAKE_WORKSPACE_ROOT`, `CSCMAKE_ROOT`,
+  `CSCMAKE_BUILD_SUB_DIR`) + the 42 `cscmake-project-setup-<variant>`; `presets/layout/<layout>.json` (generated from
+  the `LAYOUTS` table of `generate.py`, template `layout.json.template`): `sibling`, `sibling-short`, `standalone`,
+  `standalone-short` (user), `env`, `env-short`, each includes the common file and defines `cscmake-project-setup`
+  with the three values. A project's `csCMakeProjectSetup.json` includes one layout (or defines its own).
+- Presets rule found by experiment: a preset can only inherit presets of its file or of files it includes → the
+  layouts include the common file (not the reverse); environment values referencing each other and the variant
+  presets resolve across inheritance (checked with a minimal preset project).
+- `cscmake-common-project-setup` (not `cscmake-project-setup-common`: the `cscmake-project-setup-` prefix is the one of
+  the per-variant presets).
+- Smoke: Base / MidA / Top `sibling`, MidB `sibling-short`; new `csSmokeStandalone` (`standalone-short`, own workspace,
+  csCMake copied into it by `run_smoke.py`) and `csSmokeEnv` (`env`, `run_smoke.py` sets `CSCMAKE_WORKSPACE_ROOT` /
+  `CSCMAKE_ROOT`, `$penv{CSCMAKE_ROOT}` includes, finds csSmokeBase). Tests: layouts, common file. `.gitattributes`:
+  LF for the new generated files. README "Project setup presets", `MIGRATION.md` table.
