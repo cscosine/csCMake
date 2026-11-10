@@ -325,7 +325,7 @@ Rule (CLAUDE.md, `docs/contributing/code.md` "No hidden side effects"): csCMake 
 or what the user asks; target properties of csCMake targets first, then directory / project variables, then global or
 cache settings; no build behaviour in the presets. Found with the install RPATH: a value in the host presets would have
 replaced OpenCV's `ocv_update(CMAKE_INSTALL_RPATH ...)` default without any sign.
-- [ ] Review every setting wider than a csCMake target: for each, who it reaches (csCMake targets, every target of the
+- [x] (4f) Review every setting wider than a csCMake target: for each, who it reaches (csCMake targets, every target of the
   project folder including third-party projects added with `add_subdirectory` / `FetchContent`, the nested csCMake
   projects, the consumers of the installed package, the projects using the presets without csCMake), whether a value
   set by the project wins, whether it is documented and can be turned off; then keep (documented), narrow (target
@@ -344,8 +344,34 @@ replaced OpenCV's `ocv_update(CMAKE_INSTALL_RPATH ...)` default without any sign
     sanitized namespace, variables; `test_no_variable_leaks_into_the_consumer` covers the variables);
   - compile profiles: `PRIVATE` options only (consumers unaffected), `INTERFACE` link options of static libraries
     (sanitizer runtime): documented.
-- [ ] For each kept global setting: a configure test that a value set by the project before `cs_initialize_project` (or
+- [x] (4f: `test_the_choices_of_the_project_win`, `test_the_debug_option_of_a_package_adds_no_cache_entry`; output folders: `test_defaults_can_be_overridden_from_the_command_line`) For each kept global setting: a configure test that a value set by the project before `cs_initialize_project` (or
   per target) wins, where it should.
+- Assessment (2026-11-10), every setting wider than a csCMake target. Reach: **F** = every target of the project folder
+  and its sub-folders (third-party projects added with `add_subdirectory` / `FetchContent` included), **B** = the
+  whole build tree, **C** = the consumers of the installed package.
+
+  | Setting | Reach | Asked by the user? | Project value wins? | Verdict |
+  |---|---|---|---|---|
+  | output folders `CMAKE_{RUNTIME,LIBRARY,ARCHIVE}_OUTPUT_DIRECTORY` (+ `_<CUSTOM>`) | F | no | yes (`if(NOT ...)`) | keep: needed on Windows (DLLs next to the executables of the folder); document the reach |
+  | `CMAKE_CXX_STANDARD` | F | yes (`CXX_STANDARD`) | n/a | keep |
+  | `CMAKE_CXX_STANDARD_REQUIRED ON`, `CMAKE_CXX_EXTENSIONS OFF` | F | no | **no** (overwritten) | **change**: only if not defined |
+  | `CMAKE_EXPORT_COMPILE_COMMANDS ON` (Ninja) | F | no | **no** (a normal variable hides `-D...=OFF`) | **change**: only if not defined |
+  | `CMAKE_PREFIX_PATH` / `CMAKE_MODULE_PATH` + HEAD / TAIL | F | yes (`CSCMAKE_*_HEAD/TAIL`) | yes (appended around) | keep |
+  | `enable_testing()` | F | no | n/a | keep (csCMake projects have tests); document |
+  | `CMAKE_CONFIGURATION_TYPES` (cache, FORCE) | B | yes (the configurations) | no, by design ("owned by csCMake", documented) | keep |
+  | `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` | F | yes (`MAPPED_TO`, `BASED_ON`) | n/a | keep: every imported target needs the mapping for custom configurations; document the reach |
+  | copied `<per-config variable>_<CUSTOM>` cache entries | B | yes (`CUSTOM_CONFIG`) | yes (no FORCE) | keep |
+  | `CMAKE_MSVC_RUNTIME_LIBRARY` (fallback) | F | no | **no** | keep: every target of a build must use the same MSVC runtime to link; document the reach and that `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` is the knob |
+  | presets: compilers, generator, toolset / architecture, `CMAKE_BUILD_TYPE`, folders, search paths, test output | every project using them | yes (choosing a preset) | yes (project setup preset first in `inherits`) | keep: no build behaviour (4c reverted the install RPATH there, 4d rejected `unusedCli`) |
+  | Config: `option(<ns>_DEBUG ...)` | C | no | n/a | **change**: a cache entry in every consumer; read `<ns>_DEBUG` as a plain variable (`-D<ns>_DEBUG=ON` still works) |
+  | Config: `<ns>_debug_message`, `<ns>_find_dependency_for_component`, `<ns>_*` variables | C | no | n/a | keep: prefixed by the namespace, temporaries unset (`test_no_variable_leaks_into_the_consumer`) |
+  | compile profiles | csCMake targets | yes | per target | keep: `PRIVATE`; the `INTERFACE` link options of static libraries are their link requirements (documented) |
+  | install RPATH (4c) | csCMake targets | default, `OFF` | yes | keep |
+- Done (user: all): the three changes above (`CMAKE_CXX_STANDARD_REQUIRED` / `CMAKE_CXX_EXTENSIONS` and
+  `CMAKE_EXPORT_COMPILE_COMMANDS` only if not defined; no `option()` in the Config), each with a configure test that the
+  project's value wins (or that the consumer has no cache entry); the lifecycle page gets the reach of each setting
+  (folder, build, consumers) and the reasons for the kept ones (MSVC runtime, output folders, imported configuration
+  mapping, `enable_testing`).
 
 ### Code structure assessment (Phase 4 step 4g, user 2026-11-10)
 - [ ] Re-evaluate how csCMake is divided into files and folders, and reorganise where it helps (one subject per module,
@@ -463,7 +489,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); next 4f (side-effect assessment), 4g (code structure assessment), 4h (gersemi + `cscmake-lint`). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); 4f done (side-effect assessment); next 4g (code structure assessment), 4h (gersemi + `cscmake-lint`). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -1093,3 +1119,11 @@ package is not released; pre-release tags are GitHub pre-releases.
   prototyped as formatter (comments untouched, templates parsed, `cs_*` signatures need an extension); no maintained
   linter replacement. Recommendation: gersemi + an own `cscmake-lint` for the rules we use, after 4f / 4g; until
   then keep cmakelang with Python <= 3.14. Decided (user): option 2, Phase 4 step 4h.
+
+### 2026-11-10 (Phase 4 step 4f — side-effect assessment)
+- Assessment table in "Side-effect assessment". Changed: `CMAKE_CXX_STANDARD_REQUIRED` / `CMAKE_CXX_EXTENSIONS` set
+  only if not defined (new macro `_cs_set_cxx_standard`, also keeps `cs_initialize_project` under the statement limit);
+  `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` only if empty (CMake creates it as an empty cache entry with Ninja: `NOT
+  DEFINED` would never be true); the Config reads `<ns>_DEBUG` as a plain variable (was `option()`: a cache entry in
+  every consumer). Configure tests fail on `754dfc2`, pass now. Lifecycle page: "What reaches beyond the csCMake
+  targets" (reach and reason of each kept setting).

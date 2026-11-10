@@ -43,15 +43,34 @@ order:
 8. sets in the project scope the variables computed by the functions called so far (see
    [project scope](#project-scope)): imported configuration mapping, postfixes, MSVC runtime, output folders of the
    custom configurations;
-9. `CMAKE_CXX_STANDARD` (required, no extensions);
+9. `CMAKE_CXX_STANDARD`; `CMAKE_CXX_STANDARD_REQUIRED` `ON` and `CMAKE_CXX_EXTENSIONS` `OFF` unless the project set them;
 10. the configurations of the build: `CMAKE_CONFIGURATION_TYPES` with a multi-config generator; with a single-config
     one, fails if `CMAKE_BUILD_TYPE` is not one of them;
 11. adds `CSCMAKE_PREFIX_PATH_HEAD` / `_TAIL` and the module path ones around `CMAKE_PREFIX_PATH` /
     `CMAKE_MODULE_PATH`;
-12. `enable_testing()`; with Ninja, `CMAKE_EXPORT_COMPILE_COMMANDS`;
+12. `enable_testing()`; with Ninja, `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` unless set (`-D...=OFF`, or the environment
+    variable of the same name);
 13. creates the default target `<namespace>::cscmake_base_include` (and its include folders, created on disk);
 14. defers a call to the end of the current `CMakeLists.txt` that fails if `cs_finalize_project` was not called
     (`cmake_language(DEFER)`).
+
+### What reaches beyond the csCMake targets
+
+csCMake changes only what its own targets need, or what the project asks for (see
+[Contributing to csCMake](../contributing/code.md#cmake-conventions)). The settings that reach further, and why:
+
+| Setting | Reaches | Why |
+|---|---|---|
+| output folders `<build>/bin`, `<build>/lib` | every target of the project folder, third-party projects added with `add_subdirectory` included | on Windows, the DLLs are found next to the executables; kept when the project set them |
+| `CMAKE_CXX_STANDARD`, `_REQUIRED`, `CMAKE_CXX_EXTENSIONS` | every target of the project folder | `CXX_STANDARD` of the project; `_REQUIRED` and `_EXTENSIONS` kept when the project set them |
+| `CMAKE_MSVC_RUNTIME_LIBRARY` | the targets of the folder not created by `cs_add_*` | every target of a build must use the same MSVC runtime to link; set with `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` |
+| `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` | every imported target of the folder | the configurations of imported targets to use (`MAPPED_TO`, `BASED_ON`): needed for the custom configurations |
+| `CMAKE_CONFIGURATION_TYPES` | the build | the configurations of the first csCMake project (multi-config generators) |
+| `CMAKE_EXPORT_COMPILE_COMMANDS` | the build folder | `compile_commands.json` for the editors (Ninja); kept when set |
+| `enable_testing()` | the project folder | the tests of the project run with ctest |
+
+The installed `<namespace>Config.cmake` defines, in the consumer, only names prefixed by the namespace, and unsets its
+temporaries; its debug switch `<namespace>_DEBUG` is read as a plain variable (no cache entry).
 
 ### Project scope
 

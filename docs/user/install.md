@@ -69,7 +69,8 @@ The generated `<namespace>Config.cmake`:
   makes `find_package` fail, with the list of the available ones in `<namespace>_NOT_FOUND_MESSAGE`;
 - sets `<namespace>_BASE_DIR` (the install prefix of the package), `<namespace>_CMAKE_DIR`,
   `<namespace>_COMPONENTS_LIST`, `<namespace>_DEFAULT_COMPONENTS_LIST` and `<namespace>_<component>_DEPENDENCIES`;
-- has its own debug option: `-D<namespace>_DEBUG=ON` prints what it loads (a `-` in the namespace becomes `_`).
+- has its own debug switch: `-D<namespace>_DEBUG=ON` prints what it loads (a `-` in the namespace becomes `_`); it adds
+  no cache entry to the consumer.
 
 ## Inside the project
 

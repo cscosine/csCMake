@@ -186,10 +186,7 @@ macro(cs_initialize_project)
   # the variables derived from the configurations (postfixes, imported config mapping, output folders, MSVC runtime)
   _cs_apply_project_scope_variables()
 
-  # set cmake standard
-  set(CMAKE_CXX_STANDARD ${_cs_init_cxx_standard})
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
+  _cs_set_cxx_standard(${_cs_init_cxx_standard})
 
   # check validity of requested config (if single generator, or set the build types to the requested configs)
   _cs_process_configurations()
@@ -219,13 +216,32 @@ macro(cs_initialize_project)
   unset(_cs_init_cxx_standard)
 endmacro()
 
+# Set the C++ standard of the project (in the scope of the caller, cs_initialize_project: a macro): required and without
+# extensions, unless the project chose otherwise.
+#
+# Writes:
+#
+# * variable CMAKE_CXX_STANDARD
+# * variable CMAKE_CXX_STANDARD_REQUIRED (ON), CMAKE_CXX_EXTENSIONS (OFF): unless defined
+macro(_cs_set_cxx_standard standard)
+  set(CMAKE_CXX_STANDARD ${standard})
+  if(NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  endif()
+  if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+  endif()
+endmacro()
+
 # Set the variables that depend on the generator (in the scope of the caller, cs_initialize_project: a macro).
 #
 # Writes:
 #
-# * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
+# * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators, unless set by the user (e.g. -D...=OFF)
 macro(_cs_set_generator_variables)
-  if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
+  # Ninja and Ninja Multi-Config; CMake creates the cache entry empty, a value (-D, or the environment variable of the
+  # same name) is the choice of the user
+  if("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL "" AND CMAKE_GENERATOR MATCHES "^Ninja")
     cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
   endif()
