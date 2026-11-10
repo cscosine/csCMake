@@ -12,8 +12,8 @@ install folder):
 
 | Project | Role | What it covers |
 |---|---|---|
-| `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with the strict options |
-| `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default targets (`csSmokeMidA::cscmake_base_include`, `csSmokeMidA::cscmake_compile_options`) linked |
+| `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with `cscmake_strict_warnings`; compile profile `csSmokeBase_paranoid` (default of the project): UBSan and standard library checks in Paranoid, clang-tidy (`.clang-tidy`) with Clang on Linux |
+| `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default target `csSmokeMidA::cscmake_base_include` linked |
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); preset layout `sibling-short` (Base, MidA, Top: `sibling`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
 | `csSmokeEnv` | application located by the environment | preset layout `env`: workspace and csCMake from `CSCMAKE_WORKSPACE_ROOT` / `CSCMAKE_ROOT` (set by `run_smoke.py`), also in the includes of its presets (`$penv{CSCMAKE_ROOT}/presets/...`); finds `csSmokeBase` there |
@@ -43,7 +43,7 @@ folder below it is its own `project()`. Each library is installed in its own com
 ```mermaid
 flowchart BT
     subgraph sol["csSmokeBaseSol (top project, folder csSmokeBase/)"]
-        common["csSmokeBase::cscmake_base_include<br/>csSmokeBase::cscmake_compile_options / _strict<br/>(component cscmake_common)"]
+        common["csSmokeBase::cscmake_base_include<br/>(component cscmake_common)"]
         subgraph pkg["project csSmokeBase (csSmokeBase/csSmokeBase/)"]
             root["csSmokeBase::csSmokeBase<br/>INTERFACE"]
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
@@ -83,7 +83,7 @@ In both, headers are included relative to the top project folder, in the build t
 | `csSmokeEnvApp` (installed, every configuration, and ctest) | prints `env(text(base-core))` |
 | `csSmokeStandaloneApp` (installed in its own workspace, every configuration, and ctest) | prints `standalone` |
 | unit tests `textTest`, `csSmokeMidATest`, `csSmokeMidBTest` | exit code 0 |
-| default targets in the installed `cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include`, `_compile_options`, `_compile_options_strict`, `_msvc_parallel_compile`, `_strict_warnings` |
+| default target in the installed `cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include` |
 | `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`, `csSmokeEnv`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only; `csSmokeStandalone`: none |
 
 ## What a smoke run does
@@ -139,5 +139,5 @@ project folder must be named like the package**.
 3. Format and lint its CMake files (`cmake-format -i`, `cmake-lint`), describe it in this file.
 
 Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,
-clang-tidy, OpenMP, ...): see "Phase 2 — not covered by the smoke projects" in
+OpenMP, ...): see "Phase 2 — not covered by the smoke projects" in
 [PLAN.md](../../PLAN.md).

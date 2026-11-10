@@ -31,7 +31,7 @@
           "CUSTOM_CONFIG": 1,
           "BASED_ON": 1,
           "POSTFIX": 1,
-          "STRICT_COMPILATION_ON_CONFIG": 1
+          "DEFAULT_COMPILE_PROFILES": "+"
         }
       },
       "cs_finalize_project": {
@@ -119,13 +119,32 @@
         "pargs": 1
       },
       "cs_target_check_installed_headers": {
-        "pargs": 2
-      },
-      "cs_target_enable_clang_tidy": {
-        "pargs": 1
+        "pargs": 1,
+        "kwargs": {
+          "COMPILE_PROFILES": "+"
+        }
       },
       "cs_target_use_openmp": {
         "pargs": 2
+      },
+      "cs_add_compile_profile_rule": {
+        "flags": [
+          "CLANG_TIDY"
+        ],
+        "kwargs": {
+          "PROFILE": 1,
+          "CONFIGS": "+",
+          "COMPILERS": "+",
+          "FRONTENDS": "+",
+          "PLATFORMS": "+",
+          "COMPILE_OPTIONS": "+",
+          "COMPILE_DEFINITIONS": "+",
+          "LINK_OPTIONS": "+",
+          "PROFILES": "+"
+        }
+      },
+      "cs_target_use_compile_profiles": {
+        "pargs": "1+"
       }
     }
   }

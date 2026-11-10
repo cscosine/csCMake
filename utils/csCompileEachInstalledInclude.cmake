@@ -1,8 +1,15 @@
 include_guard(GLOBAL)
 
 # Check that every header of target_name queued for installation is self-contained: for each one generate a .cpp that
-# only includes it and build it as a static library linked to target_name and link_target.
-function(cs_target_check_installed_headers target_name link_target)
+# only includes it and build it as a static library linked to target_name, with the compile profiles given after
+# COMPILE_PROFILES (in addition to the default profiles of the project):
+#
+# cs_target_check_installed_headers(<target> [COMPILE_PROFILES <profile>...])
+function(cs_target_check_installed_headers target_name)
+  cmake_parse_arguments(arg "" "" "COMPILE_PROFILES" ${ARGN})
+  if(arg_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "[cs_target_check_installed_headers] unparsed arguments ${arg_UNPARSED_ARGUMENTS}")
+  endif()
 
   # folder for generated files shared by all the configurations: the generated .cpp is the same in every configuration,
   # and the Xcode generator does not support sources that vary by configuration (gen-$<CONFIG>/)
@@ -43,7 +50,8 @@ function(cs_target_check_installed_headers target_name link_target)
 
     cs_target_sources(${static_lib_name} PRIVATE ${output_file})
 
-    cs_target_link_libraries(${static_lib_name} PRIVATE ${target_name} ${link_target})
+    cs_target_link_libraries(${static_lib_name} PRIVATE ${target_name})
+    cs_target_use_compile_profiles(${static_lib_name} ${arg_COMPILE_PROFILES})
 
     cs_finalize_target(${static_lib_name})
 

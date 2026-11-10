@@ -9,8 +9,7 @@ cs_find_package(csSmokeTop PRIVATE csSmokeMidB REQUIRED CONFIG)
 
 cs_target_sources(csSmokeTop PRIVATE main.cpp)
 
-cs_target_link_libraries(csSmokeTop PRIVATE csSmokeMidA::csSmokeMidA csSmokeMidB::csSmokeMidB
-                                            csSmokeTop::cscmake_compile_options)
+cs_target_link_libraries(csSmokeTop PRIVATE csSmokeMidA::csSmokeMidA csSmokeMidB::csSmokeMidB)
 
 cs_install_target(csSmokeTop csSmokeTop DEFAULT)
 

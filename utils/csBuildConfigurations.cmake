@@ -144,18 +144,15 @@ function(_cs_add_custom_build_configuration config base_config postfix base_conf
   set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
 endfunction()
 
-# helper function to parse the cs_initialize_project arguments and add build types accepts extra arguments to specify
-# the available build configurations: _cs_process_configurations( CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug
-# DEFAULT_CONFIG Release DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release," CUSTOM_CONFIG
-# MyCustomConfig1 BASED_ON Debug POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
-# [STRICT_COMPILATION_ON_CONFIG ConfigName] note, make sure to use POSTFIX "" if no postfix has to be used )
+# Parse the arguments of cs_initialize_project (see csCMake.cmake): namespace, C++ standard (returned in
+# required_cxx_standard), default compile profiles, build configurations.
 function(_cs_parse_additional_configurations required_cxx_standard)
   # cmake-lint: disable=R0912,R0915
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
   set(options "")
-  set(onevalue NAMESPACE CXX_STANDARD STRICT_COMPILATION_ON_CONFIG)
-  set(multivalue DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
+  set(onevalue NAMESPACE CXX_STANDARD)
+  set(multivalue DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG DEFAULT_COMPILE_PROFILES)
   cmake_parse_arguments(arg "${options}" "${onevalue}" "${multivalue}" ${ARGN})
 
   if(arg_UNPARSED_ARGUMENTS)
@@ -181,6 +178,18 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   # return cxx standard
   set(${required_cxx_standard}
       ${arg_CXX_STANDARD}
+      PARENT_SCOPE)
+
+  # compile profiles of every target of the project (cs_finalize_target): cscmake_default unless given, NONE for none
+  set(default_profiles cscmake_default)
+  if(DEFINED arg_DEFAULT_COMPILE_PROFILES)
+    set(default_profiles ${arg_DEFAULT_COMPILE_PROFILES})
+  endif()
+  if(default_profiles STREQUAL "NONE")
+    set(default_profiles "")
+  endif()
+  set(CSCMAKE_DEFAULT_COMPILE_PROFILES
+      "${default_profiles}"
       PARENT_SCOPE)
 
   # the configurations belong to the build tree: the first csCMake project defines them; a nested project (added with
@@ -322,29 +331,9 @@ function(_cs_parse_additional_configurations required_cxx_standard)
     endforeach()
   endwhile()
 
-  # a nested project: same strict configuration as the build, if given; the derived variables come from the scope of the
-  # project that defined the configurations (parent directory)
+  # a nested project: the derived variables come from the scope of the project that defined the configurations
   if(nested)
-    cs_get_strict_build_configuration(strict_config)
-    if(arg_STRICT_COMPILATION_ON_CONFIG AND NOT arg_STRICT_COMPILATION_ON_CONFIG STREQUAL strict_config)
-      message(FATAL_ERROR "[cs_initialize_project] STRICT_COMPILATION_ON_CONFIG ${arg_STRICT_COMPILATION_ON_CONFIG} "
-                          "of ${arg_NAMESPACE} differs from the one of the build: '${strict_config}'")
-    endif()
     return()
-  endif()
-
-  # check if the user want strict compilation flags for a specific configutation
-  if(arg_STRICT_COMPILATION_ON_CONFIG)
-    # check such configuration exists
-    cs_get_build_configurations(configs_list)
-    if(arg_STRICT_COMPILATION_ON_CONFIG IN_LIST configs_list)
-      _cs_set_strict_build_configuration(${arg_STRICT_COMPILATION_ON_CONFIG})
-    else()
-      message(
-        FATAL_ERROR
-          "[cs_initialize_project] STRICT_COMPILATION_ON_CONFIG ${arg_STRICT_COMPILATION_ON_CONFIG} is not one "
-          "of the configurations of the project: ${configs_list}")
-    endif()
   endif()
 
   # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with
@@ -395,21 +384,6 @@ function(_cs_process_configurations)
           "by this project")
     endif()
   endif()
-endfunction()
-
-# Store configname as the configuration built with strict compilation flags (global property
-# CSCMAKE_STRICT_BUILD_CONFIGURATION).
-function(_cs_set_strict_build_configuration configname)
-  set_property(GLOBAL PROPERTY CSCMAKE_STRICT_BUILD_CONFIGURATION ${configname})
-endfunction()
-
-# Return in configname the configuration built with strict compilation flags (STRICT_COMPILATION_ON_CONFIG of
-# cs_initialize_project), empty if none.
-function(cs_get_strict_build_configuration configname)
-  get_property(val GLOBAL PROPERTY CSCMAKE_STRICT_BUILD_CONFIGURATION)
-  set(${configname}
-      ${val}
-      PARENT_SCOPE)
 endfunction()
 
 # set a global property CSCMAKE_PER_CONFIG_VARIABLES highly inspired from https://stackoverflow.com/q/75823363 (copy all

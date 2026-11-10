@@ -97,13 +97,7 @@ PROJECTS = (
 )
 
 # default targets created by cs_initialize_project, installed in the cscmake_common component
-DEFAULT_TARGETS = (
-    "cscmake_base_include",
-    "cscmake_compile_options",
-    "cscmake_compile_options_strict",
-    "cscmake_msvc_parallel_compile",
-    "cscmake_strict_warnings",
-)
+DEFAULT_TARGETS = ("cscmake_base_include",)
 _ADD_LIBRARY = re.compile(r"^add_library\(\s*([^\s)]+)", re.MULTILINE)
 _FIND_DEPENDENCY = re.compile(r"^\s*find_dependency\(\s*([^\s)]+)", re.MULTILINE)
 

@@ -128,7 +128,7 @@ variables, properties, preset environment variables, default targets) guides the
     `cmake -P`), `cs_print_target_properties` (`PROP_LIST`), `cs_print_exported_list_details` (prints the export list
     as default list), error messages naming nonexistent functions / undefined variables, unused argument of
     `_cs_sort_export_dependent_exports`, `INSTALL_CONFIGDIR` read from the caller scope, PDB destination `bin`;
-  - `cs_target_enable_clang_tidy` never ran clang-tidy (verified 2026-11-09): the generator expression is split into
+  - [x] (step 6a: compile profiles, `CLANG_TIDY` rules) `cs_target_enable_clang_tidy` never ran clang-tidy (verified 2026-11-09): the generator expression is split into
     several `set_target_properties` arguments, `CXX_CLANG_TIDY` ends up empty. Fixing it turns on `-checks=*` +
     `-warnings-as-errors=*` for every project calling it → decide the check set (e.g. a `.clang-tidy` file) and
     smoke-test it. (The include-time `FATAL_ERROR` without clang-tidy was fixed in 3m: lazy lookup.)
@@ -230,6 +230,33 @@ variables, properties, preset environment variables, default targets) guides the
 - [x] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups → preset layouts `standalone-short`, `sibling-short`, `env` in the smoke tests (3b step 6d).
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
+
+### Compile profiles and clang-tidy: ideas (future)
+Guiding constraint (user): configurability per kind of project and per part of a project: a core library is stricter
+than an application, a sample or a standalone tool; tests and samples inside a project may be looser than its library.
+- [ ] **Tiers** composed from the shipped profiles, chosen with `DEFAULT_COMPILE_PROFILES`: e.g. `cscmake_tier_core`
+  (strict warnings, hardening in debug configurations, UBSan + ASan and clang-tidy in a paranoid configuration),
+  `cscmake_tier_app` (warnings as errors, sanitizers on request), `cscmake_tier_sample` (warnings, no `-Werror`).
+  Configuration names are project-defined, so tiers need the configurations as a parameter (e.g. a helper
+  `cs_add_compile_profile_tier(<name> CORE PARANOID_CONFIGS Paranoid)`) or stay documented recipes.
+- [ ] **Per directory**: `CSCMAKE_DEFAULT_COMPILE_PROFILES` is a directory variable read at `cs_finalize_target`, so a
+  `samples/` or `tests/` folder can already `set()` its own defaults: test it, document it, maybe a named helper.
+- [ ] **Per target exceptions**: `cs_target_exclude_compile_profiles(<target> <profile>...)` (vendored or generated
+  code); generated sources (Qt `moc`/`uic`) marked `SKIP_LINTING` (CMake 3.27) so clang-tidy skips them.
+- [ ] **`.clang-tidy` tiers** shipped as recommendations (later in the copier template): core (bugprone, cert,
+  cppcoreguidelines subset, modernize, performance, readability subset, `WarningsAsErrors: '*'`), app (lighter), sample
+  (minimal); a sub-folder `.clang-tidy` with `InheritParentConfig: true` relaxes tests / samples.
+- [ ] **More profiles**: `cscmake_conformance` (MSVC `/Zc:preprocessor /utf-8 /permissive-`), `cscmake_hardening_release`
+  (`-D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection`, MSVC `/sdl /guard:cf`), `cscmake_sanitize_thread`,
+  `cscmake_sanitize_undefined_fatal` (`-fno-sanitize-recover=all`: tests fail on UB), `cscmake_coverage` (`--coverage`,
+  Clang source-based coverage) for a Coverage configuration.
+- [ ] **More warnings, opt-in** (noisy or style): `-Wcast-qual -Wextra-semi -Wundef -Wredundant-decls -Wsuggest-override`,
+  GCC `-Wuseless-cast`; MSVC `/w14287 /we4289 /w14545 /w14546 /w14547 /w14549 /w14555 /w14619`.
+- [ ] **Other analyzers** as rule fields like `CLANG_TIDY`: `CPPCHECK` (`<LANG>_CPPCHECK`), `IWYU`
+  (`<LANG>_INCLUDE_WHAT_YOU_USE`); clang-tidy fixes export (`<LANG>_CLANG_TIDY_EXPORT_FIXES_DIR`).
+- [ ] **Warnings from dependencies**: the targets of a nested csCMake project (same build) are not `SYSTEM`, so its headers
+  trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
+- [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
 
 ### Run scripts (future)
 - [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
@@ -582,3 +609,29 @@ variables, properties, preset environment variables, default targets) guides the
   csCMake copied into it by `run_smoke.py`) and `csSmokeEnv` (`env`, `run_smoke.py` sets `CSCMAKE_WORKSPACE_ROOT` /
   `CSCMAKE_ROOT`, `$penv{CSCMAKE_ROOT}` includes, finds csSmokeBase). Tests: layouts, common file. `.gitattributes`:
   LF for the new generated files. README "Project setup presets", `MIGRATION.md` table.
+
+### 2026-11-10 (Phase 3b step 6a — compile profiles)
+- `utils/csCompileProfiles.cmake`: `cs_add_compile_profile_rule(PROFILE <p> [CONFIGS] [COMPILERS] [FRONTENDS] [PLATFORMS]
+  [COMPILE_OPTIONS] [COMPILE_DEFINITIONS] [LINK_OPTIONS] [PROFILES] [CLANG_TIDY])`, `cs_target_use_compile_profiles`,
+  `cs_get_target_compile_profiles`; `cs_initialize_project(... DEFAULT_COMPILE_PROFILES <p>...|NONE)` (default
+  `cscmake_default`). Applied once by `cs_finalize_target`: conditions → generator expressions (nested profiles: AND),
+  compile options / definitions PRIVATE, link options PRIVATE + INTERFACE for static / object libraries (sanitizer
+  runtime: found by the smoke chain, csSmokeMidA's Paranoid build links the UBSan-compiled installed csSmokeBase);
+  INTERFACE libraries skipped. `CLANG_TIDY`: generator expression in `CXX_CLANG_TIDY` (checked: CMake runs it only in
+  the matching configurations), mandatory where the rule matches the build at configure time (configurations,
+  compiler, frontend, platform), warning with Visual Studio / Xcode.
+- Shipped profiles (user review): `cscmake_default` (MSVC `/MP /Zc:__cplusplus`), `cscmake_warnings` (same essential
+  checks on every compiler; added `-Woverloaded-virtual -Wimplicit-fallthrough -Wmisleading-indentation`, and the MSVC
+  off-by-default warnings `/w15038` (initialization order, user question), `/w14265 /w14263 /w14264 /w14242 /w14254
+  /w14826 /w14062 /w14296 /w14905 /w14906 /w14928 /w14640`; clang-cl gets `/W4 /permissive-` instead of the GCC-style
+  list), `cscmake_warnings_as_errors`, `cscmake_strict_warnings` (the former "strict"), `cscmake_sanitize_undefined`,
+  `cscmake_sanitize_address` (new), `cscmake_hardening` (new: `_GLIBCXX_ASSERTIONS`, `_LIBCPP_HARDENING_MODE`),
+  `cscmake_clang_tidy`.
+- Removed: option targets `cscmake_compile_options[_strict]`, `cscmake_msvc_parallel_compile`,
+  `cscmake_strict_warnings` (only `cscmake_base_include` remains), `STRICT_COMPILATION_ON_CONFIG`,
+  `cs_get_strict_build_configuration`, `cs_target_enable_clang_tidy` / `csClangTidy.cmake`.
+  `cs_target_check_installed_headers(<target> [COMPILE_PROFILES ...])`.
+- Smoke: csSmokeBase profile `csSmokeBase_paranoid` (project default): UBSan + hardening in Paranoid, clang-tidy with
+  Clang on Linux (`.clang-tidy`); header check with `cscmake_strict_warnings`. Tests: `test_compile_profiles.py`
+  (conditions, nesting, defaults, static link options, unknown profile, clang-tidy mandatory / not in the build;
+  skipped on Windows: they compile). README "Compile profiles" (profiles and warnings tables), `MIGRATION.md`.

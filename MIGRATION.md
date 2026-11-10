@@ -16,7 +16,7 @@ Functions acting on a target are named `cs_target_*` (like CMake's `target_*`); 
 |---|---|
 | `csUseOpenMPOnTarget` | `cs_target_use_openmp` |
 | `cs_compileEachInstalledInclude` | `cs_target_check_installed_headers` |
-| `cs_exec_clang_tidy` | `cs_target_enable_clang_tidy` |
+| `cs_exec_clang_tidy` | a compile profile with `cscmake_clang_tidy` (see "Compile profiles") |
 | `cs_get_generate_folder_common` | `cs_get_generated_dir` |
 | `cs_get_generate_folder_config` | `cs_get_generated_config_dir` |
 
@@ -147,10 +147,10 @@ The default targets have the same name in the build tree and once installed:
 | Old (build tree) | Old (installed) | New |
 |---|---|---|
 | `<project>::<project>_csCMakeBaseInclude` | `<namespace>::<project>_csCMakeBaseInclude` | `<namespace>::cscmake_base_include` |
-| `<project>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::cscmake_compile_options` |
-| `<project>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::cscmake_compile_options_strict` |
-| `<project>::<project>MSVCParallelCompile` | `<namespace>::<project>MSVCParallelCompile` | `<namespace>::cscmake_msvc_parallel_compile` |
-| `<project>::<project>StrictCompilation` | `<namespace>::<project>StrictCompilation` | `<namespace>::cscmake_strict_warnings` |
+| `<project>::<project>_csCMakeCompileOptionsDefault` | `<namespace>::<project>_csCMakeCompileOptionsDefault` | compile profile `cscmake_default` (every target by default) |
+| `<project>::<project>_csCMakeCompileOptionsStrict` | `<namespace>::<project>_csCMakeCompileOptionsStrict` | compile profile `cscmake_strict_warnings` |
+| `<project>::<project>MSVCParallelCompile` | `<namespace>::<project>MSVCParallelCompile` | compile profile `cscmake_default` |
+| `<project>::<project>StrictCompilation` | `<namespace>::<project>StrictCompilation` | compile profile `cscmake_strict_warnings` |
 | component `<project>_csCMakeCommon` | | component `cscmake_common` |
 
 `<project>` is the name of the top `project()`.
@@ -229,3 +229,17 @@ Action: add the missing calls, and move `cs_finalize_target` after the last `cs_
 `csCMakeProjectSetup-base.json` / `-base-standalone.json` are replaced by `presets/csCMakeProjectSetup.json` (preset
 `cscmake-common-project-setup`); a project defining its own setup inherits it and sets `CSCMAKE_WORKSPACE_ROOT`,
 `CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (see README, "Project setup presets").
+
+### Compile options: compile profiles
+
+| Old | New |
+|---|---|
+| `cs_target_link_libraries(<t> ... <ns>::<project>_csCMakeCompileOptionsDefault)` | nothing: `cscmake_default` applies to every target |
+| `cs_target_link_libraries(<t> ... <ns>::<project>_csCMakeCompileOptionsStrict)` | `cs_target_use_compile_profiles(<t> cscmake_strict_warnings)` |
+| `cs_initialize_project(... STRICT_COMPILATION_ON_CONFIG Paranoid)` | `cs_add_compile_profile_rule(PROFILE <ns>_paranoid CONFIGS Paranoid PROFILES cscmake_sanitize_undefined)` and `DEFAULT_COMPILE_PROFILES cscmake_default <ns>_paranoid` (or `cs_target_use_compile_profiles`) |
+| `cs_exec_clang_tidy(<t>)` | a rule with `PROFILES cscmake_clang_tidy` (or `CLANG_TIDY`) with the configurations / compilers / platforms where it runs, used by `<t>`; checks in `.clang-tidy` |
+| `cs_compileEachInstalledInclude(<t> <ns>::<project>_csCMakeCompileOptionsStrict)` | `cs_target_check_installed_headers(<t> COMPILE_PROFILES cscmake_strict_warnings)` |
+
+`cs_get_strict_build_configuration` and the target property `CXX_CLANG_TIDY` set by `cs_exec_clang_tidy` are gone.
+Differences: the warnings are private to each target (not propagated to consumers); clang-cl gets the MSVC-style
+`/W4 /permissive-` instead of the GCC-style list; MSVC gets the off-by-default warnings listed in the README.

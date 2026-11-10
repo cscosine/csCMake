@@ -62,6 +62,14 @@ function(cs_finalize_target target_name)
   if(aliased)
     set(target_name ${aliased})
   endif()
+  get_property(
+    finalized
+    TARGET ${target_name}
+    PROPERTY _CSCMAKE_FINALIZED_LINKS
+    SET)
+  if(NOT finalized)
+    _cs_apply_compile_profiles(${target_name})
+  endif()
   _cs_recursive_analyze_target(${target_name})
   _cs_target_links(${target_name} links)
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")

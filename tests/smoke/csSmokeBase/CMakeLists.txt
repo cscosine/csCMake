@@ -15,6 +15,18 @@ project(
 
 include(csCMake)
 
+# Paranoid: undefined behavior sanitizer, standard library checks, clang-tidy with Clang on Linux (.clang-tidy)
+cs_add_compile_profile_rule(
+  PROFILE csSmokeBase_paranoid
+  CONFIGS Paranoid
+  PROFILES cscmake_sanitize_undefined cscmake_hardening)
+cs_add_compile_profile_rule(
+  PROFILE csSmokeBase_paranoid
+  CONFIGS Paranoid
+  COMPILERS Clang
+  PLATFORMS Linux
+  PROFILES cscmake_clang_tidy)
+
 cs_initialize_project(
   NAMESPACE csSmokeBase
   CXX_STANDARD 17
@@ -23,7 +35,8 @@ cs_initialize_project(
   MAPPED_TO "RelWithDebInfo,Release,"
   CUSTOM_CONFIG Paranoid
   BASED_ON "Debug,Release,"
-  POSTFIX "dp")
+  POSTFIX "dp"
+  DEFAULT_COMPILE_PROFILES cscmake_default csSmokeBase_paranoid)
 
 add_subdirectory(csSmokeBase)
 

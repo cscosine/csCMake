@@ -1,41 +1,12 @@
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# Create the default targets of the project, to be linked by the project targets. Same name in the build tree and once
-# installed, in the namespace given to cs_initialize_project:
-#
-# * <namespace>::cscmake_base_include: include folders (project source folder, generated files)
-# * <namespace>::cscmake_compile_options: default compile options (cscmake_msvc_parallel_compile)
-# * <namespace>::cscmake_compile_options_strict: the default ones plus cscmake_strict_warnings
-#
-# All of them are installed in the cscmake_common component (a default component).
+# Create the default target of the project, to be linked by the project targets: <namespace>::cscmake_base_include
+# (include folders: project source folder, generated files), the same name in the build tree and once installed,
+# installed in the cscmake_common component (a default component). Compile options come from the compile profiles
+# (csCompileProfiles.cmake), applied by cs_finalize_target.
 function(_cs_add_default_targets)
-
-  # create the base include, to be used in all project
-  _cs_target_base_project_include_dir() # cscmake_base_include
-
-  # ---------------------------------------------------
-  # create MSVC parallel compilation flags
-  _cs_target_msvc_parallel_compilation() # cscmake_msvc_parallel_compile
-  # TODO(sc) add a target that manages the version file etc
-
-  # <namespace>::cscmake_compile_options: the default compile options
-  _cs_target_create_default(cscmake_compile_options INTERFACE target_name)
-  cs_get_namespace(namespace)
-  cs_target_link_libraries(${target_name} INTERFACE ${namespace}::cscmake_msvc_parallel_compile)
-
-  _cs_target_create_default_finalize(cscmake_compile_options)
-
-  # ---------------------------------------------------
-  # create the strict compiler options
-  _cs_target_strict_compilation() # cscmake_strict_warnings
-
-  # <namespace>::cscmake_compile_options_strict: the default compile options plus the strict warnings
-  _cs_target_create_default(cscmake_compile_options_strict INTERFACE target_name)
-  cs_target_link_libraries(${target_name} INTERFACE ${namespace}::cscmake_strict_warnings
-                                                    ${namespace}::cscmake_msvc_parallel_compile)
-  _cs_target_create_default_finalize(cscmake_compile_options_strict)
-
+  _cs_target_base_project_include_dir()
 endfunction()
 
 # Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project and the
@@ -56,7 +27,7 @@ function(_cs_target_base_project_include_dir)
                                                       $<BUILD_INTERFACE:${config_folder}>)
 
   # create the folders now: an include folder must exist even when nothing is generated there (clang-cl reports a
-  # missing include folder, -Wmissing-include-dirs, an error with the strict options)
+  # missing include folder, -Wmissing-include-dirs, an error with -Werror)
   file(MAKE_DIRECTORY "${common_folder}")
   get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if(generator_is_multi_config)
@@ -68,112 +39,6 @@ function(_cs_target_base_project_include_dir)
   endif()
 
   _cs_target_create_default_finalize(cscmake_base_include)
-
-endfunction()
-
-# Create the <namespace>::cscmake_msvc_parallel_compile interface target, adding /MP and /Zc:__cplusplus on MSVC.
-function(_cs_target_msvc_parallel_compilation)
-  _cs_target_create_default(cscmake_msvc_parallel_compile INTERFACE target_name)
-
-  # add /MP and /Zc:__cplusplus
-  target_compile_options(${target_name} INTERFACE $<$<CXX_COMPILER_ID:MSVC>: /MP /Zc:__cplusplus >)
-
-  _cs_target_create_default_finalize(cscmake_msvc_parallel_compile)
-
-endfunction()
-
-# Create the <namespace>::cscmake_strict_warnings interface target with the strict warning flags of each compiler (GCC,
-# Clang, ClangCL, MSVC), warnings treated as errors.
-function(_cs_target_strict_compilation)
-
-  _cs_target_create_default(cscmake_strict_warnings INTERFACE target_name)
-
-  # add compile options
-  target_compile_options(
-    ${target_name}
-    INTERFACE # both GNU and Clang
-              $<$<CXX_COMPILER_ID:GNU,Clang>:
-              -Wall
-              -Wextra
-              -Wpedantic
-              -Wconversion
-              -Wsign-conversion
-              -Wshadow
-              -Wnon-virtual-dtor
-              -Wold-style-cast
-              -Wfloat-equal
-              -Winit-self
-              -Wuninitialized
-              -Wunused
-              -Wreorder
-              -Wcast-align
-              -Wformat=2
-              -Wnull-dereference
-              -Wdouble-promotion
-              -Wzero-as-null-pointer-constant
-              -Werror # Treat all warnings as errors
-              >
-              # remove some on MSVC CLANG
-              $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>>:
-              -Wno-c++98-compat
-              -Wno-c++98-compat-pedantic
-              -Wno-c++20-extensions # otherwise clang on msvc will not work
-              >
-              # GNU only
-              $<$<CXX_COMPILER_ID:GNU>:
-              -Wstrict-null-sentinel
-              -Wlogical-op
-              -Wduplicated-cond
-              -Wduplicated-branches
-              >
-              # MSVC
-              $<$<CXX_COMPILER_ID:MSVC>:
-              /W4
-              /WX
-              /permissive-
-              >)
-
-  cs_get_strict_build_configuration(configname)
-  if(configname)
-    # add sanitize options only for the specified configuration
-    target_compile_options(
-      ${target_name}
-      INTERFACE # both GNU and Clang but not on windows
-                $<$<AND:$<CONFIG:${configname}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-                # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same
-                # flags
-                -fsanitize=undefined
-                # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread # mutually exclusive with address
-                # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very
-                # same flags -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled
-                # with the very same flags
-                >
-                # Clang additions
-                $<$<AND:$<CONFIG:${configname}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-                # -fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same
-                # flags -fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very
-                # same flags -fsanitize=bounds  # might cause false positives if 3rd parts are not compiled with the
-                # very same flags
-                >)
-    target_link_options(
-      ${target_name}
-      INTERFACE
-      $<$<AND:$<CONFIG:${configname}>,$<CXX_COMPILER_ID:GNU,Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      # -fsanitize=address # might cause false positives if 3rd parts are not compiled with the very same flags
-      -fsanitize=undefined
-      # -fsanitize=leak # mutually exclusive with thread -fsanitize=thread # mutually exclusive with address
-      # -fsanitize=pointer-compare  # might cause false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=pointer-subtract # might cause false positives if 3rd parts are not compiled with the very same flags
-      >
-      # Clang additions
-      $<$<AND:$<CONFIG:${configname}>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<PLATFORM_ID:Windows>>>:
-      # -fsanitize=integer # might cause false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=nullability # might cause false positives if 3rd parts are not compiled with the very same flags
-      # -fsanitize=bounds # might cause false positives if 3rd parts are not compiled with the very same flags
-      >)
-  endif()
-
-  _cs_target_create_default_finalize(cscmake_strict_warnings)
 
 endfunction()
 

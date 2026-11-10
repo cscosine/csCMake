@@ -22,7 +22,7 @@ include(utils/csInstall)
 include(utils/csDefaultTargets)
 include(utils/csBuildConfigurations)
 include(utils/csCompileEachInstalledInclude)
-include(utils/csClangTidy)
+include(utils/csCompileProfiles)
 include(utils/csOpenMP)
 
 # store in a global variable the directory of csCMake, need to be invoked right after
@@ -47,11 +47,15 @@ function(_cs_get_root_dir path)
       PARENT_SCOPE)
 endfunction()
 
-# accepts extra arguments to specify the namespace and the available build configurations:
-# cs_initialize_project(NAMESPACE MyNamespace CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug DEFAULT_CONFIG Release
-# DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release," CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug
-# POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX "" [STRICT_COMPILATION_ON_CONFIG ConfigName] )
-# note, make sure to use POSTFIX "" if no postfix
+# Initialize the project (mandatory, after project(... VERSION ...)):
+#
+# cs_initialize_project(NAMESPACE <namespace> CXX_STANDARD <standard> [DEFAULT_CONFIG <config>...]
+# [DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"]... [CUSTOM_CONFIG <config> BASED_ON
+# "<config>,<fallback>," POSTFIX "<postfix>"]... [DEFAULT_COMPILE_PROFILES <profile>...|NONE])
+#
+# * DEFAULT_CONFIG: Debug, Release, RelWithDebInfo; DEFAULT_CONFIG_MAPPED: one of them, with its imported configuration
+#   mapping; CUSTOM_CONFIG: a copy of a default configuration with its own postfix (POSTFIX "" for none)
+# * DEFAULT_COMPILE_PROFILES: the compile profiles of every target (default cscmake_default)
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
   # temporaries are _cs_init_* and are unset at the end.
@@ -128,11 +132,7 @@ macro(cs_initialize_project)
   # enable cmake testing
   enable_testing()
 
-  # enable generation of compile commands on ninja generators
-  if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
-    cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  endif()
+  _cs_set_generator_variables()
 
   _cs_add_default_targets()
 
@@ -144,6 +144,24 @@ macro(cs_initialize_project)
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
   unset(_cs_init_cxx_standard)
+endmacro()
+
+# Set the variables that depend on the generator (in the scope of the caller, cs_initialize_project: a macro).
+#
+# Writes:
+#
+# * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
+# * variable CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING: none with Xcode, unless set; the standard
+#   library checks of libc++ come from the compile profiles (cscmake_hardening), as with the other generators, and Xcode
+#   would define _LIBCPP_HARDENING_MODE too (macro redefined)
+macro(_cs_set_generator_variables)
+  if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
+    cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  endif()
+  if(CMAKE_GENERATOR STREQUAL "Xcode" AND NOT DEFINED CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING)
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING "none")
+  endif()
 endmacro()
 
 # Return in output_variable_name the namespace given to cs_initialize_project (NAMESPACE): the prefix of the installed

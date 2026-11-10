@@ -29,6 +29,8 @@ two parts:
   - [Build configurations](#build-configurations)
   - [Dependencies](#dependencies)
   - [Default targets](#default-targets)
+  - [Compile profiles](#compile-profiles)
+  - [Nested csCMake projects](#nested-cscmake-projects)
   - [Install and export](#install-and-export)
 - [CMake Presets](#cmake-presets)
   - [Using the generated presets](#using-the-generated-presets)
@@ -94,8 +96,8 @@ cs_initialize_project(
     DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
     # define a custom configuration, cloned from Debug; artifacts get postfix "d"
     CUSTOM_CONFIG MyCustomConfig BASED_ON Debug POSTFIX "d"
-    # enable strict compilation (warnings-as-errors) for one configuration only
-    STRICT_COMPILATION_ON_CONFIG Debug
+    # compile profiles of every target (default: cscmake_default), see "Compile profiles"
+    DEFAULT_COMPILE_PROFILES cscmake_default cscmake_strict_warnings
 )
 
 # add libraries, executables...
@@ -133,13 +135,12 @@ cs_target_sources(mylib
 cs_target_link_libraries(mylib
     PUBLIC
         myApp::cscmake_base_include              # project root include dir
-        myApp::cscmake_compile_options_strict
 )
 
 # optional helpers
+cs_target_use_compile_profiles(mylib myApp_paranoid)   # more compile profiles for this target
 cs_target_use_openmp(mylib PUBLIC)
-cs_target_enable_clang_tidy(mylib)                     # clang-tidy as a build step (Linux/Clang)
-cs_target_check_installed_headers(mylib mylib)   # compile every installed header standalone
+cs_target_check_installed_headers(mylib COMPILE_PROFILES cscmake_strict_warnings)  # each header compiles alone
 
 # export the target within the given components; pass DEFAULT to include it in
 # the default component list
@@ -201,19 +202,68 @@ cs_find_package(mylib PUBLIC Eigen3 REQUIRED)
 
 ### Default targets
 
-`cs_initialize_project` creates a few convenience targets, installed in the
-`cscmake_common` component. They have the same name in the build
-tree and once installed:
+`cs_initialize_project` creates `<namespace>::cscmake_base_include` (the project root and the generated folders as
+include folders, build-interface and install-interface aware), installed in the `cscmake_common` component, with the
+same name in the build tree and once installed. Compile options come from the compile profiles.
 
-- `<namespace>::cscmake_base_include` — includes the project root and the
-  generated folders (build-interface and install-interface aware).
-- `<namespace>::cscmake_compile_options` — common flags (e.g. MSVC parallel
-  compilation).
-- `<namespace>::cscmake_compile_options_strict` — default flags plus strict
-  compilation; if `STRICT_COMPILATION_ON_CONFIG` is set, the corresponding
-  configuration also gets sanitizer flags (GCC/Clang on non-Windows).
-- `<namespace>::cscmake_msvc_parallel_compile`,
-  `<namespace>::cscmake_strict_warnings` — the building blocks of the two above.
+### Compile profiles
+
+A compile profile is a named set of rules; a rule adds compile options, compile definitions, link options, clang-tidy
+or other profiles, under conditions on the configuration, the compiler, its command-line style and the platform
+(every condition is optional):
+
+```cmake
+cs_add_compile_profile_rule(
+  PROFILE myApp_paranoid
+  CONFIGS Paranoid                          # build configurations
+  COMPILERS GNU Clang                       # CMAKE_CXX_COMPILER_ID
+  FRONTENDS GNU                             # command-line style: GNU, or MSVC (cl, clang-cl)
+  PLATFORMS Linux                           # CMAKE_SYSTEM_NAME
+  COMPILE_OPTIONS -fno-inline
+  COMPILE_DEFINITIONS MY_CHECKS=1
+  LINK_OPTIONS ...
+  PROFILES cscmake_sanitize_undefined cscmake_clang_tidy)   # other profiles, under the same conditions
+```
+
+`cs_finalize_target` applies to each target the default profiles of the project (`DEFAULT_COMPILE_PROFILES` of
+`cs_initialize_project`, `cscmake_default` if not given, `NONE` for none) and the ones given to
+`cs_target_use_compile_profiles(<target> <profile>...)`. Compile options and definitions are private to the target
+(consumers never get them); the link options of static and object libraries are also part of their interface (e.g.
+the sanitizer runtime). `CLANG_TIDY` runs clang-tidy with the checks of the project's `.clang-tidy`: where such a rule
+matches the build, configure fails without clang-tidy (`CLANG_TIDY_EXE`); the Visual Studio and Xcode generators do
+not run it (warning).
+
+Profiles shipped with csCMake:
+
+| Profile | Contents |
+|---|---|
+| `cscmake_default` | MSVC: `/MP` (parallel compilation), `/Zc:__cplusplus` |
+| `cscmake_warnings` | high warning level, the same checks on every compiler (table below) |
+| `cscmake_warnings_as_errors` | `-Werror` / `/WX` |
+| `cscmake_strict_warnings` | `cscmake_warnings` + `cscmake_warnings_as_errors` |
+| `cscmake_sanitize_undefined` | UndefinedBehaviorSanitizer (GCC, Clang, AppleClang on Linux / macOS) |
+| `cscmake_sanitize_address` | AddressSanitizer (GCC, Clang, AppleClang on Linux / macOS; MSVC `/fsanitize=address`) |
+| `cscmake_hardening` | standard library checks: `_GLIBCXX_ASSERTIONS` (libstdc++), `_LIBCPP_HARDENING_MODE` (libc++; with Xcode, csCMake sets the Xcode setting `CLANG_CXX_STANDARD_LIBRARY_HARDENING` to `none` unless the project sets it) |
+| `cscmake_clang_tidy` | clang-tidy |
+
+`cscmake_warnings`:
+
+| Check | GCC / Clang / AppleClang | MSVC (`cl`) |
+|---|---|---|
+| warning level | `-Wall -Wextra -Wpedantic` | `/W4 /permissive-` (also clang-cl) |
+| data member initialization order | `-Wreorder` | `/w15038` |
+| non-virtual destructor with virtual functions | `-Wnon-virtual-dtor` | `/w14265` |
+| function hiding a virtual one | `-Woverloaded-virtual` | `/w14263 /w14264` |
+| narrowing and sign conversions | `-Wconversion -Wsign-conversion -Wdouble-promotion` | `/w14242 /w14254 /w14826` |
+| enumerator not handled in a switch | (`-Wall`) | `/w14062` |
+| implicit fallthrough in a switch | `-Wimplicit-fallthrough` | |
+| shadowed variables | `-Wshadow` | (`/W4`) |
+| old-style casts, `0` / `NULL` as pointer | `-Wold-style-cast -Wzero-as-null-pointer-constant` | |
+| uninitialized, unused, format | `-Winit-self -Wuninitialized -Wunused -Wformat=2` | |
+| other | `-Wfloat-equal -Wcast-align -Wnull-dereference`; GCC: `-Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wmisleading-indentation -Wstrict-null-sentinel` | `/w14296 /w14905 /w14906 /w14928 /w14640` |
+
+A project adds its own checks with more rules on its own profile (or on a shipped one), and silences one with a rule
+adding `-Wno-...` / `/wd....`.
 
 ### Nested csCMake projects
 

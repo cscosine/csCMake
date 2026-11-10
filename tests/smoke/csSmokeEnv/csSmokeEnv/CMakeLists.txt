@@ -8,7 +8,7 @@ cs_find_package(
 
 cs_target_sources(csSmokeEnvApp PRIVATE main.cpp)
 
-cs_target_link_libraries(csSmokeEnvApp PRIVATE csSmokeBase::text csSmokeEnv::cscmake_compile_options)
+cs_target_link_libraries(csSmokeEnvApp PRIVATE csSmokeBase::text)
 
 cs_install_target(csSmokeEnvApp csSmokeEnvApp DEFAULT)
 
