@@ -42,15 +42,17 @@ jobs:
         with:
           arch: x64
 
+      # pwsh, not bash: on Windows, Git Bash puts Git's usr/bin (its own link.exe) before the MSVC linker, and pip may
+      # build a Rust extension from source (gersemi without a wheel for the Python version)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ "${{ matrix.deps }}" = "minimum" ]; then
-            pip install -e .[dev] -c constraints-minimum.txt
-          else
-            pip install -e .[dev]
-          fi
-        shell: bash
+          if ("${{ matrix.deps }}" -eq "minimum") {
+            python -m pip install -e ".[dev]" -c constraints-minimum.txt
+          } else {
+            python -m pip install -e ".[dev]"
+          }
+        shell: pwsh
 
       - name: Run pre-commit
         run: pre-commit run --all-files
