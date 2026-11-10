@@ -457,13 +457,13 @@ Decided (user, 2026-11-10): version **v0.2.0** (v1.0.0 when more projects are on
 package is not released; pre-release tags are GitHub pre-releases.
 
 ### Documentation appeal (future, user 2026-11-10)
-- [ ] Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
+- [x] (done) Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
   pydata-sphinx-theme as alternative).
-- [ ] Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
+- [x] (done) Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
   a package with components and its generated `<Package>Config.cmake`, Debug / Release side by side in one prefix, a
   custom Paranoid configuration with sanitizers, one preset per platform / compiler, DLLs found in the Visual Studio
   debugger, install RPATH; who it is for and when not to use it.
-- [ ] A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
+- [x] (done, `docs/advanced/design-decisions.md`) A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
   RPATH per target, include folders per configuration, gersemi + own linter, ...).
 
 ### Clean first stable release (future, user 2026-11-10, to decide)
@@ -1221,3 +1221,18 @@ package is not released; pre-release tags are GitHub pre-releases.
   checked merged into `origin/dev` first).
 - v0.3.0 (user): `pyproject.toml` 0.3.0, CHANGELOG "Unreleased" -> "v0.3.0" (fixes of 4c-4f and the include folders,
   install RPATH, gersemi, the `modules/` reorganisation); release from `main` as v0.2.0 (`dev` -> `main`, tag).
+
+### 2026-11-10 (v0.3.0 tag moved; documentation appeal)
+- v0.3.0: the Windows / Python 3.15 CI job failed installing gersemi (no wheel: its Rust backend built from source, and
+  Git Bash's `link.exe` came before MSVC's). Fix (user: split, explained): a Windows-only install step in `pwsh`,
+  Linux / macOS keep bash. The fix commit was amended on `dev` (force-push); rewriting `main` was refused by the
+  permission check, so `main` got a normal merge of the amended `dev` (Git combined the two fixes: corrected by a commit
+  taking `dev`'s `ci.yml`, `main` = `dev` again) and the tag `v0.3.0` was moved to it (`510bcdf`, not yet published
+  before).
+- Documentation appeal (user away, done alone; uncommitted for review): Furo theme (light / dark, "view / edit this
+  page" links to GitHub), sphinx-design (cards, tabs); dev deps `furo>=2024.8.6`, `sphinx-design>=0.6.1` (pinned in
+  the constraints). Landing page `docs/index.md`: what csCMake is, cards to the main entry points, what it solves with
+  three with / without csCMake examples (a package with components, configurations side by side with a custom one,
+  presets), the rest in short, who it is for and when not (not a package manager); the toctrees hidden there (they
+  drive the sidebar). New `docs/advanced/design-decisions.md` (the decisions worth keeping from this PLAN). README map,
+  CHANGELOG "Unreleased".

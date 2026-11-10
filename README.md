@@ -26,7 +26,7 @@ The documentation site is built from `docs/` and published from `main`
   [presets](docs/user/presets.md), [formatting your CMake files](docs/user/formatting.md),
   [troubleshooting](docs/user/troubleshooting.md).
 - **Tutorials**: [the smoke projects, step by step](docs/tutorials/index.md).
-- **Advanced**: [lifecycle of a project](docs/advanced/lifecycle.md),
+- **Advanced**: [design decisions](docs/advanced/design-decisions.md), [lifecycle of a project](docs/advanced/lifecycle.md),
   [runtime dependencies](docs/advanced/runtime-dependencies.md), [installed packages internals](docs/advanced/packages.md),
   [presets internals](docs/advanced/presets-internals.md), [smoke tests](docs/advanced/smoke-tests.md).
 - **Reference**: every command, variable and property, generated from the CMake modules: on the site (or build it

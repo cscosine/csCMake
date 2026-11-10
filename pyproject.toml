@@ -40,6 +40,8 @@ dev = [
     "sphinxcontrib-moderncmakedomain>=3.29",
     "myst-parser>=4.0",
     "sphinxcontrib-mermaid>=1.0",
+    "furo>=2024.8.6",
+    "sphinx-design>=0.6.1",
 ]
 
 # ===============================

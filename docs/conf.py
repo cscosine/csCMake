@@ -25,6 +25,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinxcontrib.mermaid",
     "sphinxcontrib.moderncmakedomain",
+    "sphinx_design",
 ]
 
 # hand-written pages in Markdown (MyST), the reference extracted from the #.rst: comments of the CMake modules
@@ -47,7 +48,7 @@ nitpicky = True
 # CMAKE_DOCS_VERSION in src/cscmake/devtools/cmake_inventory.py and run cscmake-update-cmake-inventory
 intersphinx_mapping = {"cmake": (docs_url(), inventory_path())}
 
-html_theme = "alabaster"
+html_theme = "furo"
 
 # links from the pages to repository files outside docs/ (the smoke projects, ...) go to GitHub, at the commit built
 REPOSITORY_URL = "https://github.com/cscosine/csCMake"
@@ -68,6 +69,12 @@ def _source_revision() -> str:
 
 SOURCE_REVISION = _source_revision()
 html_title = "csCMake"
+html_theme_options = {
+    # "view / edit this page" links to the sources on GitHub
+    "source_repository": REPOSITORY_URL + "/",
+    "source_branch": "main",
+    "source_directory": "docs/",
+}
 
 
 def _resolve_in_cmake_inventory(
