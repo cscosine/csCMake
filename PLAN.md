@@ -247,6 +247,14 @@ variables, properties, preset environment variables, default targets) guides the
 - [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
 - [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
 
+### Findings while writing the docs (3d step 4, to decide)
+- [ ] **Preset display names**: `presets/template/cs-single-config-generator-config.json.template` hard-codes
+  `Ubuntu 24.04` in the `displayName` / `description` of every single-config preset (Windows Ninja, macOS Ninja, every
+  Ubuntu version: `cmake --list-presets` shows "Configure macos Ubuntu 24.04 ..."). Names and ids are not affected; the
+  fix (`@{osVersion}` or the host description) changes the generated files.
+- [ ] **Visual Studio debugger `PATH`**: `_cs_set_vs_debugger_env_variable` sets `PATH=<folders of the runtime
+  libraries>` without `;%PATH%` (or `$(Path)`): check on Windows whether the debugged program loses the system `PATH`.
+
 ### Compile profiles and clang-tidy: ideas (future)
 Guiding constraint (user): configurability per kind of project and per part of a project: a core library is stricter
 than an application, a sample or a standalone tool; tests and samples inside a project may be looser than its library.
@@ -760,3 +768,14 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   tutorials (the smoke files keep referring to it).
 - `docs/conf.py`: links to repository files outside `docs/` become links to GitHub at the commit built (`GITHUB_SHA` in
   CI, `git HEAD` locally) instead of downloads.
+
+### 2026-11-10 (Phase 3d step 4 — advanced pages, formatting, contributing to the code)
+- `docs/advanced/`: lifecycle (include, `cs_initialize_project` step by step, project scope, targets, finalize target
+  and project, deferred check; Mermaid), runtime dependencies (walk at `cs_finalize_target`, resolution at
+  `cs_finalize_project`, uses), installed packages internals (components, finalization steps, the generated Config),
+  presets internals (files, registry, generator and templates, project setup and layouts, adding a variant).
+- `docs/user/formatting.md`: formatting the CMake files of a project with the `cs_*` signatures of csCMake
+  (`-c ../csCMake/.cmake-format.json [own config] --`, checked: the later file overrides, the signatures stay, `--`
+  needed before the files, also in pre-commit hooks).
+- `docs/contributing/code.md`: layout, CMake conventions, what a new or changed public command involves, checks.
+- Findings recorded above ("Findings while writing the docs").

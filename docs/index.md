@@ -14,6 +14,7 @@ user/install
 user/build-configurations
 user/compile-profiles
 user/presets
+user/formatting
 user/troubleshooting
 ```
 
@@ -28,6 +29,10 @@ tutorials/index
 :caption: Advanced
 :maxdepth: 1
 
+advanced/lifecycle
+advanced/runtime-dependencies
+advanced/packages
+advanced/presets-internals
 advanced/smoke-tests
 ```
 
@@ -57,5 +62,6 @@ reference/csPrintInitialState
 :caption: Contributing
 :maxdepth: 1
 
+contributing/code
 contributing/documentation
 ```
