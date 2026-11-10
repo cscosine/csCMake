@@ -87,20 +87,23 @@ function(_cs_add_target_to_project_targets target_name)
       else()
         message(
           FATAL_ERROR
-            "CSCMAKE_${config}_POSTFIX variable do not exists, call cs_initialize_project before adding targets")
+          "CSCMAKE_${config}_POSTFIX variable do not exists, call cs_initialize_project before adding targets"
+        )
       endif()
-
     endforeach()
 
     # path to allow execution inside visual studio
     if(DEFINED CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION)
-      set_target_properties(${target_name} PROPERTIES MSVC_RUNTIME_LIBRARY
-                                                      "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
+      set_target_properties(
+        ${target_name}
+        PROPERTIES MSVC_RUNTIME_LIBRARY "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
+      )
     else()
       message(
         FATAL_ERROR
-          "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project "
-          "before adding targets")
+        "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project "
+        "before adding targets"
+      )
     endif()
 
     # the csCMake project of the target (its namespace): used for the links between projects of the same build
@@ -137,11 +140,7 @@ function(cs_finalize_target target_name)
   if(aliased)
     set(target_name ${aliased})
   endif()
-  get_property(
-    finalized
-    TARGET ${target_name}
-    PROPERTY _CSCMAKE_FINALIZED_LINKS
-    SET)
+  get_property(finalized TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS SET)
   if(NOT finalized)
     _cs_apply_compile_profiles(${target_name})
     _cs_set_install_rpath(${target_name})
@@ -161,9 +160,7 @@ function(_cs_target_links target_name links_out)
     endif()
     string(APPEND links "${property}=${values} ")
   endforeach()
-  set(${links_out}
-      "${links}"
-      PARENT_SCOPE)
+  set(${links_out} "${links}" PARENT_SCOPE)
 endfunction()
 
 # Fail if a target of the project was not finalized with cs_finalize_target, or if its links changed after it.
@@ -177,11 +174,7 @@ function(_cs_check_targets_finalized)
   set(not_finalized "")
   set(changed "")
   foreach(target_name ${targets})
-    get_property(
-      finalized
-      TARGET ${target_name}
-      PROPERTY _CSCMAKE_FINALIZED_LINKS
-      SET)
+    get_property(finalized TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS SET)
     if(NOT finalized)
       list(APPEND not_finalized ${target_name})
     else()
@@ -194,13 +187,19 @@ function(_cs_check_targets_finalized)
   endforeach()
   if(not_finalized)
     list(JOIN not_finalized ", " not_finalized)
-    message(FATAL_ERROR "[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its "
-                        "links: missing for ${not_finalized}")
+    message(
+      FATAL_ERROR
+      "[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its "
+      "links: missing for ${not_finalized}"
+    )
   endif()
   if(changed)
     list(JOIN changed ", " changed)
-    message(FATAL_ERROR "[cs_finalize_project] links added after cs_finalize_target: ${changed} (call "
-                        "cs_finalize_target after cs_target_link_libraries)")
+    message(
+      FATAL_ERROR
+      "[cs_finalize_project] links added after cs_finalize_target: ${changed} (call "
+      "cs_finalize_target after cs_target_link_libraries)"
+    )
   endif()
 endfunction()
 
@@ -221,14 +220,10 @@ function(cs_get_project_targets output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 

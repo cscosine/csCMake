@@ -8,9 +8,7 @@ function(_cs_list_add_list_unique_values list_name values)
     foreach(value IN ITEMS ${values})
       _cs_list_add_unique_value(output_list ${value})
     endforeach()
-    set(${list_name}
-        ${output_list}
-        PARENT_SCOPE)
+    set(${list_name} ${output_list} PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -20,19 +18,14 @@ function(_cs_list_add_unique_value list_name value)
   if(NOT ${value} IN_LIST output_list)
     list(APPEND output_list ${value})
   endif()
-  set(${list_name}
-      ${output_list}
-      PARENT_SCOPE)
+  set(${list_name} ${output_list} PARENT_SCOPE)
 endfunction()
 
 # Append value to the list property property_name of target_name, unless already present.
 function(_cs_add_to_target_property_unique_value target_name property_name value)
   get_target_property(list_values ${target_name} ${property_name})
   if(NOT ${value} IN_LIST list_values)
-    set_property(
-      TARGET ${target_name}
-      APPEND
-      PROPERTY ${property_name} ${value})
+    set_property(TARGET ${target_name} APPEND PROPERTY ${property_name} ${value})
   endif()
 endfunction()
 
@@ -51,9 +44,7 @@ function(_cs_path_list_normalize input_list_name)
     cmake_path(SET normalized_path NORMALIZE "${path_item}")
     list(APPEND output_list ${normalized_path})
   endforeach()
-  set(${input_list_name}
-      ${output_list}
-      PARENT_SCOPE)
+  set(${input_list_name} ${output_list} PARENT_SCOPE)
 endfunction()
 
 # Return in out_list the unique parent folders of the files given after it.
@@ -63,7 +54,5 @@ function(_cs_unique_parent_dirs out_list)
     get_filename_component(dir_path "${file_path}" DIRECTORY)
     _cs_list_add_unique_value(out_tmp ${dir_path})
   endforeach()
-  set(${out_list}
-      ${out_tmp}
-      PARENT_SCOPE)
+  set(${out_list} ${out_tmp} PARENT_SCOPE)
 endfunction()

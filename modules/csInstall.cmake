@@ -37,14 +37,10 @@ function(cs_get_install_include_dir install_folder_expression)
   if(count GREATER 1)
     # includes are installed per configuration, independently if we are with a multi generator or a single one
     set(folder "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
-    set(${install_folder_expression}
-        "${folder}"
-        PARENT_SCOPE)
+    set(${install_folder_expression} "${folder}" PARENT_SCOPE)
   else()
     set(folder "${CMAKE_INSTALL_INCLUDEDIR}")
-    set(${install_folder_expression}
-        "${folder}"
-        PARENT_SCOPE)
+    set(${install_folder_expression} "${folder}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -133,16 +129,14 @@ function(cs_install_target target_name export_name)
     EXPORT ${CSCMAKE_NAMESPACE}_${export_name}-targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
 
   # and install the pdb file for debugging if exists
   if(WIN32)
     get_target_property(target_type ${target_name} TYPE)
     if((${target_type} STREQUAL "SHARED_LIBRARY" OR ${target_type} STREQUAL "EXECUTABLE"))
-      install(
-        FILES $<TARGET_PDB_FILE:${target_name}>
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-        OPTIONAL)
+      install(FILES $<TARGET_PDB_FILE:${target_name}> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
     endif()
   endif()
 
@@ -153,9 +147,9 @@ function(cs_install_target target_name export_name)
   cs_get_target_find_packages(${target_name} find_packages_list)
   foreach(find_package ${find_packages_list})
     _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES
-                                            ${find_package})
+                                            ${find_package}
+    )
   endforeach()
-
 endfunction()
 
 # Set the install RPATH of target_name, an executable or a shared or module library, on Linux and macOS: relative to the
@@ -209,14 +203,10 @@ function(cs_get_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -237,14 +227,10 @@ function(cs_get_default_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -266,9 +252,7 @@ endfunction()
 #   :Reads: :prop_tgt:`CSCMAKE_COMPONENT`
 function(cs_get_target_component target_name output_variable_name)
   get_target_property(value ${target_name} CSCMAKE_COMPONENT)
-  set(${output_variable_name}
-      ${value}
-      PARENT_SCOPE)
+  set(${output_variable_name} ${value} PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -291,14 +275,10 @@ function(cs_get_component_targets export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -323,14 +303,10 @@ function(cs_get_component_find_packages export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -353,7 +329,8 @@ function(cs_print_components)
     cs_debug_message(
       "[cs_print_components] export ${export} contains the following targets: ${targets_values}, has the "
       "following find_packages: ${find_packages_values} and depends on those other exports: ${depends_values} "
-      "(sorted as ${depends_values_sorted})")
+      "(sorted as ${depends_values_sorted})"
+    )
   endforeach()
 
   cs_get_default_components(exports_default)

@@ -47,14 +47,6 @@ repos:
             "--config-file=pyproject.toml",
           ]
 
-  - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: v0.6.13
-    hooks:
-      # config: .cmake-format.json (line width 120, lint naming/disabled codes)
-      # templates (*.cmake.in) are handled by the local cmake-*-templates hooks below
-      - id: cmake-format
-      - id: cmake-lint
-
   - repo: local
     hooks:
       # regenerates presets/csv1 in place; fails (files modified) when the committed
@@ -69,20 +61,20 @@ repos:
         pass_filenames: false
         always_run: true
 
-      # configure_file templates: @VAR@ placeholders are swapped for valid CMake stand-ins, then
-      # cmake-format / cmake-lint run and the placeholders are restored (cscmake.devtools.cmake_template).
-      # require the dev venv, like generate-csv1-presets
-      - id: cmake-format-templates
-        name: cmake-format (templates)
-        entry: cscmake-cmake-template format
+      # CMake files, templates (@VAR@) included: gersemi formats (.gersemirc, the cs_* signatures in
+      # gersemi/cscmake.py), cscmake-lint checks the rules of csCMake (cscmake.devtools.cmake_lint); require the dev
+      # venv, like generate-csv1-presets
+      - id: gersemi
+        name: gersemi (format CMake)
+        entry: gersemi -i
         language: system
-        files: \.cmake\.in$
+        files: (\.cmake|\.cmake\.in|CMakeLists\.txt)$
 
-      - id: cmake-lint-templates
-        name: cmake-lint (templates)
-        entry: cscmake-cmake-template lint
+      - id: cscmake-lint
+        name: cscmake-lint (lint CMake)
+        entry: cscmake-lint
         language: system
-        files: \.cmake\.in$
+        files: (\.cmake|\.cmake\.in|CMakeLists\.txt)$
 
       # reference documentation complete: every public command, variable and property of the CMake modules has its
       # #.rst: entry (cscmake.devtools.check_docs); requires the dev venv, like generate-csv1-presets

@@ -77,8 +77,9 @@ macro(cs_initialize_project)
   if(NOT PROJECT_VERSION)
     message(
       FATAL_ERROR
-        "[cs_initialize_project] project(${PROJECT_NAME} VERSION <x.y.z> ...) is required: the version of the "
-        "installed package (<namespace>ConfigVersion.cmake)")
+      "[cs_initialize_project] project(${PROJECT_NAME} VERSION <x.y.z> ...) is required: the version of the "
+      "installed package (<namespace>ConfigVersion.cmake)"
+    )
   endif()
 
   # the folder of the project: base of the relative install paths of the headers
@@ -144,8 +145,11 @@ macro(cs_initialize_project)
 
   # check at the end of this CMakeLists.txt that cs_finalize_project was called (the values are fixed now: deferred call
   # arguments are evaluated when the call runs)
-  cmake_language(EVAL CODE "cmake_language(DEFER CALL _cs_check_project_finalized [[${CSCMAKE_NAMESPACE}]] "
-                 "[[${CMAKE_CURRENT_SOURCE_DIR}]])")
+  cmake_language(
+    EVAL CODE
+      "cmake_language(DEFER CALL _cs_check_project_finalized [[${CSCMAKE_NAMESPACE}]] "
+      "[[${CMAKE_CURRENT_SOURCE_DIR}]])"
+  )
 
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
@@ -200,9 +204,7 @@ function(cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
     message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
   endif()
-  set(${output_variable_name}
-      ${CSCMAKE_NAMESPACE}
-      PARENT_SCOPE)
+  set(${output_variable_name} ${CSCMAKE_NAMESPACE} PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -221,8 +223,11 @@ endfunction()
 #   :Writes: :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`
 function(cs_finalize_project)
   if(ARGN)
-    message(FATAL_ERROR "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
-                        "cs_initialize_project(NAMESPACE ...), see MIGRATION.md")
+    message(
+      FATAL_ERROR
+      "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
+      "cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
+    )
   endif()
   cs_get_namespace(export_namespace)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${export_namespace} TRUE)
@@ -246,8 +251,11 @@ endfunction()
 function(_cs_check_project_finalized namespace source_dir)
   get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace})
   if(NOT finalized)
-    message(FATAL_ERROR "[cs_initialize_project] cs_finalize_project() is required at the end of "
-                        "${source_dir}/CMakeLists.txt (namespace ${namespace})")
+    message(
+      FATAL_ERROR
+      "[cs_initialize_project] cs_finalize_project() is required at the end of "
+      "${source_dir}/CMakeLists.txt (namespace ${namespace})"
+    )
   endif()
 endfunction()
 
@@ -272,9 +280,7 @@ function(_cs_apply_project_scope_variables)
   get_property(var_names GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
   foreach(var_name ${var_names})
     get_property(value GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
-    set(${var_name}
-        "${value}"
-        PARENT_SCOPE)
+    set(${var_name} "${value}" PARENT_SCOPE)
     set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
   endforeach()
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)

@@ -38,9 +38,11 @@ function(cs_target_use_openmp target_name visibility)
     target_link_libraries(${target_name} ${visibility} vcomp)
   else()
     # Clang or GCC on Linux/other
-    message(NOTICE
-            "Enabling OpenMP for ${target_name} (non Clang on windows), If this fail, for clang on linux try `sudo apt "
-            "install libomp-dev`")
+    message(
+      NOTICE
+      "Enabling OpenMP for ${target_name} (non Clang on windows), If this fail, for clang on linux try `sudo apt "
+      "install libomp-dev`"
+    )
     cs_find_package(${target_name} PUBLIC OpenMP REQUIRED)
     target_link_libraries(${target_name} ${visibility} OpenMP::OpenMP_CXX)
   endif()

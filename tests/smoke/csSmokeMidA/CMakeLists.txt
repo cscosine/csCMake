@@ -8,10 +8,7 @@
 #
 # See tests/smoke/README.md.
 cmake_minimum_required(VERSION 3.31)
-project(
-  csSmokeMidASol
-  VERSION 1.0.0
-  LANGUAGES CXX)
+project(csSmokeMidASol VERSION 1.0.0 LANGUAGES CXX)
 
 include(csCMake)
 
@@ -23,7 +20,8 @@ cs_initialize_project(
   MAPPED_TO "RelWithDebInfo,Release,"
   CUSTOM_CONFIG Paranoid
   BASED_ON "Debug,Release,"
-  POSTFIX "dp")
+  POSTFIX "dp"
+)
 
 add_subdirectory(csSmokeMidA)
 

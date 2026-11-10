@@ -7,6 +7,8 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ### Changed
 
+- Formatting: gersemi, with the `cs_*` signatures in the extension `gersemi/cscmake.py` and the configuration
+  `.gersemirc` (both in the release package, instead of `.cmake-format.json`); see Formatting your CMake files.
 - The CMake modules are in `modules/` (`modules/integrations/` for third-party integrations, e.g. OpenMP), reorganised
   by subject: the reference pages are renamed (`csProject`, `csTargets`, `csBaseInclude`, `csPackageConfig`,
   `csCheckInstalledHeaders`, `csCompileProfilesShipped`, `csDebug`). The commands are unchanged: projects include

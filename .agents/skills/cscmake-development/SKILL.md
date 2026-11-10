@@ -34,9 +34,9 @@ compile-option defaults, and CMake presets. It has two parts:
 | `modules/csDebug.cmake` | `cs_debug_message`, `cs_print_state`, `cs_print_target_properties`. |
 | `modules/csInternal.cmake` | Private helpers (lists, properties, paths); no reference page. |
 | `modules/integrations/csOpenMP.cmake` | `cs_target_use_openmp` (integrations with third-party tools and libraries). |
-| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). Format/lint with `cscmake-cmake-template`. |
-| `.cmake-format.json` | cmake-format / cmake-lint configuration (width, naming patterns, disabled codes). |
-| `src/cscmake/devtools/cmake_template.py` | `cscmake-cmake-template format\|lint`: cmakelang on `@VAR@` templates via parseable stand-ins. |
+| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |
+| `.gersemirc`, `gersemi/cscmake.py` | gersemi configuration (width 120, indent 2) and the `cs_*` signatures (shipped to projects). |
+| `src/cscmake/devtools/cmake_lint.py` | `cscmake-lint`: names, comment above every function, complexity, line length. |
 | `presets/common/` | Reusable preset building blocks (hosts, compilers, generators, build types, tests). |
 | `presets/csv1/` | **Generated** preset matrix — do not edit by hand. |
 | `presets/template/` | `@VAR@` templates used to generate `presets/csv1/`. |
@@ -49,7 +49,7 @@ compile-option defaults, and CMake presets. It has two parts:
 ## Conventions
 
 - **CMake:** public functions `cs_*`, private helpers `_cs_`. File names `cs<Name>.cmake`.
-  Formatted and linted by cmake-format / cmake-lint (`.cmake-format.json`, line width 120); every
+  Formatted by gersemi (`.gersemirc`, line width 120) and linted by `cscmake-lint`; every
   `function`/`macro` has a docstring comment block right above it: a `#.rst:` reStructuredText block for the public
   ones (the reference documentation, built by Sphinx from `docs/`), a plain `#` comment for the private ones. See the
   docs rule in `CLAUDE.md`.
@@ -70,8 +70,8 @@ source .venv/bin/activate
 
 ### Run quality gates
 ```bash
-pre-commit run --all-files   # hygiene, ruff, ruff-format, actionlint, mypy, cmake-format, cmake-lint,
-                             # cmake-format/-lint (templates), generate-csv1-presets, import-linter
+pre-commit run --all-files   # hygiene, ruff, ruff-format, actionlint, mypy, gersemi, cscmake-lint,
+                             # generate-csv1-presets, check-docs, import-linter
 ```
 
 ### Run tests

@@ -24,7 +24,7 @@ source .venv/bin/activate
 python -m pytest                                    # fast tests (tests/cscmake mirrors src/, tests/cmake: CMake configure tests)
 python -m pytest --run-all                          # + slow CMake smoke builds (host variants)
 python tests/smoke/run_smoke.py --variant <id>      # smoke test one preset variant
-pre-commit run --all-files                          # ruff, mypy --strict, cmake-format/-lint, preset regen, ...
+pre-commit run --all-files                          # ruff, mypy --strict, gersemi, cscmake-lint, preset regen, ...
 cscmake-generate-presets                            # regenerate presets/csv1
 cscmake-generate-presets --check                    # verify presets/csv1 is in sync
 sphinx-build -W -n docs docs/_build/html            # documentation (reference from the #.rst: blocks); CI: docs.yml
@@ -43,10 +43,10 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - No runtime dependencies: the package and the preset generator use the standard library only.
 - New dev dependency in `pyproject.toml` → pin the minimum in `constraints-minimum.txt` in the same commit.
 - Python: mypy strict, ruff (line length 120, double quotes), type hints everywhere.
-- CMake: cmake-format + cmake-lint with `.cmake-format.json` (line width 120). Every `function`/`macro` needs a
-  docstring comment block directly above it (C0111). Silence a finding only with a scoped
-  `# cmake-lint: disable=<code>` as first line of the function body, plus a reason. Do not mix a file-level
-  pragma with function-level ones in the same file: cmakelang 0.6.13 then ignores the function-level ones.
+- CMake: gersemi formats (`.gersemirc`: line width 120, indent 2; the `cs_*` signatures in `gersemi/cscmake.py`),
+  `cscmake-lint` checks (`src/cscmake/devtools/cmake_lint.py`): lowercase names, a comment block directly above every
+  `function`/`macro`, complexity limits, line length. Both handle the `@VAR@` templates. Silence a finding only with
+  `# cscmake-lint: disable=<code>` as first line of the function body, plus a reason.
 - Docs of the CMake modules (full guide: `docs/contributing/documentation.md`): reStructuredText in `#.rst:` comment
   blocks (CMake's own format), extracted by Sphinx (`sphinxcontrib-moderncmakedomain`, `docs/reference/<module>.rst` =
   `.. cmake-module::`):
@@ -58,8 +58,8 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
     of a field indented 2 more spaces);
   * the variables and properties a module writes: `.. variable::` / `.. prop_tgt::` / `.. prop_gbl::` in a
     `#.rst:` block of that module (section `Variables`, `Target properties`, `Global properties`);
-  * cmake-format keeps `#.rst:` blocks as written (`literal_comment_pattern`): wrap them by hand at 120 columns, indent
-    directive content by 2 spaces;
+  * gersemi keeps comments as written: wrap `#.rst:` blocks by hand at 120 columns, indent directive content by 2
+    spaces;
   * private `_cs_*`: plain `#` comment, one-line summary (+ details), `Reads:` / `Writes:` when it touches state;
   * a module without public commands or documented state (`csInternal`): plain `#` header, no page;
   * a new documented module → `docs/reference/<module>.rst` and an entry in the toctree of `docs/index.md`;
@@ -67,11 +67,11 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
     `docs/_inventories/cmake-<version>.inv`, the local copy of the cmake.org inventory: never edit it; a new minimum
     CMake version → `CMAKE_DOCS_VERSION` in `src/cscmake/devtools/cmake_inventory.py`, then
     `cscmake-update-cmake-inventory`).
-- New or changed public `cs_*` command → update its signature in `.cmake-format.json` (`parse.additional_commands`),
-  so cmake-format lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+$`, arguments and locals
-  `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).
-- Plain CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
-  an empty `#` line between paragraphs and bullet lists (`* item`, preceded by an empty `#` line).
+- New or changed public `cs_*` command → update its signature in `gersemi/cscmake.py` (shipped to the projects too),
+  so gersemi lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+`, arguments and locals
+  `[a-z][a-z0-9_]*` (`cscmake-lint`).
+- Comments are not reflowed: wrap them by hand at 120 columns; an empty `#` line between paragraphs and before bullet
+  lists (`* item`).
 - **No hidden side effects.** csCMake changes only what its own targets need, or what the user asks for. In order of
   preference: a target property of the csCMake targets (e.g. set by `cs_finalize_target`), a directory / project
   variable, a global or cache setting. The presets are also used by projects without csCMake (third-party forks,
@@ -82,7 +82,6 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - Docs, code comments, README and test docstrings describe the current behaviour only (no "was", "no longer",
   "not FORCE", "(was X)"). History goes in the PLAN.md CHANGELOG and commit messages; `MIGRATION.md` maps old → new as
   tables and actions.
-- `*.cmake.in` templates: use `cscmake-cmake-template format|lint` (plain cmake-format cannot parse `@VAR@`).
 - The `no-unstaged-changes` pre-commit hook fails if anything is unstaged: stage before running hooks.
 - Hooks need the dev venv active (`generate-csv1-presets` and `import-linter` run tools installed in it).
 
@@ -96,7 +95,6 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - Because of that, do not verify with `pre-commit run` (it stashes unstaged changes and checks the index;
   `no-unstaged-changes` fails anyway). Run the tools directly on the working tree instead:
   `ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src tests && lint-imports
-  && python -m pytest && cscmake-generate-presets --check && cmake-format --check csCMake.cmake modules/*.cmake modules/*/*.cmake
-  && cmake-lint csCMake.cmake modules/*.cmake modules/*/*.cmake && cscmake-cmake-template format --check templates/*.cmake.in
-  && cscmake-cmake-template lint templates/*.cmake.in && cscmake-check-docs && sphinx-build -W -n -q docs docs/_build/html`.
+  && python -m pytest && cscmake-generate-presets --check && gersemi --check csCMake.cmake modules templates tests/smoke
+  && cscmake-lint csCMake.cmake modules/*.cmake modules/*/*.cmake templates/*.cmake.in && cscmake-check-docs && sphinx-build -W -n -q docs docs/_build/html`.
 - Do not run CI locally (no recreating the CI matrix / minimum-deps venvs); the user runs CI on GitHub.

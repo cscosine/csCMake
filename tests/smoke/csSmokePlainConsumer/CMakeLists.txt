@@ -3,10 +3,7 @@
 #
 # See tests/smoke/README.md.
 cmake_minimum_required(VERSION 3.31)
-project(
-  csSmokePlainConsumer
-  VERSION 1.0.0
-  LANGUAGES CXX)
+project(csSmokePlainConsumer VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -22,7 +19,8 @@ if(WIN32)
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:plainConsumer> $<TARGET_FILE_DIR:plainConsumer>
     COMMAND_EXPAND_LISTS
-    COMMENT "Copy the DLLs of plainConsumer next to it")
+    COMMENT "Copy the DLLs of plainConsumer next to it"
+  )
 endif()
 
 # the install step of the workflow presets needs an install rule (the installed executable is not run: the shared

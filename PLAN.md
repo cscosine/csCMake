@@ -80,7 +80,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - Scope: only `src/cscmake` (`[tool.coverage.run] source = ["cscmake"]`). The CI helpers in `tests/smoke/` (`run_smoke.py`, `ci_matrix.py`) do **not** count for coverage (decided 2026-11-09).
 
 ### Tooling (cmakelang)
-- [ ] **4h — gersemi + `cscmake-lint`** (decided, user 2026-11-10: option 2 below; after 4f and 4g): gersemi formats
+- [x] **4h — gersemi + `cscmake-lint`** (done) (decided, user 2026-11-10: option 2 below; after 4f and 4g): gersemi formats
   csCMake, the smoke projects and the template (one-time reformat, `.gersemirc`, a gersemi extension with the `cs_*`
   signatures generated from one signature list); `cscmake-lint` (stdlib, on the `check_docs` parser) checks the naming
   patterns, a comment before every function / macro, the complexity limits and the line length; cmakelang removed
@@ -114,12 +114,12 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
     release package (`.cmake-format.json` -> gersemi config + extension) change with it; (3) vendor and patch
     cmakelang's lexer (a fork to maintain). Recommendation: (2), as its own Phase 4 step after 4f / 4g (the
     reorganisation of 4g moves code anyway, a good moment for the one-time reformat); (1) until then.
-- [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
-- [ ] cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; no file-level pragma left since 4b).
+- [x] (4h: replaced) cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
+- [x] (4h: cmakelang removed) cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; no file-level pragma left since 4b).
 - [x] (Phase 3a step 5) cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
 - [x] (Phase 3a step 4) Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
-- [ ] cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
-- [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
+- [x] (4h: cmakelang removed; `cscmake-lint` reads CRLF) cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
+- [x] (4h: cmakelang removed) `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
 
 ### Phase 3 plan (agreed 2026-11-09)
 Breaking change, **no deprecation aliases**: old names are removed, a `MIGRATION.md` (old → new table for functions,
@@ -496,7 +496,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 ### Project template with copier (future)
 - [ ] Consumer project scaffolding with copier (`copier copy` / `copier update`): `CMakePresets.json`,
   `csCMakeProjectSetup.json`, top `CMakeLists.txt` (`cs_initialize_project(NAMESPACE ...)`), pre-commit config,
-  cmake-format/lint style. Split ownership: the **style policy** (line width, anchored lint patterns, disabled codes) in
+  gersemi / cscmake-lint style. Split ownership: the **style policy** (line width, indentation) in
   the template repository (csCMake itself could take it via `copier update`); the **`cs_*` command signatures** stay in
   csCMake (versioned with the API), e.g. `cmake-format/cscmake-commands.py`, loaded by the template's
   `.cmake-format.py` from the csCMake checkout (two files: no merge conflicts on `copier update`; `.py` allows comments,
@@ -520,7 +520,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); 4f done (side-effect assessment), 4g done (modules/ reorganisation); next 4h (gersemi + `cscmake-lint`). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a-4g done; 4h (gersemi + `cscmake-lint`, cmakelang removed, Python 3.15 in CI) under review; then sign-off. |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -1194,3 +1194,23 @@ package is not released; pre-release tags are GitHub pre-releases.
   CLAUDE.md, the skill, contributing pages, `.vscode/launch.json`; CHANGELOG "Unreleased" (renamed reference pages).
 - Checked: fast checks, the installed files of csSmokeBase and csSmokeShared byte-identical to `2ab2dfa` (44 files, 4
   configurations), local smoke run.
+
+### 2026-11-10 (Phase 4 step 4h — gersemi + cscmake-lint)
+- gersemi formats every CMake file (`.gersemirc`: 120 columns, indent 2, `list_expansion: favour-inlining`; the `cs_*`
+  signatures in the extension `gersemi/cscmake.py`, the single source of them, shipped in the release package). One-time
+  reformat of 32 of 38 files with `--safe` (gersemi checks the meaning is kept); comments untouched (no more
+  `literal_comment_pattern` / reflow rules). gersemi resolves `extensions` paths from the current folder: run from the
+  project folder (documented for the projects).
+- `cscmake-lint` (`src/cscmake/devtools/cmake_lint.py`, stdlib, own small tokenizer: quoted and bracket arguments,
+  bracket comments): `CS101`-`CS103` lowercase names (functions / macros, arguments, function locals), `CS104` comment
+  block above every function / macro, `CS105`-`CS107` at most 5 arguments, 50 statements, 12 branches, `CS108` 120
+  columns; `@VAR@` placeholders count as lowercase names; `# cscmake-lint: disable=<codes>` at the start of a body.
+  Counts in line with cmakelang's (largest: 45 statements, 12 branches). Tests, 100% coverage.
+- Removed: cmakelang (dev dep, constraints -> `gersemi==0.29.2`), the cmake-format / cmake-lint hooks,
+  `cscmake-cmake-template` (gersemi parses `@VAR@` templates as they are), `.cmake-format.json`, the `W0106` pragma.
+  `run_smoke.py` lints the installed Config with `cscmake-lint --disable CS101,CS102,CS103,CS108` (no LF copy needed);
+  smoke workflow installs only csCMake's package. CI: Python 3.15 added.
+- Docs: formatting page for the projects (gersemi, `.gersemirc` with the extension, pre-commit), contributing pages,
+  CLAUDE.md, the skill, releasing (package content), CHANGELOG.
+- Checked: fast checks; installed files of csSmokeBase / csSmokeShared identical to `748d563` except the two
+  `Config.cmake` (template reformatted): same commands and arguments (parsed), lint-clean.

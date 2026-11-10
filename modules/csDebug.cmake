@@ -53,8 +53,6 @@ endfunction()
 #   ``<header>``
 #     A text printed in the header of the output.
 function(cs_print_state header_message)
-  # cmake-lint: disable=W0106
-  # (the "ENV{CMAKE_PREFIX_PATH}" label below is intentional text, not a broken variable reference)
   cs_debug_message("--- csCMake ${header_message} state ---")
   cs_debug_message("  csCMake path: ${CMAKE_CURRENT_LIST_DIR}")
   cs_debug_message("  CSCMAKE_MODULE_PATH_HEAD: ${CSCMAKE_MODULE_PATH_HEAD}")
@@ -124,11 +122,7 @@ function(cs_print_target_properties tgt)
   list(REMOVE_DUPLICATES expanded_list)
 
   foreach(prop ${expanded_list})
-    get_property(
-      is_set
-      TARGET ${tgt}
-      PROPERTY ${prop}
-      SET)
+    get_property(is_set TARGET ${tgt} PROPERTY ${prop} SET)
     if(is_set)
       get_target_property(propval ${tgt} ${prop})
       cs_debug_message("${tgt} ${prop} = ${propval}")

@@ -3,10 +3,7 @@
 # * <project>/workspace/csCMake, build and install folders in <project>/workspace
 # * presets/layout/standalone-short.json (see tests/smoke/README.md)
 cmake_minimum_required(VERSION 3.31)
-project(
-  csSmokeStandalone
-  VERSION 1.0.0
-  LANGUAGES CXX)
+project(csSmokeStandalone VERSION 1.0.0 LANGUAGES CXX)
 
 include(csCMake)
 
@@ -18,7 +15,8 @@ cs_initialize_project(
   MAPPED_TO "RelWithDebInfo,Release,"
   CUSTOM_CONFIG Paranoid
   BASED_ON "Debug,Release,"
-  POSTFIX "dp")
+  POSTFIX "dp"
+)
 
 add_subdirectory(csSmokeStandalone)
 

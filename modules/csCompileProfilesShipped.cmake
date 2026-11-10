@@ -40,10 +40,7 @@ include(modules/csCompileProfiles)
 # The compile profiles shipped with csCMake (README: "Compile profiles").
 function(_cs_add_cscmake_compile_profiles)
   # every target of a project, unless DEFAULT_COMPILE_PROFILES says otherwise
-  cs_add_compile_profile_rule(
-    PROFILE cscmake_default
-    COMPILERS MSVC
-    COMPILE_OPTIONS /MP /Zc:__cplusplus)
+  cs_add_compile_profile_rule(PROFILE cscmake_default COMPILERS MSVC COMPILE_OPTIONS /MP /Zc:__cplusplus)
 
   # high warning level, the same essential checks on every compiler
   cs_add_compile_profile_rule(
@@ -69,30 +66,30 @@ function(_cs_add_cscmake_compile_profiles)
       -Wformat=2
       -Wnull-dereference
       -Wdouble-promotion
-      -Wzero-as-null-pointer-constant)
+      -Wzero-as-null-pointer-constant
+  )
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
     COMPILERS GNU
-    COMPILE_OPTIONS -Wstrict-null-sentinel -Wlogical-op -Wduplicated-cond -Wduplicated-branches
-                    -Wmisleading-indentation)
+    COMPILE_OPTIONS -Wstrict-null-sentinel -Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wmisleading-indentation
+  )
   # Clang: C++98 compatibility warnings, noise in a project at C++11 or later (on with -Weverything, and with -Wall on
   # clang-cl, where it means -Weverything)
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
     COMPILERS Clang AppleClang
-    COMPILE_OPTIONS -Wno-c++98-compat -Wno-c++98-compat-pedantic)
+    COMPILE_OPTIONS -Wno-c++98-compat -Wno-c++98-compat-pedantic
+  )
   # clang-cl: C++20 extensions used by headers written for MSVC (e.g. an empty variadic macro argument), not reported by
   # MSVC itself
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
     COMPILERS Clang
     FRONTENDS MSVC
-    COMPILE_OPTIONS -Wno-c++20-extensions)
+    COMPILE_OPTIONS -Wno-c++20-extensions
+  )
   # MSVC and clang-cl (MSVC command line)
-  cs_add_compile_profile_rule(
-    PROFILE cscmake_warnings
-    FRONTENDS MSVC
-    COMPILE_OPTIONS /W4 /permissive-)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings FRONTENDS MSVC COMPILE_OPTIONS /W4 /permissive-)
   # MSVC: warnings off by default even at /W4, the counterparts of the GCC/Clang ones above
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
@@ -119,16 +116,11 @@ function(_cs_add_cscmake_compile_profiles)
       # illegal copy-initialization
       /w14928
       # thread-unsafe construction of a static local
-      /w14640)
+      /w14640
+  )
 
-  cs_add_compile_profile_rule(
-    PROFILE cscmake_warnings_as_errors
-    FRONTENDS GNU
-    COMPILE_OPTIONS -Werror)
-  cs_add_compile_profile_rule(
-    PROFILE cscmake_warnings_as_errors
-    FRONTENDS MSVC
-    COMPILE_OPTIONS /WX)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS GNU COMPILE_OPTIONS -Werror)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS MSVC COMPILE_OPTIONS /WX)
 
   cs_add_compile_profile_rule(PROFILE cscmake_strict_warnings PROFILES cscmake_warnings cscmake_warnings_as_errors)
 
@@ -138,17 +130,16 @@ function(_cs_add_cscmake_compile_profiles)
     FRONTENDS GNU
     PLATFORMS Linux Darwin
     COMPILE_OPTIONS -fsanitize=undefined
-    LINK_OPTIONS -fsanitize=undefined)
+    LINK_OPTIONS -fsanitize=undefined
+  )
   cs_add_compile_profile_rule(
     PROFILE cscmake_sanitize_address
     FRONTENDS GNU
     PLATFORMS Linux Darwin
     COMPILE_OPTIONS -fsanitize=address -fno-omit-frame-pointer
-    LINK_OPTIONS -fsanitize=address)
-  cs_add_compile_profile_rule(
-    PROFILE cscmake_sanitize_address
-    COMPILERS MSVC
-    COMPILE_OPTIONS /fsanitize=address)
+    LINK_OPTIONS -fsanitize=address
+  )
+  cs_add_compile_profile_rule(PROFILE cscmake_sanitize_address COMPILERS MSVC COMPILE_OPTIONS /fsanitize=address)
 
   # checks of the standard library, libstdc++ and libc++ (each one ignores the other definition): the cheap ones (usable
   # in release builds) and all of them (libc++ debug mode, expensive: for test configurations); MSVC STL: the Debug
@@ -162,12 +153,14 @@ function(_cs_add_cscmake_compile_profiles)
     PROFILE cscmake_hardening_fast
     FRONTENDS GNU
     COMPILE_OPTIONS ${hardening_options}
-    COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST)
+    COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST
+  )
   cs_add_compile_profile_rule(
     PROFILE cscmake_hardening_debug
     FRONTENDS GNU
     COMPILE_OPTIONS ${hardening_options}
-    COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
+    COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
+  )
 
   cs_add_compile_profile_rule(PROFILE cscmake_clang_tidy CLANG_TIDY)
 endfunction()

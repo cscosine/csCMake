@@ -22,14 +22,13 @@ include(modules/csInternal)
 # * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> of target_name: the files of dependency, if an imported
 #   shared, module or interface library
 function(_cs_analyze_dependency target_name dependency linked_libs_var)
-  set(${linked_libs_var}
-      ""
-      PARENT_SCOPE)
+  set(${linked_libs_var} "" PARENT_SCOPE)
 
   if(NOT TARGET ${dependency})
     if(NOT ${dependency} STREQUAL ${target_name})
       cs_debug_message("[_cs_recursive_analyze_target] ${dependency} is not a target, add it to the non resolved "
-                       "dependencies")
+                       "dependencies"
+      )
       _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_NON_TARGETS ${dependency})
     endif()
     return()
@@ -42,13 +41,12 @@ function(_cs_analyze_dependency target_name dependency linked_libs_var)
     set(dependency "${aliased_dependency}")
   endif()
   cs_debug_message(
-    "[_cs_recursive_analyze_target] ${dependency} TYPE ${dependency_type} IMPORTED ${dependency_imported}")
+    "[_cs_recursive_analyze_target] ${dependency} TYPE ${dependency_type} IMPORTED ${dependency_imported}"
+  )
 
   _cs_get_all_linked_libs(${dependency} linked_libs)
   cs_debug_message("[_cs_recursive_analyze_target] ${dependency} links to ${linked_libs}")
-  set(${linked_libs_var}
-      "${linked_libs}"
-      PARENT_SCOPE)
+  set(${linked_libs_var} "${linked_libs}" PARENT_SCOPE)
 
   if(NOT dependency_imported)
     # a target of the project: its own runtime dependencies are resolved by cs_finalize_project
@@ -68,7 +66,8 @@ function(_cs_debug_analyzed_target target_name)
     string(TOUPPER "${config}" config_ucase)
     _cs_get_target_direct_runtime_libraries(${target_name} ${config} runtime_libraries)
     cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase}: "
-                     "${runtime_libraries}")
+                     "${runtime_libraries}"
+    )
   endforeach()
   _cs_get_target_linked_project_targets(${target_name} project_targets)
   cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: ${project_targets}")
@@ -104,13 +103,9 @@ function(_cs_get_target_direct_runtime_libraries target_name config output_varia
   string(TOUPPER "${config}" config_ucase)
   get_target_property(values ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase})
   if(values)
-    set(${output_variable_name}
-        ${values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${values} PARENT_SCOPE)
   else()
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -122,13 +117,9 @@ endfunction()
 function(_cs_get_target_linked_project_targets target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS)
   if(values)
-    set(${output_variable_name}
-        ${values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${values} PARENT_SCOPE)
   else()
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -140,13 +131,9 @@ endfunction()
 function(_cs_get_target_linked_non_targets target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_LINKED_NON_TARGETS)
   if(values)
-    set(${output_variable_name}
-        ${values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${values} PARENT_SCOPE)
   else()
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -170,13 +157,9 @@ endfunction()
 function(cs_get_target_project_dependencies target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_PROJECT_DEPENDENCIES)
   if(values)
-    set(${output_variable_name}
-        ${values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${values} PARENT_SCOPE)
   else()
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -219,7 +202,8 @@ function(_cs_recursive_analyze_targets_finalize targets_list)
       _cs_target_is_fully_finalized(${target_name} target_finalized)
       if(NOT target_finalized)
         cs_debug_message(
-          "[_cs_recursive_analyze_targets_finalize] target ${target_name} is not finalized yet, readd it")
+          "[_cs_recursive_analyze_targets_finalize] target ${target_name} is not finalized yet, readd it"
+        )
         _cs_list_add_unique_value(targets_list ${target_name})
       else()
         cs_debug_message("[_cs_recursive_analyze_targets_finalize] target ${target_name} is now finalized!")
@@ -242,11 +226,11 @@ function(_cs_recursive_analyze_targets_finalize targets_list)
       cs_get_target_runtime_libraries(${target_name} ${config} target_to_analyze_dependencies)
       cs_debug_message(
         "[_cs_recursive_analyze_targets_finalize] ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase} : "
-        "${target_to_analyze_dependencies}")
+        "${target_to_analyze_dependencies}"
+      )
     endforeach()
   endforeach()
   cs_debug_message("[_cs_recursive_analyze_targets_finalize] end")
-
 endfunction()
 
 # Merge into the runtime libraries of target_name those of its pending dependencies already resolved; keep the others
@@ -289,7 +273,6 @@ function(_cs_target_try_to_finalize target_name)
 
   cs_debug_message("[_cs_target_try_to_finalize] target ${target_name} pending dependencies ${pending_dep_targets}")
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_PENDING_DEPENDENCIES "${pending_dep_targets}")
-
 endfunction()
 
 # Return in target_finalized whether target_name has no pending dependency.
@@ -300,13 +283,9 @@ endfunction()
 function(_cs_target_is_fully_finalized target_name target_finalized)
   get_target_property(values ${target_name} _CSCMAKE_PENDING_DEPENDENCIES)
   if(values)
-    set(${target_finalized}
-        False
-        PARENT_SCOPE)
+    set(${target_finalized} False PARENT_SCOPE)
   else()
-    set(${target_finalized}
-        True
-        PARENT_SCOPE)
+    set(${target_finalized} True PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -329,13 +308,15 @@ function(_cs_prepare_finalize_target target_name)
     _cs_get_target_direct_runtime_libraries(${target_name} ${config} target_libs)
     set_property(TARGET ${target_name} PROPERTY CSCMAKE_RUNTIME_LIBRARIES_${config_ucase} "${target_libs}")
     cs_debug_message(
-      "[_cs_prepare_finalize_target] ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase}: ${target_libs}")
+      "[_cs_prepare_finalize_target] ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase}: ${target_libs}"
+    )
   endforeach()
 
   # retrieve targets to analyze
   _cs_get_target_linked_project_targets(${target_name} target_not_imported)
   cs_debug_message(
-    "[_cs_prepare_finalize_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: ${target_not_imported}")
+    "[_cs_prepare_finalize_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: ${target_not_imported}"
+  )
 
   _cs_get_target_linked_non_targets(${target_name} target_non_targets)
   cs_debug_message("[_cs_prepare_finalize_target] ${target_name} CSCMAKE_LINKED_NON_TARGETS: ${target_non_targets}")
@@ -349,7 +330,8 @@ function(_cs_prepare_finalize_target target_name)
     _cs_list_add_unique_value(targets_to_analyze_list_raw "${target_to_analyze}")
   endforeach()
   cs_debug_message(
-    "[_cs_prepare_finalize_target] ${target_name} TARGETS_TO_ANALYZE_LIST_RAW ${targets_to_analyze_list_raw}")
+    "[_cs_prepare_finalize_target] ${target_name} TARGETS_TO_ANALYZE_LIST_RAW ${targets_to_analyze_list_raw}"
+  )
 
   # select only targets
   set(targets_to_analyze_list "")
@@ -367,7 +349,6 @@ function(_cs_prepare_finalize_target target_name)
   cs_debug_message("[_cs_prepare_finalize_target] ${target_name} TARGETS_TO_ANALYZE_LIST ${targets_to_analyze_list}")
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_PENDING_DEPENDENCIES "${targets_to_analyze_list}")
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES "${targets_to_analyze_list}")
-
 endfunction()
 
 #.rst:
@@ -394,13 +375,9 @@ function(cs_get_target_runtime_libraries target_name config output_variable_name
   string(TOUPPER "${config}" config_ucase)
   get_target_property(values ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase})
   if(values)
-    set(${output_variable_name}
-        ${values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${values} PARENT_SCOPE)
   else()
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -414,7 +391,8 @@ function(_cs_add_imported_target_locations target_name target_to_analyze)
     string(TOUPPER "${config}" config_ucase)
     get_target_property(imported_location_${config_ucase} ${target_to_analyze} IMPORTED_LOCATION_${config_ucase})
     _cs_add_existing_path_to_target_property(${imported_location_${config_ucase}} ${target_name}
-                                             CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase} ${target_to_analyze})
+                                             CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase} ${target_to_analyze}
+    )
   endforeach()
 
   # generic
@@ -426,13 +404,14 @@ function(_cs_add_imported_target_locations target_name target_to_analyze)
       cs_debug_message(
         "[_cs_add_imported_target_locations] target ${target_to_analyze} has "
         "IMPORTED_LOCATION=${imported_location} but no IMPORTED_LOCATION_${config_ucase}, use IMPORTED_LOCATION "
-        "for it")
+        "for it"
+      )
       set(imported_location_${config_ucase} "${imported_location}")
       _cs_add_existing_path_to_target_property(${imported_location_${config_ucase}} ${target_name}
-                                               CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase} ${target_to_analyze})
+                                               CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase} ${target_to_analyze}
+      )
     endif()
   endforeach()
-
 endfunction()
 
 # Append path_value to the property target_property of target_name if the file exists; a warning otherwise
@@ -444,8 +423,11 @@ function(_cs_add_existing_path_to_target_property path_value target_name target_
       _cs_add_to_target_property_unique_value(${target_name} ${target_property} ${path_value})
     else()
       # not silent: the runtime dependencies (Visual Studio debugger PATH) would miss it
-      message(WARNING "[csCMake] ${target_name} depends on the imported target ${target_to_analyze}, whose file "
-                      "${path_value} does not exist: not added to its runtime libraries")
+      message(
+        WARNING
+        "[csCMake] ${target_name} depends on the imported target ${target_to_analyze}, whose file "
+        "${path_value} does not exist: not added to its runtime libraries"
+      )
     endif()
   endif()
 endfunction()
@@ -516,9 +498,7 @@ function(_cs_get_all_linked_libs target_to_analyze target_to_analyze_linked_libs
   _cs_list_add_list_unique_values(target_to_analyze_linked_libs "${tmp_list}")
 
   # set output value
-  set(${target_to_analyze_linked_libs_out}
-      ${target_to_analyze_linked_libs}
-      PARENT_SCOPE)
+  set(${target_to_analyze_linked_libs_out} ${target_to_analyze_linked_libs} PARENT_SCOPE)
 endfunction()
 
 # Resolve the runtime dependencies of every target of the project (CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>) and, from them,
@@ -558,8 +538,10 @@ function(_cs_set_vs_debugger_env_variable targets_list)
 
       # the value of each configuration in its own property, selected by configuration in VS_DEBUGGER_ENVIRONMENT
       set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_ENVIRONMENT_${config_ucase} "PATH=${folders};%PATH%")
-      string(APPEND debugger_environment
-             "$<$<CONFIG:${config}>:$<TARGET_PROPERTY:${target_name},VS_DEBUGGER_ENVIRONMENT_${config_ucase}>>")
+      string(
+        APPEND debugger_environment
+        "$<$<CONFIG:${config}>:$<TARGET_PROPERTY:${target_name},VS_DEBUGGER_ENVIRONMENT_${config_ucase}>>"
+      )
     endforeach()
 
     if(debugger_environment)

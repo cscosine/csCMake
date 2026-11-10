@@ -63,19 +63,24 @@ include(modules/csInternal)
 function(cs_add_compile_profile_rule)
   set(options CLANG_TIDY)
   set(onevalue PROFILE)
-  set(multivalue
-      CONFIGS
-      COMPILERS
-      FRONTENDS
-      PLATFORMS
-      COMPILE_OPTIONS
-      COMPILE_DEFINITIONS
-      LINK_OPTIONS
-      PROFILES)
+  set(
+    multivalue
+    CONFIGS
+    COMPILERS
+    FRONTENDS
+    PLATFORMS
+    COMPILE_OPTIONS
+    COMPILE_DEFINITIONS
+    LINK_OPTIONS
+    PROFILES
+  )
   cmake_parse_arguments(arg "${options}" "${onevalue}" "${multivalue}" ${ARGN})
   if(arg_UNPARSED_ARGUMENTS OR NOT arg_PROFILE)
-    message(FATAL_ERROR "[cs_add_compile_profile_rule] PROFILE <name> is required, unparsed arguments: "
-                        "${arg_UNPARSED_ARGUMENTS}")
+    message(
+      FATAL_ERROR
+      "[cs_add_compile_profile_rule] PROFILE <name> is required, unparsed arguments: "
+      "${arg_UNPARSED_ARGUMENTS}"
+    )
   endif()
 
   get_property(rule GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_COUNT)
@@ -115,10 +120,7 @@ function(cs_target_use_compile_profiles target_name)
   if(aliased)
     set(target_name ${aliased})
   endif()
-  set_property(
-    TARGET ${target_name}
-    APPEND
-    PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
+  set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
 endfunction()
 
 #.rst:
@@ -144,9 +146,7 @@ function(cs_get_target_compile_profiles target_name profiles_out)
     list(APPEND profiles ${own})
   endif()
   list(REMOVE_DUPLICATES profiles)
-  set(${profiles_out}
-      "${profiles}"
-      PARENT_SCOPE)
+  set(${profiles_out} "${profiles}" PARENT_SCOPE)
 endfunction()
 
 # Apply the compile profiles of target_name (called by cs_finalize_target); INTERFACE libraries are skipped (nothing to
@@ -174,14 +174,21 @@ endfunction()
 # Writes:
 #
 # * target property _CSCMAKE_CLANG_TIDY_CONDITIONS: conditions of the rules running clang-tidy
-function(_cs_apply_compile_profile target_name profile condition static_match allowed_configs)
-  get_property(
-    defined GLOBAL
-    PROPERTY CSCMAKE_COMPILE_PROFILE_${profile}_RULES
-    SET)
+function(
+  _cs_apply_compile_profile
+  target_name
+  profile
+  condition
+  static_match
+  allowed_configs
+)
+  get_property(defined GLOBAL PROPERTY CSCMAKE_COMPILE_PROFILE_${profile}_RULES SET)
   if(NOT defined)
-    message(FATAL_ERROR "[cs_finalize_target] compile profile ${profile} of ${target_name} is not defined "
-                        "(cs_add_compile_profile_rule)")
+    message(
+      FATAL_ERROR
+      "[cs_finalize_target] compile profile ${profile} of ${target_name} is not defined "
+      "(cs_add_compile_profile_rule)"
+    )
   endif()
   get_property(rules GLOBAL PROPERTY CSCMAKE_COMPILE_PROFILE_${profile}_RULES)
   foreach(rule ${rules})
@@ -197,16 +204,14 @@ function(_cs_apply_compile_profile target_name profile condition static_match al
     get_property(clang_tidy GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_CLANG_TIDY)
     if(clang_tidy AND rule_static_match)
       _cs_genex_or_term("${rule_condition}" term)
-      set_property(
-        TARGET ${target_name}
-        APPEND
-        PROPERTY _CSCMAKE_CLANG_TIDY_CONDITIONS "${term}")
+      set_property(TARGET ${target_name} APPEND PROPERTY _CSCMAKE_CLANG_TIDY_CONDITIONS "${term}")
     endif()
 
     get_property(nested GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_PROFILES)
     foreach(nested_profile ${nested})
       _cs_apply_compile_profile(${target_name} ${nested_profile} "${rule_condition}" ${rule_static_match}
-                                "${rule_configs}")
+                                "${rule_configs}"
+      )
     endforeach()
   endforeach()
 endfunction()
@@ -242,8 +247,12 @@ function(_cs_compile_profile_rule_condition rule condition_out static_match_out)
   set(terms "")
   set(static_match TRUE)
   # condition field, generator expression, configure-time value
-  foreach(spec "CONFIGS;CONFIG" "COMPILERS;CXX_COMPILER_ID;${CMAKE_CXX_COMPILER_ID}"
-               "PLATFORMS;PLATFORM_ID;${CMAKE_SYSTEM_NAME}")
+  foreach(
+    spec
+    "CONFIGS;CONFIG"
+    "COMPILERS;CXX_COMPILER_ID;${CMAKE_CXX_COMPILER_ID}"
+    "PLATFORMS;PLATFORM_ID;${CMAKE_SYSTEM_NAME}"
+  )
     list(GET spec 0 field)
     list(GET spec 1 genex)
     list(LENGTH spec spec_size)
@@ -272,12 +281,8 @@ function(_cs_compile_profile_rule_condition rule condition_out static_match_out)
     endif()
   endif()
   _cs_genex_and_list("${terms}" condition)
-  set(${condition_out}
-      "${condition}"
-      PARENT_SCOPE)
-  set(${static_match_out}
-      ${static_match}
-      PARENT_SCOPE)
+  set(${condition_out} "${condition}" PARENT_SCOPE)
+  set(${static_match_out} ${static_match} PARENT_SCOPE)
 endfunction()
 
 # Return in configs_out the configurations allowed by both lists ("" = any); set the caller's static_match_var to FALSE
@@ -295,9 +300,7 @@ function(_cs_intersect_configs allowed rule_configs configs_out static_match_var
       endif()
     endforeach()
     if(NOT configs)
-      set(${static_match_var}
-          FALSE
-          PARENT_SCOPE)
+      set(${static_match_var} FALSE PARENT_SCOPE)
     endif()
   endif()
   if(configs)
@@ -314,14 +317,10 @@ function(_cs_intersect_configs allowed rule_configs configs_out static_match_var
       endif()
     endforeach()
     if(NOT in_build)
-      set(${static_match_var}
-          FALSE
-          PARENT_SCOPE)
+      set(${static_match_var} FALSE PARENT_SCOPE)
     endif()
   endif()
-  set(${configs_out}
-      "${configs}"
-      PARENT_SCOPE)
+  set(${configs_out} "${configs}" PARENT_SCOPE)
 endfunction()
 
 # Set CXX_CLANG_TIDY of target_name when a rule of its profiles runs clang-tidy in this build (clang-tidy then
@@ -351,8 +350,11 @@ function(_cs_apply_clang_tidy target_name)
   endif()
   find_program(CLANG_TIDY_EXE NAMES clang-tidy)
   if(NOT CLANG_TIDY_EXE OR NOT EXISTS "${CLANG_TIDY_EXE}")
-    message(FATAL_ERROR "[cs_finalize_target] clang-tidy is required: the compile profiles of ${target_name} run it in "
-                        "this build (install it, or set CLANG_TIDY_EXE)")
+    message(
+      FATAL_ERROR
+      "[cs_finalize_target] clang-tidy is required: the compile profiles of ${target_name} run it in "
+      "this build (install it, or set CLANG_TIDY_EXE)"
+    )
   endif()
   list(JOIN terms "," joined)
   set_property(TARGET ${target_name} PROPERTY CXX_CLANG_TIDY "$<$<OR:${joined}>:${CLANG_TIDY_EXE}>")
@@ -367,9 +369,7 @@ function(_cs_genex_and first_condition second_condition out)
     endif()
   endforeach()
   _cs_genex_and_list("${terms}" condition)
-  set(${out}
-      "${condition}"
-      PARENT_SCOPE)
+  set(${out} "${condition}" PARENT_SCOPE)
 endfunction()
 
 # Return in out the conjunction of the generator expression conditions of the list terms ("" when empty).
@@ -383,21 +383,15 @@ function(_cs_genex_and_list terms out)
     list(JOIN terms "," joined)
     set(condition "$<AND:${joined}>")
   endif()
-  set(${out}
-      "${condition}"
-      PARENT_SCOPE)
+  set(${out} "${condition}" PARENT_SCOPE)
 endfunction()
 
 # Return in out the condition as a term of $<OR:...>: "1" for an empty condition (always).
 function(_cs_genex_or_term condition out)
   if(condition)
-    set(${out}
-        "${condition}"
-        PARENT_SCOPE)
+    set(${out} "${condition}" PARENT_SCOPE)
   else()
-    set(${out}
-        "1"
-        PARENT_SCOPE)
+    set(${out} "1" PARENT_SCOPE)
   endif()
 endfunction()
 

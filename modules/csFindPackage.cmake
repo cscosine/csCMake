@@ -62,14 +62,10 @@ function(cs_get_target_find_packages target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_FIND_PACKAGES)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -112,8 +108,9 @@ function(_cs_add_find_package_args_to_target target_name propagate_mode)
   else()
     message(
       FATAL_ERROR
-        "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with "
-        "PROPAGATE_MODE=${propagate_mode})")
+      "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with "
+      "PROPAGATE_MODE=${propagate_mode})"
+    )
   endif()
 endfunction()
 

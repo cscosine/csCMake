@@ -44,16 +44,18 @@ function(cs_target_sources target_name)
   cs_debug_message("[cs_target_sources] target ${target_name}: ${ARGN}")
 
   # split arguments in groups according to keywords
-  set(keywords
-      PRIVATE
-      PUBLIC
-      INTERFACE
-      PRIVATE_INSTALL
-      PUBLIC_INSTALL
-      INTERFACE_INSTALL
-      PRIVATE_INSTALL_ABSOLUTE_PATH
-      PUBLIC_INSTALL_ABSOLUTE_PATH
-      INTERFACE_INSTALL_ABSOLUTE_PATH)
+  set(
+    keywords
+    PRIVATE
+    PUBLIC
+    INTERFACE
+    PRIVATE_INSTALL
+    PUBLIC_INSTALL
+    INTERFACE_INSTALL
+    PRIVATE_INSTALL_ABSOLUTE_PATH
+    PUBLIC_INSTALL_ABSOLUTE_PATH
+    INTERFACE_INSTALL_ABSOLUTE_PATH
+  )
   cmake_parse_arguments(arg "" "" "${keywords}" ${ARGN})
 
   # retrieve the relative install path
@@ -62,7 +64,6 @@ function(cs_target_sources target_name)
 
   # get the different groups
   foreach(base_type IN ITEMS PRIVATE PUBLIC INTERFACE)
-
     # add the files not to be installed
     cs_debug_message("[cs_target_sources] arg_${base_type} contains ${arg_${base_type}}")
     foreach(file_path ${arg_${base_type}})
@@ -78,12 +79,12 @@ function(cs_target_sources target_name)
 
     # add the files to be installed from absolute path
     cs_debug_message(
-      "[cs_target_sources] arg_${base_type}_INSTALL_ABSOLUTE_PATH contains ${arg_${base_type}_INSTALL_ABSOLUTE_PATH}")
+      "[cs_target_sources] arg_${base_type}_INSTALL_ABSOLUTE_PATH contains ${arg_${base_type}_INSTALL_ABSOLUTE_PATH}"
+    )
     foreach(file_path ${arg_${base_type}_INSTALL_ABSOLUTE_PATH})
       target_sources(${target_name} ${base_type} $<BUILD_INTERFACE:${file_path}>)
       _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE "${file_path}")
     endforeach()
-
   endforeach()
 endfunction()
 
@@ -107,14 +108,10 @@ function(cs_get_target_sources_to_install target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -138,14 +135,10 @@ function(cs_get_target_sources_to_install_absolute_path target_name output_varia
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
   if(list_values)
     # if exists
-    set(${output_variable_name}
-        ${list_values}
-        PARENT_SCOPE)
+    set(${output_variable_name} ${list_values} PARENT_SCOPE)
   else()
     # otherwise set to empty list
-    set(${output_variable_name}
-        ""
-        PARENT_SCOPE)
+    set(${output_variable_name} "" PARENT_SCOPE)
   endif()
 endfunction()
 

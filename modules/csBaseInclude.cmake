@@ -29,9 +29,7 @@ include(modules/csInternal)
 #     The variable to set, in the scope of the caller.
 function(cs_get_generated_dir output_folder)
   set(folder "${CMAKE_BINARY_DIR}/gen/")
-  set(${output_folder}
-      "${folder}"
-      PARENT_SCOPE)
+  set(${output_folder} "${folder}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -47,21 +45,16 @@ endfunction()
 #   ``<out-var>``
 #     The variable to set, in the scope of the caller.
 function(cs_get_generated_config_dir output_folder)
-
   get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
   if(generator_is_multi_config)
     # if multi-generator, use a -CONFIG folder
     set(folder "${CMAKE_BINARY_DIR}/gen-$<CONFIG>/")
-    set(${output_folder}
-        "${folder}"
-        PARENT_SCOPE)
+    set(${output_folder} "${folder}" PARENT_SCOPE)
   else()
     # if not multigenerator, just get the common folder
     cs_get_generated_dir(folder)
-    set(${output_folder}
-        "${folder}"
-        PARENT_SCOPE)
+    set(${output_folder} "${folder}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -82,19 +75,17 @@ function(_cs_installed_include_dirs output_variable)
   cs_get_build_configurations(configs_list)
   list(LENGTH configs_list count)
   if(count EQUAL 1)
-    set(${output_variable}
-        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-        PARENT_SCOPE)
+    set(${output_variable} "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>" PARENT_SCOPE)
     return()
   endif()
   set(dirs "")
   foreach(config ${configs_list})
-    list(APPEND dirs
-         "$<INSTALL_INTERFACE:$<$<CONFIG:${config}>:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${config}>>")
+    list(
+      APPEND dirs
+      "$<INSTALL_INTERFACE:$<$<CONFIG:${config}>:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${config}>>"
+    )
   endforeach()
-  set(${output_variable}
-      "${dirs}"
-      PARENT_SCOPE)
+  set(${output_variable} "${dirs}" PARENT_SCOPE)
 endfunction()
 
 # Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project, the
@@ -103,15 +94,19 @@ function(_cs_target_base_project_include_dir)
   _cs_target_create_default(cscmake_base_include INTERFACE target_name)
   _cs_installed_include_dirs(installed_include_dirs)
 
-  target_include_directories(${target_name} INTERFACE ${installed_include_dirs}
-                                                      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+  target_include_directories(
+    ${target_name}
+    INTERFACE ${installed_include_dirs} $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  )
 
   # get the folder where files are generated
   cs_get_generated_dir(common_folder)
   cs_get_generated_config_dir(config_folder)
 
-  target_include_directories(${target_name} INTERFACE $<BUILD_INTERFACE:${common_folder}>
-                                                      $<BUILD_INTERFACE:${config_folder}>)
+  target_include_directories(
+    ${target_name}
+    INTERFACE $<BUILD_INTERFACE:${common_folder}> $<BUILD_INTERFACE:${config_folder}>
+  )
 
   # create the folders now: an include folder must exist even when nothing is generated there (clang-cl reports a
   # missing include folder, -Wmissing-include-dirs, an error with -Werror)
@@ -126,7 +121,6 @@ function(_cs_target_base_project_include_dir)
   endif()
 
   _cs_target_create_default_finalize(cscmake_base_include)
-
 endfunction()
 
 # Create the empty default target <project>_<target_sub_name> of type target_type (unique in the build tree), exported
@@ -143,9 +137,7 @@ function(_cs_target_create_default target_sub_name target_type target_name_out)
   cs_add_library(${namespace}::${target_sub_name} ALIAS ${target_name})
 
   # return the target name
-  set(${target_name_out}
-      ${target_name}
-      PARENT_SCOPE)
+  set(${target_name_out} ${target_name} PARENT_SCOPE)
 endfunction()
 
 # Install the default target in the cscmake_common component (a default component) and finalize it.
@@ -154,5 +146,4 @@ function(_cs_target_create_default_finalize target_sub_name)
   cs_install_target(${target_name} cscmake_common DEFAULT)
 
   cs_finalize_target(${target_name})
-
 endfunction()

@@ -31,9 +31,11 @@ function(cs_target_link_libraries target_name)
 
   set(link_targets_list "")
   foreach(linked_target ${ARGN})
-    if(${linked_target} STREQUAL "INTERFACE"
-       OR ${linked_target} STREQUAL "PUBLIC"
-       OR ${linked_target} STREQUAL "PRIVATE")
+    if(
+      ${linked_target} STREQUAL "INTERFACE"
+      OR ${linked_target} STREQUAL "PUBLIC"
+      OR ${linked_target} STREQUAL "PRIVATE"
+    )
       list(APPEND link_targets_list ${linked_target})
       continue()
     else()
@@ -43,25 +45,29 @@ function(cs_target_link_libraries target_name)
         if(linked_target_imported)
           list(APPEND link_targets_list ${linked_target})
           cs_debug_message(
-            "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a IMPORTED target")
+            "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a IMPORTED target"
+          )
         else()
           get_target_property(aliased_linked_target ${linked_target} ALIASED_TARGET)
           if(aliased_linked_target)
             list(APPEND link_targets_list ${aliased_linked_target})
             cs_debug_message(
               "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a alias for project "
-              "target ${aliased_linked_target}")
+              "target ${aliased_linked_target}"
+            )
           else()
             list(APPEND link_targets_list ${linked_target})
             cs_debug_message(
-              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a project target")
+              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a project target"
+            )
           endif()
         endif()
       else()
         list(APPEND link_targets_list ${linked_target})
         cs_debug_message(
           "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is not a target.\n Check "
-          "your target creation order to remove this warning.")
+          "your target creation order to remove this warning."
+        )
       endif()
     endif()
   endforeach()

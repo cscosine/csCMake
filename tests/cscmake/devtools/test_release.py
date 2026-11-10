@@ -41,7 +41,7 @@ def _repo(tmp_path: Path, version: str = "0.2.0") -> Path:
     root = tmp_path / "repo"
     for entry in PACKAGE_CONTENT:
         path = root / entry
-        if path.suffix or entry == "LICENSE":
+        if path.suffix or entry in ("LICENSE", ".gersemirc"):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(entry, encoding="utf-8")
         else:

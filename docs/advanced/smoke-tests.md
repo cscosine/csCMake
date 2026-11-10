@@ -101,7 +101,7 @@ flowchart TD
         wf["cmake --workflow<br/>configure, build, install, ctest<br/>multi-config: 1 workflow with the 4 configs<br/>single-config: 1 workflow per config"]
         deps["check the find_dependency calls of the installed<br/>&lt;Package&gt;Config.cmake and the installed default targets"]
         apps["run the installed applications<br/>of every configuration (postfixes d, rd, dp)"]
-        lint["cmake-lint the installed &lt;Package&gt;Config.cmake<br/>(consistent line endings, LF copy)"]
+        lint["cscmake-lint the installed &lt;Package&gt;Config.cmake<br/>(consistent line endings)"]
         wf --> deps --> apps --> lint
     end
 ```
@@ -140,7 +140,7 @@ project folder must be named like the package**.
 2. Add it to `PROJECTS` in `run_smoke.py`, after the projects it depends on, with the packages its Config must
    `find_dependency` and its installed applications with their expected output (`test_every_smoke_project_is_run`
    fails until you do).
-3. Format and lint its CMake files (`cmake-format -i`, `cmake-lint`), describe it on this page (and in a tutorial when
+3. Format and lint its CMake files (`gersemi -i`, `cscmake-lint`), describe it on this page (and in a tutorial when
    it shows something new).
 
 Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,

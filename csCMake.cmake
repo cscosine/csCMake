@@ -62,8 +62,10 @@ function(_cs_set_root_dir path)
   if(val)
     if(NOT val STREQUAL ${path})
       message(
-        FATAL_ERROR "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "
-                    "configuration.")
+        FATAL_ERROR
+        "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "
+        "configuration."
+      )
     endif()
   endif()
   set_property(GLOBAL PROPERTY CSCMAKE_ROOT_DIR ${path})
@@ -77,9 +79,7 @@ _cs_set_root_dir(${CMAKE_CURRENT_LIST_DIR})
 # * global property CSCMAKE_ROOT_DIR
 function(_cs_get_root_dir path)
   get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
-  set(${path}
-      ${val}
-      PARENT_SCOPE)
+  set(${path} ${val} PARENT_SCOPE)
 endfunction()
 
 cmake_policy(POP)

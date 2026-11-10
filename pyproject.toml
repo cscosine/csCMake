@@ -17,7 +17,7 @@ dependencies = []
 
 [project.scripts]
 cscmake-generate-presets = "cscmake.presets.generate:main"
-cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
+cscmake-lint = "cscmake.devtools.cmake_lint:main"
 cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
 cscmake-check-docs = "cscmake.devtools.check_docs:main"
 cscmake-release = "cscmake.devtools.release:main"
@@ -34,7 +34,7 @@ dev = [
     "ruff>=0.4",
     "pre-commit>=4",
     "import-linter[ui]>=2.11",
-    "cmakelang>=0.6.13",
+    "gersemi>=0.29.2",
     # documentation (Sphinx, CMake domain, Markdown pages)
     "sphinx>=8.1",
     "sphinxcontrib-moderncmakedomain>=3.29",

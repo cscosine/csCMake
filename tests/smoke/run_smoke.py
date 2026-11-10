@@ -10,7 +10,7 @@ Lays out a workspace the way csCMake consumers do (the presets expect ``${source
 then, for the variant and in the order of PROJECTS (each project finds the previous ones in the install
 folder), runs the csv1 workflow presets (configure, build, install, ctest) for every build configuration,
 runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
-``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cmake-lint.
+``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cscmake-lint.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -20,7 +20,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -260,27 +259,18 @@ def check_installed_default_targets(workspace: Path, variant: str, project: Proj
 
 
 def lint_installed_config(workspace: Path, variant: str, project: Project) -> None:
-    """cmake-lint the installed ``<project>Config.cmake`` with the repository configuration.
+    """cscmake-lint the installed ``<project>Config.cmake`` (comments, complexity).
 
-    C0103 (naming) and C0301 (line length) are not checked: the names in a package config are dictated by CMake
-    (``<Package>_FIND_COMPONENTS``, ...) and by the package/component names chosen by the user.
-
-    The file is written by CMake with the line endings of the build platform: they only have to be
-    consistent (checked here), and an LF copy is linted, because cmakelang 0.6.13 cannot lint CRLF
-    files (``line_ending: auto`` crashes, ``windows`` flags the last line).
+    The naming rules and the line length are not checked: the names in a package config are dictated by CMake
+    (``<Package>_FIND_COMPONENTS``, ...) and by the package and component names chosen by the user. The file is written
+    with the line endings of the build platform: they only have to be consistent (checked here).
     """
     config_file = installed_config(workspace, variant, project)
     print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
-    lint_config = json.loads((REPO_ROOT / ".cmake-format.json").read_text(encoding="utf-8"))
-    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).extend(["C0103", "C0301"])
-    with tempfile.TemporaryDirectory() as tmp:
-        cfg = Path(tmp) / "cmake-format.json"
-        cfg.write_text(json.dumps(lint_config), encoding="utf-8")
-        lf_copy = Path(tmp) / config_file.name
-        lf_copy.write_bytes(config_file.read_bytes().replace(b"\r\n", b"\n"))
-        print(f"linting an LF copy of {config_file}", flush=True)
-        # -c last: it takes one or more values and would swallow the input file
-        run([sys.executable, "-m", "cmakelang.lint", lf_copy, "-c", cfg], cwd=workspace)
+    run(
+        [sys.executable, "-m", "cscmake.devtools.cmake_lint", "--disable", "CS101,CS102,CS103,CS108", config_file],
+        cwd=workspace,
+    )
 
 
 def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
@@ -301,7 +291,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
             with group(f"{project.name}: run the installed applications"):
                 check_installed_apps(workspace, variant, project)
         if lint:
-            with group(f"{project.name}: cmake-lint installed {project.name}Config.cmake"):
+            with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
 
 
@@ -309,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--variant", required=True, help="preset variant id, e.g. csv1-linux-ubuntu24.04-...")
     parser.add_argument("--workspace", type=Path, help="workspace folder (default: a new temporary folder)")
-    parser.add_argument("--no-lint", action="store_true", help="skip cmake-lint of the installed configs")
+    parser.add_argument("--no-lint", action="store_true", help="skip cscmake-lint of the installed configs")
     args = parser.parse_args(argv)
 
     workspace = args.workspace or Path(tempfile.mkdtemp(prefix="cscmake-smoke-"))
