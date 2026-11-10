@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
-            "displayName": "Configure @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
-            "description": "Configure preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "displayName": "Configure @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Configure preset for @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
             "inherits": [
                 "cmake-configure-build-type-@{buildConfig}",
                 "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
-            "displayName": "Build @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
-            "description": "Build preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "displayName": "Build @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Build preset for @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
             "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}"
         },
         {
             "name": "install-@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
-            "displayName": "Install @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
-            "description": "Install preset for @{host} Ubuntu 24.04 @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "displayName": "Install @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
+            "description": "Install preset for @{host} @{osVersion} @{architecture} @{architectureVariant} @{compiler}-@{compiler_version} @{generator} @{buildConfig}",
             "configurePreset": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}-@{buildConfig}",
             "inherits": [
                 "build-target-install"

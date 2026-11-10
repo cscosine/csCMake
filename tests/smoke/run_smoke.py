@@ -4,13 +4,13 @@
 Lays out a workspace the way csCMake consumers do (the presets expect ``${sourceParentDir}/csCMake``):
 
     <workspace>/csCMake            copy of csCMake.cmake, utils/, presets/, templates/
-    <workspace>/csSmoke            static lib + app + tests, installed and exported as csSmoke
-    <workspace>/csSmokeConsumer    find_package(csSmoke COMPONENTS hellolib) from the install folder
+    <workspace>/<project>          every project of PROJECTS (see tests/smoke/README.md)
     <workspace>/build, install     created by the presets
 
-then, for the variant, runs the csv1 workflow presets (configure, build, install, ctest) for every build
-configuration on both projects, runs the installed ``helloapp`` of each configuration, and lints the
-installed ``csSmokeConfig.cmake`` with cmake-lint.
+then, for the variant and in the order of PROJECTS (each project finds the previous ones in the install
+folder), runs the csv1 workflow presets (configure, build, install, ctest) for every build configuration,
+runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
+``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cmake-lint.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -43,8 +44,6 @@ from cscmake.presets.registry import (
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SMOKE_DIR = Path(__file__).resolve().parent
 CSCMAKE_CONTENT = ("csCMake.cmake", "utils", "presets", "templates")
-PRODUCER = "csSmoke"
-CONSUMER = "csSmokeConsumer"
 
 
 @dataclass(frozen=True)
@@ -61,7 +60,46 @@ CONFIGS = (
     Config(BuildConfig.RELWITHDEBINFO.value, "RelWithDebInfo", "rd"),
     Config(BuildConfig.PARANOID.value, "Paranoid", "dp"),
 )
-EXPECTED_APP_OUTPUT = ["hello-lib", "hello-app"]
+
+
+@dataclass(frozen=True)
+class App:
+    name: str  # installed executable, without postfix and suffix
+    output: tuple[str, ...]  # expected non-empty stdout lines
+
+
+@dataclass(frozen=True)
+class Project:
+    name: str  # folder name = package name = export namespace (find_package searches <prefix>/<name>*/...)
+    find_dependencies: tuple[str, ...] = ()  # exactly the packages of find_dependency() in its installed Config
+    apps: tuple[App, ...] = ()  # installed applications to run
+    standalone: bool = False  # standalone layout: its own workspace, <project>/workspace (csCMake copied there)
+
+
+# build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
+PROJECTS = (
+    Project("csSmokeBase"),
+    Project("csSmokeMidA", find_dependencies=("csSmokeBase",)),
+    Project("csSmokeMidB", find_dependencies=("csSmokeBase",)),
+    # csSmokeMidB is found PRIVATE: not propagated to the Config
+    Project(
+        "csSmokeTop",
+        find_dependencies=("csSmokeMidA",),
+        apps=(App("csSmokeTop", ("mid-a(text(base-core)) mid-b(base-core)",)),),
+    ),
+    # env layout: workspace and csCMake from CSCMAKE_WORKSPACE_ROOT / CSCMAKE_ROOT (cmake_environment)
+    Project(
+        "csSmokeEnv",
+        find_dependencies=("csSmokeBase",),
+        apps=(App("csSmokeEnvApp", ("env(text(base-core))",)),),
+    ),
+    Project("csSmokeStandalone", apps=(App("csSmokeStandaloneApp", ("standalone",)),), standalone=True),
+)
+
+# default targets created by cs_initialize_project, installed in the cscmake_common component
+DEFAULT_TARGETS = ("cscmake_base_include",)
+_ADD_LIBRARY = re.compile(r"^add_library\(\s*([^\s)]+)", re.MULTILINE)
+_FIND_DEPENDENCY = re.compile(r"^\s*find_dependency\(\s*([^\s)]+)", re.MULTILINE)
 
 
 class SmokeError(RuntimeError):
@@ -100,10 +138,19 @@ def group(title: str) -> Iterator[None]:
             print("::endgroup::", flush=True)
 
 
-def run(cmd: Sequence[str | Path], cwd: Path) -> None:
+def cmake_environment(workspace: Path) -> dict[str, str]:
+    """Process environment of the cmake calls: the workspace and csCMake for the projects using the env layout."""
+    return {
+        **os.environ,
+        "CSCMAKE_WORKSPACE_ROOT": workspace.as_posix(),
+        "CSCMAKE_ROOT": (workspace / "csCMake").as_posix(),
+    }
+
+
+def run(cmd: Sequence[str | Path], cwd: Path, env: dict[str, str] | None = None) -> None:
     printable = " ".join(str(c) for c in cmd)
     print(f"$ {printable}   (in {cwd})", flush=True)
-    result = subprocess.run([str(c) for c in cmd], cwd=cwd, check=False)
+    result = subprocess.run([str(c) for c in cmd], cwd=cwd, env=env, check=False)
     if result.returncode != 0:
         raise SmokeError(f"command failed with exit code {result.returncode}: {printable}")
 
@@ -111,40 +158,50 @@ def run(cmd: Sequence[str | Path], cwd: Path) -> None:
 def prepare_workspace(workspace: Path) -> None:
     """(Re)create the workspace: csCMake and the smoke projects as siblings, no build/install leftovers."""
     workspace.mkdir(parents=True, exist_ok=True)
-    for name in ("csCMake", PRODUCER, CONSUMER, "build", "install"):
+    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install"):
         shutil.rmtree(workspace / name, ignore_errors=True)
+    copy_cscmake(workspace / "csCMake")
+    for project in PROJECTS:
+        shutil.copytree(SMOKE_DIR / project.name, workspace / project.name)
+        if project.standalone:
+            copy_cscmake(workspace / project.name / "workspace" / "csCMake")
+
+
+def copy_cscmake(target_dir: Path) -> None:
+    """Copy the csCMake files used by the projects (CSCMAKE_CONTENT) into ``target_dir``."""
     for item in CSCMAKE_CONTENT:
         source = REPO_ROOT / item
-        target = workspace / "csCMake" / item
+        target = target_dir / item
         if source.is_dir():
             shutil.copytree(source, target)
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-    for project in (PRODUCER, CONSUMER):
-        shutil.copytree(SMOKE_DIR / project, workspace / project)
 
 
-def install_dir(workspace: Path, variant: str, project: str) -> Path:
-    """Install folder of ``project``, as set by csCMakeProjectSetup-base.json."""
-    return workspace / "install" / variant / project
+def install_dir(workspace: Path, variant: str, project: Project) -> Path:
+    """Install folder of ``project``: install/<variant>/<project> of its workspace (csCMakeProjectSetup.json)."""
+    project_workspace = workspace / project.name / "workspace" if project.standalone else workspace
+    return project_workspace / "install" / variant / project.name
 
 
-def check_installed_apps(workspace: Path, variant: str) -> None:
-    """Run the installed helloapp of every configuration and check its output."""
-    bin_dir = install_dir(workspace, variant, PRODUCER) / "bin"
+def check_installed_apps(workspace: Path, variant: str, project: Project) -> None:
+    """Run the installed applications of ``project`` in every configuration and check their output."""
+    bin_dir = install_dir(workspace, variant, project) / "bin"
     suffix = ".exe" if os.name == "nt" else ""
-    for config in CONFIGS:
-        app = bin_dir / f"helloapp{config.postfix}{suffix}"
-        if not app.is_file():
-            raise SmokeError(f"{config.cmake}: installed application not found: {app}")
-        result = subprocess.run([str(app)], capture_output=True, text=True, check=False)
-        lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-        print(f"{app.name}: exit code {result.returncode}, output {lines}", flush=True)
-        if result.returncode != 0 or lines != EXPECTED_APP_OUTPUT:
-            raise SmokeError(
-                f"{config.cmake}: {app} printed {lines} (exit code {result.returncode}), expected {EXPECTED_APP_OUTPUT}"
-            )
+    for app_spec in project.apps:
+        expected = list(app_spec.output)
+        for config in CONFIGS:
+            app = bin_dir / f"{app_spec.name}{config.postfix}{suffix}"
+            if not app.is_file():
+                raise SmokeError(f"{config.cmake}: installed application not found: {app}")
+            result = subprocess.run([str(app)], capture_output=True, text=True, check=False)
+            lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+            print(f"{app.name}: exit code {result.returncode}, output {lines}", flush=True)
+            if result.returncode != 0 or lines != expected:
+                raise SmokeError(
+                    f"{config.cmake}: {app} printed {lines} (exit code {result.returncode}), expected {expected}"
+                )
 
 
 def line_ending(path: Path) -> str:
@@ -157,22 +214,57 @@ def line_ending(path: Path) -> str:
     return "windows" if crlf else "unix"
 
 
-def lint_installed_config(workspace: Path, variant: str) -> None:
-    """cmake-lint the installed csSmokeConfig.cmake with the repository configuration.
+def installed_config(workspace: Path, variant: str, project: Project) -> Path:
+    """Return the installed ``<project>Config.cmake``; fail if it is missing."""
+    name = project.name
+    config_file = install_dir(workspace, variant, project) / "lib" / "cmake" / name / f"{name}Config.cmake"
+    if not config_file.is_file():
+        raise SmokeError(f"installed config not found: {config_file}")
+    return config_file
 
-    C0103 (naming) is not checked: the names in a package config are dictated by CMake
-    (``<Package>_FIND_COMPONENTS``, ...) and by the package/export names chosen by the user.
+
+def config_find_dependencies(text: str) -> set[str]:
+    """Return the packages of the ``find_dependency(<package> ...)`` calls in a Config text."""
+    return set(_FIND_DEPENDENCY.findall(text))
+
+
+def check_installed_config_dependencies(workspace: Path, variant: str, project: Project) -> None:
+    """The installed Config propagates exactly the PUBLIC ``cs_find_package`` of the project (PRIVATE ones not)."""
+    config_file = installed_config(workspace, variant, project)
+    found = config_find_dependencies(config_file.read_text(encoding="utf-8"))
+    print(f"{config_file.name}: find_dependency {sorted(found)}", flush=True)
+    if found != set(project.find_dependencies):
+        raise SmokeError(
+            f"{config_file}: find_dependency of {sorted(found)}, expected {sorted(project.find_dependencies)}"
+        )
+
+
+def check_installed_default_targets(workspace: Path, variant: str, project: Project) -> None:
+    """The default targets are installed as ``<namespace>::cscmake_*``: the same names used in the build tree."""
+    targets_file = installed_config(workspace, variant, project).parent / "targets" / "cscmake_commonTargets.cmake"
+    if not targets_file.is_file():
+        raise SmokeError(f"installed default targets not found: {targets_file}")
+    found = set(_ADD_LIBRARY.findall(targets_file.read_text(encoding="utf-8")))
+    expected = {f"{project.name}::{target}" for target in DEFAULT_TARGETS}
+    print(f"{targets_file.name}: {sorted(found)}", flush=True)
+    if found != expected:
+        raise SmokeError(f"{targets_file}: imported targets {sorted(found)}, expected {sorted(expected)}")
+
+
+def lint_installed_config(workspace: Path, variant: str, project: Project) -> None:
+    """cmake-lint the installed ``<project>Config.cmake`` with the repository configuration.
+
+    C0103 (naming) and C0301 (line length) are not checked: the names in a package config are dictated by CMake
+    (``<Package>_FIND_COMPONENTS``, ...) and by the package/component names chosen by the user.
 
     The file is written by CMake with the line endings of the build platform: they only have to be
     consistent (checked here), and an LF copy is linted, because cmakelang 0.6.13 cannot lint CRLF
     files (``line_ending: auto`` crashes, ``windows`` flags the last line).
     """
-    config_file = install_dir(workspace, variant, PRODUCER) / "lib" / "cmake" / PRODUCER / f"{PRODUCER}Config.cmake"
-    if not config_file.is_file():
-        raise SmokeError(f"installed config not found: {config_file}")
+    config_file = installed_config(workspace, variant, project)
     print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
     lint_config = json.loads((REPO_ROOT / ".cmake-format.json").read_text(encoding="utf-8"))
-    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).append("C0103")
+    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).extend(["C0103", "C0301"])
     with tempfile.TemporaryDirectory() as tmp:
         cfg = Path(tmp) / "cmake-format.json"
         cfg.write_text(json.dumps(lint_config), encoding="utf-8")
@@ -188,23 +280,26 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     ctx = find_variant(variant)
     with group(f"prepare workspace {workspace}"):
         prepare_workspace(workspace)
-    for project in (PRODUCER, CONSUMER):
+    for project in PROJECTS:
         for workflow in workflow_presets(ctx):
-            with group(f"{project}: cmake --workflow {workflow}"):
-                run(["cmake", "--workflow", workflow], cwd=workspace / project)
-        if project == PRODUCER:
-            with group("run the installed applications"):
-                check_installed_apps(workspace, variant)
-            if lint:
-                with group(f"cmake-lint installed {PRODUCER}Config.cmake"):
-                    lint_installed_config(workspace, variant)
+            with group(f"{project.name}: cmake --workflow {workflow}"):
+                run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
+        with group(f"{project.name}: find_dependency in the installed {project.name}Config.cmake"):
+            check_installed_config_dependencies(workspace, variant, project)
+            check_installed_default_targets(workspace, variant, project)
+        if project.apps:
+            with group(f"{project.name}: run the installed applications"):
+                check_installed_apps(workspace, variant, project)
+        if lint:
+            with group(f"{project.name}: cmake-lint installed {project.name}Config.cmake"):
+                lint_installed_config(workspace, variant, project)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--variant", required=True, help="preset variant id, e.g. csv1-linux-ubuntu24.04-...")
     parser.add_argument("--workspace", type=Path, help="workspace folder (default: a new temporary folder)")
-    parser.add_argument("--no-lint", action="store_true", help="skip cmake-lint of the installed config")
+    parser.add_argument("--no-lint", action="store_true", help="skip cmake-lint of the installed configs")
     args = parser.parse_args(argv)
 
     workspace = args.workspace or Path(tempfile.mkdtemp(prefix="cscmake-smoke-"))

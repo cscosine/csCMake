@@ -1,44 +1,45 @@
+# List helpers.
 include_guard(GLOBAL)
 
-# Append each element of VALUES to the list variable LIST_NAME of the caller, skipping elements already present.
-function(_cs_list_add_list_unique_values LIST_NAME VALUES)
-  if(VALUES)
-    set(OUTPUT_LIST ${${LIST_NAME}})
-    foreach(VALUE IN ITEMS ${VALUES})
-      _cs_list_add_unique_value(OUTPUT_LIST ${VALUE})
+# Append each element of values to the list variable list_name of the caller, skipping the ones already present.
+function(_cs_list_add_list_unique_values list_name values)
+  if(values)
+    set(output_list ${${list_name}})
+    foreach(value IN ITEMS ${values})
+      _cs_list_add_unique_value(output_list ${value})
     endforeach()
-    set(${LIST_NAME}
-        ${OUTPUT_LIST}
+    set(${list_name}
+        ${output_list}
         PARENT_SCOPE)
   endif()
 endfunction()
 
-# Append VALUE to the list variable LIST_NAME of the caller, unless already present.
-function(_cs_list_add_unique_value LIST_NAME VALUE)
-  set(OUTPUT_LIST ${${LIST_NAME}})
-  if(NOT ${VALUE} IN_LIST OUTPUT_LIST)
-    list(APPEND OUTPUT_LIST ${VALUE})
+# Append value to the list variable list_name of the caller, unless already present.
+function(_cs_list_add_unique_value list_name value)
+  set(output_list ${${list_name}})
+  if(NOT ${value} IN_LIST output_list)
+    list(APPEND output_list ${value})
   endif()
-  set(${LIST_NAME}
-      ${OUTPUT_LIST}
+  set(${list_name}
+      ${output_list}
       PARENT_SCOPE)
 endfunction()
 
-# Append VALUE to the list property PROPERTY_NAME of TARGET_NAME, unless already present.
-function(_cs_add_to_target_property_unique_value TARGET_NAME PROPERTY_NAME VALUE)
-  get_target_property(LIST_VALUES ${TARGET_NAME} ${PROPERTY_NAME})
-  if(NOT ${VALUE} IN_LIST LIST_VALUES)
+# Append value to the list property property_name of target_name, unless already present.
+function(_cs_add_to_target_property_unique_value target_name property_name value)
+  get_target_property(list_values ${target_name} ${property_name})
+  if(NOT ${value} IN_LIST list_values)
     set_property(
-      TARGET ${TARGET_NAME}
+      TARGET ${target_name}
       APPEND
-      PROPERTY ${PROPERTY_NAME} ${VALUE})
+      PROPERTY ${property_name} ${value})
   endif()
 endfunction()
 
-# Append VALUE to the global list property PROPERTY_NAME, unless already present.
-function(_cs_add_to_global_property_unique_value PROPERTY_NAME VALUE)
-  get_property(LIST_VALUES GLOBAL PROPERTY ${PROPERTY_NAME})
-  if(NOT ${VALUE} IN_LIST LIST_VALUES)
-    set_property(GLOBAL APPEND PROPERTY ${PROPERTY_NAME} ${VALUE})
+# Append value to the global list property property_name, unless already present.
+function(_cs_add_to_global_property_unique_value property_name value)
+  get_property(list_values GLOBAL PROPERTY ${property_name})
+  if(NOT ${value} IN_LIST list_values)
+    set_property(GLOBAL APPEND PROPERTY ${property_name} ${value})
   endif()
 endfunction()

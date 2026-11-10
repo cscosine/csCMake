@@ -1,0 +1,4 @@
+# clang-tidy checks of the smoke project (csSmokeBase_checks profile: Paranoid, Clang on Linux)
+Checks: '-*,bugprone-*,performance-*,-bugprone-easily-swappable-parameters'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'csSmokeBase/.*'

@@ -1,16 +1,39 @@
+#.rst:
+# csDebugMessage
+# --------------
+#
+# Debug messages of csCMake.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# option to print out messages as "STATUS" from this module
-option(${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG "activate the debug of csCMake for the current project" OFF)
-
-# print message msg if ${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG is ON, or if a additional parameter at end is true
-function(cs_debug_message msg)
-  set(forced False)
-  if(ARGC EQUAL 2)
-    set(forced ${ARGV1})
+#.rst:
+# .. command:: cs_debug_message
+#
+#   Print a debug message of csCMake.
+#
+#   .. code-block:: cmake
+#
+#     cs_debug_message(<text>...)
+#
+#   The arguments are concatenated like message() does (also when they contain ";") and printed as a STATUS message when
+#   the debug messages of the current project are enabled.
+#
+#   ``<text>``
+#     The message, its arguments concatenated as :command:`message` does.
+#
+#   :Reads: :variable:`_cscmake_debug_option`, :variable:`<project>_CSCMAKE_DEBUG`
+function(cs_debug_message)
+  if(NOT _cscmake_debug_option OR NOT ${_cscmake_debug_option})
+    return()
   endif()
-
-  if(${forced} OR ${CMAKE_PROJECT_NAME}_CS_CMAKE_DEBUG)
-    message(STATUS "${msg}")
-  endif()
+  # ARGV<n> one by one: ARGN would split the arguments containing ";"
+  set(text "")
+  set(index 0)
+  while(index LESS ARGC)
+    string(APPEND text "${ARGV${index}}")
+    math(EXPR index "${index} + 1")
+  endwhile()
+  message(STATUS "${text}")
 endfunction()

@@ -1,364 +1,486 @@
+#.rst:
+# csBuildConfigurations
+# ---------------------
+#
+# The build configurations of the build tree (``DEFAULT_CONFIG``, ``DEFAULT_CONFIG_MAPPED``, ``CUSTOM_CONFIG`` of
+# :command:`cs_initialize_project`): the first csCMake project defines them, a nested project uses some of them, defined
+# the same way.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# set cache variables with postfix for targets
+# Defaults chosen by csCMake are cache variables: override them with -D<variable>=<value>. Values derived from the
+# cs_initialize_project arguments are normal variables of the project scope (_cs_set_in_project_scope).
+
+# output name postfix of the targets, per default configuration
 set(CSCMAKE_DEBUG_POSTFIX
     "d"
-    CACHE STRING "value for suffix in Debug config" FORCE)
+    CACHE STRING "csCMake: output name postfix in the Debug configuration")
 set(CSCMAKE_RELEASE_POSTFIX
     ""
-    CACHE STRING "value for suffix in Release config" FORCE)
+    CACHE STRING "csCMake: output name postfix in the Release configuration")
 set(CSCMAKE_RELWITHDEBINFO_POSTFIX
     "rd"
-    CACHE STRING "value for suffix in RelWithDebInfo config" FORCE)
+    CACHE STRING "csCMake: output name postfix in the RelWithDebInfo configuration")
 
 # note, MSVC supports also MinSizeRel, but it is not supported here
 
-# set CACHE variables with the expected MSVC runtime library
+# MSVC runtime library, per default configuration
 set(CSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG
     "MultiThreadedDebugDLL"
-    CACHE STRING "The MSVC runtime library to use in Debug" FORCE)
+    CACHE STRING "csCMake: MSVC runtime library in the Debug configuration")
 set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELWITHDEBINFO
     "MultiThreadedDLL"
-    CACHE STRING "The MSVC runtime library to use in RelWithDebInfo" FORCE)
+    CACHE STRING "csCMake: MSVC runtime library in the RelWithDebInfo configuration")
 set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE
     "MultiThreadedDLL"
-    CACHE STRING "The MSVC runtime library to use in Release" FORCE)
+    CACHE STRING "csCMake: MSVC runtime library in the Release configuration")
 
-# get the stored list of available build config (including default ones)
-function(cs_get_specified_build_configurations CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypes)
-  set(${CONFIGS_LIST}
-      ${VAL}
+# Record the normal variable var_name = value, set in the project scope by _cs_apply_project_scope_variables (lets
+# functions called at any depth by cs_initialize_project set project variables).
+#
+# Writes:
+#
+# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
+function(_cs_set_in_project_scope var_name value)
+  set_property(GLOBAL APPEND PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES ${var_name})
+  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name} "${value}")
+endfunction()
+
+# Set in the caller's scope (cs_initialize_project: the project scope) the variables recorded by
+# _cs_set_in_project_scope, then forget them.
+#
+# Reads:
+#
+# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
+function(_cs_apply_project_scope_variables)
+  get_property(var_names GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
+  foreach(var_name ${var_names})
+    get_property(value GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
+    set(${var_name}
+        "${value}"
+        PARENT_SCOPE)
+    set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
+  endforeach()
+  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
+endfunction()
+
+#.rst:
+# .. command:: cs_get_build_configurations
+#
+#   Return the build configurations of the build (default, mapped and custom ones).
+#
+#   .. code-block:: cmake
+#
+#     cs_get_build_configurations(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
+#   :Reads: :prop_gbl:`CSCMAKE_BUILD_CONFIGURATIONS`
+function(cs_get_build_configurations configs_list)
+  get_property(val GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
+  set(${configs_list}
+      ${val}
       PARENT_SCOPE)
 endfunction()
 
-# get the stored list of available default build config
-function(cs_get_specified_build_configurations_default CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationTypesDefault)
-  set(${CONFIGS_LIST}
-      ${VAL}
+#.rst:
+# .. command:: cs_get_default_build_configurations
+#
+#   Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
+#
+#   .. code-block:: cmake
+#
+#     cs_get_default_build_configurations(<out-var>)
+#
+#   ``<out-var>``
+#     The variable to set, in the scope of the caller.
+#
+#   :Reads: :prop_gbl:`CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS`
+function(cs_get_default_build_configurations configs_list)
+  get_property(val GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS)
+  set(${configs_list}
+      ${val}
       PARENT_SCOPE)
 endfunction()
 
-# get all the CMAKE variables that belongs to a configuration
-function(cs_get_build_configurations_variables CONFIGS_LIST)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigurationVariables)
-  set(${CONFIGS_LIST}
-      ${VAL}
+# Return in configs_list the CMake variables with a <CONFIG> part (CMAKE_CXX_FLAGS_<CONFIG>, ...).
+#
+# Reads:
+#
+# * global property CSCMAKE_PER_CONFIG_VARIABLES
+function(_cs_get_per_config_variables configs_list)
+  get_property(val GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES)
+  set(${configs_list}
+      ${val}
       PARENT_SCOPE)
 endfunction()
 
-# add a default configuration
-function(_cs_add_default_build_configuration CONFIG)
-  cs_get_specified_build_configurations(CONFIGS_LIST)
-  cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
+# Add the default configuration config (Debug, Release or RelWithDebInfo) to the build.
+#
+# Writes:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS, CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
+function(_cs_add_default_build_configuration config)
+  cs_get_build_configurations(configs_list)
+  cs_get_default_build_configurations(configs_list_default)
 
-  set(VALID_DEFAULT_CONFIGS "Debug;Release;RelWithDebInfo")
+  set(valid_default_configs "Debug;Release;RelWithDebInfo")
 
-  if(NOT ${CONFIG} IN_LIST VALID_DEFAULT_CONFIGS)
+  if(NOT ${config} IN_LIST valid_default_configs)
+    message(
+      FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with invalid default config ${config}, choose one of "
+                  "${valid_default_configs}")
+  endif()
+
+  if(NOT ${config} IN_LIST configs_list)
+    list(APPEND configs_list ${config})
+  else()
+    message(FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config}")
+  endif()
+
+  if(NOT ${config} IN_LIST configs_list_default)
+    list(APPEND configs_list_default ${config})
+  else()
+    message(
+      FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config} in default list")
+  endif()
+
+  set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
+  set_property(GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS ${configs_list_default})
+
+endfunction()
+
+# Add the default configuration config with the configurations of imported targets to use (base_config_and_fallback).
+#
+# Writes:
+#
+# * variable CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>: project scope
+function(_cs_add_default_build_configuration_mapped config base_config_and_fallback)
+  _cs_add_default_build_configuration(${config})
+
+  string(TOUPPER "${config}" config_ucase)
+
+  _cs_set_in_project_scope(CMAKE_MAP_IMPORTED_CONFIG_${config_ucase} "${base_config_and_fallback}")
+  cs_debug_message("[_cs_add_default_build_configuration_mapped] set CMAKE_MAP_IMPORTED_CONFIG_${config_ucase} = "
+                   "${base_config_and_fallback}")
+
+endfunction()
+
+# Add the custom configuration config, a copy of base_config with its own postfix.
+#
+# Writes:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS
+# * variable CSCMAKE_<CONFIG>_POSTFIX: project scope
+function(_cs_add_custom_build_configuration config base_config postfix base_config_and_fallback)
+  cs_get_build_configurations(configs_list)
+  cs_get_default_build_configurations(configs_list_default)
+
+  if(NOT ${config} IN_LIST configs_list)
+    list(APPEND configs_list ${config})
+  else()
+    message(FATAL_ERROR "[_cs_add_custom_build_configuration] called with duplicated element ${config}")
+  endif()
+
+  if(NOT ${base_config} IN_LIST configs_list_default)
     message(
       FATAL_ERROR
-        "[cs_set_default_build_config] called with invalid default config ${CONFIG}, choose one of ${VALID_DEFAULT_CONFIGS}"
-    )
-  endif()
-
-  if(NOT ${CONFIG} IN_LIST CONFIGS_LIST)
-    list(APPEND CONFIGS_LIST ${CONFIG})
+        "[_cs_add_custom_build_configuration] element ${config} base on ${base_config}, which is not in default "
+        "configs ${configs_list_default}")
   else()
-    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${CONFIG}")
+    _cs_copy_build_configuration(${base_config} ${config} "${base_config_and_fallback}")
   endif()
 
-  if(NOT ${CONFIG} IN_LIST CONFIGS_LIST_DEFAULT)
-    list(APPEND CONFIGS_LIST_DEFAULT ${CONFIG})
-  else()
-    message(FATAL_ERROR "[cs_set_default_build_config] called with duplicated element ${CONFIG} in default list")
-  endif()
+  string(TOUPPER "${config}" config_upper)
 
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypesDefault ${CONFIGS_LIST_DEFAULT})
+  # the postfix is given by the project code (POSTFIX of cs_initialize_project)
+  _cs_set_in_project_scope(CSCMAKE_${config_upper}_POSTFIX "${postfix}")
 
+  set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
 endfunction()
 
-# add a default configuration that need a fallback mapping
-function(_cs_add_default_build_configuration_mapped CONFIG BASE_CONFIG_AND_FALLBACK)
-  _cs_add_default_build_configuration(${CONFIG})
-
-  string(TOUPPER "${CONFIG}" CONFIG_UCASE)
-
-  set("CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}"
-      "${BASE_CONFIG_AND_FALLBACK}"
-      CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE}" FORCE)
-  cs_debug_message(
-    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${CONFIG_UCASE} = ${BASE_CONFIG_AND_FALLBACK}" True)
-
-endfunction()
-
-# add a custom configuration, based on a default one
-function(_cs_add_custom_build_configuration CONFIG BASE_CONFIG POSTFIX BASE_CONFIG_AND_FALLBACK)
-  cs_get_specified_build_configurations(CONFIGS_LIST)
-  cs_get_specified_build_configurations_default(CONFIGS_LIST_DEFAULT)
-
-  if(NOT ${CONFIG} IN_LIST CONFIGS_LIST)
-    list(APPEND CONFIGS_LIST ${CONFIG})
-  else()
-    message(FATAL_ERROR "[_cs_add_custom_build_configuration] called with duplicated element ${CONFIG}")
-  endif()
-
-  if(NOT ${BASE_CONFIG} IN_LIST CONFIGS_LIST_DEFAULT)
-    message(
-      FATAL_ERROR
-        "[_cs_add_custom_build_configuration] element ${CONFIG} base on ${BASE_CONFIG}, which is not in default configs ${CONFIGS_LIST_DEFAULT}"
-    )
-  else()
-    cs_copy_configuration_type(${BASE_CONFIG} ${CONFIG} "${BASE_CONFIG_AND_FALLBACK}")
-  endif()
-
-  string(TOUPPER "${CONFIG}" CONFIG_UPPER)
-  string(TOUPPER "${BASE_CONFIG}" BASE_CONFIG_UPPER)
-
-  # set the postfix
-  set(CSCMAKE_${CONFIG_UPPER}_POSTFIX
-      "${POSTFIX}"
-      CACHE STRING "value for suffix in ${CONFIG} config" FORCE)
-
-  set_property(GLOBAL PROPERTY csCMakeConfigurationTypes ${CONFIGS_LIST})
-endfunction()
-
-# helper function to parse the cs_initialize_project arguments and add build types accepts extra arguments to specify
-# the available build configurations: _cs_process_configurations( CXX_STANDARD 14/17/... DEFAULT_CONFIG Debug
-# DEFAULT_CONFIG Release DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release," CUSTOM_CONFIG
-# MyCustomConfig1 BASED_ON Debug POSTFIX "d" CUSTOM_CONFIG MyCustomConfig2 BASED_ON Release POSTFIX ""
-# [STRICT_COMPILATION_ON_CONFIG ConfigName] note, make sure to use POSTFIX "" if no postfix has to be used )
-function(_cs_parse_additional_configurations REQUIRED_CXX_STANDARD)
+# Parse the arguments of cs_initialize_project: namespace, C++ standard (returned in required_cxx_standard), default
+# compile profiles, build configurations. A nested csCMake project checks its configurations against the build instead
+# of adding them.
+#
+# Writes:
+#
+# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES: caller scope
+# * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION: "default", "mapped <fallbacks>" or "custom <base
+#   and fallbacks> postfix <postfix>"
+# * variable CMAKE_<RUNTIME|LIBRARY|ARCHIVE>_OUTPUT_DIRECTORY_<CONFIG>: project scope, custom configurations, unless set
+# * variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION, CMAKE_MSVC_RUNTIME_LIBRARY: project scope
+function(_cs_parse_additional_configurations required_cxx_standard)
   # cmake-lint: disable=R0912,R0915
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
-  set(OPTIONS "")
-  set(ONEVALUE CXX_STANDARD STRICT_COMPILATION_ON_CONFIG)
-  set(MULTIVALUE DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG)
-  cmake_parse_arguments(ARG "${OPTIONS}" "${ONEVALUE}" "${MULTIVALUE}" ${ARGN})
+  set(options "")
+  set(onevalue NAMESPACE CXX_STANDARD)
+  set(multivalue DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG DEFAULT_COMPILE_PROFILES)
+  cmake_parse_arguments(arg "${options}" "${onevalue}" "${multivalue}" ${ARGN})
 
-  if(ARG_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "[_cs_parse_additional_configurations] has unparsed arguments ${ARG_UNPARSED_ARGUMENTS}")
+  if(arg_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "[cs_initialize_project] unparsed arguments ${arg_UNPARSED_ARGUMENTS}: the arguments are "
+                        "NAMESPACE <namespace> CXX_STANDARD <standard> and the configurations (see MIGRATION.md)")
   endif()
 
+  # the namespace of the installed targets (<namespace>::<target>) and of the package (<namespace>Config.cmake)
+  if(NOT arg_NAMESPACE)
+    message(FATAL_ERROR "[cs_initialize_project] NAMESPACE <namespace> is required")
+  endif()
+  # a variable, not a global property: set in the directory of cs_initialize_project (this is called by the macro) and
+  # inherited by its subdirectories, so a nested csCMake project has its own namespace
+  set(CSCMAKE_NAMESPACE
+      ${arg_NAMESPACE}
+      PARENT_SCOPE)
+
   # If not set by caller, error
-  if(NOT ARG_CXX_STANDARD)
-    message(FATAL_ERROR "USE cs_initialize_project(CXX_STANDARD XX)")
+  if(NOT arg_CXX_STANDARD)
+    message(FATAL_ERROR "[cs_initialize_project] CXX_STANDARD <standard> is required (e.g. CXX_STANDARD 17)")
   endif()
 
   # return cxx standard
-  set(${REQUIRED_CXX_STANDARD}
-      ${ARG_CXX_STANDARD}
+  set(${required_cxx_standard}
+      ${arg_CXX_STANDARD}
       PARENT_SCOPE)
 
+  # compile profiles of every target of the project (cs_finalize_target): cscmake_default unless given, NONE for none
+  set(default_profiles cscmake_default)
+  if(DEFINED arg_DEFAULT_COMPILE_PROFILES)
+    set(default_profiles ${arg_DEFAULT_COMPILE_PROFILES})
+  endif()
+  if(default_profiles STREQUAL "NONE")
+    set(default_profiles "")
+  endif()
+  set(CSCMAKE_DEFAULT_COMPILE_PROFILES
+      "${default_profiles}"
+      PARENT_SCOPE)
+
+  # the configurations belong to the build tree: the first csCMake project defines them; a nested project (added with
+  # add_subdirectory) uses some of them, defined the same way, and registers nothing (_cs_check_build_configuration)
+  get_property(
+    nested GLOBAL
+    PROPERTY CSCMAKE_BUILD_CONFIGURATIONS
+    SET)
+
   # add default configurations
-  foreach(DEFAULT_CONFIG ${ARG_DEFAULT_CONFIG})
-    cs_debug_message("adding default config ${DEFAULT_CONFIG}")
-    _cs_add_default_build_configuration(${DEFAULT_CONFIG})
+  foreach(default_config ${arg_DEFAULT_CONFIG})
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${default_config} "default")
+      continue()
+    endif()
+    cs_debug_message("[_cs_parse_additional_configurations] adding default config ${default_config}")
+    _cs_add_default_build_configuration(${default_config})
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${default_config}_DEFINITION "default")
   endforeach()
 
   # add default configurations mapped
-  list(LENGTH ARG_DEFAULT_CONFIG_MAPPED ARG_DEFAULT_CONFIG_MAPPED_SIZE)
-  math(EXPR MOD_SIZE "${ARG_DEFAULT_CONFIG_MAPPED_SIZE} % 3")
-  if(NOT ${MOD_SIZE} EQUAL 0)
-    message(
-      FATAL_ERROR
-        "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${ARG_DEFAULT_CONFIG_MAPPED}"
-    )
+  list(LENGTH arg_DEFAULT_CONFIG_MAPPED arg_default_config_mapped_size)
+  math(EXPR mod_size "${arg_default_config_mapped_size} % 3")
+  if(NOT ${mod_size} EQUAL 0)
+    message(FATAL_ERROR "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : "
+                        "DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${arg_DEFAULT_CONFIG_MAPPED}")
   endif()
 
-  set(I 0)
-  while(ARG_DEFAULT_CONFIG_MAPPED_SIZE GREATER I)
-    list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} DEFAULT_CONFIG_MAPPED)
-    math(EXPR I "${I} + 1")
+  set(idx 0)
+  while(arg_default_config_mapped_size GREATER idx)
+    list(GET arg_DEFAULT_CONFIG_MAPPED ${idx} default_config_mapped)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} MAPPED_TO_KEYWORD)
-    math(EXPR I "${I} + 1")
+    list(GET arg_DEFAULT_CONFIG_MAPPED ${idx} mapped_to_keyword)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_DEFAULT_CONFIG_MAPPED ${I} BASE_CONFIG_AND_FALLBACK)
-    math(EXPR I "${I} + 1")
+    list(GET arg_DEFAULT_CONFIG_MAPPED ${idx} base_config_and_fallback)
+    math(EXPR idx "${idx} + 1")
 
     # parse the ; separated BASE_CONFIG_AND_FALLBACK variable
-    string(FIND "${BASE_CONFIG_AND_FALLBACK}" "," POS)
-    if(${POS} EQUAL -1)
-      set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
+    string(FIND "${base_config_and_fallback}" "," pos)
+    if(${pos} EQUAL -1)
+      set(base_config "${base_config_and_fallback}")
     else()
-      string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
-      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
+      string(SUBSTRING "${base_config_and_fallback}" 0 ${pos} base_config)
+      string(REPLACE "," ";" base_config_and_fallback ${base_config_and_fallback})
     endif()
 
-    if(NOT ${MAPPED_TO_KEYWORD} STREQUAL "MAPPED_TO")
+    if(NOT ${mapped_to_keyword} STREQUAL "MAPPED_TO")
       message(
-        FATAL_ERROR
-          "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${ARG_DEFAULT_CONFIG_MAPPED}"
-      )
+        FATAL_ERROR "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : "
+                    "DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO \"Release,\". Got ${arg_DEFAULT_CONFIG_MAPPED}")
     endif()
 
+    set(definition "mapped ${base_config_and_fallback}")
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${default_config_mapped} "${definition}")
+      continue()
+    endif()
     cs_debug_message(
-      "[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}"
-    )
-    _cs_add_default_build_configuration_mapped(${DEFAULT_CONFIG_MAPPED} "${BASE_CONFIG_AND_FALLBACK}")
+      "[_cs_parse_additional_configurations] adding mapped config ${default_config_mapped} ${base_config_and_fallback}")
+    _cs_add_default_build_configuration_mapped(${default_config_mapped} "${base_config_and_fallback}")
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${default_config_mapped}_DEFINITION "${definition}")
 
   endwhile()
 
   # add custom configs, based on default ones
-  list(LENGTH ARG_CUSTOM_CONFIG ARG_CUSTOM_CONFIG_SIZE)
-  math(EXPR MOD_SIZE "${ARG_CUSTOM_CONFIG_SIZE} % 5")
-  if(NOT ${MOD_SIZE} EQUAL 0)
-    message(
-      FATAL_ERROR
-        "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ${ARG_CUSTOM_CONFIG}"
-    )
+  list(LENGTH arg_CUSTOM_CONFIG arg_custom_config_size)
+  math(EXPR mod_size "${arg_custom_config_size} % 5")
+  if(NOT ${mod_size} EQUAL 0)
+    message(FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
+                        "MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Got ${arg_CUSTOM_CONFIG}")
   endif()
 
-  set(I 0)
-  while(ARG_CUSTOM_CONFIG_SIZE GREATER I)
-    list(GET ARG_CUSTOM_CONFIG ${I} CUSTOM_CONFIG)
-    math(EXPR I "${I} + 1")
+  set(idx 0)
+  while(arg_custom_config_size GREATER idx)
+    list(GET arg_CUSTOM_CONFIG ${idx} custom_config)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_CUSTOM_CONFIG ${I} BASED_ON_KEYWORD)
-    math(EXPR I "${I} + 1")
+    list(GET arg_CUSTOM_CONFIG ${idx} based_on_keyword)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_CUSTOM_CONFIG ${I} BASE_CONFIG_AND_FALLBACK)
-    math(EXPR I "${I} + 1")
+    list(GET arg_CUSTOM_CONFIG ${idx} base_config_and_fallback)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_CUSTOM_CONFIG ${I} POSTFIX_KEYWORD)
-    math(EXPR I "${I} + 1")
+    list(GET arg_CUSTOM_CONFIG ${idx} postfix_keyword)
+    math(EXPR idx "${idx} + 1")
 
-    list(GET ARG_CUSTOM_CONFIG ${I} POSTFIX_VALUE)
-    math(EXPR I "${I} + 1")
+    list(GET arg_CUSTOM_CONFIG ${idx} postfix_value)
+    math(EXPR idx "${idx} + 1")
 
     # parse the ; separated BASE_CONFIG_AND_FALLBACK variable
-    string(FIND "${BASE_CONFIG_AND_FALLBACK}" "," POS)
-    if(${POS} EQUAL -1)
-      set(BASE_CONFIG "${BASE_CONFIG_AND_FALLBACK}")
+    string(FIND "${base_config_and_fallback}" "," pos)
+    if(${pos} EQUAL -1)
+      set(base_config "${base_config_and_fallback}")
     else()
-      string(SUBSTRING "${BASE_CONFIG_AND_FALLBACK}" 0 ${POS} BASE_CONFIG)
-      string(REPLACE "," ";" BASE_CONFIG_AND_FALLBACK ${BASE_CONFIG_AND_FALLBACK})
+      string(SUBSTRING "${base_config_and_fallback}" 0 ${pos} base_config)
+      string(REPLACE "," ";" base_config_and_fallback ${base_config_and_fallback})
     endif()
 
-    if(NOT ${BASED_ON_KEYWORD} STREQUAL "BASED_ON")
+    if(NOT ${based_on_keyword} STREQUAL "BASED_ON")
       message(
-        FATAL_ERROR
-          "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected BASED_ON found ${BASED_ON_KEYWORD}"
-      )
+        FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
+                    "MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected BASED_ON found ${based_on_keyword}")
     endif()
-    if(NOT ${POSTFIX_KEYWORD} STREQUAL "POSTFIX")
+    if(NOT ${postfix_keyword} STREQUAL "POSTFIX")
       message(
-        FATAL_ERROR
-          "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected POSTFIX found ${POSTFIX_KEYWORD}"
-      )
+        FATAL_ERROR "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
+                    "MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected POSTFIX found ${postfix_keyword}")
     endif()
 
-    cs_debug_message(
-      "[_cs_parse_additional_configurations] adding custom config ${CUSTOM_CONFIG} ${BASE_CONFIG} ${BASE_CONFIG_AND_FALLBACK}"
-    )
-    _cs_add_custom_build_configuration(${CUSTOM_CONFIG} ${BASE_CONFIG} ${POSTFIX_VALUE} "${BASE_CONFIG_AND_FALLBACK}")
+    set(definition "custom ${base_config_and_fallback} postfix ${postfix_value}")
+    if(nested)
+      _cs_check_build_configuration(${arg_NAMESPACE} ${custom_config} "${definition}")
+      continue()
+    endif()
+    cs_debug_message("[_cs_parse_additional_configurations] adding custom config ${custom_config} ${base_config} "
+                     "${base_config_and_fallback}")
+    _cs_add_custom_build_configuration(${custom_config} ${base_config} ${postfix_value} "${base_config_and_fallback}")
+    set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${custom_config}_DEFINITION "${definition}")
 
-    # for some reason, the output directory of custom configuration does not get set properly, therefore we need to set
-    # it explicitely TODO(sc) try to understand better this behavior, at the moment this is a workaround
-    get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-    if(GENERATOR_IS_MULTI_CONFIG)
-      string(TOUPPER "${CUSTOM_CONFIG}" CUSTOM_CONFIG_UCASE)
-      set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/bin/${CUSTOM_CONFIG}"
-          CACHE STRING "RUNTIME OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
-      set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/lib/${CUSTOM_CONFIG}"
-          CACHE STRING "LIBRARY OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
-      set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/lib/${CUSTOM_CONFIG}"
-          CACHE STRING "ARCHIVE OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+    # the output folders of a custom configuration are set explicitly: the ones without configuration suffix do not
+    # apply to it (CMake uses the per-configuration ones copied from the base configuration). Kept if set by the user.
+    get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    string(TOUPPER "${custom_config}" custom_config_ucase)
+    if(generator_is_multi_config)
+      set(config_subfolder "/${custom_config}")
     else()
-      set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/bin"
-          CACHE STRING "RUNTIME OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
-      set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/lib"
-          CACHE STRING "LIBRARY OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
-      set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CUSTOM_CONFIG_UCASE}
-          "${CMAKE_BINARY_DIR}/lib"
-          CACHE STRING "ARCHIVE OUTPUT DIRECTORY for ${CUSTOM_CONFIG}" FORCE)
+      set(config_subfolder "")
     endif()
+    foreach(kind_folder RUNTIME/bin LIBRARY/lib ARCHIVE/lib)
+      string(REPLACE "/" ";" kind_folder "${kind_folder}")
+      list(GET kind_folder 0 kind)
+      list(GET kind_folder 1 folder)
+      if(NOT CMAKE_${kind}_OUTPUT_DIRECTORY_${custom_config_ucase})
+        _cs_set_in_project_scope(CMAKE_${kind}_OUTPUT_DIRECTORY_${custom_config_ucase}
+                                 "${CMAKE_BINARY_DIR}/${folder}${config_subfolder}")
+      endif()
+    endforeach()
   endwhile()
 
-  # check if the user want strict compilation flags for a specific configutation
-  if(ARG_STRICT_COMPILATION_ON_CONFIG)
-    # check such configuration exists
-    cs_get_specified_build_configurations(CONFIGS_LIST)
-    if(ARG_STRICT_COMPILATION_ON_CONFIG IN_LIST CONFIGS_LIST)
-      _cssetconfigurationwithstrictflags(${ARG_STRICT_COMPILATION_ON_CONFIG})
-    else()
-      message(
-        FATAL_ERROR
-          "The value ${ARG_STRICT_COMPILATION_ON_CONFIG} of ${STRICT_COMPILATION_ON_CONFIG} is not a valid configuration in list ${CONFIGS_LIST}"
-      )
-    endif()
+  # a nested project: the derived variables come from the scope of the project that defined the configurations
+  if(nested)
+    return()
   endif()
 
   # finally, prepare the variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION (will be used by targets added with
   # cs_add_library / cs_add_executable)
-  set(TEMP_STRING "")
-  cs_get_specified_build_configurations(CONFIGS_LIST)
-  foreach(CONFIG ${CONFIGS_LIST})
-    string(TOUPPER "${CONFIG}" CONFIG_UCASE)
-    set(VALUE "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG_UCASE}}")
-    set(TEMP_STRING "${TEMP_STRING}$<$<CONFIG:${CONFIG}>:${VALUE}>")
+  set(temp_string "")
+  cs_get_build_configurations(configs_list)
+  foreach(config ${configs_list})
+    string(TOUPPER "${config}" config_ucase)
+    set(value "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_ucase}}")
+    set(temp_string "${temp_string}$<$<CONFIG:${config}>:${value}>")
   endforeach()
-  set(CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
-      "${TEMP_STRING}"
-      CACHE STRING "final value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
+  _cs_set_in_project_scope(CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "${temp_string}")
 
-  # and set CMAKE_MSVC_RUNTIME_LIBRARY = CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION for generic targes (fallback)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY
-      "${TEMP_STRING}"
-      CACHE STRING "default value for MSVC_RUNTIME_LIBRARY for targets, with generator expressions" FORCE)
+  # and CMAKE_MSVC_RUNTIME_LIBRARY for the targets not created by cs_add_library / cs_add_executable (fallback)
+  _cs_set_in_project_scope(CMAKE_MSVC_RUNTIME_LIBRARY "${temp_string}")
 endfunction()
 
-# Apply the configurations requested in cs_initialize_project: on multi-config generators reset
-# CMAKE_CONFIGURATION_TYPES to them, on single-config generators fail if CMAKE_BUILD_TYPE is not one of them.
-function(_cs_process_configurations)
-  cs_get_specified_build_configurations(CONFIGS_LIST)
+# Fail if config, requested by the nested csCMake project namespace, is not a configuration of the build defined the
+# same way (definition).
+#
+# Reads:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION
+function(_cs_check_build_configuration namespace config definition)
+  get_property(defined GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATION_${config}_DEFINITION)
+  if(NOT defined)
+    cs_get_build_configurations(configs_list)
+    message(FATAL_ERROR "[cs_initialize_project] configuration ${config} of ${namespace} is not a configuration of "
+                        "the build (${configs_list}): the first csCMake project of the build defines them")
+  endif()
+  if(NOT defined STREQUAL definition)
+    message(FATAL_ERROR "[cs_initialize_project] configuration ${config} of ${namespace} is '${definition}', in "
+                        "the build it is '${defined}'")
+  endif()
+endfunction()
 
-  get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-  if(GENERATOR_IS_MULTI_CONFIG)
+# Apply the configurations of the build: with multi-config generators set CMAKE_CONFIGURATION_TYPES, with single-config
+# ones fail if CMAKE_BUILD_TYPE is not one of them.
+#
+# Writes:
+#
+# * cache variable CMAKE_CONFIGURATION_TYPES: the configurations of the build (owned by csCMake)
+function(_cs_process_configurations)
+  cs_get_build_configurations(configs_list)
+
+  get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(generator_is_multi_config)
     set(CMAKE_CONFIGURATION_TYPES
-        "${CONFIGS_LIST}"
-        CACHE STRING "Reset the configurations to what we need" FORCE)
+        "${configs_list}"
+        CACHE STRING "csCMake: the configurations of cs_initialize_project (owned by csCMake)" FORCE)
   else()
-    if(NOT ${CMAKE_BUILD_TYPE} IN_LIST CONFIGS_LIST)
+    if(NOT ${CMAKE_BUILD_TYPE} IN_LIST configs_list)
       message(
         FATAL_ERROR
-          "[_cs_process_configurations] request to build with config ${CMAKE_BUILD_TYPE} which is not supported by this project"
-      )
+          "[_cs_process_configurations] request to build with config ${CMAKE_BUILD_TYPE} which is not supported "
+          "by this project")
     endif()
   endif()
 endfunction()
 
-# Store CONFIGNAME as the configuration built with strict compilation flags (global property
-# csCMakeConfigWithStrictFlags).
-function(_csSetConfigurationWithStrictFlags CONFIGNAME)
-  set_property(GLOBAL PROPERTY csCMakeConfigWithStrictFlags ${CONFIGNAME})
-endfunction()
-
-# Return in CONFIGNAME the configuration built with strict compilation flags (STRICT_COMPILATION_ON_CONFIG of
-# cs_initialize_project), empty if none.
-function(csGetConfigurationWithStrictFlags CONFIGNAME)
-  get_property(VAL GLOBAL PROPERTY csCMakeConfigWithStrictFlags)
-  set(${CONFIGNAME}
-      ${VAL}
-      PARENT_SCOPE)
-endfunction()
-
-# set a global property csCMakeConfigurationVariables highly inspired from
-# https://stackoverflow.com/questions/75823363/how-can-i-copy-all-build-type-parameters-from-an-existing-build-configuration-ty/75828118#75828118
+# Collect the CMake variables with a <CONFIG> part (cmake --help-variable-list), once per build tree; inspired by
+# https://stackoverflow.com/q/75823363.
+#
+# Writes:
+#
+# * global property CSCMAKE_PER_CONFIG_VARIABLES
 function(_cs_process_build_configurations_variables)
+  # once per build tree (a nested csCMake project finds it done)
+  get_property(
+    done GLOBAL
+    PROPERTY CSCMAKE_PER_CONFIG_VARIABLES
+    SET)
+  if(done)
+    return()
+  endif()
   execute_process(COMMAND ${CMAKE_COMMAND} --help-variable-list
                   OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt")
-  file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" VAR_FULL_LIST)
+  file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" var_full_list)
 
-  foreach(var ${VAR_FULL_LIST})
+  foreach(var ${var_full_list})
     if("${var}" MATCHES "<CONFIG>")
       if("${var}" MATCHES "<LANG>")
         foreach(
@@ -380,82 +502,166 @@ function(_cs_process_build_configurations_variables)
           ASM-ATT)
           # (supported languages list from https://cmake.org/cmake/help/latest/command/project.html)
           string(REPLACE "<LANG>" "${lang}" lang_var "${var}")
-          list(APPEND CONFIG_VAR_LIST "${lang_var}")
+          list(APPEND config_var_list "${lang_var}")
         endforeach()
       else()
-        list(APPEND CONFIG_VAR_LIST "${var}")
+        list(APPEND config_var_list "${var}")
       endif()
     endif()
   endforeach()
 
-  set_property(GLOBAL PROPERTY csCMakeConfigurationVariables ${CONFIG_VAR_LIST})
+  set_property(GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES ${config_var_list})
 endfunction()
 
-# Create the configuration config_to_in as a copy of config_from_in: copy every per-<CONFIG> CMake variable and the MSVC
-# runtime library, and map imported targets of the new configuration onto BASE_CONFIG_AND_FALLBACK
-# (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>).
-function(cs_copy_configuration_type config_from_in config_to_in BASE_CONFIG_AND_FALLBACK)
-  cs_get_build_configurations_variables(CONFIG_VAR_LIST)
+# Create the configuration config_to_in as a copy of config_from_in: every per-<CONFIG> CMake variable and the MSVC
+# runtime library, imported targets mapped onto base_config_and_fallback.
+#
+# Writes:
+#
+# * cache variable <every per-<CONFIG> variable>_<CONFIG>: copy of the base configuration, overridable
+# * cache variable CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>: copy of the base configuration, overridable
+# * variable CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>: project scope
+function(_cs_copy_build_configuration config_from_in config_to_in base_config_and_fallback)
+  _cs_get_per_config_variables(config_var_list)
 
   string(TOUPPER "${config_from_in}" config_from)
   string(TOUPPER "${config_to_in}" config_to)
-  foreach(config_var ${CONFIG_VAR_LIST})
+  foreach(config_var ${config_var_list})
     string(REPLACE "<CONFIG>" "${config_from}" config_var_from "${config_var}")
     string(REPLACE "<CONFIG>" "${config_to}" config_var_to "${config_var}")
 
+    # cache variable, overridable (e.g. -DCMAKE_CXX_FLAGS_PARANOID=...); it keeps its value when the base configuration
+    # changes: delete the cache entry to copy it again
     set("${config_var_to}"
         "${${config_var_from}}"
-        CACHE STRING "value for custom build ${config_to}" FORCE)
+        CACHE STRING "csCMake: copy of ${config_var_from} for the configuration ${config_to_in}")
     mark_as_advanced("${config_var_to}")
 
-    cs_debug_message("[cs_copy_configuration_type] ${config_var_to} = ${${config_var_from}}")
+    cs_debug_message("[_cs_copy_build_configuration] ${config_var_to} = ${${config_var_from}}")
   endforeach()
 
   # TODO(sc) consider also DEBUG_CONFIGURATIONS global property  ?
 
-  set("CMAKE_MAP_IMPORTED_CONFIG_${config_to}"
-      "${BASE_CONFIG_AND_FALLBACK}"
-      CACHE STRING "value for custom build CMAKE_MAP_IMPORTED_CONFIG_${config_to}" FORCE)
+  _cs_set_in_project_scope(CMAKE_MAP_IMPORTED_CONFIG_${config_to} "${base_config_and_fallback}")
   cs_debug_message(
-    "[cs_copy_configuration_type] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${BASE_CONFIG_AND_FALLBACK}" True)
+    "[_cs_copy_build_configuration] set CMAKE_MAP_IMPORTED_CONFIG_${config_to} = ${base_config_and_fallback}")
 
-  # set the MSVC Runtime Library based on the config to copy
+  # the MSVC runtime library of the configuration it is based on (overridable, like the copies above)
   set(CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_to}
       "${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_from}}"
-      CACHE STRING "The MSVC runtime library to use in ${config_to_in}, copied from ${config_from_in}" FORCE)
+      CACHE STRING "csCMake: MSVC runtime library in the ${config_to_in} configuration (copied from ${config_from_in})")
 
 endfunction()
 
-# Print (debug) the per-configuration variables of every configuration of the project, tagging each block with
-# ADD_MESSAGE.
-function(cs_print_all_configurations_variables ADD_MESSAGE)
-  cs_get_specified_build_configurations(CONFIG_VAR_LIST)
-  cs_debug_message("[cs_print_all_configurations_variables] configs are ${CONFIG_VAR_LIST}")
-  foreach(CONFIG ${CONFIG_VAR_LIST})
-    cs_debug_message("[cs_print_all_configurations_variables] CONFIG ${CONFIG} ${ADD_MESSAGE}")
-    cs_print_configuration_variables(${CONFIG} "  ")
+#.rst:
+# .. command:: cs_print_all_configurations_variables
+#
+#   Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
+#
+#   .. code-block:: cmake
+#
+#     cs_print_all_configurations_variables(<message>)
+#
+#   ``<message>``
+#     A text printed with the name of each configuration.
+function(cs_print_all_configurations_variables add_message)
+  cs_get_build_configurations(config_var_list)
+  cs_debug_message("[cs_print_all_configurations_variables] configs are ${config_var_list}")
+  foreach(config ${config_var_list})
+    cs_debug_message("[cs_print_all_configurations_variables] CONFIG ${config} ${add_message}")
+    cs_print_configuration_variables(${config} "  ")
     cs_debug_message("[cs_print_all_configurations_variables] -------")
   endforeach()
-  cs_debug_message(
-    "[cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION ${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
-  )
+  cs_debug_message("[cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "
+                   "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
   cs_debug_message("[cs_print_all_configurations_variables] end --------")
 
 endfunction()
 
-# Print (debug) the per-configuration CMake and csCMake variables of CONFIG_IN, each line prefixed with PRINT_PREFIX.
-function(cs_print_configuration_variables CONFIG_IN PRINT_PREFIX)
+#.rst:
+# .. command:: cs_print_configuration_variables
+#
+#   Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
+#
+#   .. code-block:: cmake
+#
+#     cs_print_configuration_variables(<config> <prefix>)
+#
+#   ``<config>``
+#     A configuration of the build (any case).
+#
+#   ``<prefix>``
+#     A text printed at the start of each line.
+function(cs_print_configuration_variables config_in print_prefix)
 
-  cs_get_build_configurations_variables(CONFIG_VAR_LIST)
-  string(TOUPPER "${CONFIG_IN}" CONFIG)
+  _cs_get_per_config_variables(config_var_list)
+  string(TOUPPER "${config_in}" config)
 
-  foreach(VAR ${CONFIG_VAR_LIST})
-    string(REPLACE "<CONFIG>" "${CONFIG}" VAR_OUT "${VAR}")
-    cs_debug_message("${PRINT_PREFIX} ${VAR_OUT} = ${${VAR_OUT}}")
+  foreach(var ${config_var_list})
+    string(REPLACE "<CONFIG>" "${config}" var_out "${var}")
+    cs_debug_message("${print_prefix} ${var_out} = ${${var_out}}")
   endforeach()
 
   # extra, CS variables
-  cs_debug_message("${PRINT_PREFIX} CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${CONFIG}}")
-  cs_debug_message("${PRINT_PREFIX} CSCMAKE_${CONFIG}_POSTFIX = ${CSCMAKE_${CONFIG}_POSTFIX}")
+  cs_debug_message("${print_prefix} CSCMAKE_MSVC_RUNTIME_LIBRARY_${config} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config}}")
+  cs_debug_message("${print_prefix} CSCMAKE_${config}_POSTFIX = ${CSCMAKE_${config}_POSTFIX}")
 
 endfunction()
+
+#.rst:
+# Variables
+# ^^^^^^^^^
+#
+# .. variable:: CSCMAKE_DEBUG_POSTFIX
+#
+#   Cache variable: output name postfix of the targets in the Debug configuration (default ``d``).
+#
+# .. variable:: CSCMAKE_RELEASE_POSTFIX
+#
+#   Cache variable: output name postfix in the Release configuration (default none).
+#
+# .. variable:: CSCMAKE_RELWITHDEBINFO_POSTFIX
+#
+#   Cache variable: output name postfix in the RelWithDebInfo configuration (default ``rd``).
+#
+# .. variable:: CSCMAKE_<CONFIG>_POSTFIX
+#
+#   Output name postfix of a custom configuration (``POSTFIX`` of ``CUSTOM_CONFIG``), in the project scope.
+#
+# .. variable:: CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>
+#
+#   Cache variable: MSVC runtime library of a configuration (``MultiThreadedDebugDLL`` in Debug, ``MultiThreadedDLL``
+#   in Release and RelWithDebInfo; a custom configuration copies the one of its base configuration).
+#
+# .. variable:: CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
+#
+#   The MSVC runtime library of every configuration as one generator expression (also
+#   :variable:`CMAKE_MSVC_RUNTIME_LIBRARY`), in the project scope.
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_BUILD_CONFIGURATIONS
+#
+#   The configurations of the build: default, mapped and custom ones.
+#
+# .. prop_gbl:: CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
+#
+#   The default configurations of the build (``DEFAULT_CONFIG`` and ``DEFAULT_CONFIG_MAPPED``).
+#
+# .. prop_gbl:: CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION
+#
+#   How a configuration is defined: ``default``, ``mapped <fallbacks>`` or ``custom <base and fallbacks> postfix
+#   <postfix>`` (a nested project must define it the same way).
+#
+# .. prop_gbl:: CSCMAKE_PER_CONFIG_VARIABLES
+#
+#   The CMake variables with a ``<CONFIG>`` part (``CMAKE_CXX_FLAGS_<CONFIG>``, ...), copied for custom configurations.
+#
+# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLES
+#
+#   Internal: the variables to set in the project scope at the end of :command:`cs_initialize_project`.
+#
+# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
+#
+#   Internal: the value of such a variable.

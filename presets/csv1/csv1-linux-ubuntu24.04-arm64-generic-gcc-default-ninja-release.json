@@ -14,8 +14,8 @@
     "configurePresets": [
         {
             "name": "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-release",
-            "displayName": "Configure linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
-            "description": "Configure preset for linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
+            "displayName": "Configure linux ubuntu24.04 arm64 generic gcc-default ninja release",
+            "description": "Configure preset for linux ubuntu24.04 arm64 generic gcc-default ninja release",
             "inherits": [
                 "cmake-configure-build-type-release",
                 "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-base"
@@ -25,14 +25,14 @@
     "buildPresets": [
         {
             "name": "build-csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-release",
-            "displayName": "Build linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
-            "description": "Build preset for linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
+            "displayName": "Build linux ubuntu24.04 arm64 generic gcc-default ninja release",
+            "description": "Build preset for linux ubuntu24.04 arm64 generic gcc-default ninja release",
             "configurePreset": "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-release"
         },
         {
             "name": "install-csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-release",
-            "displayName": "Install linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
-            "description": "Install preset for linux Ubuntu 24.04 arm64 generic gcc-default ninja release",
+            "displayName": "Install linux ubuntu24.04 arm64 generic gcc-default ninja release",
+            "description": "Install preset for linux ubuntu24.04 arm64 generic gcc-default ninja release",
             "configurePreset": "csv1-linux-ubuntu24.04-arm64-generic-gcc-default-ninja-release",
             "inherits": [
                 "build-target-install"

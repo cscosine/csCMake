@@ -21,9 +21,9 @@
                 "cs-compiler-@{host}-@{compiler}-@{compiler_version}"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "@{csVersion_short}@{host_short}@{osVersion_short}@{architecture_short}@{architectureVariant_short}@{compiler_short}@{compiler_version_short}@{generator_short}"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CSCMAKE_CSV1_SUB_DIR": "@{csVersion}-@{host}-@{osVersion}-@{architecture}-@{architectureVariant}-@{compiler}-@{compiler_version}-@{generator}",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "@{csVersion_short}@{host_short}@{osVersion_short}@{architecture_short}@{architectureVariant_short}@{compiler_short}@{compiler_version_short}@{generator_short}"
             }
         }
     ]

@@ -19,7 +19,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | Path | Role |
 |------|------|
 | `csCMake.cmake` | Main entry point. `include(csCMake)` from a consumer `CMakeLists.txt`. Defines `cs_initialize_project` / `cs_finalize_project`. |
-| `utils/csAddLibraryExecutable.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_all_targets`. |
+| `utils/csAddLibraryExecutable.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
 | `utils/csTargetSources.cmake` | `cs_target_sources` — sources + install-aware variants. |
 | `utils/csTargetLinkLibraries.cmake` | `cs_target_link_libraries` — scoped linking with dependency analysis. |
 | `utils/csFindPackage.cmake` | `cs_find_package` — PUBLIC/PRIVATE propagation for install. |
@@ -44,11 +44,12 @@ compile-option defaults, and CMake presets. It has two parts:
 
 - **CMake:** public functions `cs_*`, private helpers `_cs_`. File names `cs<Name>.cmake`.
   Formatted and linted by cmake-format / cmake-lint (`.cmake-format.json`, line width 120); every
-  `function`/`macro` has a docstring comment block right above it. Long string literals are allowed
-  (C0301 off: cmake-format cannot wrap strings).
+  `function`/`macro` has a docstring comment block right above it: a `#.rst:` reStructuredText block for the public
+  ones (the reference documentation, built by Sphinx from `docs/`), a plain `#` comment for the private ones. See the
+  docs rule in `CLAUDE.md`.
 - **Python:** strict mypy, ruff line-length 120, double quotes, docstrings on public functions.
 - **Commit style:** short imperative summary, e.g. `add presets for arm64`.
-- **Presets:** checked-in `presets/csv1/*.json` and `presets/csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json`
+- **Presets:** checked-in `presets/csv1/*.json` and `presets/csCMakeProjectSetup.json` and `presets/layout/*.json`
   are generated (templates in `presets/template/`). Never edit by hand.
   Regenerate with `cscmake-generate-presets`.
 
@@ -89,7 +90,12 @@ entries in `presets/common/build-configurations.json`.
 
 ### Adding tests
 - Python tests go in `tests/cscmake/<module>/test_*.py`.
-- CMake smoke projects live in `tests/smoke/` (`csSmoke`, `csSmokeConsumer`), driven by
+- CMake behaviour that can be checked at configure time (properties, generated values, error messages) goes in
+  `tests/cmake/test_*.py`: `tests.cmake.cmake_project.configure()` writes a `LANGUAGES NONE` project including csCMake,
+  configures it and returns what it reported with `cstest_report(<key> <value>)`. Fast, no compiler needed.
+- CMake smoke projects live in `tests/smoke/` (described in `docs/advanced/smoke-tests.md`, walked through in
+  `docs/tutorials/`: a chain of packages
+  `csSmokeBase` → `csSmokeMidA`/`csSmokeMidB` → `csSmokeTop`), driven by
   `tests/smoke/run_smoke.py --variant <id>`; CI runs it for every registry variant (`smoke.yml`,
   matrix from `tests/smoke/ci_matrix.py`). New csCMake features should get coverage there.
 - Markers (root `conftest.py`): `@pytest.mark.slow` (skipped unless `--run-all`) and

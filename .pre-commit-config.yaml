@@ -39,6 +39,9 @@ repos:
     rev: v1.20.2
     hooks:
       - id: mypy
+        # docs/conf.py: Sphinx configuration, its libraries (docutils, sphinx, the CMake domain) are not in the hook
+        # environment and ship no stubs; ruff checks it
+        exclude: ^docs/
         args:
           [
             "--config-file=pyproject.toml",
@@ -80,6 +83,15 @@ repos:
         entry: cscmake-cmake-template lint
         language: system
         files: \.cmake\.in$
+
+      # reference documentation complete: every public command, variable and property of the CMake modules has its
+      # #.rst: entry (cscmake.devtools.check_docs); requires the dev venv, like generate-csv1-presets
+      - id: check-docs
+        name: Check the reference documentation
+        entry: cscmake-check-docs
+        language: system
+        pass_filenames: false
+        files: ^(csCMake\.cmake|utils/.*\.cmake|docs/reference/.*)$
 
       # requires the dev venv, like generate-csv1-presets
       - id: import-linter

@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -118,3 +119,19 @@ def test_standin_case_follows_cmake_naming_context() -> None:
     assert lines[0].startswith("function(csatph")  # function name: lowercase
     assert lines[2].startswith("csatph")  # command name: lowercase
     assert lines[3].startswith("set(CSATPH")  # variable: uppercase
+
+
+@pytest.mark.parametrize(
+    ("text", "lowercase"),
+    [
+        ("set(_@NS@_items 1)\n", True),  # private variable: lowercase around the placeholder
+        ("foreach(@NS@_item IN LISTS x)\nendforeach()\n", True),
+        ("set(@NS@_${x}_FOUND 1)\n", False),  # no lowercase around: uppercase
+        ("set(_@NS@_Mixed 1)\n", False),
+    ],
+)
+def test_standin_case_follows_the_identifier_around_it(text: str, lowercase: bool) -> None:
+    standin = re.search("csatph[0-9_]*x", protect(text).text, re.IGNORECASE)
+
+    assert standin is not None
+    assert standin.group(0).islower() == lowercase

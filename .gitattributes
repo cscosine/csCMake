@@ -20,6 +20,8 @@ CMakeLists.txt text eol=lf
 
 # generated presets: byte-identical on every OS (the generator writes LF)
 presets/csv1/*.json text eol=lf
+presets/csCMakeProjectSetup.json text eol=lf
+presets/layout/*.json text eol=lf
 
 # Binary safety
 *.png binary

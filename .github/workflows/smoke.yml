@@ -9,6 +9,8 @@ on:
   pull_request:
   push:
     branches: [ main, dev ]
+    # release tags, e.g. v1.2.3 (also v1.2.3-rc1)
+    tags: [ "v*.*.*" ]
 
 jobs:
   matrix:
@@ -42,6 +44,13 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      # Ninja generators on Windows: cl / clang-cl and the SDK come from the Visual Studio developer environment
+      - name: Visual Studio developer environment
+        if: ${{ matrix.msvc_dev_env == 'true' }}
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
 
       - name: Install cscmake and cmakelang
         run: python -m pip install -e . "cmakelang==0.6.13"

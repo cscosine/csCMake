@@ -1,44 +1,67 @@
+#.rst:
+# csTargetLinkLibraries
+# ---------------------
+#
+# Links between targets.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# Drop-in replacement for target_link_libraries(TARGET_NAME ...): links TARGET_NAME to the arguments (PUBLIC, PRIVATE
-# and INTERFACE keywords included), resolving aliases of project targets to the real target.
-function(cs_target_link_libraries TARGET_NAME)
-  cs_debug_message("[cs_target_link_libraries] ${TARGET_NAME} ${ARGN}")
+#.rst:
+# .. command:: cs_target_link_libraries
+#
+#   Link a target, like :command:`target_link_libraries`, resolving the aliases of the project targets.
+#
+#   .. code-block:: cmake
+#
+#     cs_target_link_libraries(<target> <target_link_libraries arguments>...)
+#
+#   The scope keywords stay where they are; an ALIAS of a project target becomes the target itself, imported targets and
+#   names that are not targets are passed unchanged.
+#
+#   ``<target>``
+#     A target of the project.
+#
+#   ``<target_link_libraries arguments>``
+#     The other arguments of :command:`target_link_libraries`: scope keywords and libraries.
+function(cs_target_link_libraries target_name)
+  cs_debug_message("[cs_target_link_libraries] ${target_name} ${ARGN}")
 
-  set(LINK_TARGETS_LIST "")
-  foreach(LINKED_TARGET ${ARGN})
-    if(${LINKED_TARGET} STREQUAL "INTERFACE"
-       OR ${LINKED_TARGET} STREQUAL "PUBLIC"
-       OR ${LINKED_TARGET} STREQUAL "PRIVATE")
-      list(APPEND LINK_TARGETS_LIST ${LINKED_TARGET})
+  set(link_targets_list "")
+  foreach(linked_target ${ARGN})
+    if(${linked_target} STREQUAL "INTERFACE"
+       OR ${linked_target} STREQUAL "PUBLIC"
+       OR ${linked_target} STREQUAL "PRIVATE")
+      list(APPEND link_targets_list ${linked_target})
       continue()
     else()
-      cs_debug_message("[cs_target_link_libraries] analyze ${LINKED_TARGET} lib")
-      if(TARGET ${LINKED_TARGET})
-        get_target_property(LINKED_TARGET_IMPORTED ${LINKED_TARGET} IMPORTED)
-        if(LINKED_TARGET_IMPORTED)
-          list(APPEND LINK_TARGETS_LIST ${LINKED_TARGET})
+      cs_debug_message("[cs_target_link_libraries] analyze ${linked_target} lib")
+      if(TARGET ${linked_target})
+        get_target_property(linked_target_imported ${linked_target} IMPORTED)
+        if(linked_target_imported)
+          list(APPEND link_targets_list ${linked_target})
           cs_debug_message(
-            "[cs_target_link_libraries] ${TARGET_NAME} links to ${LINKED_TARGET} which is a IMPORTED target")
+            "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a IMPORTED target")
         else()
-          get_target_property(ALIASED_LINKED_TARGET ${LINKED_TARGET} ALIASED_TARGET)
-          if(ALIASED_LINKED_TARGET)
-            list(APPEND LINK_TARGETS_LIST ${ALIASED_LINKED_TARGET})
+          get_target_property(aliased_linked_target ${linked_target} ALIASED_TARGET)
+          if(aliased_linked_target)
+            list(APPEND link_targets_list ${aliased_linked_target})
             cs_debug_message(
-              "[cs_target_link_libraries] ${TARGET_NAME} links to ${LINKED_TARGET} which is a alias for project target ${ALIASED_LINKED_TARGET}"
-            )
+              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a alias for project "
+              "target ${aliased_linked_target}")
           else()
-            list(APPEND LINK_TARGETS_LIST ${LINKED_TARGET})
+            list(APPEND link_targets_list ${linked_target})
             cs_debug_message(
-              "[cs_target_link_libraries] ${TARGET_NAME} links to ${LINKED_TARGET} which is a project target")
+              "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is a project target")
           endif()
         endif()
       else()
-        list(APPEND LINK_TARGETS_LIST ${LINKED_TARGET})
+        list(APPEND link_targets_list ${linked_target})
         cs_debug_message(
-          "[cs_target_link_libraries] ${TARGET_NAME} links to ${LINKED_TARGET} which is not a target.\n Check your target creation order to remove this warning."
-        )
+          "[cs_target_link_libraries] ${target_name} links to ${linked_target} which is not a target.\n Check "
+          "your target creation order to remove this warning.")
       endif()
     endif()
   endforeach()
@@ -46,8 +69,8 @@ function(cs_target_link_libraries TARGET_NAME)
   # TODO(sc) if the target contains generator expression, we might need to skip it to avoid too many warning emitted
   # string(GENEX_STRIP "${FOO_POSSIBLY_RELATIVE_POSSIBLY_GENEX_PATH}" no_genex)
 
-  cs_debug_message("[cs_target_link_libraries] original  ${TARGET_NAME} ${ARGN}" True)
-  cs_debug_message("[cs_target_link_libraries] converted ${TARGET_NAME} ${LINK_TARGETS_LIST}" True)
+  cs_debug_message("[cs_target_link_libraries] original  ${target_name} ${ARGN}")
+  cs_debug_message("[cs_target_link_libraries] converted ${target_name} ${link_targets_list}")
 
-  target_link_libraries("${TARGET_NAME}" ${LINK_TARGETS_LIST})
+  target_link_libraries("${target_name}" ${link_targets_list})
 endfunction()

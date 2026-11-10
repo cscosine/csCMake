@@ -8,9 +8,10 @@ the placeholders are put back:
 - a line holding only ``@VAR@`` becomes the statement ``cscmake_template_line(<n>)``;
 - any other ``@VAR@`` becomes the identifier ``csatph<n>__..x``, padded with ``_`` to the length of
   ``@VAR@`` so that line widths are unchanged. It is lowercase where CMake convention wants
-  lowercase (command names, ``function``/``macro`` names) and uppercase elsewhere (variables), so
-  cmake-lint naming checks are meaningful; it is restored case-insensitively (cmake-format may
-  also lowercase command names).
+  lowercase (command names, ``function``/``macro`` names, identifiers whose other characters are
+  lowercase such as ``_@VAR@_items``) and uppercase elsewhere (``@VAR@_FOUND``), so cmake-lint
+  naming checks are meaningful; it is restored case-insensitively (cmake-format may also lowercase
+  command names).
 
 Formatting fails if the restored text does not contain exactly the original placeholders.
 
@@ -38,6 +39,7 @@ _STANDIN_LINE = re.compile(r"^([ \t]*)cscmake_template_line\((\d+)\)[ \t]*$", re
 _STANDIN = re.compile(r"csatph(\d+)_*x", re.IGNORECASE)
 # a placeholder at the start of a command name, or right after function( / macro(
 _LOWERCASE_CONTEXT = re.compile(r"(^[ \t]*|\b(?:function|macro)\([ \t]*)$", re.IGNORECASE)
+_NOT_IDENT = re.compile(r"[^A-Za-z0-9_]")
 
 
 class TemplateError(RuntimeError):
@@ -66,7 +68,11 @@ def protect(text: str) -> Protected:
     def standin(m: re.Match[str]) -> str:
         token = _standin(index[m.group(1)], len(m.group(0)))
         line_start = text.rfind("\n", 0, m.start()) + 1
-        return token if _LOWERCASE_CONTEXT.search(text[line_start : m.start()]) else token.upper()
+        if _LOWERCASE_CONTEXT.search(text[line_start : m.start()]):
+            return token
+        # part of a longer identifier: follow its case (e.g. _@NS@_components is a lowercase variable)
+        around = _NOT_IDENT.split(text[line_start : m.start()])[-1] + _NOT_IDENT.split(text[m.end() :], maxsplit=1)[0]
+        return token if re.search("[a-z]", around) and not re.search("[A-Z]", around) else token.upper()
 
     text = _PLACEHOLDER.sub(standin, text)
     return Protected(text, names)
