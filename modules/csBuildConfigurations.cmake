@@ -477,11 +477,9 @@ function(_cs_process_build_configurations_variables)
   if(done)
     return()
   endif()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} --help-variable-list
-    OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt"
-  )
-  file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/cmake_var_full_list.txt" var_full_list)
+  execute_process(COMMAND ${CMAKE_COMMAND} --help-variable-list OUTPUT_VARIABLE var_full_list)
+  # one variable per line (names have no ";")
+  string(REPLACE "\n" ";" var_full_list "${var_full_list}")
 
   foreach(var ${var_full_list})
     if("${var}" MATCHES "<CONFIG>")

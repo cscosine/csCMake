@@ -32,9 +32,8 @@ include(GNUInstallDirs)
 #   ``<out-var>``
 #     The variable to set, in the scope of the caller.
 function(cs_get_install_include_dir install_folder_expression)
-  cs_get_build_configurations(configs_list)
-  list(LENGTH configs_list count)
-  if(count GREATER 1)
+  _cs_headers_per_configuration(per_configuration)
+  if(per_configuration)
     # includes are installed per configuration, independently if we are with a multi generator or a single one
     set(folder "${CMAKE_INSTALL_INCLUDEDIR}/$<CONFIG>")
     set(${install_folder_expression} "${folder}" PARENT_SCOPE)
@@ -79,7 +78,7 @@ function(cs_install_target target_name export_name)
   set_target_properties(${target_name} PROPERTIES CSCMAKE_COMPONENT ${export_name})
 
   # get the relative folder from the target folder to the base of the project
-  file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+  _cs_relative_install_folder(destination_folder)
 
   # add the EXPORT_NAME to the list of exports
   _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS ${export_name})

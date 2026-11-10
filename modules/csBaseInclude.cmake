@@ -72,12 +72,12 @@ endfunction()
 # the package does not have, and not mapped, gets no folder (not a missing one). Absolute ($<INSTALL_PREFIX>): CMake
 # prefixes a relative entry with the install prefix even when it evaluates to nothing.
 function(_cs_installed_include_dirs output_variable)
-  cs_get_build_configurations(configs_list)
-  list(LENGTH configs_list count)
-  if(count EQUAL 1)
+  _cs_headers_per_configuration(per_configuration)
+  if(NOT per_configuration)
     set(${output_variable} "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>" PARENT_SCOPE)
     return()
   endif()
+  cs_get_build_configurations(configs_list)
   set(dirs "")
   foreach(config ${configs_list})
     list(

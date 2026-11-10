@@ -166,3 +166,23 @@ cstest_report(cached "${cached}")
     assert result.returncode == 0, result.output
     assert result.reports["cached"] == "0"
     assert ("[BConfig] entry point" in result.output) == debug
+
+
+def test_many_paths_between_components_are_checked_once(tmp_path: Path) -> None:
+    """24 components, each depending on the next two: about 75 000 paths, each component checked once."""
+    count = 24
+    lines = [
+        "project(C VERSION 1.0.0 LANGUAGES NONE)",
+        "cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)",
+    ]
+    for index in range(count, -1, -1):
+        lines.append(f"cs_add_library(t{index} INTERFACE)")
+        for dependency in (index + 1, index + 2):
+            if dependency <= count:
+                lines.append(f"cs_target_link_libraries(t{index} INTERFACE t{dependency})")
+        lines += [f"cs_install_target(t{index} c{index})", f"cs_finalize_target(t{index})"]
+    lines.append("cs_finalize_project()")
+
+    result = configure(tmp_path, "\n".join(lines) + "\n", timeout=60)
+
+    assert result.returncode == 0, result.output

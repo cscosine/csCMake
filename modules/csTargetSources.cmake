@@ -38,7 +38,7 @@ include(modules/csDebug)
 #     Sources given by absolute path (e.g. generated headers), installed with the target in the include folder of the
 #     current folder.
 #
-#   :Reads: :variable:`CSCMAKE_SOURCE_DIR`
+#   :Reads: :variable:`CMAKE_CURRENT_SOURCE_DIR`
 #   :Writes: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_target_sources target_name)
   cs_debug_message("[cs_target_sources] target ${target_name}: ${ARGN}")
@@ -58,37 +58,23 @@ function(cs_target_sources target_name)
   )
   cmake_parse_arguments(arg "" "" "${keywords}" ${ARGN})
 
-  # retrieve the relative install path
-  file(RELATIVE_PATH destination_folder ${CSCMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-  cs_debug_message("[cs_target_sources] relative install path is ${destination_folder}")
-
-  # get the different groups
+  # each scope: its sources, then the ones installed (relative to the current folder, or by absolute path)
   foreach(base_type IN ITEMS PRIVATE PUBLIC INTERFACE)
-    # add the files not to be installed
-    cs_debug_message("[cs_target_sources] arg_${base_type} contains ${arg_${base_type}}")
-    foreach(file_path ${arg_${base_type}})
-      # absolute: CMake rejects relative paths in the INTERFACE_SOURCES of PUBLIC / INTERFACE ones
-      cmake_path(ABSOLUTE_PATH file_path BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE build_path)
-      target_sources(${target_name} ${base_type} $<BUILD_INTERFACE:${build_path}>)
+    set(build_paths "")
+    foreach(group IN ITEMS ${base_type} ${base_type}_INSTALL ${base_type}_INSTALL_ABSOLUTE_PATH)
+      foreach(file_path IN LISTS arg_${group})
+        # absolute: CMake rejects relative paths in the INTERFACE_SOURCES of PUBLIC / INTERFACE ones
+        cmake_path(ABSOLUTE_PATH file_path BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE build_path)
+        list(APPEND build_paths "$<BUILD_INTERFACE:${build_path}>")
+      endforeach()
     endforeach()
-
-    # add the files to be installed
-    cs_debug_message("[cs_target_sources] arg_${base_type}_INSTALL contains ${arg_${base_type}_INSTALL}")
-    foreach(file_path ${arg_${base_type}_INSTALL})
-      # absolute: CMake rejects relative paths in the INTERFACE_SOURCES of PUBLIC / INTERFACE ones
-      cmake_path(ABSOLUTE_PATH file_path BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE build_path)
-      target_sources(${target_name} ${base_type} $<BUILD_INTERFACE:${build_path}>)
+    if(build_paths)
+      target_sources(${target_name} ${base_type} ${build_paths})
+    endif()
+    foreach(file_path IN LISTS arg_${base_type}_INSTALL)
       _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_SOURCES_TO_INSTALL "${file_path}")
     endforeach()
-
-    # add the files to be installed from absolute path
-    cs_debug_message(
-      "[cs_target_sources] arg_${base_type}_INSTALL_ABSOLUTE_PATH contains ${arg_${base_type}_INSTALL_ABSOLUTE_PATH}"
-    )
-    foreach(file_path ${arg_${base_type}_INSTALL_ABSOLUTE_PATH})
-      # absolute: CMake rejects relative paths in the INTERFACE_SOURCES of PUBLIC / INTERFACE ones
-      cmake_path(ABSOLUTE_PATH file_path BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE build_path)
-      target_sources(${target_name} ${base_type} $<BUILD_INTERFACE:${build_path}>)
+    foreach(file_path IN LISTS arg_${base_type}_INSTALL_ABSOLUTE_PATH)
       _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE "${file_path}")
     endforeach()
   endforeach()

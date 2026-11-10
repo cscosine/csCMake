@@ -104,16 +104,16 @@ Design (behaviour or API changes):
 Simplifications (no behaviour change, installed files byte-identical):
 - [x] (done, 15 getters) S1 eleven getters repeat `get_*_property` + `if(values) ... else "" ...` (NOTFOUND handling): `get_property()`
   returns an empty value for an unset property; one line each, or gone with 6b.
-- [ ] S2 "several configurations" is computed in three places (`cs_get_install_include_dir`,
+- [x] (done: `_cs_relative_install_folder`, `_cs_headers_per_configuration`; the multi-config subfolders differ, genex vs folder, kept) S2 "several configurations" is computed in three places (`cs_get_install_include_dir`,
   `_cs_installed_include_dirs`, the multi-config subfolder in `cs_initialize_project` and
   `_cs_set_custom_config_output_directories`); the relative install folder of the current directory
   (`file(RELATIVE_PATH ... CSCMAKE_SOURCE_DIR ...)`) in three: one helper each.
-- [ ] S3 component graph: cycle check (recursive over every path: exponential on diamonds) and topological sort
+- [x] (done: the cycle check visits each component once; the sort kept, a depth-first sort gives another valid order and would change the generated Configs) S3 component graph: cycle check (recursive over every path: exponential on diamonds) and topological sort
   (re-queue loop, ~60 lines) as one depth-first search with a "visiting" mark: sorted dependencies and cycles in one
   pass.
-- [ ] S4 `cs_target_sources`: three identical loops per visibility, one `target_sources()` per file; `PRIVATE`
+- [x] (done: one loop, one `target_sources()` per scope; the unused relative folder removed; `$<BUILD_INTERFACE>` kept) S4 `cs_target_sources`: three identical loops per visibility, one `target_sources()` per file; `PRIVATE`
   sources wrapped in `$<BUILD_INTERFACE:...>` for no reason (to check: relative paths).
-- [ ] S5 `_cs_list_add_list_unique_values` / `_cs_list_add_unique_value` in loops: `list(APPEND)` +
+- [x] (done; `get_filename_component` goes with D1) S5 `_cs_list_add_list_unique_values` / `_cs_list_add_unique_value` in loops: `list(APPEND)` +
   `list(REMOVE_DUPLICATES)`; `get_filename_component` -> `cmake_path`; the help list of variables goes through a file
   in the build folder (`cmake_var_full_list.txt`) instead of `OUTPUT_VARIABLE`.
 - [ ] S6 the debug-only work runs when debug is off: `cs_print_state` loops over every per-configuration variable of
@@ -367,3 +367,10 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   its mode with a prefixed message (the printers' dead code goes with D2). Tests: build type, target before
   initialize, OpenMP propagation, csCMake path.
 - S1: 15 getters read with `get_property()` (empty when unset) instead of `get_target_property` + NOTFOUND branch.
+
+### 2026-11-10 (Phase 6a — S2-S5; v0.4.0 released)
+- v0.4.0 release run green (4 assets).
+- S2: `_cs_relative_install_folder`, `_cs_headers_per_configuration`. S3: the component cycle check visits each
+  component once (24 components with ~75 000 paths: 1 s; 16 levels: 5.4 s -> 0.3 s; generated Config identical);
+  test with a timeout (`configure(..., timeout=)`). S4: `cs_target_sources` one loop per scope. S5: list helper with
+  `REMOVE_DUPLICATES`, the variable list of CMake read without a file in the build folder.

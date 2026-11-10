@@ -41,7 +41,7 @@ function(cs_target_check_installed_headers target_name)
   cs_get_generated_dir(generated_folder)
 
   # the install folder of the headers, relative to the base of the project (empty at the base)
-  file(RELATIVE_PATH destination_folder "${CSCMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  _cs_relative_install_folder(destination_folder)
 
   # cleanup target name if aliased
   get_target_property(aliased_target_to_analyze ${target_name} ALIASED_TARGET)

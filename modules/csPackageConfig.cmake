@@ -113,7 +113,12 @@ function(_cs_populate_component_dependencies export_name)
   )
 endfunction()
 
-# Depth-first visit of the components export_name depends on (visited_list: the current path); fail on a cycle.
+# Depth-first visit of the components export_name depends on (visited_list: the current path); fail on a cycle. A
+# component whose dependencies are already checked is not visited again (each one once, not once per path).
+#
+# Writes:
+#
+# * global property _CSCMAKE_<namespace>_ACYCLIC_COMPONENTS: the components checked
 function(_cs_check_component_cycles_recursive export_name visited_list)
   cs_debug_message(
     "[_cs_check_component_cycles_recursive] -- for export ${export_name} with visited list = ${visited_list}"
@@ -127,6 +132,10 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
       "depend on itself through other components; move the targets so that the dependencies go one way"
     )
   endif()
+  get_property(acyclic GLOBAL PROPERTY _CSCMAKE_${CSCMAKE_NAMESPACE}_ACYCLIC_COMPONENTS)
+  if("${export_name}" IN_LIST acyclic)
+    return()
+  endif()
 
   list(APPEND visited_list ${export_name})
 
@@ -138,6 +147,7 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
     )
     _cs_check_component_cycles_recursive(${next_element} "${visited_list}")
   endforeach()
+  set_property(GLOBAL APPEND PROPERTY _CSCMAKE_${CSCMAKE_NAMESPACE}_ACYCLIC_COMPONENTS ${export_name})
 endfunction()
 
 # Fail if the dependencies between the components reachable from export_name contain a cycle.
@@ -396,3 +406,7 @@ endfunction()
 # .. prop_gbl:: CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
 #
 #   The same, each one after the ones it depends on.
+#
+# .. prop_gbl:: _CSCMAKE_<namespace>_ACYCLIC_COMPONENTS
+#
+#   Internal: the components whose dependencies are checked for cycles (each one once).

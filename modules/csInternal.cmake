@@ -4,10 +4,9 @@ include_guard(GLOBAL)
 # Append each element of values to the list variable list_name of the caller, skipping the ones already present.
 function(_cs_list_add_list_unique_values list_name values)
   if(values)
-    set(output_list ${${list_name}})
-    foreach(value IN ITEMS ${values})
-      _cs_list_add_unique_value(output_list ${value})
-    endforeach()
+    # REMOVE_DUPLICATES keeps the first occurrence: the existing elements stay in place
+    set(output_list ${${list_name}} ${values})
+    list(REMOVE_DUPLICATES output_list)
     set(${list_name} ${output_list} PARENT_SCOPE)
   endif()
 endfunction()
@@ -55,4 +54,31 @@ function(_cs_unique_parent_dirs out_list)
     _cs_list_add_unique_value(out_tmp ${dir_path})
   endforeach()
   set(${out_list} ${out_tmp} PARENT_SCOPE)
+endfunction()
+
+# Set out to the folder of CMAKE_CURRENT_SOURCE_DIR relative to the folder of cs_initialize_project (empty there): the
+# install folder of the headers of the current folder, below the include folder.
+#
+# Reads:
+#
+# * variable CSCMAKE_SOURCE_DIR
+function(_cs_relative_install_folder out)
+  file(RELATIVE_PATH folder "${CSCMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  set(${out} "${folder}" PARENT_SCOPE)
+endfunction()
+
+# Set out to TRUE when the headers are installed per configuration (include/<CONFIG>): the project has several
+# configurations, with any generator.
+#
+# Reads:
+#
+# * global property CSCMAKE_BUILD_CONFIGURATIONS
+function(_cs_headers_per_configuration out)
+  get_property(configs_list GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
+  list(LENGTH configs_list count)
+  if(count GREATER 1)
+    set(${out} TRUE PARENT_SCOPE)
+  else()
+    set(${out} FALSE PARENT_SCOPE)
+  endif()
 endfunction()
