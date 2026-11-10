@@ -13,7 +13,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 0 — Project plumbing** (port from csorchestrator: `.vscode/`, `pyproject.toml`, `conftest.py`, `constraints-minimum.txt`, `.pre-commit-config.yaml`, `setup.sh`/`setup.ps1`, CI workflow, agent skill)
 - [x] **Phase 1 — Decouple preset generation from csOrchestrator** (built-in variant registry in `src/cscmake/presets/registry.py`, generator `src/cscmake/presets/generate.py` / `cscmake-generate-presets` with `--check`, pre-commit regen hook; amended: `csCMakeProjectSetup-{default,default-standalone,shortBuildPath}.json` generated too). `--variants-source csorchestrator` dropped: csOrchestrator should import the registry from cscmake instead.
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
-- [ ] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
+- [x] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
 - [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
 - [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
 
@@ -227,8 +227,9 @@ variables, properties, preset environment variables, default targets) guides the
     without clang-tidy (macOS has none by default), `.dylib`/RPATH of installed shared libraries, install-time
     paths, sanitizer flags of the strict config with Apple Clang; Xcode generator: per-configuration output folders
     and postfixes of custom configurations (Paranoid), `$<CONFIG>` install include folders.
-- **3f — Validation** (final gate before `dev`): csfoundation migrated on `feature/productize` and green; merge to `dev`; migrate other projects
-  (optional `cscmake-migrate` search/replace helper from the `MIGRATION.md` table, to decide).
+- **3f — Validation** (done): csfoundation (csCore, csLie, csCamera, csVisOpenGL) and third_party_base_libs (12 forks,
+  release `v0.1.0-rc4`) migrated on `feature/productize`, CI green; merged into `dev`. Other projects (csqt6, ...):
+  later, one by one (optional `cscmake-migrate` search/replace helper from the `MIGRATION.md` table, to decide).
 
 ### Phase 2 plan (agreed 2026-11-09)
 - **Smoke projects** in `tests/smoke/` (consumers of csCMake through the presets, exactly like real projects):
@@ -327,7 +328,7 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b, 3c, 3d done; 3e (doc checks) done, under review; next 3f (csfoundation). Pages: Settings → Pages → Source "GitHub Actions" (user). |
+| 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
 | 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
@@ -867,3 +868,16 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   `Angles.cpp`. `cscmake_warnings` adds `-Wno-c++20-extensions` for clang-cl only (`COMPILERS Clang FRONTENDS MSVC`):
   on Linux and macOS, `-Wpedantic` keeps reporting C++20 extensions in older-standard code. Test renamed
   `test_warnings_turn_off_the_compatibility_warnings_on_clang`.
+- third_party_base_libs (user: close the loop before the merge): `feature/productize` in it and its 12 forks. Every fork:
+  `csCMakeProjectSetup.json` includes `presets/layout/sibling.json`; fmt-eigen and tclap (the two using `cs_*`):
+  `NAMESPACE fmt-eigen` / `NAMESPACE tclap`, `cs_finalize_project()`, `<ns>::cscmake_base_include` (package and target
+  names unchanged; first namespace with a hyphen, works). third_party_base_libs: `common_repo_ref` and
+  `on_push_branches` as csfoundation. Release `v0.1.0-rc4` tagged on the feature branch, csfoundation
+  `release_tag="v0.1.0-rc4"`. **When merging into `dev`**: the same trigger and `common_repo_ref` reverts in
+  third_party_base_libs; a release tag from `dev` afterwards.
+
+### 2026-11-10 (Phase 3 sign-off, merge into dev)
+- Signed off (user): csfoundation CI green on `feature/productize` (all variants, both Windows clang-cl), third_party_base_libs
+  release `v0.1.0-rc4` published and used by csfoundation. `feature/**` push triggers removed from `ci`, `smoke`, `docs`;
+  `feature/productize` merged into `dev` (`--no-ff`). Merge order (user): csCMake, then third_party_base_libs and its
+  forks with a release tag from `dev`, then csfoundation and its four projects on that release.
