@@ -143,5 +143,5 @@ project folder must be named like the package**.
 3. Format and lint its CMake files (`gersemi -i`, `cscmake-lint`), describe it on this page (and in a tutorial when
    it shows something new).
 
-Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,
-OpenMP, ...): see "Phase 2 — not covered by the smoke projects" in `PLAN.md`.
+Not covered: `cs_target_use_openmp` (it needs OpenMP on every runner); the runtime dependency analysis and the
+cyclic components are covered by configure tests (`tests/cmake/`).
