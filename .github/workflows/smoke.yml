@@ -9,8 +9,8 @@ on:
   pull_request:
   push:
     branches: [ main, dev ]
-    # release tags, e.g. v1.2.3 (also v1.2.3-rc1)
-    tags: [ "v*.*.*" ]
+  # release tags: called by release.yml
+  workflow_call:
 
 jobs:
   matrix:

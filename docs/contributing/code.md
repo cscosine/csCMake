@@ -86,4 +86,5 @@ sphinx-build -W -n docs docs/_build/html
 
 `pre-commit run --all-files` runs them on every file. The documentation build is not a hook: build it before pushing a
 documentation change. CI (`.github/workflows/`) runs the checks and tests
-on Linux, Windows and macOS (`ci`), the smoke projects on every variant (`smoke`) and the documentation build (`docs`).
+on Linux, Windows and macOS (`ci`), the smoke projects on every variant (`smoke`) and the documentation build (`docs`); a release tag runs the three, then
+publishes the release (`release`, see [Releasing](releasing.md)).

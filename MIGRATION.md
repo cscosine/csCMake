@@ -1,6 +1,6 @@
-# Migrating to the next csCMake release
+# Migrating from v0.1.0 to v0.2.0
 
-The next release renames the csCMake API to consistent names and fixes behaviours that cannot be fixed compatibly.
+v0.2.0 renames the csCMake API to consistent names and fixes behaviours that cannot be fixed compatibly.
 There are **no deprecated aliases**: the old names are removed, a project using them fails at configure time with
 `Unknown CMake command "<old name>"`. Apply the tables below (plain search and replace: CMake command names are
 case-insensitive, look for every spelling).

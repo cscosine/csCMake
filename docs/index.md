@@ -64,4 +64,5 @@ reference/csPrintInitialState
 
 contributing/code
 contributing/documentation
+contributing/releasing
 ```

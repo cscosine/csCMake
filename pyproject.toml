@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cscmake"
-version = "0.1.0"
+version = "0.2.0"
 description = "cscmake facilities for C++ projects config, build, deployment"
 authors = [
   { name = "cscosine-dev", email = "cscosine@gmail.com" }
@@ -20,6 +20,7 @@ cscmake-generate-presets = "cscmake.presets.generate:main"
 cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
 cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
 cscmake-check-docs = "cscmake.devtools.check_docs:main"
+cscmake-release = "cscmake.devtools.release:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

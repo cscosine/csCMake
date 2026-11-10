@@ -29,6 +29,7 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
 sphinx-build -W -n docs docs/_build/html            # documentation (reference from the #.rst: blocks); CI: docs.yml
 cscmake-update-cmake-inventory                      # refresh docs/_inventories (after changing CMAKE_DOCS_VERSION)
 cscmake-check-docs                                  # every public command, variable, property documented (pre-commit)
+cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release assets (docs/contributing/releasing.md)
 ```
 
 ## Rules

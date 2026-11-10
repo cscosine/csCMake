@@ -285,6 +285,11 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
 - [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
 
+### Open after Phase 3
+- [ ] When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
+  `feature/productize` branches, remote and local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL,
+  third_party_base_libs and its 12 forks (user).
+
 ### Phase 5 — Release package (agreed)
 A `release` workflow on `v*.*.*` tags: after `ci`, `smoke` and `docs` pass for the tag, create the GitHub Release of
 the tag with, as assets:
@@ -292,9 +297,9 @@ the tag with, as assets:
   `presets/`; no tests, no Python sources), unpacked as a `csCMake/` folder (the sibling layout of the presets);
 - `csCMake-docs-<version>.zip`: the built documentation of the tag (durable: build artifacts expire after 90 days);
 - release notes from the CHANGELOG section of the version.
-To decide: one workflow `release.yml` (`contents: write`, `gh release create`) waiting for the others, or the jobs
-in one workflow; checksums (`SHA256SUMS`); whether the Python package (`cscmake`, the preset generator) is also
-released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-releases.
+Decided (user, 2026-11-10): version **v0.2.0** (v1.0.0 when more projects are on the API); `release.yml` calls
+`ci`, `smoke`, `docs` as reusable workflows (they drop their own tag trigger), then `publish`; `SHA256SUMS`; the Python
+package is not released; pre-release tags are GitHub pre-releases.
 
 ### Run scripts (future)
 - [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
@@ -330,7 +335,7 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
 | 4 | not started | Internal quality (non-breaking) |
-| 5 | not started | Release |
+| 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
 
@@ -881,3 +886,12 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   release `v0.1.0-rc4` published and used by csfoundation. `feature/**` push triggers removed from `ci`, `smoke`, `docs`;
   `feature/productize` merged into `dev` (`--no-ff`). Merge order (user): csCMake, then third_party_base_libs and its
   forks with a release tag from `dev`, then csfoundation and its four projects on that release.
+
+### 2026-11-10 (Phase 5 step 1 — release tooling)
+- `cscmake-release` (`src/cscmake/devtools/release.py`, tests): from the tag and the built docs, `csCMake-<v>.tar.gz` /
+  `.zip` (`csCMake/` folder, `PACKAGE_CONTENT`), `csCMake-docs-<v>.zip`, `SHA256SUMS`, `release-notes.md` (the
+  `CHANGELOG.md` section); fails when the tag does not match `pyproject.toml` or the section is missing.
+- `.github/workflows/release.yml`: on `v*.*.*` tags, `ci` / `smoke` / `docs` as reusable workflows (`workflow_call`,
+  their tag triggers removed), then `publish` (`gh release create`, `--prerelease` for `-` tags).
+- `CHANGELOG.md` (v0.2.0, v0.1.0); `pyproject.toml` 0.2.0; `MIGRATION.md` "from v0.1.0 to v0.2.0"; docs: Releasing page,
+  getting started (a release or a clone), README status. Checked: the unpacked package builds tclap.

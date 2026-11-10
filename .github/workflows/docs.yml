@@ -1,14 +1,14 @@
 name: Docs
 
 # Build the documentation (Sphinx, reference from the #.rst: blocks of the CMake modules) on every push, pull
-# request and release tag (v*.*.*), as a downloadable artifact; publish it on GitHub Pages from main.
+# request and release tag (called by release.yml), as a downloadable artifact; publish it on GitHub Pages from main.
 on:
   workflow_dispatch:
   pull_request:
   push:
     branches: [ main, dev ]
-    # release tags, e.g. v1.2.3 (also v1.2.3-rc1)
-    tags: [ "v*.*.*" ]
+  # release tags: called by release.yml
+  workflow_call:
 
 permissions:
   contents: read

@@ -39,13 +39,14 @@ problems in the Problems panel.
 
 The `docs` workflow (`.github/workflows/docs.yml`):
 
-- builds the documentation with `-W -n` on every push, pull request and release tag (`v*.*.*`);
+- builds the documentation with `-W -n` on every push and pull request, and for release tags as part of the `release`
+  workflow;
 - uploads the HTML as the artifact `github-pages` of the run: download it from the run page to look at the
   documentation of any branch;
 - publishes it on GitHub Pages on pushes to `main` (Settings → Pages → Source: GitHub Actions).
 
-Release tags will also attach the built documentation to the GitHub Release (planned: `PLAN.md`, "Phase 5 — Release
-package").
+On a release tag, the `release` workflow builds it again and attaches it to the GitHub Release
+(`csCMake-docs-<version>.zip`): the documentation of every version stays available. See [Releasing](releasing.md).
 
 ### Completeness check
 

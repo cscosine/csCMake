@@ -15,7 +15,7 @@ that configure, build, test and install it.
 
 ## Where csCMake lives
 
-csCMake is not installed: a project uses a clone of it, and finds it through its presets. The usual layout is a
+csCMake is not installed: a project uses a copy of it, and finds it through its presets. The usual layout is a
 *workspace* folder holding csCMake, the projects, and the build and install folders of every project:
 
 ```mermaid
@@ -34,7 +34,7 @@ flowchart TB
 
 ```text
 workspace/
-  csCMake/                     git clone of csCMake
+  csCMake/                     csCMake: a release package, or a git clone
   myLib/                       a project
   myApp/                       another project, using myLib
   build/<variant>/<project>/   created by the presets
@@ -44,6 +44,14 @@ workspace/
 This is the `sibling` *layout*. A project chooses its layout in one file (below); the others are `standalone` (a
 workspace inside the project, e.g. for a self-contained application) and `env` (the workspace and csCMake given by
 environment variables). See [Presets](presets.md#layouts).
+
+Get csCMake in the workspace in one of two ways:
+
+- **a release** (a fixed version): download `csCMake-<version>.tar.gz` (or `.zip`) from the GitHub Releases of csCMake
+  and unpack it in the workspace; it creates `csCMake/`. `SHA256SUMS` lists the checksums of the archives
+  (`sha256sum -c SHA256SUMS --ignore-missing`). The documentation of that version is `csCMake-docs-<version>.zip`;
+- **a git clone**: `git clone <csCMake repository> csCMake`, on a release tag (`git checkout v<version>`) or on a
+  branch (`main`: the latest release, `dev`: the development).
 
 ## The files of a project
 
