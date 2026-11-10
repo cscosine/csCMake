@@ -16,7 +16,8 @@
 #
 # ``cscmake_warnings``
 #   High warning level, the same essential checks on every compiler.
-#   Clang, AppleClang (also clang-cl): the C++98 compatibility warnings off.
+#   Clang, AppleClang (also clang-cl): the C++98 compatibility warnings off; clang-cl: the C++20 extensions
+#   warnings off.
 #
 # ``cscmake_warnings_as_errors``
 #   ``-Werror`` / ``/WX``.
@@ -472,6 +473,13 @@ function(_cs_add_cscmake_compile_profiles)
     PROFILE cscmake_warnings
     COMPILERS Clang AppleClang
     COMPILE_OPTIONS -Wno-c++98-compat -Wno-c++98-compat-pedantic)
+  # clang-cl: C++20 extensions used by headers written for MSVC (e.g. an empty variadic macro argument), not reported by
+  # MSVC itself
+  cs_add_compile_profile_rule(
+    PROFILE cscmake_warnings
+    COMPILERS Clang
+    FRONTENDS MSVC
+    COMPILE_OPTIONS -Wno-c++20-extensions)
   # MSVC and clang-cl (MSVC command line)
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings

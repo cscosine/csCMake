@@ -862,3 +862,8 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   production code unchanged): `cscmake_warnings` adds `-Wno-c++98-compat -Wno-c++98-compat-pedantic` on Clang and
   AppleClang (clang-cl included); configure test `test_warnings_turn_off_the_cpp98_compatibility_warnings_on_clang`.
   `-Wno-c++20-extensions` (old target) left out until a build needs it.
+- csfoundation CI, clang-cl of Visual Studio 2022 only (2026 passes): `-Wc++20-extensions` errors from libassert's
+  macros (an empty variadic macro argument, `CSCORE_ASSERT_SAFE_MATH`), again under `-Wall` = `-Weverything` of
+  `Angles.cpp`. `cscmake_warnings` adds `-Wno-c++20-extensions` for clang-cl only (`COMPILERS Clang FRONTENDS MSVC`):
+  on Linux and macOS, `-Wpedantic` keeps reporting C++20 extensions in older-standard code. Test renamed
+  `test_warnings_turn_off_the_compatibility_warnings_on_clang`.
