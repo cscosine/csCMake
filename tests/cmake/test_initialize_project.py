@@ -141,3 +141,26 @@ def test_header_install_path_is_relative_to_the_project_folder(tmp_path: Path) -
     assert result.returncode == 0, result.output
     line = next(x for x in result.output.splitlines() if "[cs_install_target] install" in x and "H.hpp" in x)
     assert line.rstrip().endswith("to include/lib/"), line
+
+
+def test_prefix_and_module_path_head_and_tail(tmp_path: Path) -> None:
+    body = (
+        INIT
+        + """
+cstest_report(prefix "${CMAKE_PREFIX_PATH}")
+cstest_report(module "${CMAKE_MODULE_PATH}")
+cs_finalize_project()
+"""
+    )
+    args = [
+        "-DCSCMAKE_PREFIX_PATH_HEAD=/head",
+        "-DCMAKE_PREFIX_PATH=/middle",
+        "-DCSCMAKE_PREFIX_PATH_TAIL=/tail1;/tail2",
+        "-DCSCMAKE_MODULE_PATH_TAIL=/module_tail",
+    ]
+    result = configure(tmp_path, body, args=args)
+
+    assert result.returncode == 0, result.output
+    assert result.report_list("prefix") == ["/head", "/middle", "/tail1", "/tail2"]
+    assert result.report_list("module")[-1] == "/module_tail"
+    assert "" not in result.report_list("module")

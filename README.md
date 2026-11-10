@@ -305,8 +305,8 @@ centralizes the workspace layout and paths through environment variables:
 | -------- | ------- |
 | `CSCMAKE_WORKSPACE_ROOT` | root folder of the sources (`${sourceParentDir}`) |
 | `CSCMAKE_ROOT` | path to the csCMake clone (`$env{CSCMAKE_WORKSPACE_ROOT}/csCMake`) |
-| `CSCMAKE_PREFIX_PATH_PREFIX` / `CSCMAKE_PREFIX_PATH_SUFFIX` | extra paths prepended/appended to `CMAKE_PREFIX_PATH` |
-| `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | extra paths prepended/appended to `CMAKE_MODULE_PATH` (normalized by `cs_initialize_project`) |
+| `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | extra paths prepended/appended to `CMAKE_PREFIX_PATH` by `cs_initialize_project`: environment variables (passed by the presets) or `-D` |
+| `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | the same for `CMAKE_MODULE_PATH` |
 | `CSCMAKE_CSV1_SUB_DIR` / `_SHORT` | sub-folder used to keep build/install paths short |
 | `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | per-build-type sub-folder inside the build dir (`debug`, `release`, ...) |
 

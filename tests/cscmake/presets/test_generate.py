@@ -178,3 +178,18 @@ def test_check_detects_stale_project_setup_preset(tmp_path: Path) -> None:
 def test_committed_project_setup_presets_are_up_to_date() -> None:
     assert [n for n in check_presets_up_to_date() if n in PROJECT_SETUP_PRESETS] == []
     assert all((SETUP_OUTPUT_DIR / name).is_file() for name in PROJECT_SETUP_PRESETS)
+
+
+@pytest.mark.parametrize("name", ["csCMakeProjectSetup-base.json", "csCMakeProjectSetup-base-standalone.json"])
+def test_setup_presets_pass_the_path_variables_from_the_environment(name: str) -> None:
+    preset = json.loads((SETUP_OUTPUT_DIR / name).read_text(encoding="utf-8"))["configurePresets"][0]
+    cache = preset["cacheVariables"]
+
+    for var in (
+        "CSCMAKE_PREFIX_PATH_HEAD",
+        "CSCMAKE_PREFIX_PATH_TAIL",
+        "CSCMAKE_MODULE_PATH_HEAD",
+        "CSCMAKE_MODULE_PATH_TAIL",
+    ):
+        assert cache[var] == f"$penv{{{var}}}"
+    assert "PREFIX_PATH" not in cache["CMAKE_PREFIX_PATH"]  # only the workspace folders, HEAD/TAIL are joined by CMake

@@ -120,9 +120,10 @@ macro(cs_initialize_project)
   # print information on the csCMake configuration
   cs_print_state("initial state")
 
-  # join CMAKE_PREFIX_PATH
-  set(CMAKE_PREFIX_PATH "${CSCMAKE_PREFIX_PATH_HEAD};${CMAKE_PREFIX_PATH};${CSCMAKE_PREFIX_PATH_TAIL}")
-  set(CMAKE_MODULE_PATH "${CSCMAKE_MODULE_PATH_HEAD};${CMAKE_MODULE_PATH};${CSCMAKE_MODULE_PATH_TAIL}")
+  # join CMAKE_PREFIX_PATH CSCMAKE_<PREFIX|MODULE>_PATH_<HEAD|TAIL>: -D, or the environment variables of the same name
+  # through the presets (unquoted: empty parts are dropped)
+  set(CMAKE_PREFIX_PATH ${CSCMAKE_PREFIX_PATH_HEAD} ${CMAKE_PREFIX_PATH} ${CSCMAKE_PREFIX_PATH_TAIL})
+  set(CMAKE_MODULE_PATH ${CSCMAKE_MODULE_PATH_HEAD} ${CMAKE_MODULE_PATH} ${CSCMAKE_MODULE_PATH_TAIL})
 
   # enable cmake testing
   enable_testing()

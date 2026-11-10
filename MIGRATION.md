@@ -70,10 +70,10 @@ Every csCMake variable starts with `CSCMAKE_` (or `<project>_CSCMAKE_`).
 |---|---|---|
 | `WORKSPACE_ROOT` | `CSCMAKE_WORKSPACE_ROOT` | preset environment (`csCMakeProjectSetup-base*.json`) |
 | `CS_CMAKE_ROOT` | `CSCMAKE_ROOT` | preset environment |
-| `CS_CMAKE_PREFIX_PATH_PREFIX` / `CS_CMAKE_PREFIX_PATH_SUFFIX` | `CSCMAKE_PREFIX_PATH_PREFIX` / `CSCMAKE_PREFIX_PATH_SUFFIX` | environment, read by the presets |
+| `CS_CMAKE_PREFIX_PATH_PREFIX` / `CS_CMAKE_PREFIX_PATH_SUFFIX` | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | environment (passed by the presets) or `-D` |
 | `CS_CMAKE_CSV1_SUB_DIR`, `CS_CMAKE_CSV1_SUB_DIR_SHORT`, `CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | `CSCMAKE_CSV1_SUB_DIR`, `CSCMAKE_CSV1_SUB_DIR_SHORT`, `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` | preset environment |
-| `CS_CMAKE_PREFIX_PATH_HEAD` / `CS_CMAKE_PREFIX_PATH_TAIL` | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | CMake variable (`-D`) |
-| `CS_CMAKE_MODULE_PATH_HEAD` / `CS_CMAKE_MODULE_PATH_TAIL` | `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | CMake variable (`-D`) |
+| `CS_CMAKE_PREFIX_PATH_HEAD` / `CS_CMAKE_PREFIX_PATH_TAIL` | `CSCMAKE_PREFIX_PATH_HEAD` / `CSCMAKE_PREFIX_PATH_TAIL` | `-D` or environment (passed by the presets) |
+| `CS_CMAKE_MODULE_PATH_HEAD` / `CS_CMAKE_MODULE_PATH_TAIL` | `CSCMAKE_MODULE_PATH_HEAD` / `CSCMAKE_MODULE_PATH_TAIL` | `-D` or environment (passed by the presets) |
 | `<project>_CS_CMAKE_DEBUG` | `<project>_CSCMAKE_DEBUG` | CMake option (`-D...=ON`) |
 
 `$env{WORKSPACE_ROOT}` / `$env{CS_CMAKE_ROOT}` references in your own preset files must be renamed too.

@@ -547,3 +547,14 @@ variables, properties, preset environment variables, default targets) guides the
 - Nested projects in the smoke tests (user question): the configure tests cover csCMake's logic; a compiled nested
   smoke project would add real builds on every generator (Visual Studio, Xcode), shared libraries and the debugger
   environment across two projects → add with the remaining smoke gaps (shared libraries, ...), not required now.
+
+### 2026-11-10 (Phase 3b step 6c — one prefix-path mechanism)
+- Step 6 split into commits (user): 6c prefix paths, 6b static MSVC runtime, 6d csCMake location (layouts `sibling`,
+  `sibling-short`, `standalone`, `standalone-short`, `env`; one generated setup file), 6a compile profiles (agreed:
+  conditional rules per configuration / compiler / platform incl. clang-tidy, applied at `cs_finalize_target`,
+  `cs_add_compile_profile_rule` / `cs_target_use_compile_profiles`, project defaults; review the default and strict
+  profiles, rename strict if a better name fits).
+- Presets: `CMAKE_PREFIX_PATH` = the workspace folders only; `CSCMAKE_{PREFIX,MODULE}_PATH_{HEAD,TAIL}` passed from the
+  process environment (`$penv{...}`) as cache variables (`-D` overrides); `CSCMAKE_PREFIX_PATH_PREFIX/SUFFIX` gone.
+  `cs_initialize_project` joins HEAD / value / TAIL without empty items. Tests: configure test (join), preset test (both
+  base files pass the four variables). README, `MIGRATION.md`.
