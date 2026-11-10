@@ -80,6 +80,40 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - Scope: only `src/cscmake` (`[tool.coverage.run] source = ["cscmake"]`). The CI helpers in `tests/smoke/` (`run_smoke.py`, `ci_matrix.py`) do **not** count for coverage (decided 2026-11-09).
 
 ### Tooling (cmakelang)
+- [ ] **4h — gersemi + `cscmake-lint`** (decided, user 2026-11-10: option 2 below; after 4f and 4g): gersemi formats
+  csCMake, the smoke projects and the template (one-time reformat, `.gersemirc`, a gersemi extension with the `cs_*`
+  signatures generated from one signature list); `cscmake-lint` (stdlib, on the `check_docs` parser) checks the naming
+  patterns, a comment before every function / macro, the complexity limits and the line length; cmakelang removed
+  (dev deps, constraints, pre-commit, `cscmake-cmake-template` format part); `docs/user/formatting.md`, CLAUDE.md, the
+  contributing pages and the release package (gersemi config + extension instead of `.cmake-format.json`) follow;
+  then Python 3.15 in the CI matrix. Until 4h: cmakelang with Python <= 3.14.
+- 4e evaluation (2026-11-10), decided: option 2 (4h above):
+  - **Risk, dated**: cmakelang 0.6.13 (last release) is reported failing on **Python 3.15**: `re.Scanner` rejects
+    capturing groups (Red Hat bugzilla 2485807, "Cannot use capturing groups in re.Scanner"). Confirmed in our copy:
+    `cmakelang/lex/__init__.py` builds a `re.Scanner` whose patterns use groups with backreferences
+    (`#\[(=*)\[.*?\]\1\]`, bracket arguments): not fixable by making them non-capturing. Not reproduced (no 3.15
+    here). Today's CI (3.11 to 3.14) is fine; adding 3.15 to the CI matrix, or a 3.15 dev venv, breaks `cmake-format`,
+    `cmake-lint` and `cscmake-cmake-template`.
+  - **Formatter: gersemi** (BlankSpruce/gersemi, PyPI, pre-commit, actively released: 0.29.2 tried, Rust backend, needs
+    only pyyaml). Prototype on a copy of `csCMake.cmake`, `utils/`, `tests/smoke/` with `--line-length 120 --indent 2`:
+    every comment line untouched (the `#.rst:` blocks need no `literal_comment_pattern`), the `@VAR@` template parsed
+    as is (no placeholder swap needed for formatting); style differences only, e.g. `set(<var> <value> PARENT_SCOPE)` on
+    one line, closing `)` on its own line for wrapped calls (~40-230 changed lines per big module, a one-time reformat).
+    The `cs_*` keyword signatures are not learned from `--definitions` (our keywords are in variables, and
+    `cs_initialize_project` forwards to a function): they need a gersemi extension (a Python module describing the
+    commands), generated from the same signature list as `.cmake-format.json` `parse.additional_commands`.
+  - **Linter: no maintained equivalent of cmake-lint** found: check-cmake (marzer), cmake_check (DaelDe, user rules),
+    cmakelint (richq, basic style, used by ROS ament), ast-grep rule hooks. What we use cmake-lint for: the naming
+    patterns (functions, macros, arguments, locals, globals), a comment before every function / macro (C0111), the
+    complexity limits (R0912 branches, R0913 arguments, R0915 statements), line length (C0301), plus its general
+    checks (C0113 missing COMMENT, ...). `cscmake-check-docs` already parses the modules (functions, comment blocks).
+  - Options: (1) keep cmakelang, pin the hooks and the dev tools to Python <= 3.14 (pre-commit `language_version`;
+    CI matrix stays <= 3.14) and revisit when 3.14 nears its end of life; (2) **gersemi for formatting + our own
+    `cscmake-lint` for the rules we rely on** (naming, comment before every function / macro, complexity, line length),
+    built on the `check_docs` parser, stdlib only; consumers' formatting docs (`docs/user/formatting.md`) and the
+    release package (`.cmake-format.json` -> gersemi config + extension) change with it; (3) vendor and patch
+    cmakelang's lexer (a fork to maintain). Recommendation: (2), as its own Phase 4 step after 4f / 4g (the
+    reorganisation of 4g moves code anyway, a good moment for the one-time reformat); (1) until then.
 - [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
 - [ ] cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; no file-level pragma left since 4b).
 - [x] (Phase 3a step 5) cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
@@ -429,7 +463,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d (unused `CMAKE_C_COMPILER` warning) under review; next 4e (cmakelang evaluation), 4f (side-effect assessment), 4g (code structure assessment). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); next 4f (side-effect assessment), 4g (code structure assessment), 4h (gersemi + `cscmake-lint`). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -1053,3 +1087,9 @@ package is not released; pre-release tags are GitHub pre-releases.
   presets (would hide the unused variables of every project using them, e.g. a mistyped option in a project's own
   setup preset); removing `CMAKE_C_COMPILER` from the presets. Projects using the presets without csCMake keep the
   warning. Configure test `test_the_c_compiler_of_the_presets_is_not_reported_unused` (fails on `4da7212`).
+
+### 2026-11-10 (Phase 4 step 4e — cmakelang evaluation)
+- Evaluation in "Tooling (cmakelang)": Python 3.15 breaks cmakelang's lexer (reported, confirmed in the code); gersemi
+  prototyped as formatter (comments untouched, templates parsed, `cs_*` signatures need an extension); no maintained
+  linter replacement. Recommendation: gersemi + an own `cscmake-lint` for the rules we use, after 4f / 4g; until
+  then keep cmakelang with Python <= 3.14. Decided (user): option 2, Phase 4 step 4h.
