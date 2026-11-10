@@ -31,7 +31,8 @@
           "CUSTOM_CONFIG": 1,
           "BASED_ON": 1,
           "POSTFIX": 1,
-          "DEFAULT_COMPILE_PROFILES": "+"
+          "DEFAULT_COMPILE_PROFILES": "+",
+          "INSTALL_RPATH": 1
         }
       },
       "cs_finalize_project": {

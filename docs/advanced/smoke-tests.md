@@ -19,8 +19,10 @@ install folder):
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
 | `csSmokeEnv` | application located by the environment | preset layout `env`: workspace and csCMake from `CSCMAKE_WORKSPACE_ROOT` / `CSCMAKE_ROOT` (set by `run_smoke.py`), also in the includes of its presets (`$penv{CSCMAKE_ROOT}/presets/...`); finds `csSmokeBase` there |
 | `csSmokeStandalone` | self-contained application | preset layout `standalone-short`: its own workspace `csSmokeStandalone/workspace/` with a copy of csCMake, build and install folders |
+| `csSmokeShared` | shared libraries | two SHARED libraries (`sharedText` uses `sharedCore`, components `text` and `core`) and an application; Windows: `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`; the **installed** application runs from the install folder (install RPATH of `cs_finalize_target` on Linux and macOS, DLLs in `bin/` on Windows) |
+| `csSmokePlainConsumer` | consumer without csCMake | plain CMake (no `include(csCMake)`): `find_package(csSmokeShared COMPONENTS text)` and `csSmokeShared::sharedText`; on Windows copies `$<TARGET_RUNTIME_DLLS>` next to its executable; its ctest runs it from the build folder; Debug and Release only (the configurations plain CMake knows) |
 
-All projects use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
+All csCMake projects use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
 `RelWithDebInfo,Release`) and the custom Paranoid (based on `Debug,Release`), with postfixes `d`, none, `rd`, `dp`.
 
 ### Package dependencies
@@ -33,6 +35,7 @@ flowchart BT
     top -.->|"PRIVATE find_package"| midB
     env["csSmokeEnv<br/>(env preset layout)"] -->|"PUBLIC find_package COMPONENTS text"| base
     standalone["csSmokeStandalone<br/>(own workspace)"]
+    plain["csSmokePlainConsumer<br/>(plain CMake)"] -->|"find_package COMPONENTS text"| shared["csSmokeShared<br/>components: core, text, app<br/>(shared libraries)"]
 ```
 
 ### Inside `csSmokeBase`

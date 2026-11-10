@@ -241,14 +241,14 @@ variables, properties, preset environment variables, default targets) guides the
 - **Local**: `tests/smoke/test_run_smoke.py` runs the driver for the host variants, marked `slow` + `requires("cmake")` via a new `conftest.py` (`--run-all`).
 
 ### Phase 2 — not covered by the smoke projects (trace for full completion)
-- [ ] Shared libraries: Windows DLL export (`__declspec`/`GenerateExportHeader`), runtime dependency analysis (`csTargetDependencies`) and VS debugger PATH (`_cs_set_vs_debugger_env_variable`).
-- [ ] INTERFACE / header-only libraries.
-- [ ] Several components with dependencies between exports; cyclic dependency detection (expected failure test).
-- [ ] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`).
-- [ ] `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`, `csUseOpenMPOnTarget`.
+- [x] (4c) Shared libraries: `csSmokeShared` (two SHARED libraries, `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`, installed app run on every variant); runtime dependency analysis and VS debugger PATH: configure tests `tests/cmake/test_target_dependencies.py`.
+- [x] INTERFACE / header-only libraries (`csSmokeBase`).
+- [x] Several components with dependencies between exports (`csSmokeBase`, `test_package_config.py`); cyclic dependency detection (4c: `test_cyclic_dependency_between_components`).
+- [x] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`): `run_smoke.py` checks every Config.
+- [x] (replaced in Phase 3 by compile profiles, `cs_target_check_installed_headers`, `cscmake_clang_tidy`: covered by `csSmokeBase`) `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`; `cs_target_use_openmp`: not covered (needs OpenMP on every runner).
 - [x] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups → preset layouts `standalone-short`, `sibling-short`, `env` in the smoke tests (3b step 6d).
-- [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
-- [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
+- [x] (4c) A consumer that does not use csCMake: `csSmokePlainConsumer`.
+- [x] macOS: Phase 3 step "3m — macOS".
 
 ### Findings while writing the docs (3d step 4, to decide)
 - [x] (fixed, `252eed2`: `@{osVersion}`) **Preset display names**: `presets/template/cs-single-config-generator-config.json.template` hard-coded
@@ -286,7 +286,51 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
 - [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
 
+### Running executables: shared libraries of other packages (deferred, user 2026-11-10)
+Context: how an executable finds its shared libraries, per platform (user doc: `docs/advanced/runtime-dependencies.md`,
+"Running the executables"):
+- Linux: `RUNPATH` of the binary (not transitive: each library needs its own), then `LD_LIBRARY_PATH`, then the system.
+  macOS: libraries have an id (`@rpath/libX.dylib` with CMake's defaults), executables `LC_RPATH` entries;
+  `DYLD_LIBRARY_PATH` is stripped for many processes (SIP), so it is not a reliable fallback. Windows: no RPATH; the
+  executable's folder, the system, then `PATH`.
+- Build folder: CMake writes the absolute folders of every linked library (Linux / macOS): runs. Windows: the project's
+  DLLs share `<build>/bin[/<config>]`; other packages' DLLs only in the Visual Studio debugger (`VS_DEBUGGER_ENVIRONMENT`).
+- Install folder (4c): `cs_finalize_target` sets the `INSTALL_RPATH` target property of the csCMake executables
+  (`$ORIGIN/<bin to lib>`) and shared / module libraries (`$ORIGIN`; `@loader_path` on macOS), unless the target has
+  its own or `CSCMAKE_INSTALL_RPATH` / `INSTALL_RPATH OFF`: a package's own executables and libraries run, relocatable
+  (needed by csorchestrator bundles, built on one CI and unpacked elsewhere). `CMAKE_INSTALL_RPATH_USE_LINK_PATH`
+  rejected: absolute paths of the CI machine, useless after download. Not in the presets (user, 2026-11-10): projects
+  using the presets without csCMake (OpenCV, the forks) keep their upstream behaviour (OpenCV's
+  `ocv_update(CMAKE_INSTALL_RPATH ...)` sets it only if not defined, so a preset value would silently replace it).
+- Evidence (2026-11-10, csImgTracker workspace, Linux): the build-tree `csImgTracker` has a `RUNPATH` with the absolute
+  `workspace/libs/<variant>/opencv/lib` and `qt6/lib` and runs; the installed one has none: `libopencv_*.so.500 => not
+  found`, and Qt resolves to the **system** `libQt6Core` (wrong version). The downloaded OpenCV libraries have
+  `RUNPATH $ORIGIN` (they find each other).
+
+To do when the applications are migrated (csImgTracker, csSkiTracker):
+- [ ] **Deploy an application with its dependencies** (situation "final application"): e.g.
+  `cs_install_runtime_dependencies(<app> [DIRECTORIES ...] [PRE_EXCLUDE_REGEXES ...])`, with CMake's
+  `install(RUNTIME_DEPENDENCY_SET ...)` / `install(IMPORTED_RUNTIME_ARTIFACTS ...)` (3.21+): copy the shared libraries of
+  the other packages (`libs/`, `install/`) into the app's `lib/` (Linux, macOS) or `bin/` (Windows); with the install
+  RPATH of 4c the installed app then runs anywhere. Exclude the system libraries. Inputs: csCMake already knows the
+  runtime libraries per configuration (`cs_get_target_runtime_libraries`). Qt: plugins (platform, image formats) need
+  Qt's deploy script (`qt_generate_deploy_app_script`) or `windeployqt` / `macdeployqt`. Smoke: an app using
+  csSmokeShared from another package, installed with its dependencies and run.
+- [ ] **Windows build folder outside Visual Studio** (ctest, a terminal, VS Code): the DLLs of other packages need
+  `PATH`. Options: tests get `ENVIRONMENT_MODIFICATION PATH=path_list_prepend:<folders>` (the folders csCMake computes
+  for the debugger; csCMake does not wrap `add_test`, so a helper or a step of `cs_finalize_project` over the tests of
+  the project); the run scripts below; or copying `$<TARGET_RUNTIME_DLLS>` next to the executables (what
+  `csSmokePlainConsumer` does, plain CMake).
+- [ ] **Run scripts** (see "Run scripts (future)"): `<build>/run/<target>-<config>.sh|.bat` setting
+  `LD_LIBRARY_PATH` / `PATH` from `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`: also the interim answer for installed apps that
+  use other packages' libraries, until the deployment command exists.
+
 ### Open after Phase 3
+- [ ] Other projects still on the v0.1.0 presets (found 2026-11-10): csopencvcpu (and probably csopencvcuda): the
+  OpenCV fork's `csCMakeProjectSetup.json` includes `presets/csCMakeProjectSetup-base.json` and inherits
+  `cscmake-project-setup-base` (gone in v0.2.0: `presets/csCMakeProjectSetup.json`, `cscmake-common-project-setup`, the
+  `CSCMAKE_*` environment, MIGRATION.md "Project setup presets"); csqt6 (its release is used by csfoundation; Qt itself
+  is built by its `configure`, check what else uses csCMake).
 - [ ] When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
   `feature/productize` branches, remote and local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL,
   third_party_base_libs and its 12 forks (user).
@@ -335,7 +379,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`); 4b (CMake complexity) under review; next 4c (smoke gaps), 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`); 4b done (`00093d7`); 4c (smoke gaps, install RPATH) under review; next 4c (smoke gaps), 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -921,3 +965,25 @@ package is not released; pre-release tags are GitHub pre-releases.
     lists and the injected code keep their `;` and newlines); the file-level `R0913` pragma of `csInstall.cmake` removed.
 - Checked: all tests with the local smoke builds (`--run-all`, 162 passed); the installed files of csSmokeBase and
   csSmokeMidA (Configs, target files, four configurations) byte-identical to the ones of `f71995c`.
+
+### 2026-11-10 (Phase 4 step 4c — smoke gaps, install RPATH)
+- Found: an installed executable linking a shared library of its own package does not run on Linux (no install RPATH:
+  `libX.so: cannot open shared object file`); also in csImgTracker (see "Running executables: shared libraries of other
+  packages"). The smoke projects used only static and interface libraries.
+- Install RPATH by default (user: "like linking a target", on by default, can be turned off): `cs_finalize_target`
+  sets the `INSTALL_RPATH` target property of executables (`$ORIGIN/<bin to lib>`, from `CMAKE_INSTALL_BINDIR` /
+  `CMAKE_INSTALL_LIBDIR`) and shared / module libraries (`$ORIGIN`), `@loader_path` on macOS, nothing on Windows; kept
+  when the target has its own (not empty; CMake initializes it from `CMAKE_INSTALL_RPATH`). Off:
+  `cs_initialize_project(... INSTALL_RPATH OFF)` or the directory variable `CSCMAKE_INSTALL_RPATH`. First tried in the
+  host presets, moved (user): presets used without csCMake (OpenCV `csopencvcpu`, the forks; Qt does not use them) must
+  keep their upstream behaviour. Configure tests `tests/cmake/test_install_rpath.py`; user guide (installed packages,
+  "Shared libraries"), runtime dependencies page.
+- Smoke: `csSmokeShared` (two SHARED libraries, one using the other, and an application whose installed copy is run in
+  the four configurations); `csSmokePlainConsumer` (plain CMake, `find_package(csSmokeShared COMPONENTS text)`, ctest
+  from the build folder; Windows: `$<TARGET_RUNTIME_DLLS>` copied; Debug and Release: `Project.plain` in
+  `run_smoke.py`, no Config checks). Checked locally: installed `csSmokeSharedApp` runs (`RUNPATH $ORIGIN/../lib` on the
+  app and the libraries).
+- Cyclic dependencies between components: message `[cs_finalize_project] cyclic dependency between the components: a ->
+  b -> a: ...` (was the internal function name), configure test `test_cyclic_dependency_between_components`.
+- Docs: smoke tests page (two projects, graph), presets (install RPATH), runtime dependencies ("Running the
+  executables"). Deferred (user): deployment command, Windows build folder outside Visual Studio, run scripts.

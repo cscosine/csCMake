@@ -38,6 +38,21 @@ lib/cmake/<namespace>/
 Headers go in an `include/<CONFIG>/` sub-folder when the project has more than one configuration, so that every
 configuration can be installed in the same prefix.
 
+### Shared libraries
+
+Installed executables and shared libraries find the shared libraries of their own package, wherever the install folder
+is moved: nothing to write. On Linux and macOS, `cs_finalize_target` gives them a relative install RPATH (on Windows,
+the DLLs are installed in `bin/`, next to the executables). To turn it off:
+
+| For | Write |
+|---|---|
+| the whole project | `cs_initialize_project(... INSTALL_RPATH OFF)` |
+| the targets of a folder | `set(CSCMAKE_INSTALL_RPATH OFF)` in that folder, before their `cs_finalize_target` |
+| one target, with your own value | `set_target_properties(<target> PROPERTIES INSTALL_RPATH ...)` before `cs_finalize_target` |
+
+A project setting `CMAKE_INSTALL_RPATH` keeps its value too. The shared libraries of **other** packages are not found
+from the install folder: see [Runtime dependencies](../advanced/runtime-dependencies.md#running-the-executables).
+
 ## Using an installed package
 
 ```cmake

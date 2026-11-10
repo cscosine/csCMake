@@ -123,3 +123,28 @@ def test_base_dir_is_the_install_prefix(tmp_path: Path, prefix: Path) -> None:
 
     assert result.returncode == 0, result.output
     assert Path(result.reports["base"]).resolve() == prefix.resolve()
+
+
+def test_cyclic_dependency_between_components(tmp_path: Path) -> None:
+    """The targets do not form a cycle (ta -> tb -> tc), their components do (a -> b -> a)."""
+    body = """
+project(C VERSION 1.0.0 LANGUAGES NONE)
+cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
+cs_add_library(tc INTERFACE)
+cs_install_target(tc a)
+cs_finalize_target(tc)
+cs_add_library(tb INTERFACE)
+cs_target_link_libraries(tb INTERFACE tc)
+cs_install_target(tb b)
+cs_finalize_target(tb)
+cs_add_library(ta INTERFACE)
+cs_target_link_libraries(ta INTERFACE tb)
+cs_install_target(ta a)
+cs_finalize_target(ta)
+cs_finalize_project()
+"""
+    result = configure(tmp_path, body)
+
+    assert result.returncode != 0
+    message = " ".join(result.output.split())  # CMake wraps the message over several lines
+    assert "[cs_finalize_project] cyclic dependency between the components: a -> b -> a" in message

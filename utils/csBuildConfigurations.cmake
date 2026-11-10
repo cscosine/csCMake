@@ -347,7 +347,7 @@ endfunction()
 #
 # Writes:
 #
-# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES: caller scope
+# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES, CSCMAKE_INSTALL_RPATH (if given): caller scope
 # * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION: "default", "mapped <fallbacks>" or "custom <base
 #   and fallbacks> postfix <postfix>"
 # * variable CMAKE_<RUNTIME|LIBRARY|ARCHIVE>_OUTPUT_DIRECTORY_<CONFIG>: project scope, custom configurations, unless set
@@ -356,7 +356,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
   set(options "")
-  set(onevalue NAMESPACE CXX_STANDARD)
+  set(onevalue NAMESPACE CXX_STANDARD INSTALL_RPATH)
   set(multivalue DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG DEFAULT_COMPILE_PROFILES)
   cmake_parse_arguments(arg "${options}" "${onevalue}" "${multivalue}" ${ARGN})
 
@@ -393,6 +393,16 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   set(CSCMAKE_DEFAULT_COMPILE_PROFILES
       "${default_profiles}"
       PARENT_SCOPE)
+
+  # install RPATH of the targets (cs_finalize_target): on unless OFF
+  if(DEFINED arg_INSTALL_RPATH)
+    if(NOT arg_INSTALL_RPATH MATCHES "^(ON|OFF)$")
+      message(FATAL_ERROR "[cs_initialize_project] INSTALL_RPATH is ON or OFF, got ${arg_INSTALL_RPATH}")
+    endif()
+    set(CSCMAKE_INSTALL_RPATH
+        ${arg_INSTALL_RPATH}
+        PARENT_SCOPE)
+  endif()
 
   # the configurations belong to the build tree: the first csCMake project defines them; a nested project (added with
   # add_subdirectory) uses some of them, defined the same way, and registers nothing (_cs_check_build_configuration)

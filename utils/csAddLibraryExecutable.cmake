@@ -7,6 +7,7 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
+include(GNUInstallDirs)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
@@ -109,7 +110,8 @@ endfunction()
 #.rst:
 # .. command:: cs_finalize_target
 #
-#   Finalize a target: apply its compile profiles, analyze its runtime dependencies, record its links.
+#   Finalize a target: apply its compile profiles, set its install RPATH, analyze its runtime dependencies, record its
+#   links.
 #
 #   .. code-block:: cmake
 #
@@ -118,10 +120,16 @@ endfunction()
 #   Mandatory for every target of :command:`cs_add_library` / :command:`cs_add_executable`, after its links:
 #   :command:`cs_finalize_project` fails for a target not finalized, or whose links changed afterwards.
 #
+#   Install RPATH (Linux, macOS): an executable or a shared or module library finds, once installed, the shared
+#   libraries installed in the ``lib/`` of its package, wherever the install folder is moved. Not set when the target
+#   already has an :prop_tgt:`INSTALL_RPATH` (also from :variable:`CMAKE_INSTALL_RPATH`), or when
+#   :variable:`CSCMAKE_INSTALL_RPATH` is ``OFF``.
+#
 #   ``<target>``
 #     A target of :command:`cs_add_library` or :command:`cs_add_executable` (an alias of one is accepted).
 #
-#   :Writes: :prop_tgt:`_CSCMAKE_FINALIZED_LINKS`
+#   :Reads: :variable:`CSCMAKE_INSTALL_RPATH`
+#   :Writes: :prop_tgt:`_CSCMAKE_FINALIZED_LINKS`, :prop_tgt:`INSTALL_RPATH`
 function(cs_finalize_target target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -134,10 +142,45 @@ function(cs_finalize_target target_name)
     SET)
   if(NOT finalized)
     _cs_apply_compile_profiles(${target_name})
+    _cs_set_install_rpath(${target_name})
   endif()
   _cs_recursive_analyze_target(${target_name})
   _cs_target_links(${target_name} links)
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
+endfunction()
+
+# Set the install RPATH of target_name, an executable or a shared or module library, on Linux and macOS: relative to the
+# binary ($ORIGIN, @loader_path), towards CMAKE_INSTALL_LIBDIR. Nothing when the target has its own INSTALL_RPATH (not
+# empty) or CSCMAKE_INSTALL_RPATH is OFF.
+#
+# Writes:
+#
+# * target property INSTALL_RPATH
+function(_cs_set_install_rpath target_name)
+  if(WIN32 OR (DEFINED CSCMAKE_INSTALL_RPATH AND NOT CSCMAKE_INSTALL_RPATH))
+    return()
+  endif()
+  get_target_property(target_type ${target_name} TYPE)
+  # initialized by CMake from CMAKE_INSTALL_RPATH (empty when not set)
+  get_target_property(own_rpath ${target_name} INSTALL_RPATH)
+  if(own_rpath OR NOT target_type MATCHES "^(EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY)$")
+    return()
+  endif()
+
+  if(APPLE)
+    set(origin "@loader_path")
+  else()
+    set(origin "$ORIGIN")
+  endif()
+  # an executable is installed in CMAKE_INSTALL_BINDIR, a library next to the other libraries
+  if(target_type STREQUAL "EXECUTABLE")
+    file(RELATIVE_PATH bin_to_lib "/${CMAKE_INSTALL_BINDIR}" "/${CMAKE_INSTALL_LIBDIR}")
+    set(rpath "${origin}/${bin_to_lib}")
+  else()
+    set(rpath "${origin}")
+  endif()
+  cs_debug_message("[cs_finalize_target] ${target_name} INSTALL_RPATH ${rpath}")
+  set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${rpath}")
 endfunction()
 
 # Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES) as a single string.

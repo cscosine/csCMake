@@ -74,6 +74,9 @@ class Project:
     find_dependencies: tuple[str, ...] = ()  # exactly the packages of find_dependency() in its installed Config
     apps: tuple[App, ...] = ()  # installed applications to run
     standalone: bool = False  # standalone layout: its own workspace, <project>/workspace (csCMake copied there)
+    # a consumer without csCMake: plain CMake, Debug and Release only (the configurations CMake knows), no installed
+    # package to check
+    plain: bool = False
 
 
 # build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
@@ -94,6 +97,10 @@ PROJECTS = (
         apps=(App("csSmokeEnvApp", ("env(text(base-core))",)),),
     ),
     Project("csSmokeStandalone", apps=(App("csSmokeStandaloneApp", ("standalone",)),), standalone=True),
+    # shared libraries: the installed application runs from the install folder
+    Project("csSmokeShared", apps=(App("csSmokeSharedApp", ("shared-text(shared-core)",)),)),
+    # plain CMake consumer of csSmokeShared (its ctest checks the output)
+    Project("csSmokePlainConsumer", plain=True),
 )
 
 # default targets created by cs_initialize_project, installed in the cscmake_common component
@@ -114,16 +121,17 @@ def find_variant(variant: str) -> ContextOsArchitectureCompilerGenerator:
     raise SmokeError(f"unknown variant {variant!r} (not in the csCMake preset registry)")
 
 
-def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator) -> list[str]:
-    """Return the workflow presets that build every configuration of ``ctx``."""
+def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, plain: bool = False) -> list[str]:
+    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release for a plain project)."""
     variant = create_context_os_architecture_compiler_generator_string(ctx)
     generator_type = ctx.context_compiler_generator.build_generator.generator_type
+    configs = CONFIGS[:2] if plain else CONFIGS
     if generator_type == GeneratorType.MULTI_CONFIG:
         # a single build tree, all the configurations in one workflow
-        all_configs = BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
+        all_configs = BuildConfig.DEBUG_RELEASE if plain else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
         assert all_configs in get_supported_build_configs_for_generator_type(generator_type)
         return [f"workflow-{variant}-{all_configs.value}"]
-    return [f"workflow-{variant}-{config.preset}" for config in CONFIGS]
+    return [f"workflow-{variant}-{config.preset}" for config in configs]
 
 
 @contextmanager
@@ -281,9 +289,11 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     with group(f"prepare workspace {workspace}"):
         prepare_workspace(workspace)
     for project in PROJECTS:
-        for workflow in workflow_presets(ctx):
+        for workflow in workflow_presets(ctx, project.plain):
             with group(f"{project.name}: cmake --workflow {workflow}"):
                 run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
+        if project.plain:
+            continue
         with group(f"{project.name}: find_dependency in the installed {project.name}Config.cmake"):
             check_installed_config_dependencies(workspace, variant, project)
             check_installed_default_targets(workspace, variant, project)

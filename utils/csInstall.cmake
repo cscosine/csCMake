@@ -290,9 +290,10 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
     "[_cs_check_component_cycles_recursive] -- for export ${export_name} with visited list = ${visited_list}")
 
   if(${export_name} IN_LIST visited_list)
+    string(REPLACE ";" " -> " cycle "${visited_list};${export_name}")
     message(
-      FATAL_ERROR "[_cs_check_component_cycles_recursive] detected cyclic dependency: ${visited_list} -> ${export_name}"
-    )
+      FATAL_ERROR "[cs_finalize_project] cyclic dependency between the components: ${cycle}: a component cannot "
+                  "depend on itself through other components; move the targets so that the dependencies go one way")
   endif()
 
   list(APPEND visited_list ${export_name})
