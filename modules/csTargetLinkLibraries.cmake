@@ -32,9 +32,9 @@ function(cs_target_link_libraries target_name)
   set(link_targets_list "")
   foreach(linked_target ${ARGN})
     if(
-      ${linked_target} STREQUAL "INTERFACE"
-      OR ${linked_target} STREQUAL "PUBLIC"
-      OR ${linked_target} STREQUAL "PRIVATE"
+      "${linked_target}" STREQUAL "INTERFACE"
+      OR "${linked_target}" STREQUAL "PUBLIC"
+      OR "${linked_target}" STREQUAL "PRIVATE"
     )
       list(APPEND link_targets_list ${linked_target})
       continue()

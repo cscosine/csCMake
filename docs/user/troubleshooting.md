@@ -25,14 +25,18 @@ To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_D
 `[cs_initialize_project] NAMESPACE <namespace> is required`, `CXX_STANDARD <standard> is required`, `unparsed arguments`
 : See the arguments of `cs_initialize_project`; `MIGRATION.md` maps the arguments of older versions.
 
-`CSCMAKE_<CONFIG>_POSTFIX variable do not exists, call cs_initialize_project before adding targets`
+`[cs_add_library / cs_add_executable] <target>: call cs_initialize_project(NAMESPACE ...) before adding targets`
 : A target is created before `cs_initialize_project`, or in a folder outside the project.
 
 ## Build configurations
 
-`[_cs_process_configurations] request to build with config <config> which is not supported by this project`
+`[cs_initialize_project] CMAKE_BUILD_TYPE <config> is not a configuration of the project (<configs>)`
 : A single-config preset (or `CMAKE_BUILD_TYPE`) asks for a configuration the project does not list. Use the presets of
   the configurations of the project, or add the configuration to `cs_initialize_project`.
+
+`[cs_initialize_project] CMAKE_BUILD_TYPE is empty: a single-config generator builds one configuration of the project`
+: The project is configured without a preset and without `-DCMAKE_BUILD_TYPE=<config>` (Ninja, Makefiles). Use a
+  preset, or give one of the configurations listed in the message.
 
 `[cs_initialize_project] configuration <config> of <namespace> is not a configuration of the build`, `... is '<definition>', in the build it is '<definition>'`
 : A nested csCMake project lists a configuration the first project of the build does not have, or defines it

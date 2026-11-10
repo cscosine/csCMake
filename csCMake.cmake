@@ -60,7 +60,7 @@ include(modules/integrations/csOpenMP)
 function(_cs_set_root_dir path)
   get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   if(val)
-    if(NOT val STREQUAL ${path})
+    if(NOT val STREQUAL "${path}")
       message(
         FATAL_ERROR
         "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "

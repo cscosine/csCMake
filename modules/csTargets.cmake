@@ -73,43 +73,35 @@ endfunction()
 # * target property CSCMAKE_NAMESPACE: the namespace of the project of the target
 # * global property CSCMAKE_<namespace>_PROJECT_TARGETS: the targets of the project
 function(_cs_add_target_to_project_targets target_name)
-  # add to list of targets if it is not an alias
+  # aliases are not targets of their own
   get_target_property(target_name_alias ${target_name} ALIASED_TARGET)
-  if(NOT target_name_alias)
-    # iterate on all specified configurations and add the target postfix
-    cs_get_build_configurations(configs_list)
-    foreach(config ${configs_list})
-      string(TOUPPER "${config}" config)
-
-      # postfix for file (d=debug, rd=relWithDebInfo, etc...)
-      if(DEFINED CSCMAKE_${config}_POSTFIX)
-        set_target_properties(${target_name} PROPERTIES ${config}_POSTFIX "${CSCMAKE_${config}_POSTFIX}")
-      else()
-        message(
-          FATAL_ERROR
-          "CSCMAKE_${config}_POSTFIX variable do not exists, call cs_initialize_project before adding targets"
-        )
-      endif()
-    endforeach()
-
-    # path to allow execution inside visual studio
-    if(DEFINED CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION)
-      set_target_properties(
-        ${target_name}
-        PROPERTIES MSVC_RUNTIME_LIBRARY "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
-      )
-    else()
-      message(
-        FATAL_ERROR
-        "CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION variable do not exists, call cs_initialize_project "
-        "before adding targets"
-      )
-    endif()
-
-    # the csCMake project of the target (its namespace): used for the links between projects of the same build
-    set_property(TARGET ${target_name} PROPERTY CSCMAKE_NAMESPACE ${CSCMAKE_NAMESPACE})
-    _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS ${target_name})
+  if(target_name_alias)
+    return()
   endif()
+  if(NOT CSCMAKE_NAMESPACE)
+    message(
+      FATAL_ERROR
+      "[cs_add_library / cs_add_executable] ${target_name}: call cs_initialize_project(NAMESPACE ...) before adding "
+      "targets"
+    )
+  endif()
+
+  # output name postfix of every configuration (d = Debug, rd = RelWithDebInfo, ...)
+  cs_get_build_configurations(configs_list)
+  foreach(config IN LISTS configs_list)
+    string(TOUPPER "${config}" config)
+    set_target_properties(${target_name} PROPERTIES ${config}_POSTFIX "${CSCMAKE_${config}_POSTFIX}")
+  endforeach()
+
+  # the MSVC runtime of every configuration
+  set_target_properties(
+    ${target_name}
+    PROPERTIES MSVC_RUNTIME_LIBRARY "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
+  )
+
+  # the csCMake project of the target (its namespace): used for the links between projects of the same build
+  set_property(TARGET ${target_name} PROPERTY CSCMAKE_NAMESPACE ${CSCMAKE_NAMESPACE})
+  _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS ${target_name})
 endfunction()
 
 #.rst:

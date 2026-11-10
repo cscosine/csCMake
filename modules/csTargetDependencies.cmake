@@ -25,7 +25,7 @@ function(_cs_analyze_dependency target_name dependency linked_libs_var)
   set(${linked_libs_var} "" PARENT_SCOPE)
 
   if(NOT TARGET ${dependency})
-    if(NOT ${dependency} STREQUAL ${target_name})
+    if(NOT "${dependency}" STREQUAL "${target_name}")
       cs_debug_message("[_cs_recursive_analyze_target] ${dependency} is not a target, add it to the non resolved "
                        "dependencies"
       )
@@ -50,7 +50,7 @@ function(_cs_analyze_dependency target_name dependency linked_libs_var)
 
   if(NOT dependency_imported)
     # a target of the project: its own runtime dependencies are resolved by cs_finalize_project
-    if(NOT ${dependency} STREQUAL ${target_name})
+    if(NOT "${dependency}" STREQUAL "${target_name}")
       _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_PROJECT_TARGETS ${dependency})
     endif()
   elseif(dependency_type MATCHES "^(MODULE|SHARED|INTERFACE)_LIBRARY$")

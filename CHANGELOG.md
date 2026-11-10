@@ -12,6 +12,12 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   `<target>_installed_headers` (instead of one library `<target>_<header>` per header).
 - `cs_target_sources`: `PUBLIC` / `INTERFACE` files (and `*_INSTALL`) given by relative path no longer fail at the
   generate step.
+- Single-config generators: an empty `CMAKE_BUILD_TYPE` fails the configure (it built none of the configurations of
+  the project); the message for an unknown one lists the configurations.
+- `cs_target_use_openmp`: `find_package(OpenMP)` goes to the installed package only when its consumers link OpenMP
+  (`PUBLIC`, `INTERFACE`, or `PRIVATE` on a static library); no messages on every configure.
+- `cs_add_library` / `cs_add_executable` before `cs_initialize_project`: a clear message.
+- `cs_print_state` prints the folder of csCMake.
 
 ## v0.4.0 (2026-11-10)
 

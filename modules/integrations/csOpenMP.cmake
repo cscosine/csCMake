@@ -18,8 +18,9 @@ include(modules/csFindPackage)
 #
 #     cs_target_use_openmp(<target> PUBLIC|PRIVATE|INTERFACE)
 #
-#   ClangCL on Windows: /openmp and vcomp; otherwise ``find_package(OpenMP)`` (propagated to the installed
-#   package) and OpenMP::OpenMP_CXX.
+#   ClangCL on Windows: /openmp and vcomp; otherwise ``find_package(OpenMP REQUIRED)`` and OpenMP::OpenMP_CXX.
+#   ``find_package(OpenMP)`` goes to the installed package (:command:`cs_find_package` ``PUBLIC``) when its consumers
+#   need it: ``PUBLIC`` and ``INTERFACE``, and ``PRIVATE`` on a static or object library (its consumers link OpenMP).
 #
 #   ``<target>``
 #     A target of the project.
@@ -28,22 +29,27 @@ include(modules/csFindPackage)
 #     The scope of the OpenMP options and library, as in :command:`target_link_libraries`.
 function(cs_target_use_openmp target_name visibility)
   if(NOT TARGET ${target_name})
-    message(FATAL_ERROR "Target '${target_name}' does not exist")
+    message(FATAL_ERROR "[cs_target_use_openmp] ${target_name} is not a target")
+  endif()
+  if(NOT visibility MATCHES "^(PUBLIC|PRIVATE|INTERFACE)$")
+    message(FATAL_ERROR "[cs_target_use_openmp] the scope is PUBLIC, PRIVATE or INTERFACE, got ${visibility}")
   endif()
 
   if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Windows + ClangCL
-    message(NOTICE "Enabling OpenMP for ${target_name} (ClangCL on Windows)")
+    # ClangCL: the OpenMP runtime of MSVC
+    cs_debug_message("[cs_target_use_openmp] ${target_name}: /openmp and vcomp (ClangCL)")
     target_compile_options(${target_name} ${visibility} /openmp)
     target_link_libraries(${target_name} ${visibility} vcomp)
-  else()
-    # Clang or GCC on Linux/other
-    message(
-      NOTICE
-      "Enabling OpenMP for ${target_name} (non Clang on windows), If this fail, for clang on linux try `sudo apt "
-      "install libomp-dev`"
-    )
-    cs_find_package(${target_name} PUBLIC OpenMP REQUIRED)
-    target_link_libraries(${target_name} ${visibility} OpenMP::OpenMP_CXX)
+    return()
   endif()
+
+  # the consumers of the installed package need find_package(OpenMP) when they link OpenMP::OpenMP_CXX too
+  get_target_property(target_type ${target_name} TYPE)
+  set(propagate PRIVATE)
+  if(NOT visibility STREQUAL "PRIVATE" OR target_type MATCHES "^(STATIC|OBJECT)_LIBRARY$")
+    set(propagate PUBLIC)
+  endif()
+  cs_debug_message("[cs_target_use_openmp] ${target_name}: OpenMP::OpenMP_CXX ${visibility}, find_package ${propagate}")
+  cs_find_package(${target_name} ${propagate} OpenMP REQUIRED)
+  target_link_libraries(${target_name} ${visibility} OpenMP::OpenMP_CXX)
 endfunction()

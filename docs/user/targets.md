@@ -115,8 +115,10 @@ for this check).
 cs_target_use_openmp(core PUBLIC)
 ```
 
-`cs_target_use_openmp` enables OpenMP: `find_package(OpenMP)` (propagated to the installed package) and
-`OpenMP::OpenMP_CXX`; with clang-cl on Windows, `/openmp` and the `vcomp` library.
+`cs_target_use_openmp` enables OpenMP: `find_package(OpenMP REQUIRED)` and `OpenMP::OpenMP_CXX`; with clang-cl on
+Windows, `/openmp` and the `vcomp` library. The installed package finds OpenMP for its consumers when they link it
+too: `PUBLIC` and `INTERFACE`, and `PRIVATE` on a static library. Clang on Linux needs the OpenMP runtime of LLVM
+(`libomp-dev` on Ubuntu).
 
 ## Debug messages
 

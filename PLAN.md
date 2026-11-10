@@ -53,7 +53,7 @@ Bugs, confirmed or to confirm with a configure test first:
   `$<BUILD_INTERFACE:...>`, which CMake does not make absolute. Every caller used `PRIVATE`, so header-only libraries
   with `INTERFACE_INSTALL` were never tried. Fix: absolute paths (relative to the current folder).
   Also: headers at the base of the project were checked with `#include </x.h>` (empty install folder).
-- [ ] B2 (confirmed) single-config generator with an empty `CMAKE_BUILD_TYPE` (no preset): accepted silently, the
+- [x] (fixed: a clear error) B2 (confirmed) single-config generator with an empty `CMAKE_BUILD_TYPE` (no preset): accepted silently, the
   build has none of the configurations (no flags of the configuration, no postfix, compile profile rules with
   `CONFIGS` never apply); the check `if(NOT ${CMAKE_BUILD_TYPE} IN_LIST ...)` degenerates. Fix: a clear error, or
   default to the first configuration when the project has not set one (to decide).
@@ -62,10 +62,10 @@ Bugs, confirmed or to confirm with a configure test first:
   and `MAP_IMPORTED_CONFIG_*`: a package with Release only, or a custom configuration (Paranoid -> Debug), gets no
   DLL folder for that configuration; link items in generator expressions (`$<LINK_ONLY:...>`, which CMake writes
   for the private links of static libraries, `$<$<CONFIG:...>:...>`) are recorded as "non targets" and not followed.
-- [ ] B4 `cs_target_use_openmp`: `cs_find_package(... PUBLIC ...)` whatever the visibility (a PRIVATE use still adds
+- [x] (fixed: find_package propagated for PUBLIC / INTERFACE and PRIVATE on static libraries; debug lines) B4 `cs_target_use_openmp`: `cs_find_package(... PUBLIC ...)` whatever the visibility (a PRIVATE use still adds
   `find_dependency(OpenMP)` to the installed Config); two `message(NOTICE ...)` on every configure; the non-ClangCL
   message talks about Windows on every platform.
-- [ ] B5 `cs_print_state` prints `CMAKE_CURRENT_LIST_DIR` as "csCMake path": it is the caller's folder.
+- [x] (fixed) B5 `cs_print_state` prints `CMAKE_CURRENT_LIST_DIR` as "csCMake path": it is the caller's folder.
 
 Design (behaviour or API changes):
 - [ ] D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
@@ -120,18 +120,18 @@ Simplifications (no behaviour change, installed files byte-identical):
   every configuration, `cs_print_components` sorts again; return early (with 6c).
 
 Cleanup:
-- [ ] C1 unquoted dereferences in conditions: `if(NOT ${value} IN_LIST ...)`, `if(${x} STREQUAL ...)` (a value
+- [x] (done, 26 conditions) C1 unquoted dereferences in conditions: `if(NOT ${value} IN_LIST ...)`, `if(${x} STREQUAL ...)` (a value
   that names a variable is dereferenced twice, an empty one breaks the condition: B2): `if(NOT value IN_LIST ...)`,
   quoted strings; about 25 places.
 - [ ] C2 error messages: some without the `[command]` prefix (`cs_install_target`, `cs_find_package`, OpenMP,
   `_cs_add_target_to_project_targets` "variable do not exists"), some naming internal functions
   (`[_cs_parse_additional_configurations]`, `[_cs_process_configurations]`, `[_cs_add_custom_build_configuration]`)
   instead of the command the user called; one wording.
-- [ ] C3 `_cs_add_target_to_project_targets` checks `CSCMAKE_<CONFIG>_POSTFIX` and the MSVC runtime variable per
+- [x] (done) C3 `_cs_add_target_to_project_targets` checks `CSCMAKE_<CONFIG>_POSTFIX` and the MSVC runtime variable per
   configuration to detect a missing `cs_initialize_project`: one check of `CSCMAKE_NAMESPACE` with a clear message.
 - [ ] C4 `find_program(CLANG_TIDY_EXE ...)`: an unprefixed cache variable (could clash with a project's own):
   `CSCMAKE_CLANG_TIDY_EXE`, documented (MIGRATION).
-- [ ] C5 dead code: the empty `elseif(propagate_mode STREQUAL "PRIVATE")` branch, `set(targets "")` before a getter,
+- [x] (done for the dead branch; the printers with D2) C5 dead code: the empty `elseif(propagate_mode STREQUAL "PRIVATE")` branch, `set(targets "")` before a getter,
   the `count GREATER 0` / `list(LENGTH)` dances in the printers.
 
 Public commands not used by any project (the starting point of the 6b inventory): `cs_get_*` (19), `cs_print_*` (8), `cs_get_namespace`,
@@ -358,3 +358,11 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   target without headers. B6 (found by its test): `cs_target_sources` gives absolute paths to `target_sources`.
   Configure + build tests `tests/cmake/test_check_installed_headers.py` (fail on the old code); docs (targets,
   tutorial, smoke tests page).
+
+### 2026-11-10 (Phase 6a — B2, B4, B5, C1, C3, C5)
+- B2: an empty or unknown `CMAKE_BUILD_TYPE` (single-config) fails with the configurations of the project. B4:
+  `cs_target_use_openmp` propagates `find_package(OpenMP)` only when consumers link OpenMP, checks the scope, debug
+  lines instead of notices. B5: `cs_print_state` shows the csCMake folder. C1: conditions quote their values. C3: one
+  "call cs_initialize_project first" check in `cs_add_library` / `cs_add_executable`. C5: `cs_find_package` checks
+  its mode with a prefixed message (the printers' dead code goes with D2). Tests: build type, target before
+  initialize, OpenMP propagation, csCMake path.

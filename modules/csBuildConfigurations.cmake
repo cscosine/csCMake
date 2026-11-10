@@ -97,7 +97,7 @@ function(_cs_add_default_build_configuration config)
 
   set(valid_default_configs "Debug;Release;RelWithDebInfo")
 
-  if(NOT ${config} IN_LIST valid_default_configs)
+  if(NOT "${config}" IN_LIST valid_default_configs)
     message(
       FATAL_ERROR
       "[cs_initialize_project] DEFAULT_CONFIG called with invalid default config ${config}, choose one of "
@@ -105,13 +105,13 @@ function(_cs_add_default_build_configuration config)
     )
   endif()
 
-  if(NOT ${config} IN_LIST configs_list)
+  if(NOT "${config}" IN_LIST configs_list)
     list(APPEND configs_list ${config})
   else()
     message(FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config}")
   endif()
 
-  if(NOT ${config} IN_LIST configs_list_default)
+  if(NOT "${config}" IN_LIST configs_list_default)
     list(APPEND configs_list_default ${config})
   else()
     message(
@@ -150,13 +150,13 @@ function(_cs_add_custom_build_configuration config base_config postfix base_conf
   cs_get_build_configurations(configs_list)
   cs_get_default_build_configurations(configs_list_default)
 
-  if(NOT ${config} IN_LIST configs_list)
+  if(NOT "${config}" IN_LIST configs_list)
     list(APPEND configs_list ${config})
   else()
     message(FATAL_ERROR "[_cs_add_custom_build_configuration] called with duplicated element ${config}")
   endif()
 
-  if(NOT ${base_config} IN_LIST configs_list_default)
+  if(NOT "${base_config}" IN_LIST configs_list_default)
     message(
       FATAL_ERROR
       "[_cs_add_custom_build_configuration] element ${config} base on ${base_config}, which is not in default "
@@ -193,7 +193,7 @@ function(_cs_add_mapped_configurations namespace nested)
   set(mapped_list ${ARGN})
   list(LENGTH mapped_list mapped_size)
   math(EXPR mod_size "${mapped_size} % 3")
-  if(NOT ${mod_size} EQUAL 0)
+  if(NOT "${mod_size}" EQUAL 0)
     message(
       FATAL_ERROR
       "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : "
@@ -203,7 +203,7 @@ function(_cs_add_mapped_configurations namespace nested)
 
   while(NOT "${mapped_list}" STREQUAL "")
     list(POP_FRONT mapped_list config mapped_to_keyword base_config_and_fallback)
-    if(NOT ${mapped_to_keyword} STREQUAL "MAPPED_TO")
+    if(NOT "${mapped_to_keyword}" STREQUAL "MAPPED_TO")
       message(
         FATAL_ERROR
         "[_cs_parse_additional_configurations] DEFAULT_CONFIG_MAPPED need to specify values as : "
@@ -260,7 +260,7 @@ function(_cs_add_custom_configurations namespace nested)
   set(custom_list ${ARGN})
   list(LENGTH custom_list custom_size)
   math(EXPR mod_size "${custom_size} % 5")
-  if(NOT ${mod_size} EQUAL 0)
+  if(NOT "${mod_size}" EQUAL 0)
     message(
       FATAL_ERROR
       "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
@@ -277,14 +277,14 @@ function(_cs_add_custom_configurations namespace nested)
       postfix_keyword
       postfix_value
     )
-    if(NOT ${based_on_keyword} STREQUAL "BASED_ON")
+    if(NOT "${based_on_keyword}" STREQUAL "BASED_ON")
       message(
         FATAL_ERROR
         "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
         "MyCustomConfig1 BASED_ON Debug POSTFIX \"d\". Expected BASED_ON found ${based_on_keyword}"
       )
     endif()
-    if(NOT ${postfix_keyword} STREQUAL "POSTFIX")
+    if(NOT "${postfix_keyword}" STREQUAL "POSTFIX")
       message(
         FATAL_ERROR
         "[_cs_parse_additional_configurations] CUSTOM_CONFIG need to specify values as : CUSTOM_CONFIG "
@@ -429,7 +429,7 @@ function(_cs_check_build_configuration namespace config definition)
 endfunction()
 
 # Apply the configurations of the build: with multi-config generators set CMAKE_CONFIGURATION_TYPES, with single-config
-# ones fail if CMAKE_BUILD_TYPE is not one of them.
+# ones fail if CMAKE_BUILD_TYPE is empty or not one of them.
 #
 # Writes:
 #
@@ -447,11 +447,19 @@ function(_cs_process_configurations)
       FORCE
     )
   else()
-    if(NOT ${CMAKE_BUILD_TYPE} IN_LIST configs_list)
+    list(JOIN configs_list ", " configs_text)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "")
       message(
         FATAL_ERROR
-        "[_cs_process_configurations] request to build with config ${CMAKE_BUILD_TYPE} which is not supported "
-        "by this project"
+        "[cs_initialize_project] CMAKE_BUILD_TYPE is empty: a single-config generator builds one configuration of "
+        "the project (${configs_text}); use a preset, or -DCMAKE_BUILD_TYPE=<config>"
+      )
+    endif()
+    if(NOT CMAKE_BUILD_TYPE IN_LIST configs_list)
+      message(
+        FATAL_ERROR
+        "[cs_initialize_project] CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} is not a configuration of the project "
+        "(${configs_text})"
       )
     endif()
   endif()

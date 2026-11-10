@@ -106,7 +106,7 @@ function(_cs_populate_component_dependencies export_name)
       cs_debug_message(
         "[_cs_populate_component_dependencies] ---- subtarget ${target_dep_name} is exported to ${export_dep_name}"
       )
-      if(NOT ${export_dep_name} STREQUAL ${export_name})
+      if(NOT "${export_dep_name}" STREQUAL "${export_name}")
         cs_debug_message("[_cs_populate_component_dependencies] ---- add ${export_dep_name}")
         _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES
                                                 ${export_dep_name}
@@ -129,7 +129,7 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
     "[_cs_check_component_cycles_recursive] -- for export ${export_name} with visited list = ${visited_list}"
   )
 
-  if(${export_name} IN_LIST visited_list)
+  if("${export_name}" IN_LIST visited_list)
     string(REPLACE ";" " -> " cycle "${visited_list};${export_name}")
     message(
       FATAL_ERROR
@@ -192,7 +192,7 @@ function(_cs_sort_component_dependencies export_name)
     # clean up and keep only the one not yet satisfied
     set(current_element_dependent_exports_clean "")
     foreach(temp_element ${current_element_dependent_exports})
-      if(NOT ${temp_element} IN_LIST dependent_exports_sorted)
+      if(NOT "${temp_element}" IN_LIST dependent_exports_sorted)
         _cs_list_add_unique_value(current_element_dependent_exports_clean ${temp_element})
       endif()
     endforeach()

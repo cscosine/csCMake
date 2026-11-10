@@ -85,10 +85,10 @@ function(cs_install_target target_name export_name)
   _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS ${export_name})
 
   # add the target to default list
-  if(${ARGC} EQUAL 2)
+  if("${ARGC}" EQUAL 2)
     # nothing to do, do not
-  elseif(${ARGC} EQUAL 3)
-    if(${ARGV2} STREQUAL "DEFAULT")
+  elseif("${ARGC}" EQUAL 3)
+    if("${ARGV2}" STREQUAL "DEFAULT")
       _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS ${export_name})
     else()
       message(FATAL_ERROR "cs_install_target argument 3 should be DEFAULT or should be empty")
@@ -135,7 +135,7 @@ function(cs_install_target target_name export_name)
   # and install the pdb file for debugging if exists
   if(WIN32)
     get_target_property(target_type ${target_name} TYPE)
-    if((${target_type} STREQUAL "SHARED_LIBRARY" OR ${target_type} STREQUAL "EXECUTABLE"))
+    if(("${target_type}" STREQUAL "SHARED_LIBRARY" OR "${target_type}" STREQUAL "EXECUTABLE"))
       install(FILES $<TARGET_PDB_FILE:${target_name}> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
     endif()
   endif()

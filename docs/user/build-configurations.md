@@ -56,8 +56,8 @@ Xcode, Ninja Multi-Config) in a sub-folder per configuration, `<build>/bin/<CONF
 
 - Multi-config generators: csCMake sets `CMAKE_CONFIGURATION_TYPES` to the configurations of the project; the build
   preset (or `cmake --build --config <config>`) chooses one.
-- Single-config generators (Ninja, Makefiles): the configure preset sets `CMAKE_BUILD_TYPE`; a configuration the project
-  does not list fails the configure (`request to build with config ... which is not supported by this project`).
+- Single-config generators (Ninja, Makefiles): the configure preset sets `CMAKE_BUILD_TYPE`; an empty one, or a
+  configuration the project does not list, fails the configure.
 
 The csCMake presets have a build, install, test and workflow preset for Debug, Release, RelWithDebInfo and Paranoid:
 use the ones of the configurations of the project.

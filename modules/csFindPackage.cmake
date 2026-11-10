@@ -101,16 +101,11 @@ function(_cs_add_find_package_args_to_target target_name propagate_mode)
   list(JOIN ARGN " " joined_argn)
   cs_debug_message("[_cs_add_find_package_args_to_target] target ${target_name} arguments ${joined_argn}")
 
+  if(NOT propagate_mode MATCHES "^(PUBLIC|PRIVATE)$")
+    message(FATAL_ERROR "[cs_find_package] ${target_name}: the mode is PUBLIC or PRIVATE, got ${propagate_mode}")
+  endif()
   if(propagate_mode STREQUAL "PUBLIC")
     _cs_add_to_target_property_unique_value("${target_name}" CSCMAKE_FIND_PACKAGES "${joined_argn}")
-  elseif(propagate_mode STREQUAL "PRIVATE")
-    # nothin to do
-  else()
-    message(
-      FATAL_ERROR
-      "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with "
-      "PROPAGATE_MODE=${propagate_mode})"
-    )
   endif()
 endfunction()
 

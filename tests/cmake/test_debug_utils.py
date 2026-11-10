@@ -1,4 +1,4 @@
-"""Debug printers: cs_print_target_properties, cs_print_components."""
+"""Debug printers: cs_print_target_properties, cs_print_components, cs_print_state."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.cmake.cmake_project import configure
+from tests.cmake.cmake_project import REPO_ROOT, configure
 
 pytestmark = pytest.mark.requires("cmake", "ninja")
 
@@ -52,3 +52,10 @@ def test_print_components_lists_the_default_components(tmp_path: Path) -> None:
     line = next(x for x in result.output.splitlines() if "[cs_print_components] default components:" in x)
     assert "comp_default" in line
     assert "comp_other" not in line
+
+
+def test_print_state_shows_the_folder_of_cscmake(tmp_path: Path) -> None:
+    result = configure(tmp_path, INIT + "cs_finalize_project()\n")
+
+    assert result.returncode == 0, result.output
+    assert f"csCMake path: {REPO_ROOT.as_posix()}\n" in result.output

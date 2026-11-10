@@ -33,6 +33,23 @@ def test_project_without_version_is_rejected(tmp_path: Path) -> None:
     assert "project(noversion VERSION <x.y.z> ...) is required" in result.output
 
 
+@pytest.mark.parametrize(
+    ("build_type", "message"),
+    [
+        ("", "CMAKE_BUILD_TYPE is empty: a single-config generator builds one configuration of the project"),
+        ("MinSizeRel", "CMAKE_BUILD_TYPE MinSizeRel is not a configuration of the project"),
+    ],
+)
+def test_a_single_config_build_type_must_be_a_configuration_of_the_project(
+    tmp_path: Path, build_type: str, message: str
+) -> None:
+    result = configure(tmp_path, INIT + FINALIZE, args=[f"-DCMAKE_BUILD_TYPE={build_type}"])
+
+    assert result.returncode != 0
+    assert message in " ".join(result.output.split())
+    assert "(Debug, Release, RelWithDebInfo, Paranoid)" in " ".join(result.output.split())
+
+
 def test_no_temporary_variable_leaks_into_the_project_scope(tmp_path: Path) -> None:
     names = [
         "_cs_init_multi_config",
@@ -219,3 +236,10 @@ def test_the_choices_of_the_project_win(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.output
     assert result.reports == {"standard": "17", "required": "OFF", "extensions": "ON", "compile_commands": "OFF"}
+
+
+def test_a_target_before_initialize_is_rejected(tmp_path: Path) -> None:
+    result = configure(tmp_path, "cs_add_library(lib INTERFACE)\n")
+
+    assert result.returncode != 0
+    assert "lib: call cs_initialize_project(NAMESPACE ...) before adding targets" in " ".join(result.output.split())
