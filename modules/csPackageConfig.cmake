@@ -31,14 +31,9 @@ include(CMakePackageConfigHelpers)
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES`
 function(cs_get_component_dependencies export_name output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -59,14 +54,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED`
 function(cs_get_component_dependencies_sorted export_name output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 # Compute the components export_name depends on (the components of the project targets its targets link to); a target of

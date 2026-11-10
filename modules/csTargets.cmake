@@ -209,14 +209,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_PROJECT_TARGETS`
 function(cs_get_project_targets output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:

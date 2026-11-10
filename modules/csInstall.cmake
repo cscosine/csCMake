@@ -200,14 +200,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENTS`
 function(cs_get_components output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -224,14 +219,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_DEFAULT_COMPONENTS`
 function(cs_get_default_components output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -272,14 +262,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`
 function(cs_get_component_targets export_name output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -300,14 +285,9 @@ endfunction()
 #
 #   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`
 function(cs_get_component_find_packages export_name output_variable_name)
+  # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:

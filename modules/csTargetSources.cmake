@@ -111,14 +111,9 @@ endfunction()
 #
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`
 function(cs_get_target_sources_to_install target_name output_variable_name)
-  get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(list_values TARGET ${target_name} PROPERTY CSCMAKE_SOURCES_TO_INSTALL)
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -138,14 +133,9 @@ endfunction()
 #
 #   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
-  get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(list_values TARGET ${target_name} PROPERTY CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:

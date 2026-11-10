@@ -101,12 +101,9 @@ endfunction()
 # * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>
 function(_cs_get_target_direct_runtime_libraries target_name config output_variable_name)
   string(TOUPPER "${config}" config_ucase)
-  get_target_property(values ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase})
-  if(values)
-    set(${output_variable_name} ${values} PARENT_SCOPE)
-  else()
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(values TARGET ${target_name} PROPERTY CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase})
+  set(${output_variable_name} "${values}" PARENT_SCOPE)
 endfunction()
 
 # Return in output_variable_name the targets of the project target_name links to.
@@ -115,12 +112,9 @@ endfunction()
 #
 # * target property CSCMAKE_LINKED_PROJECT_TARGETS
 function(_cs_get_target_linked_project_targets target_name output_variable_name)
-  get_target_property(values ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS)
-  if(values)
-    set(${output_variable_name} ${values} PARENT_SCOPE)
-  else()
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(values TARGET ${target_name} PROPERTY CSCMAKE_LINKED_PROJECT_TARGETS)
+  set(${output_variable_name} "${values}" PARENT_SCOPE)
 endfunction()
 
 # Return in output_variable_name the linked names of target_name that were not targets when it was finalized.
@@ -129,12 +123,9 @@ endfunction()
 #
 # * target property CSCMAKE_LINKED_NON_TARGETS
 function(_cs_get_target_linked_non_targets target_name output_variable_name)
-  get_target_property(values ${target_name} CSCMAKE_LINKED_NON_TARGETS)
-  if(values)
-    set(${output_variable_name} ${values} PARENT_SCOPE)
-  else()
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(values TARGET ${target_name} PROPERTY CSCMAKE_LINKED_NON_TARGETS)
+  set(${output_variable_name} "${values}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -155,12 +146,9 @@ endfunction()
 #
 #   :Reads: :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`
 function(cs_get_target_project_dependencies target_name output_variable_name)
-  get_target_property(values ${target_name} CSCMAKE_PROJECT_DEPENDENCIES)
-  if(values)
-    set(${output_variable_name} ${values} PARENT_SCOPE)
-  else()
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(values TARGET ${target_name} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES)
+  set(${output_variable_name} "${values}" PARENT_SCOPE)
 endfunction()
 
 # Resolve the runtime libraries of every target of targets_list: its own ones plus the ones of the targets of the
@@ -373,12 +361,9 @@ endfunction()
 #   :Reads: :prop_tgt:`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`
 function(cs_get_target_runtime_libraries target_name config output_variable_name)
   string(TOUPPER "${config}" config_ucase)
-  get_target_property(values ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase})
-  if(values)
-    set(${output_variable_name} ${values} PARENT_SCOPE)
-  else()
-    set(${output_variable_name} "" PARENT_SCOPE)
-  endif()
+  # empty when the property is not set
+  get_property(values TARGET ${target_name} PROPERTY CSCMAKE_RUNTIME_LIBRARIES_${config_ucase})
+  set(${output_variable_name} "${values}" PARENT_SCOPE)
 endfunction()
 
 # Add to the direct runtime libraries of target_name the existing files of the imported target target_to_analyze

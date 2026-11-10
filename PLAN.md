@@ -102,7 +102,7 @@ Design (behaviour or API changes):
   compile profile (see "Professional C++ projects", clang-tidy); C4 renames the cache variable.
 
 Simplifications (no behaviour change, installed files byte-identical):
-- [ ] S1 eleven getters repeat `get_*_property` + `if(values) ... else "" ...` (NOTFOUND handling): `get_property()`
+- [x] (done, 15 getters) S1 eleven getters repeat `get_*_property` + `if(values) ... else "" ...` (NOTFOUND handling): `get_property()`
   returns an empty value for an unset property; one line each, or gone with 6b.
 - [ ] S2 "several configurations" is computed in three places (`cs_get_install_include_dir`,
   `_cs_installed_include_dirs`, the multi-config subfolder in `cs_initialize_project` and
@@ -366,3 +366,4 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   "call cs_initialize_project first" check in `cs_add_library` / `cs_add_executable`. C5: `cs_find_package` checks
   its mode with a prefixed message (the printers' dead code goes with D2). Tests: build type, target before
   initialize, OpenMP propagation, csCMake path.
+- S1: 15 getters read with `get_property()` (empty when unset) instead of `get_target_property` + NOTFOUND branch.
