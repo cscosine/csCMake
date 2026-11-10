@@ -1,3 +1,16 @@
+# Migrating from v0.4.0 to the next release
+
+Phase 6 of the plan (API review before 1.0) removes or changes what the projects should not rely on. Apply the table;
+the sections below cover the older versions.
+
+| Old | New | Action |
+|---|---|---|
+| `cs_get_target_runtime_libraries(<target> <config> <out>)` | removed | the DLLs a target needs: CMake's `$<TARGET_RUNTIME_DLLS:<target>>` / `$<TARGET_RUNTIME_DLL_DIRS:<target>>` (generator expressions, per configuration) |
+| target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`, `_CSCMAKE_PENDING_DEPENDENCIES` | removed | the same generator expressions; the project targets a target depends on: `CSCMAKE_PROJECT_DEPENDENCIES` (`cs_get_target_project_dependencies`) |
+| `VS_DEBUGGER_ENVIRONMENT_<CONFIG>` set by csCMake | not set | `VS_DEBUGGER_ENVIRONMENT` holds the value of every configuration |
+| warning "depends on the imported target ..., whose file ... does not exist" | not printed | CMake reports a missing imported file when it is needed |
+| check targets `<target>_<header>` of `cs_target_check_installed_headers` | `<target>_installed_headers` | rename in build commands that name them |
+
 # Migrating from v0.1.0 to v0.2.0
 
 v0.2.0 renames the csCMake API to consistent names and fixes behaviours that cannot be fixed compatibly.

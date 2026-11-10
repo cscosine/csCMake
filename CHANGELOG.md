@@ -5,6 +5,21 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ## Unreleased
 
+### Changed
+
+- The Visual Studio debugger environment of a target comes from CMake's `$<TARGET_RUNTIME_DLL_DIRS>`: the DLLs of
+  every linked target, per configuration, with the configuration CMake selects for each imported target (a package
+  installed in Release only, a custom configuration mapped to Debug, private links of static libraries: their DLLs
+  were missing). Set on executables and shared / module libraries.
+- The targets a target depends on (`CSCMAKE_PROJECT_DEPENDENCIES`, the dependencies between components) are resolved
+  once by `cs_finalize_project`, following `$<LINK_ONLY:...>` links too.
+
+### Removed
+
+- `cs_get_target_runtime_libraries` and the target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`,
+  `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`: use
+  `$<TARGET_RUNTIME_DLLS>` / `$<TARGET_RUNTIME_DLL_DIRS>` (see MIGRATION.md).
+
 ### Fixed
 
 - `cs_target_check_installed_headers`: headers with the same name (`a/util.h` and `b/util.h`, `util.h` and

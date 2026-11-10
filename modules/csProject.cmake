@@ -210,8 +210,8 @@ endfunction()
 #.rst:
 # .. command:: cs_finalize_project
 #
-#   Finalize the project: check its targets, resolve their runtime dependencies, install its components and generate
-#   <namespace>Config.cmake.
+#   Finalize the project: check its targets, resolve their dependencies (the targets each one depends on, the Visual
+#   Studio debugger environment), install its components and generate <namespace>Config.cmake.
 #
 #   .. code-block:: cmake
 #
@@ -220,7 +220,8 @@ endfunction()
 #   Mandatory, at the end of the CMakeLists.txt of :command:`cs_initialize_project` (checked). Fails for the targets not
 #   finalized with :command:`cs_finalize_target` and for the ones whose links changed after it.
 #
-#   :Writes: :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`
+#   :Writes: :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`, :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`,
+#     :prop_tgt:`VS_DEBUGGER_ENVIRONMENT`
 function(cs_finalize_project)
   if(ARGN)
     message(

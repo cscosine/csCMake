@@ -57,7 +57,7 @@ Bugs, confirmed or to confirm with a configure test first:
   build has none of the configurations (no flags of the configuration, no postfix, compile profile rules with
   `CONFIGS` never apply); the check `if(NOT ${CMAKE_BUILD_TYPE} IN_LIST ...)` degenerates. Fix: a clear error, or
   default to the first configuration when the project has not set one (to decide).
-- [ ] B3 (to confirm) runtime dependency analysis (`csTargetDependencies`, VS debugger `PATH`): imported locations are
+- [x] (fixed by D1: CMake evaluates the DLLs per configuration with the mapping; checked on Windows by CI only) B3 (to confirm) runtime dependency analysis (`csTargetDependencies`, VS debugger `PATH`): imported locations are
   read per configuration of the build (`IMPORTED_LOCATION_<CONFIG>`), ignoring `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>`
   and `MAP_IMPORTED_CONFIG_*`: a package with Release only, or a custom configuration (Paranoid -> Debug), gets no
   DLL folder for that configuration; link items in generator expressions (`$<LINK_ONLY:...>`, which CMake writes
@@ -68,7 +68,7 @@ Bugs, confirmed or to confirm with a configure test first:
 - [x] (fixed) B5 `cs_print_state` prints `CMAKE_CURRENT_LIST_DIR` as "csCMake path": it is the caller's folder.
 
 Design (behaviour or API changes):
-- [ ] D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
+- [x] (done, under review; B3 fixed with it) D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
   `LINK_INTERFACE_LIBRARIES*`, file dependencies `LINK_DEPENDS` / `INTERFACE_LINK_DEPENDS` read as libraries) does
   what CMake does since 3.21 / 3.27 with `$<TARGET_RUNTIME_DLLS:tgt>` / `$<TARGET_RUNTIME_DLL_DIRS:tgt>` (minimum
   3.31: available), evaluated at generate time with the imported-configuration mapping: the debugger environment
@@ -196,6 +196,13 @@ C2 to 6c.
   OpenCV fork's `csCMakeProjectSetup.json` includes `presets/csCMakeProjectSetup-base.json` and inherits
   `cscmake-project-setup-base`, gone since v0.2.0: see MIGRATION.md "Project setup presets"), csqt6 (its release is
   used by csfoundation).
+- Licences (user 2026-11-10): check the licences of everything csCMake uses or ships, and comply (notices,
+  attribution, compatibility with csCMake's own licence): what the release package and the docs zip contain
+  (the built docs embed Furo, sphinx-design, Sphinx assets and fonts; `docs/_inventories` is cmake.org data), code
+  derived from others (e.g. the per-configuration variable list "inspired by" comment in `csBuildConfigurations`),
+  the dev tools (gersemi, ruff, mypy, pytest, import-linter, pre-commit: used, not shipped) and the presets
+  (toolchain names only). Output: a third-party notices file in the package if needed, a licence section in the
+  docs, and the same check in the template for the projects.
 - Clean first stable release (to decide):
   - User idea: after Phase 5, a full clean-up and a first clean release, without references to the past (PLAN removed).
   - Proposal: keep the repository and its history (blame, tags `v0.1.0` / `v0.2.0` used by third_party_base_libs and
@@ -374,3 +381,11 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   component once (24 components with ~75 000 paths: 1 s; 16 levels: 5.4 s -> 0.3 s; generated Config identical);
   test with a timeout (`configure(..., timeout=)`). S4: `cs_target_sources` one loop per scope. S5: list helper with
   `REMOVE_DUPLICATES`, the variable list of CMake read without a file in the build folder.
+
+### 2026-11-10 (Phase 6a — D1, B3)
+- `csTargetDependencies` rewritten (~580 -> ~120 lines): `CSCMAKE_PROJECT_DEPENDENCIES` by one walk in
+  `cs_finalize_project` (`LINK_LIBRARIES`, `INTERFACE_LINK_LIBRARIES`, aliases, `$<LINK_ONLY:...>`); the Visual Studio
+  debugger `PATH` from `$<TARGET_RUNTIME_DLL_DIRS>` (B3). Removed: `cs_get_target_runtime_libraries`, the
+  `CSCMAKE_*RUNTIME_LIBRARIES*` / `CSCMAKE_LINKED_*` properties, the missing-file warning, two unused helpers.
+  Host smoke (Ninja, GCC) before / after: the 84 installed text files identical (Config, targets, headers). MIGRATION
+  section for the next release; docs (runtime dependencies, dependencies).

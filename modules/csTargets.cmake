@@ -107,8 +107,7 @@ endfunction()
 #.rst:
 # .. command:: cs_finalize_target
 #
-#   Finalize a target: apply its compile profiles, set its install RPATH, analyze its runtime dependencies, record its
-#   links.
+#   Finalize a target: apply its compile profiles, set its install RPATH, record its links.
 #
 #   .. code-block:: cmake
 #
@@ -137,7 +136,6 @@ function(cs_finalize_target target_name)
     _cs_apply_compile_profiles(${target_name})
     _cs_set_install_rpath(${target_name})
   endif()
-  _cs_recursive_analyze_target(${target_name})
   _cs_target_links(${target_name} links)
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
 endfunction()

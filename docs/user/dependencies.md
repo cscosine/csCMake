@@ -62,8 +62,6 @@ cs_finalize_project()
 
 ## Runtime dependencies
 
-When the project is finalized, csCMake walks the links of every target and collects the shared libraries it needs at
-run time, per configuration, also through other targets
-(`cs_get_target_runtime_libraries`). With the Visual Studio generators, each target gets a debugger
-environment whose `PATH` contains the folders of those libraries, so running or debugging it from Visual Studio finds
-its DLLs.
+When the project is finalized, each executable and shared library gets a Visual Studio debugger environment whose
+`PATH` contains the folders of the DLLs it needs, per configuration (CMake's `$<TARGET_RUNTIME_DLL_DIRS>`), so running
+or debugging it from Visual Studio finds them; see [Runtime dependencies](../advanced/runtime-dependencies.md).

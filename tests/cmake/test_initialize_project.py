@@ -117,25 +117,6 @@ def test_debug_messages_only_with_the_project_option(tmp_path: Path, debug: bool
     assert ("[cs_target_link_libraries]" in result.output) == debug
 
 
-def test_missing_imported_file_is_a_warning(tmp_path: Path) -> None:
-    body = (
-        INIT
-        + """
-add_library(ext SHARED IMPORTED)
-set_target_properties(ext PROPERTIES IMPORTED_LOCATION_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/missing.so)
-cs_add_library(lib INTERFACE)
-cs_target_link_libraries(lib INTERFACE ext)
-cs_finalize_target(lib)
-cs_finalize_project()
-"""
-    )
-    result = configure(tmp_path, body)
-
-    assert result.returncode == 0, result.output
-    assert "CMake Warning" in result.output
-    assert "missing.so does not exist" in " ".join(result.output.split())  # CMake wraps warnings
-
-
 SUBPROJECT = """
 project(sub VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE sub CXX_STANDARD 17 DEFAULT_CONFIG Debug)

@@ -83,9 +83,5 @@ To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_D
 : Check that it is installed for the same variant (`install/<variant>/`), and that its project folder is named like the
   package (see [Presets](presets.md#folders)).
 
-`[csCMake] <target> depends on the imported target <imported>, whose file <path> does not exist`
-: A warning: the package of `<imported>` is installed without the files of this configuration (e.g. only Release).
-  Install it for the same configurations, or map the configuration to one it has (`MAPPED_TO`, `BASED_ON`).
-
 `Visual Studio: path too long`, files not found in deep build folders
 : Use a `*-short` layout: short build folder names (see [Presets](presets.md#layouts)).

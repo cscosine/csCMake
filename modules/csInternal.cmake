@@ -1,16 +1,6 @@
 # Internal helpers of csCMake: lists, properties, paths.
 include_guard(GLOBAL)
 
-# Append each element of values to the list variable list_name of the caller, skipping the ones already present.
-function(_cs_list_add_list_unique_values list_name values)
-  if(values)
-    # REMOVE_DUPLICATES keeps the first occurrence: the existing elements stay in place
-    set(output_list ${${list_name}} ${values})
-    list(REMOVE_DUPLICATES output_list)
-    set(${list_name} ${output_list} PARENT_SCOPE)
-  endif()
-endfunction()
-
 # Append value to the list variable list_name of the caller, unless already present.
 function(_cs_list_add_unique_value list_name value)
   set(output_list ${${list_name}})
@@ -44,16 +34,6 @@ function(_cs_path_list_normalize input_list_name)
     list(APPEND output_list ${normalized_path})
   endforeach()
   set(${input_list_name} ${output_list} PARENT_SCOPE)
-endfunction()
-
-# Return in out_list the unique parent folders of the files given after it.
-function(_cs_unique_parent_dirs out_list)
-  set(out_tmp "")
-  foreach(file_path ${ARGN})
-    get_filename_component(dir_path "${file_path}" DIRECTORY)
-    _cs_list_add_unique_value(out_tmp ${dir_path})
-  endforeach()
-  set(${out_list} ${out_tmp} PARENT_SCOPE)
 endfunction()
 
 # Set out to the folder of CMAKE_CURRENT_SOURCE_DIR relative to the folder of cs_initialize_project (empty there): the

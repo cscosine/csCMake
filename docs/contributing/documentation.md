@@ -173,7 +173,7 @@ of the file), grouped under `Variables`, `Target properties` and `Global propert
 | environment variable | — | `` :envvar:`X` `` |
 
 - Names with parts that vary are written with placeholders, as CMake does: `CSCMAKE_<namespace>_COMPONENTS`,
-  `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`.
+  `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>`.
 - Internal entries (a leading `_`, or state no project should read) start their description with "Internal:".
 - References to CMake's own commands, variables and properties (`` :command:`target_sources` ``,
   `` :variable:`CMAKE_PREFIX_PATH` ``, `` :prop_tgt:`EXPORT_NAME` ``) link to the CMake documentation of the minimum
