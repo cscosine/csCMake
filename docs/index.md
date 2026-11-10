@@ -4,6 +4,20 @@ CMake utilities for C++ projects: targets, dependencies, installed packages with
 CMake presets.
 
 ```{toctree}
+:caption: User guide
+:maxdepth: 2
+
+user/getting-started
+user/targets
+user/dependencies
+user/install
+user/build-configurations
+user/compile-profiles
+user/presets
+user/troubleshooting
+```
+
+```{toctree}
 :caption: Reference
 :maxdepth: 1
 

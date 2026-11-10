@@ -181,9 +181,11 @@ of a section page). Write them so that they also read well on GitHub:
 - headings, lists, tables, code blocks: plain Markdown;
 - diagrams: ` ```mermaid ` blocks (rendered by GitHub and by the documentation build alike; in VS Code, the
   recommended extension `bierner.markdown-mermaid` renders them in the Markdown preview);
-- a reference to the reference: the MyST role syntax, e.g. {cmake:command}`cs_install_target`,
-  {cmake:variable}`CSCMAKE_NAMESPACE`, {cmake:prop_tgt}`CSCMAKE_COMPONENT` (written
-  `` {cmake:command}`cs_install_target` ``); GitHub shows them as plain text;
+- a command, variable or property: plain inline code, e.g. `cs_install_target`, `CSCMAKE_NAMESPACE`. In the site, inline
+  code naming exactly one documented object becomes a link to its entry (`_link_code_to_reference` in `docs/conf.py`);
+  a name documented twice (`CSCMAKE_NAMESPACE` is a variable and a target property) stays plain. The MyST role syntax
+  (`` {cmake:prop_tgt}`CSCMAKE_NAMESPACE` ``) chooses explicitly, but GitHub and the editors show it as raw text: avoid
+  it in pages
 - a link to another page: a relative Markdown link to the `.md` file, e.g. [the documentation index](../index.md).
 
 Pages describe the current behaviour only: history goes in the `PLAN.md` changelog and in the commit messages,

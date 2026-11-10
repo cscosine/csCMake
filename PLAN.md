@@ -255,8 +255,9 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `cscmake_tier_app` (warnings as errors, sanitizers on request), `cscmake_tier_sample` (warnings, no `-Werror`).
   Configuration names are project-defined, so tiers need the configurations as a parameter (e.g. a helper
   `cs_add_compile_profile_tier(<name> CORE PARANOID_CONFIGS Paranoid)`) or stay documented recipes.
-- [ ] **Per directory**: `CSCMAKE_DEFAULT_COMPILE_PROFILES` is a directory variable read at `cs_finalize_target`, so a
-  `samples/` or `tests/` folder can already `set()` its own defaults: test it, document it, maybe a named helper.
+- [x] **Per directory**: `CSCMAKE_DEFAULT_COMPILE_PROFILES` is a directory variable read at `cs_finalize_target`, so a
+  `samples/` or `tests/` folder `set()`s its own defaults: tested (`test_a_folder_sets_its_own_default_profiles`) and
+  documented (user guide, compile profiles); a named helper not needed so far.
 - [ ] **Per target exceptions**: `cs_target_exclude_compile_profiles(<target> <profile>...)` (vendored or generated
   code); generated sources (Qt `moc`/`uic`) marked `SKIP_LINTING` (CMake 3.27) so clang-tidy skips them.
 - [ ] **`.clang-tidy` tiers** shipped as recommendations (later in the copier template): core (bugprone, cert,
@@ -729,3 +730,23 @@ released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-r
   ` ```mermaid ` blocks render on GitHub and in the site.
 - Release package with the docs (Phase 5, user): recorded in "Phase 5 — Release package".
 - VS Code: `bierner.markdown-mermaid` recommended (Mermaid in the Markdown preview).
+
+### 2026-11-10 (Phase 3d step 2 — user guide)
+- `docs/user/`: getting started (workspace and layouts with a Mermaid diagram, the files of a project, configure /
+  build / install / test), targets and sources (installed headers, include paths, generated files, links, mandatory
+  finalize, header check, OpenMP, debug messages), dependencies (`cs_find_package` PUBLIC / PRIVATE, installed and
+  nested csCMake projects, runtime dependencies; project folder named like the package), installed packages
+  (components, installed layout, the generated Config and its variables), build configurations (mapped and custom,
+  postfixes, output folders, MSVC runtime, nested projects), compile profiles (rules, defaults, clang-tidy, shipped
+  profiles, hardening, recipe: strictness per kind of project and per folder), presets (names, layouts, folders,
+  search paths, without presets), troubleshooting (the error messages of csCMake).
+- Checked against the code and by running them: the getting-started project built with the documented workflow preset
+  in a scratch workspace (installed layout as documented), and a consumer project using it (`<ns>_<component>_FOUND`,
+  `<ns>_BASE_DIR`, `find_dependency` in its installed Config). Corrections found on the way: `CMakePresets.json`
+  includes only `cs-presets-all.json` (the csCMake presets include `csCMakeProjectSetup.json`), install presets are
+  build presets, workflows run build, install, test per configuration.
+- Per-folder default profiles tested (`test_a_folder_sets_its_own_default_profiles`).
+- `docs/conf.py`: MyST `deflist` (troubleshooting) and `myst_heading_anchors = 3` (GitHub-style `page.md#heading`
+  links in the site too).
+- Pages write names as plain inline code (the MyST roles show as raw text on GitHub and in the VS Code preview, user
+  feedback): `docs/conf.py` links inline code naming exactly one documented command / variable / property.

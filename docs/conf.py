@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from docutils import nodes
 from docutils.nodes import Element, Node, TextElement
 from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
 from sphinx.ext import intersphinx
+from sphinx.util.nodes import make_refnode
 from sphinxcontrib.moderncmakedomain.cmake import CMakeObject
 
 from cscmake.devtools.cmake_inventory import docs_url, inventory_path
@@ -28,6 +30,10 @@ primary_domain = "cmake"
 exclude_patterns = ["_build", "_inventories"]
 # ```mermaid blocks: diagrams on GitHub and in the built documentation alike
 myst_fence_as_directive = ["mermaid"]
+# term / ": meaning" lists (troubleshooting)
+myst_enable_extensions = ["deflist"]
+# GitHub-style heading anchors: page.md#a-heading links work on GitHub and in the site
+myst_heading_anchors = 3
 
 # every reference must resolve (CMake commands and variables: the CMake documentation)
 nitpicky = True
@@ -54,9 +60,31 @@ def _resolve_in_cmake_inventory(
     return intersphinx.missing_reference(app, env, prefixed, contnode)
 
 
+def _link_code_to_reference(app: Sphinx, doctree: nodes.document, docname: str) -> None:
+    """Link inline code naming one documented csCMake object (`cs_install_target`, `CSCMAKE_SOURCE_DIR`, ...).
+
+    The Markdown pages write names as plain inline code, which reads well on GitHub and in editors; in the site, a name
+    documented exactly once (a command, a variable or a property) becomes a link to its entry.
+    """
+    domain = app.env.get_domain("cmake")
+    entries: dict[str, list[tuple[str, str]]] = {}
+    for target_id, entry in domain.data["objects"].items():
+        name = target_id.partition(":")[2]
+        entries.setdefault(name, []).append((entry.docname, entry.node_id))
+    for literal in list(doctree.findall(nodes.literal)):
+        if isinstance(literal.parent, nodes.reference):
+            continue
+        name = literal.astext().removesuffix("()")
+        found = entries.get(name.lower() if name.startswith("cs_") else name, [])
+        if len(found) == 1:
+            target_doc, node_id = found[0]
+            literal.replace_self(make_refnode(app.builder, docname, target_doc, node_id, literal.deepcopy(), name))
+
+
 def setup(app: Sphinx) -> None:
     """Properties described next to the code that writes them, and links to the CMake documentation."""
     # the domain creates these objects only from one document per property (CMake's own layout)
     for objtype in ("prop_tgt", "prop_gbl"):
         app.add_directive_to_domain("cmake", objtype, CMakeObject)
     app.connect("missing-reference", _resolve_in_cmake_inventory)
+    app.connect("doctree-resolved", _link_code_to_reference)

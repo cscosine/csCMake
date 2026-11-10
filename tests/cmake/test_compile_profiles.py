@@ -79,6 +79,37 @@ def test_default_profiles(tmp_path: Path, defaults: str, expected: str) -> None:
     assert result.reports["COMPILE_OPTIONS"] == expected
 
 
+def test_a_folder_sets_its_own_default_profiles(tmp_path: Path) -> None:
+    rules = """
+cs_add_compile_profile_rule(PROFILE strict COMPILE_OPTIONS -Wstrict)
+cs_add_compile_profile_rule(PROFILE loose COMPILE_OPTIONS -Wloose)
+"""
+    body = (
+        INIT.format(defaults=" DEFAULT_COMPILE_PROFILES strict")
+        + rules
+        + """
+cs_add_library(lib STATIC lib.cpp)
+cs_finalize_target(lib)
+add_subdirectory(tests)
+get_target_property(value lib COMPILE_OPTIONS)
+cstest_report(LIB "${value}")
+get_target_property(value test_lib COMPILE_OPTIONS)
+cstest_report(TEST "${value}")
+cs_finalize_project()
+"""
+    )
+    tests = """
+set(CSCMAKE_DEFAULT_COMPILE_PROFILES loose)
+cs_add_library(test_lib STATIC ../lib.cpp)
+cs_finalize_target(test_lib)
+"""
+    result = configure(tmp_path, body, {**FILES, "tests/CMakeLists.txt": tests})
+
+    assert result.returncode == 0, result.output
+    assert result.reports["LIB"] == "-Wstrict"
+    assert result.reports["TEST"] == "-Wloose"
+
+
 def test_link_options_of_a_static_library_are_also_interface(tmp_path: Path) -> None:
     rules = "cs_add_compile_profile_rule(PROFILE p LINK_OPTIONS -fsanitize=undefined)\n"
     result = configure(
