@@ -29,8 +29,8 @@ cs_initialize_project(
   links the RelWithDebInfo build of a dependency, or its Release build when there is none
   (`CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO`).
 - **`CUSTOM_CONFIG <name> BASED_ON "<config>,<fallback>,..." POSTFIX "<postfix>"`**: a new configuration, a copy of
-  the first one listed (its compiler and linker flags, its MSVC runtime), which must be a `DEFAULT_CONFIG` of the
-  project, with its own postfix (`""` for none). The
+  the first one listed (its compiler and linker flags, of the languages enabled before `cs_initialize_project`; its
+  MSVC runtime), which must be a `DEFAULT_CONFIG` of the project, with its own postfix (`""` for none). The
   list also maps the imported targets: a Paranoid build links the Debug build of a dependency, or its Release build.
   `BASED_ON Debug` alone is enough when no fallback is needed.
 

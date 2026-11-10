@@ -90,6 +90,28 @@ cs_finalize_project()
     assert result.reports["runtime_cache"] == ""
 
 
+def test_a_custom_configuration_copies_the_variables_defined_for_its_base(tmp_path: Path) -> None:
+    """Paranoid is based on Debug: the C++ flags of Debug are copied (C++ is enabled), not the ones of the languages
+    that are not (no empty cache entries for them)."""
+    body = (
+        "enable_language(CXX)\n"
+        + INIT
+        + LIB
+        + """
+cstest_report(cxx_debug "${CMAKE_CXX_FLAGS_DEBUG}")
+cstest_report(cxx "$CACHE{CMAKE_CXX_FLAGS_PARANOID}")
+get_property(fortran CACHE CMAKE_Fortran_FLAGS_PARANOID PROPERTY TYPE SET)
+cstest_report(fortran "${fortran}")
+cs_finalize_project()
+"""
+    )
+    result = configure(tmp_path, body)
+
+    assert result.returncode == 0, result.output
+    assert result.reports["cxx"] == result.reports["cxx_debug"]
+    assert result.reports["fortran"] == "0"
+
+
 def test_defaults_can_be_overridden_from_the_command_line(tmp_path: Path) -> None:
     body = (
         INIT

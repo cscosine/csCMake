@@ -85,7 +85,7 @@ Design (behaviour or API changes):
   documented entry point, or drop (9 consumer calls), to decide.
 - [ ] D4 `<namespace>ConfigVersion.cmake` is always `COMPATIBILITY AnyNewerVersion` (a consumer asking 1.0 accepts
   2.0): an option of `cs_initialize_project` (e.g. `VERSION_COMPATIBILITY SameMajorVersion`), default to decide.
-- [ ] D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
+- [x] (done, under review) D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
   configuration, e.g. `CMAKE_ASM-ATT_FLAGS_PARANOID`), most of them empty: copy only the ones defined (or the enabled
   languages).
 - [ ] D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
@@ -401,3 +401,8 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - Smoke: csSmokeSharedApp calls `cs_target_runtime_environment` (a folder and a variable per configuration); on the Visual Studio variants `run_smoke.py`
   checks the `LocalDebuggerEnvironment` of its `.vcxproj` for every configuration (extra folder first, then
   `bin/<config>`, then `%PATH%`); parser and check unit-tested.
+
+### 2026-11-11 (Phase 6a — D5)
+- A custom configuration copies only the per-configuration variables defined for its base (C++ project, Paranoid: 65
+  cache entries -> 6, the non-empty values identical); configure test (fails on the old code); docs (build
+  configurations, lifecycle).

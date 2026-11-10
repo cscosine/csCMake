@@ -15,6 +15,8 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   once by `cs_finalize_project`, following `$<LINK_ONLY:...>` links too.
 - A `VS_DEBUGGER_ENVIRONMENT` set by the project is kept: csCMake adds its lines after the project's, and merges its
   folders into the project's `PATH` line (`DEBUGGER_PATH` of `cs_target_runtime_environment`).
+- A custom configuration creates cache entries only for the per-configuration variables defined for its base (e.g. 6
+  instead of 65 for a C++ project: no empty `CMAKE_Fortran_FLAGS_PARANOID` ...).
 
 ### New
 

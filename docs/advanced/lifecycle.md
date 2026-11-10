@@ -37,7 +37,7 @@ order:
 4. normalizes the search paths and the install prefix;
 5. the output folders `<build>/bin` and `<build>/lib` (`/<CONFIG>` with multi-config generators), unless set;
 6. collects the CMake variables with a `<CONFIG>` part, once per build tree (`cmake --help-variable-list`): a custom
-   configuration copies them from its base;
+   configuration copies the ones defined for its base (the flags of the languages enabled so far);
 7. parses the arguments: namespace (`CSCMAKE_NAMESPACE`), C++ standard, default compile profiles, and
    the configurations, added to the build, or, in a nested project, checked against the build;
 8. sets in the project scope the variables computed by the functions called so far (see

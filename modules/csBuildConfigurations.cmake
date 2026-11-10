@@ -515,12 +515,14 @@ function(_cs_process_build_configurations_variables)
   set_property(GLOBAL PROPERTY CSCMAKE_PER_CONFIG_VARIABLES ${config_var_list})
 endfunction()
 
-# Create the configuration config_to_in as a copy of config_from_in: every per-<CONFIG> CMake variable and the MSVC
-# runtime library, imported targets mapped onto base_config_and_fallback.
+# Create the configuration config_to_in as a copy of config_from_in: every per-<CONFIG> CMake variable defined for the
+# base configuration (e.g. the flags of the enabled languages; not the ones of other languages) and the MSVC runtime
+# library, imported targets mapped onto base_config_and_fallback.
 #
 # Writes:
 #
-# * cache variable <every per-<CONFIG> variable>_<CONFIG>: copy of the base configuration, overridable
+# * cache variable <every per-<CONFIG> variable defined for the base>_<CONFIG>: copy of the base configuration,
+#   overridable
 # * cache variable CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>: copy of the base configuration, overridable
 # * variable CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>: project scope
 function(_cs_copy_build_configuration config_from_in config_to_in base_config_and_fallback)
@@ -531,6 +533,9 @@ function(_cs_copy_build_configuration config_from_in config_to_in base_config_an
   foreach(config_var ${config_var_list})
     string(REPLACE "<CONFIG>" "${config_from}" config_var_from "${config_var}")
     string(REPLACE "<CONFIG>" "${config_to}" config_var_to "${config_var}")
+    if(NOT DEFINED "${config_var_from}")
+      continue()
+    endif()
 
     # cache variable, overridable (e.g. -DCMAKE_CXX_FLAGS_PARANOID=...); it keeps its value when the base configuration
     # changes: delete the cache entry to copy it again
