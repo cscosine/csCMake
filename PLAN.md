@@ -17,7 +17,7 @@ the decisions and the session log): `PLAN.md` at tag `v0.4.0` and the git histor
   reviewer.
 - Update `PLAN_STATE` and the changelog below at the end of each session.
 
-## Phase 6 — API review before 1.0 (proposed, user 2026-11-10)
+## Phase 6 — API review before 1.0 (in progress, user 2026-11-10)
 All three steps can change the public API: they belong before the 1.0 stability promise, not after. 6a comes first:
 it shrinks what 6b and 6c have to organise. How the 6a findings flow into the next steps:
 
@@ -25,11 +25,12 @@ it shrinks what 6b and 6c have to organise. How the 6a findings flow into the ne
 |---|---|---|
 | B1, B2, B4-B6, C1, C3, C5, S1-S5 | 6a | none on the API; smaller, cleaner code for 6b / 6c |
 | D1 (+ B3) runtime DLLs with CMake's genex | 6a | removes ~400 lines and 26 of the ~113 debug call sites (6c smaller; S3 removes ~15 more); drops `cs_get_target_runtime_libraries` and the `CSCMAKE_*RUNTIME_LIBRARIES*` / `CSCMAKE_LINKED_*` properties (6b inventory smaller); the runtime deployment ideas ("Later") use the genex too |
-| D5 per-configuration cache copies, D7 C files | 6a | none on the API (D7 to decide) |
-| D8 clang-tidy: kept (user) | 6a / later | C4 renames the cache variable (6b); maturity with csCore: "Professional C++ projects" |
+| D5 per-configuration cache copies, D7 C files | 6a | D7: `LANGUAGES` of the compile profile rules (MIGRATION) |
+| D8 clang-tidy: kept (user) | decided in 6a | C4 renames the cache variable (6b); maturity with csCore: "Professional C++ projects" |
 | D2 printers, getters internal, D3, D6, C4 | 6b | the inventory starts from the 6a proposal below |
 | D4 version compatibility | 6b | a new `cs_initialize_project` keyword (or not) |
 | S6, C2 (messages) | 6c | the message review covers the error messages too |
+| Unused public commands: keep / internal / drop | 6a, last step | the 6b inventory starts from what is left |
 
 **6a. General code review (first).**
 - The whole CMake code (`csCMake.cmake`, `modules/`, the Config template): repeated code to factor (e.g. the
@@ -44,11 +45,11 @@ it shrinks what 6b and 6c have to organise. How the 6a findings flow into the ne
 **6a findings (review 2026-11-10, to agree; B = bug, D = design, S = simplification, C = cleanup).**
 
 Bugs, confirmed or to confirm with a configure test first:
-- [x] (fixed, under review) B1 (confirmed) `cs_target_check_installed_headers`: one target and one generated file per header, named after
+- [x] (fixed) B1 (confirmed) `cs_target_check_installed_headers`: one target and one generated file per header, named after
   `NAME_WE`: `a/util.h` + `b/util.h`, or `util.h` + `util.hpp`, fail with "add_library cannot create target
   lib_util". Fix: one STATIC library per checked target with one generated `.cpp` per header, named after the
   relative path (also fewer targets).
-- [x] (fixed, under review; found by the B1 test) B6 `cs_target_sources(<t> PUBLIC|INTERFACE[_INSTALL] <relative>)`
+- [x] (fixed; found by the B1 test) B6 `cs_target_sources(<t> PUBLIC|INTERFACE[_INSTALL] <relative>)`
   failed at generate ("Target contains relative path in its INTERFACE_SOURCES"): the paths are wrapped in
   `$<BUILD_INTERFACE:...>`, which CMake does not make absolute. Every caller used `PRIVATE`, so header-only libraries
   with `INTERFACE_INSTALL` were never tried. Fix: absolute paths (relative to the current folder).
@@ -68,7 +69,7 @@ Bugs, confirmed or to confirm with a configure test first:
 - [x] (fixed) B5 `cs_print_state` prints `CMAKE_CURRENT_LIST_DIR` as "csCMake path": it is the caller's folder.
 
 Design (behaviour or API changes):
-- [x] (done, under review; B3 fixed with it) D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
+- [x] (done; B3 fixed with it; the Visual Studio check runs in CI) D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
   `LINK_INTERFACE_LIBRARIES*`, file dependencies `LINK_DEPENDS` / `INTERFACE_LINK_DEPENDS` read as libraries) does
   what CMake does since 3.21 / 3.27 with `$<TARGET_RUNTIME_DLLS:tgt>` / `$<TARGET_RUNTIME_DLL_DIRS:tgt>` (minimum
   3.31: available), evaluated at generate time with the imported-configuration mapping: the debugger environment
@@ -77,23 +78,23 @@ Design (behaviour or API changes):
   `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_*`,
   `cs_get_target_runtime_libraries` (check the run-scripts idea can use the same genex: yes, `file(GENERATE)`).
   `CSCMAKE_PROJECT_DEPENDENCIES` (component dependencies) stays, computed from the links directly.
-- [ ] D2 `cs_print_*`: they print only when the debug switch is on, so a project calling `cs_print_target_properties`
+- [ ] (-> 6b) D2 `cs_print_*`: they print only when the debug switch is on, so a project calling `cs_print_target_properties`
   to troubleshoot sees nothing. A command the project calls explicitly should always print. With 6b / 6c.
-- [ ] D3 `cs_target_link_libraries` replaces in-project aliases by the real target, then calls `target_link_libraries`
+- [ ] (-> 6b) D3 `cs_target_link_libraries` replaces in-project aliases by the real target, then calls `target_link_libraries`
   (the result equals `target_link_libraries`, `test_target_link_libraries.py`): is it still needed? If the analysis
   (D1, component dependencies) resolves aliases itself, it is `target_link_libraries` plus debug lines: keep as the
   documented entry point, or drop (9 consumer calls), to decide.
-- [ ] D4 `<namespace>ConfigVersion.cmake` is always `COMPATIBILITY AnyNewerVersion` (a consumer asking 1.0 accepts
+- [ ] (-> 6b) D4 `<namespace>ConfigVersion.cmake` is always `COMPATIBILITY AnyNewerVersion` (a consumer asking 1.0 accepts
   2.0): an option of `cs_initialize_project` (e.g. `VERSION_COMPATIBILITY SameMajorVersion`), default to decide.
-- [x] (done, under review) D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
+- [x] (done) D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
   configuration, e.g. `CMAKE_ASM-ATT_FLAGS_PARANOID`), most of them empty: copy only the ones defined (or the enabled
   languages).
-- [ ] D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
+- [ ] (-> 6b) D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
   <find_package args>)` validates the mode after `find_package` ran and stores the arguments as one string: keyword
   style and early checks (with 6b).
-- [x] (done, under review: `LANGUAGES` per rule, default CXX; user) D7 compile profiles apply their options to every language of the target (`-Wold-style-cast` on a C file warns):
+- [x] (done: `LANGUAGES` per rule, default CXX; user) D7 compile profiles apply their options to every language of the target (`-Wold-style-cast` on a C file warns):
   wrap them in `$<COMPILE_LANGUAGE:CXX>` (or per-rule `LANGUAGES`), to decide.
-- [ ] D8 clang-tidy: the old `cs_target_enable_clang_tidy` / `cs_exec_clang_tidy` were removed in Phase 3 (they never
+- [x] (decided: keep) D8 clang-tidy: the old `cs_target_enable_clang_tidy` / `cs_exec_clang_tidy` were removed in Phase 3 (they never
   ran clang-tidy), but the compile profiles brought it back: the rule keyword `CLANG_TIDY`, the shipped profile
   `cscmake_clang_tidy`, the cache variable `CLANG_TIDY_EXE`, `_cs_apply_clang_tidy` (~40 lines, mandatory where a rule
   matches, a warning with Visual Studio / Xcode). Tested: configure tests (`test_compile_profiles.py`) and the smoke
@@ -116,34 +117,34 @@ Simplifications (no behaviour change, installed files byte-identical):
 - [x] (done; `get_filename_component` goes with D1) S5 `_cs_list_add_list_unique_values` / `_cs_list_add_unique_value` in loops: `list(APPEND)` +
   `list(REMOVE_DUPLICATES)`; `get_filename_component` -> `cmake_path`; the help list of variables goes through a file
   in the build folder (`cmake_var_full_list.txt`) instead of `OUTPUT_VARIABLE`.
-- [ ] S6 the debug-only work runs when debug is off: `cs_print_state` loops over every per-configuration variable of
+- [ ] (-> 6c) S6 the debug-only work runs when debug is off: `cs_print_state` loops over every per-configuration variable of
   every configuration, `cs_print_components` sorts again; return early (with 6c).
 
 Cleanup:
 - [x] (done, 26 conditions) C1 unquoted dereferences in conditions: `if(NOT ${value} IN_LIST ...)`, `if(${x} STREQUAL ...)` (a value
   that names a variable is dereferenced twice, an empty one breaks the condition: B2): `if(NOT value IN_LIST ...)`,
   quoted strings; about 25 places.
-- [ ] C2 error messages: some without the `[command]` prefix (`cs_install_target`, `cs_find_package`, OpenMP,
+- [ ] (-> 6c) C2 error messages: some without the `[command]` prefix (`cs_install_target`, `cs_find_package`, OpenMP,
   `_cs_add_target_to_project_targets` "variable do not exists"), some naming internal functions
   (`[_cs_parse_additional_configurations]`, `[_cs_process_configurations]`, `[_cs_add_custom_build_configuration]`)
   instead of the command the user called; one wording.
 - [x] (done) C3 `_cs_add_target_to_project_targets` checks `CSCMAKE_<CONFIG>_POSTFIX` and the MSVC runtime variable per
   configuration to detect a missing `cs_initialize_project`: one check of `CSCMAKE_NAMESPACE` with a clear message.
-- [ ] C4 `find_program(CLANG_TIDY_EXE ...)`: an unprefixed cache variable (could clash with a project's own):
+- [ ] (-> 6b) C4 `find_program(CLANG_TIDY_EXE ...)`: an unprefixed cache variable (could clash with a project's own):
   `CSCMAKE_CLANG_TIDY_EXE`, documented (MIGRATION).
 - [x] (done for the dead branch; the printers with D2) C5 dead code: the empty `elseif(propagate_mode STREQUAL "PRIVATE")` branch, `set(targets "")` before a getter,
   the `count GREATER 0` / `list(LENGTH)` dances in the printers.
 
-Public commands not used by any project (the starting point of the 6b inventory): `cs_get_*` (19), `cs_print_*` (8), `cs_get_namespace`,
-`cs_debug_message`. Proposal: keep `cs_get_generated_dir` / `cs_get_generated_config_dir` (generated headers),
-`cs_get_build_configurations`, `cs_get_install_include_dir`; the other getters become internal (state accessors of
-csCMake); the eight printers become two that always print (`cs_print_target(<target>)`: csCMake view of a target,
-plus its CMake properties with `ALL_PROPERTIES`; `cs_print_project()`: configurations, targets, components,
-dependencies, search paths).
+- [ ] **Last 6a step: the public commands no project uses** (keep / make internal / drop, MIGRATION entries; then
+  the 6b inventory starts from what is left): `cs_get_*` (18 after D1), `cs_print_*` (8), `cs_get_namespace`,
+  `cs_debug_message`. Proposal: keep `cs_get_generated_dir` / `cs_get_generated_config_dir` (generated headers),
+  `cs_get_build_configurations`, `cs_get_install_include_dir`; the other getters become internal (state accessors of
+  csCMake); the eight printers become two that always print (`cs_print_target(<target>)`: csCMake view of a target,
+  plus its CMake properties with `ALL_PROPERTIES`; `cs_print_project()`: configurations, targets, components,
+  dependencies, search paths; their output and D2 in 6b). Steps: a table (command, what it is for, used by csCMake /
+  projects / docs, proposal), agreed, then the changes.
 
-Order proposal: B1, B2, B4, B5, C1, C3-C5 and S1-S5 (small, safe,
-one commit each or grouped); then D1 (with B3, needs Windows CI) and D5; D7 to decide. D2, D3, D4, D6 go to 6b; S6 and
-C2 to 6c.
+Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public commands are the last 6a step.
 
 **6b. Public API surface: core vs utilities.**
 - Today: ~43 public `cs_*` commands in one flat namespace. Consumers (csfoundation, trackers, scanned 2026-11-10)
@@ -346,7 +347,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a: findings listed (B1-B5, D1-D7, S1-S6, C1-C5), to agree; then 6b API tiers, 6c debug. |
+| 6 | in progress | 6a: B1-B6, D1, D5, D7, S1-S5, C1, C3, C5 done and pushed (CI pending for the Visual Studio check); D8 decided; last step: the unused public commands. Then 6b (API: D2-D4, D6, C4), 6c (debug: S6, C2). |
 
 ## CHANGELOG
 
@@ -412,3 +413,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `$<COMPILE_LANGUAGE:...>`; the shipped profiles split into C-and-C++ rules (warnings valid in C, `-Werror` / `/WX`,
   sanitizers, `/MP`) and C++-only rules (`-Wold-style-cast` ..., `/permissive-`, `/Zc:__cplusplus`, hardening).
   Test on `compile_commands.json` (a C and a C++ source); expectations of the profile tests updated; docs, MIGRATION.
+
+### 2026-11-11 (Phase 6a — status)
+- 6a section brought up to date: the committed findings marked done, D8 closed (kept), D2-D4, D6, C4 marked for 6b and
+  S6, C2 for 6c; the unused public commands (keep / internal / drop) recorded as the last 6a step.
