@@ -19,8 +19,10 @@ include(CMakePackageConfigHelpers)
 #.rst:
 # .. command:: cs_get_install_include_dir
 #
-#   Return the install folder of the headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-folder when the project has
-#   more than one configuration.
+#   Return the install folder of the headers, for ``install(... DESTINATION ...)``: CMAKE_INSTALL_INCLUDEDIR, plus a
+#   $<CONFIG> sub-folder when the project has more than one configuration (evaluated with the configuration being
+#   installed). The consumers get the include folders from ``<namespace>::cscmake_base_include``, which follow the
+#   configuration CMake selects for them.
 #
 #   .. code-block:: cmake
 #

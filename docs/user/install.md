@@ -60,6 +60,13 @@ find_package(myApp COMPONENTS core REQUIRED CONFIG)
 target_link_libraries(consumer PRIVATE myApp::core)
 ```
 
+A package built in several configurations gives a consumer the headers and the libraries of the same configuration.
+A configuration of the consumer that the package does not have (e.g. `MinSizeRel`, which Visual Studio and Xcode
+always configure): map it to one the package has, `-DCMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL=Release` (csCMake projects
+map theirs with `MAPPED_TO` / `BASED_ON`, see [Build configurations](build-configurations.md)). Without a mapping it
+configures, but does not find the headers of the package when built (with CMake 4.2 or newer and policy `CMP0199`
+`NEW`, CMake selects an installed configuration itself).
+
 The generated `<namespace>Config.cmake`:
 
 - loads the requested components (or the default ones) and the components they depend on, each once;

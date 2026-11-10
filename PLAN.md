@@ -1127,3 +1127,17 @@ package is not released; pre-release tags are GitHub pre-releases.
   DEFINED` would never be true); the Config reads `<ns>_DEBUG` as a plain variable (was `option()`: a cache entry in
   every consumer). Configure tests fail on `754dfc2`, pass now. Lifecycle page: "What reaches beyond the csCMake
   targets" (reach and reason of each kept setting).
+
+### 2026-11-10 (fix: installed include folders follow the selected configuration)
+- CI (`9037b82`+): the smoke plain consumer failed to generate on Visual Studio (MSVC, clang-cl) and Xcode: `Imported
+  target "csSmokeShared::sharedText" includes non-existent path .../include/MinSizeRel`. The packages exported
+  `include/$<CONFIG>`, evaluated with the consumer's configuration (Visual Studio and Xcode generate MinSizeRel too); the
+  imported configuration mapping chooses the libraries only. Now `cscmake_base_include` exports one entry per
+  configuration, `$<$<CONFIG:<config>>:$<INSTALL_PREFIX>/include/<config>>` (`_cs_installed_include_dirs`):
+  `$<CONFIG:...>` in the usage requirements of imported targets also matches the mapped configurations
+  (`MAP_IMPORTED_CONFIG_<CONFIG>`; CMake >= 4.2 with CMP0199 NEW: the selected one), so headers and library come from
+  the same configuration; an unmapped missing configuration gets no folder (generates; built, it needs a mapping).
+  Absolute entries (`$<INSTALL_PREFIX>`): CMake prefixes relative ones even when they evaluate to nothing. Install
+  side unchanged (`cs_get_install_include_dir`, `include/$<CONFIG>` evaluated at install: kept, documented as the
+  install destination). Configure tests `tests/cmake/test_installed_include_dirs.py` (fail on `8678142`); docs:
+  installed packages, build configurations, packages internals.

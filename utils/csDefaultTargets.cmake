@@ -16,14 +16,39 @@ function(_cs_add_default_targets)
   _cs_target_base_project_include_dir()
 endfunction()
 
+# Return in output_variable the include folders of the installed package, for the consumers: a list of
+# $<INSTALL_INTERFACE:...> entries. One configuration: CMAKE_INSTALL_INCLUDEDIR. Several: the headers are installed per
+# configuration, one entry per configuration, $<$<CONFIG:<config>>:$<INSTALL_PREFIX>/<includedir>/<config>>: in the
+# usage requirements of an imported target $<CONFIG:...> also matches the configuration CMake selects for it (the mapped
+# ones of MAP_IMPORTED_CONFIG_<CONFIG>), so the headers come from the same configuration as the library; a configuration
+# the package does not have, and not mapped, gets no folder (not a missing one). Absolute ($<INSTALL_PREFIX>): CMake
+# prefixes a relative entry with the install prefix even when it evaluates to nothing.
+function(_cs_installed_include_dirs output_variable)
+  cs_get_build_configurations(configs_list)
+  list(LENGTH configs_list count)
+  if(count EQUAL 1)
+    set(${output_variable}
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+        PARENT_SCOPE)
+    return()
+  endif()
+  set(dirs "")
+  foreach(config ${configs_list})
+    list(APPEND dirs
+         "$<INSTALL_INTERFACE:$<$<CONFIG:${config}>:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/${config}>>")
+  endforeach()
+  set(${output_variable}
+      "${dirs}"
+      PARENT_SCOPE)
+endfunction()
+
 # Create <namespace>::cscmake_base_include: include folders of the project (the folder of cs_initialize_project, the
 # generated files folders, created at configure time).
 function(_cs_target_base_project_include_dir)
   _cs_target_create_default(cscmake_base_include INTERFACE target_name)
-  cs_get_install_include_dir(install_folder_expression)
+  _cs_installed_include_dirs(installed_include_dirs)
 
-  # add include to root dir, with subdir $<CONFIG> in installation if multiple config, with single folder if individual
-  target_include_directories(${target_name} INTERFACE $<INSTALL_INTERFACE:${install_folder_expression}>
+  target_include_directories(${target_name} INTERFACE ${installed_include_dirs}
                                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
   # get the folder where files are generated
