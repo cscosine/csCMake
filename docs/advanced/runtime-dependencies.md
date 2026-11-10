@@ -43,6 +43,27 @@ dependency tree, per configuration (`cs_get_target_runtime_libraries`).
 The libraries built by the project itself are not listed: they are written to the output folders of the build
 (`<build>/bin`), next to the executables.
 
+## Running the executables
+
+Where an executable finds its shared libraries:
+
+| | Linux, macOS | Windows |
+|---|---|---|
+| build folder | the absolute folders of every linked library (build RPATH written by CMake) | its own folder: the DLLs of the project are written to the same `<build>/bin[/<config>]`; the DLLs of other packages through `PATH` (the Visual Studio debugger gets it, see below) |
+| install folder | the `lib/` of its package (install RPATH set by `cs_finalize_target`, below) | its own folder: the DLLs of the package are installed in `bin/` |
+
+The install RPATH (`INSTALL_RPATH` target property) is relative to the binary, so the install folder can be moved:
+`$ORIGIN/<bin to lib>` (`$ORIGIN/../lib` with the default folders) for an executable, `$ORIGIN` for a shared or module
+library (installed next to the others); `@loader_path` instead of `$ORIGIN` on macOS. Only the targets of
+`cs_add_library` / `cs_add_executable`: other targets of the build (e.g. a third-party project added with
+`add_subdirectory`) and the projects using the presets without csCMake keep their own. Not set when the target has its
+own `INSTALL_RPATH` (also from `CMAKE_INSTALL_RPATH`), or with `CSCMAKE_INSTALL_RPATH` `OFF`.
+
+The shared libraries of **other** packages are not found from the install folder (an absolute path to another
+package would break when the packages are moved, e.g. built on a CI machine and unpacked elsewhere): an installed
+executable using them runs with `LD_LIBRARY_PATH` / `DYLD_LIBRARY_PATH` / `PATH` set to their folders. On Windows,
+outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packages also need `PATH` in the build folder.
+
 ## Uses
 
 - **Visual Studio debugger environment**: for each target and configuration with runtime libraries,

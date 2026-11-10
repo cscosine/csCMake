@@ -1,0 +1,6 @@
+# gersemi (CMake formatter) configuration of csCMake; projects using csCMake: docs/user/formatting.md
+line_length: 120
+indent: 2
+list_expansion: favour-inlining
+extensions: [gersemi/cscmake.py]
+warn_about_unknown_commands: false

@@ -15,7 +15,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [x] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
 - [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
-- [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
+- [x] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
 
 ## Governance
 
@@ -50,16 +50,16 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 2) Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
 - [x] (3b step 4) `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
 - [x] `templates/csTemplateConfig.cmake.in` breaks cmake-format (`@...@` substitution) → formatted/linted via `cscmake-cmake-template` (placeholder stand-ins).
-- [ ] Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
-- [ ] Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
+- [x] (4b) Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
+- [x] (3a) Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
 - [x] (3b step 1) `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
-- [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
+- [x] (4b, the three functions rewritten) Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
 - [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
 - [x] (3b step 2) 46 lines over 120 columns are string literals (log messages and the code injected into `<Ns>Config.cmake`), so `C0301` is disabled. Split/shorten them (`message()` concatenates its arguments; `cs_debug_message` takes a single string, so build the text first) and re-enable `C0301`.
 - [x] (3b step 3) Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
 - [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
 - [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
-- [ ] The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
+- [x] (4d: read by `cs_initialize_project`) The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
 - [x] (Phase 3a step 5) cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
 
 ### csCMake location (presets)
@@ -71,20 +71,55 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 6d) The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmokeMidB) and `csCMakeProjectSetup-default.json` (the other chain projects).
 
 ### Python code coverage
-- [ ] Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
+- [x] (4a) Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
   - `presets/registry.py` 79%: non-default variant selection (`use_ninja_for_windows`, `use_ninja` / `use_ninjamulti` without `generate_all_combinations`), MSVC versions for Ninja on Windows, `MACOS` branches, `assert_never` fallbacks;
   - `devtools/cmake_template.py` 90%: cmake-format failure, restored placeholders differing from the original, `TemplateError` reported by `main`, the `__main__` entry point;
   - `presets/generate.py` 98%: the `__main__` entry point.
-- [ ] Then enforce it: `[tool.coverage.report] fail_under = 100` in `pyproject.toml` (CI already runs `pytest --cov=cscmake --cov-branch`); exclude only `if __name__ == "__main__":` blocks (`exclude_also`), no other `# pragma: no cover`.
+- [x] (4a) Then enforce it: `[tool.coverage.report] fail_under = 100` in `pyproject.toml` (CI already runs `pytest --cov=cscmake --cov-branch`); exclude only `if __name__ == "__main__":` blocks and the `case _: assert_never(...)` exhaustiveness checks
+  (`exclude_also`), no `# pragma: no cover`.
 - Scope: only `src/cscmake` (`[tool.coverage.run] source = ["cscmake"]`). The CI helpers in `tests/smoke/` (`run_smoke.py`, `ci_matrix.py`) do **not** count for coverage (decided 2026-11-09).
 
 ### Tooling (cmakelang)
-- [ ] cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
-- [ ] cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; only `csInstall.cmake` has a file-level pragma).
+- [x] **4h — gersemi + `cscmake-lint`** (done) (decided, user 2026-11-10: option 2 below; after 4f and 4g): gersemi formats
+  csCMake, the smoke projects and the template (one-time reformat, `.gersemirc`, a gersemi extension with the `cs_*`
+  signatures generated from one signature list); `cscmake-lint` (stdlib, on the `check_docs` parser) checks the naming
+  patterns, a comment before every function / macro, the complexity limits and the line length; cmakelang removed
+  (dev deps, constraints, pre-commit, `cscmake-cmake-template` format part); `docs/user/formatting.md`, CLAUDE.md, the
+  contributing pages and the release package (gersemi config + extension instead of `.cmake-format.json`) follow;
+  then Python 3.15 in the CI matrix. Until 4h: cmakelang with Python <= 3.14.
+- 4e evaluation (2026-11-10), decided: option 2 (4h above):
+  - **Risk, dated**: cmakelang 0.6.13 (last release) is reported failing on **Python 3.15**: `re.Scanner` rejects
+    capturing groups (Red Hat bugzilla 2485807, "Cannot use capturing groups in re.Scanner"). Confirmed in our copy:
+    `cmakelang/lex/__init__.py` builds a `re.Scanner` whose patterns use groups with backreferences
+    (`#\[(=*)\[.*?\]\1\]`, bracket arguments): not fixable by making them non-capturing. Not reproduced (no 3.15
+    here). Today's CI (3.11 to 3.14) is fine; adding 3.15 to the CI matrix, or a 3.15 dev venv, breaks `cmake-format`,
+    `cmake-lint` and `cscmake-cmake-template`.
+  - **Formatter: gersemi** (BlankSpruce/gersemi, PyPI, pre-commit, actively released: 0.29.2 tried, Rust backend, needs
+    only pyyaml). Prototype on a copy of `csCMake.cmake`, `utils/`, `tests/smoke/` with `--line-length 120 --indent 2`:
+    every comment line untouched (the `#.rst:` blocks need no `literal_comment_pattern`), the `@VAR@` template parsed
+    as is (no placeholder swap needed for formatting); style differences only, e.g. `set(<var> <value> PARENT_SCOPE)` on
+    one line, closing `)` on its own line for wrapped calls (~40-230 changed lines per big module, a one-time reformat).
+    The `cs_*` keyword signatures are not learned from `--definitions` (our keywords are in variables, and
+    `cs_initialize_project` forwards to a function): they need a gersemi extension (a Python module describing the
+    commands), generated from the same signature list as `.cmake-format.json` `parse.additional_commands`.
+  - **Linter: no maintained equivalent of cmake-lint** found: check-cmake (marzer), cmake_check (DaelDe, user rules),
+    cmakelint (richq, basic style, used by ROS ament), ast-grep rule hooks. What we use cmake-lint for: the naming
+    patterns (functions, macros, arguments, locals, globals), a comment before every function / macro (C0111), the
+    complexity limits (R0912 branches, R0913 arguments, R0915 statements), line length (C0301), plus its general
+    checks (C0113 missing COMMENT, ...). `cscmake-check-docs` already parses the modules (functions, comment blocks).
+  - Options: (1) keep cmakelang, pin the hooks and the dev tools to Python <= 3.14 (pre-commit `language_version`;
+    CI matrix stays <= 3.14) and revisit when 3.14 nears its end of life; (2) **gersemi for formatting + our own
+    `cscmake-lint` for the rules we rely on** (naming, comment before every function / macro, complexity, line length),
+    built on the `check_docs` parser, stdlib only; consumers' formatting docs (`docs/user/formatting.md`) and the
+    release package (`.cmake-format.json` -> gersemi config + extension) change with it; (3) vendor and patch
+    cmakelang's lexer (a fork to maintain). Recommendation: (2), as its own Phase 4 step after 4f / 4g (the
+    reorganisation of 4g moves code anyway, a good moment for the one-time reformat); (1) until then.
+- [x] (4h: replaced) cmakelang (cmake-format/cmake-lint) 0.6.13 is the last release and unmaintained; Python 3.13/3.14 compatibility only proven by CI. If it breaks, evaluate `gersemi` (formatter) and keep/replace cmake-lint.
+- [x] (4h: cmakelang removed) cmakelang 0.6.13 bug: suppression events are not sorted by line, so a file-level `# cmake-lint: disable` disables the later function-level ones in the same file (workaround documented in CLAUDE.md; no file-level pragma left since 4b).
 - [x] (Phase 3a step 5) cmake-lint name patterns are prefix matches (`re.match`), so non-conforming names pass. After the renames above, anchor the patterns in `.cmake-format.json` with `$`.
 - [x] (Phase 3a step 4) Adopt the established CMake naming: lowercase snake_case function arguments and local variables (cmakelang default; UPPER_CASE stays for cache/global variables and keywords). `argument_var_pattern` / `local_var_pattern` in `.cmake-format.json` are **temporary** overrides that accept today's UPPER_CASE names (166 arguments, 98 locals). Do the rename in its own commit **after** the Phase 2 fixture project exists (configure/build/install/`find_package`) to verify it. Watch out: `_cs_configure_config_cmake` argument names must match the `@VAR@` placeholders of `templates/csTemplateConfig.cmake.in` (rename both together); CMake functions see caller variables (new collisions/shadowing); check `${OUT_VAR}`/`PARENT_SCOPE` and `cmake_parse_arguments` prefixes. Then delete both overrides.
-- [ ] cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
-- [ ] `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
+- [x] (4h: cmakelang removed; `cscmake-lint` reads CRLF) cmakelang 0.6.13 cannot lint CRLF files: `format.line_ending: auto` crashes cmake-lint (`set_line_ending` missing), `windows` still flags the last line (C0327). Found by the Windows smoke jobs (generated Config.cmake with CRLF): `run_smoke.py` now checks the line endings are consistent and lints an LF copy; `.gitattributes` forces LF for `*.cmake`, `*.cmake.in`, `CMakeLists.txt`.
+- [x] (4h: cmakelang removed) `cmake-lint -c` takes one or more values and swallows the following file paths ("files scanned: 0", exit 0). `cscmake-cmake-template` passes `-c` last; keep that in mind for any other cmake-lint invocation.
 
 ### Phase 3 plan (agreed 2026-11-09)
 Breaking change, **no deprecation aliases**: old names are removed, a `MIGRATION.md` (old → new table for functions,
@@ -240,14 +275,14 @@ variables, properties, preset environment variables, default targets) guides the
 - **Local**: `tests/smoke/test_run_smoke.py` runs the driver for the host variants, marked `slow` + `requires("cmake")` via a new `conftest.py` (`--run-all`).
 
 ### Phase 2 — not covered by the smoke projects (trace for full completion)
-- [ ] Shared libraries: Windows DLL export (`__declspec`/`GenerateExportHeader`), runtime dependency analysis (`csTargetDependencies`) and VS debugger PATH (`_cs_set_vs_debugger_env_variable`).
-- [ ] INTERFACE / header-only libraries.
-- [ ] Several components with dependencies between exports; cyclic dependency detection (expected failure test).
-- [ ] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`).
-- [ ] `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`, `csUseOpenMPOnTarget`.
+- [x] (4c) Shared libraries: `csSmokeShared` (two SHARED libraries, `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`, installed app run on every variant); runtime dependency analysis and VS debugger PATH: configure tests `tests/cmake/test_target_dependencies.py`.
+- [x] INTERFACE / header-only libraries (`csSmokeBase`).
+- [x] Several components with dependencies between exports (`csSmokeBase`, `test_package_config.py`); cyclic dependency detection (4c: `test_cyclic_dependency_between_components`).
+- [x] `cs_find_package` PUBLIC propagation into the installed Config (`find_dependency`): `run_smoke.py` checks every Config.
+- [x] (replaced in Phase 3 by compile profiles, `cs_target_check_installed_headers`, `cscmake_clang_tidy`: covered by `csSmokeBase`) `STRICT_COMPILATION_ON_CONFIG`, `cs_compileEachInstalledInclude`, `cs_exec_clang_tidy`; `cs_target_use_openmp`: not covered (needs OpenMP on every runner).
 - [x] `csCMakeProjectSetup-default-standalone.json` and `-shortBuildPath.json` setups → preset layouts `standalone-short`, `sibling-short`, `env` in the smoke tests (3b step 6d).
-- [ ] A consumer that does not use csCMake (plain `find_package` with `CMAKE_PREFIX_PATH`).
-- [ ] macOS (no variants in the registry yet) → Phase 3 step "3m — macOS".
+- [x] (4c) A consumer that does not use csCMake: `csSmokePlainConsumer`.
+- [x] macOS: Phase 3 step "3m — macOS".
 
 ### Findings while writing the docs (3d step 4, to decide)
 - [x] (fixed, `252eed2`: `@{osVersion}`) **Preset display names**: `presets/template/cs-single-config-generator-config.json.template` hard-coded
@@ -285,8 +320,128 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
 - [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
 
+### Side-effect assessment (Phase 4 step 4f, user 2026-11-10)
+Rule (CLAUDE.md, `docs/contributing/code.md` "No hidden side effects"): csCMake changes only what its own targets need
+or what the user asks; target properties of csCMake targets first, then directory / project variables, then global or
+cache settings; no build behaviour in the presets. Found with the install RPATH: a value in the host presets would have
+replaced OpenCV's `ocv_update(CMAKE_INSTALL_RPATH ...)` default without any sign.
+- [x] (4f) Review every setting wider than a csCMake target: for each, who it reaches (csCMake targets, every target of the
+  project folder including third-party projects added with `add_subdirectory` / `FetchContent`, the nested csCMake
+  projects, the consumers of the installed package, the projects using the presets without csCMake), whether a value
+  set by the project wins, whether it is documented and can be turned off; then keep (documented), narrow (target
+  property in `cs_finalize_target` / `cs_add_*`), or make opt-in. Candidates (inventory 2026-11-10):
+  - `cs_initialize_project` (project scope, reach the third-party targets of the folder too):
+    `CMAKE_RUNTIME/LIBRARY/ARCHIVE_OUTPUT_DIRECTORY` (+ `_<CUSTOM>`), `CMAKE_CXX_STANDARD` / `_REQUIRED` /
+    `CMAKE_CXX_EXTENSIONS` (overwritten even if the project set them?), `CMAKE_PREFIX_PATH` / `CMAKE_MODULE_PATH`
+    (HEAD/TAIL), `enable_testing()`, `CMAKE_EXPORT_COMPILE_COMMANDS` (Ninja);
+  - build configurations: `CMAKE_CONFIGURATION_TYPES`, `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` (every imported target of
+    the folder), the copied `CMAKE_<LANG>_FLAGS_<CUSTOM>` / linker flags cache entries, `CMAKE_MSVC_RUNTIME_LIBRARY`
+    (the fallback for targets not created by `cs_add_*`: third-party targets of the folder get the csCMake runtime);
+  - presets (`presets/common`, `csCMakeProjectSetup.json`): `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER`,
+    `CMAKE_BUILD_TYPE`, `CMAKE_PREFIX_PATH`, `CMAKE_MODULE_PATH`, the `CSCMAKE_*` path variables, install and build
+    folders, generator toolsets and architectures (`config-generators.json`): check none is build behaviour;
+  - the installed `<namespace>Config.cmake`: what it defines in the consumer's scope (functions / macros prefixed by the
+    sanitized namespace, variables; `test_no_variable_leaks_into_the_consumer` covers the variables);
+  - compile profiles: `PRIVATE` options only (consumers unaffected), `INTERFACE` link options of static libraries
+    (sanitizer runtime): documented.
+- [x] (4f: `test_the_choices_of_the_project_win`, `test_the_debug_option_of_a_package_adds_no_cache_entry`; output folders: `test_defaults_can_be_overridden_from_the_command_line`) For each kept global setting: a configure test that a value set by the project before `cs_initialize_project` (or
+  per target) wins, where it should.
+- Assessment (2026-11-10), every setting wider than a csCMake target. Reach: **F** = every target of the project folder
+  and its sub-folders (third-party projects added with `add_subdirectory` / `FetchContent` included), **B** = the
+  whole build tree, **C** = the consumers of the installed package.
+
+  | Setting | Reach | Asked by the user? | Project value wins? | Verdict |
+  |---|---|---|---|---|
+  | output folders `CMAKE_{RUNTIME,LIBRARY,ARCHIVE}_OUTPUT_DIRECTORY` (+ `_<CUSTOM>`) | F | no | yes (`if(NOT ...)`) | keep: needed on Windows (DLLs next to the executables of the folder); document the reach |
+  | `CMAKE_CXX_STANDARD` | F | yes (`CXX_STANDARD`) | n/a | keep |
+  | `CMAKE_CXX_STANDARD_REQUIRED ON`, `CMAKE_CXX_EXTENSIONS OFF` | F | no | **no** (overwritten) | **change**: only if not defined |
+  | `CMAKE_EXPORT_COMPILE_COMMANDS ON` (Ninja) | F | no | **no** (a normal variable hides `-D...=OFF`) | **change**: only if not defined |
+  | `CMAKE_PREFIX_PATH` / `CMAKE_MODULE_PATH` + HEAD / TAIL | F | yes (`CSCMAKE_*_HEAD/TAIL`) | yes (appended around) | keep |
+  | `enable_testing()` | F | no | n/a | keep (csCMake projects have tests); document |
+  | `CMAKE_CONFIGURATION_TYPES` (cache, FORCE) | B | yes (the configurations) | no, by design ("owned by csCMake", documented) | keep |
+  | `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` | F | yes (`MAPPED_TO`, `BASED_ON`) | n/a | keep: every imported target needs the mapping for custom configurations; document the reach |
+  | copied `<per-config variable>_<CUSTOM>` cache entries | B | yes (`CUSTOM_CONFIG`) | yes (no FORCE) | keep |
+  | `CMAKE_MSVC_RUNTIME_LIBRARY` (fallback) | F | no | **no** | keep: every target of a build must use the same MSVC runtime to link; document the reach and that `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` is the knob |
+  | presets: compilers, generator, toolset / architecture, `CMAKE_BUILD_TYPE`, folders, search paths, test output | every project using them | yes (choosing a preset) | yes (project setup preset first in `inherits`) | keep: no build behaviour (4c reverted the install RPATH there, 4d rejected `unusedCli`) |
+  | Config: `option(<ns>_DEBUG ...)` | C | no | n/a | **change**: a cache entry in every consumer; read `<ns>_DEBUG` as a plain variable (`-D<ns>_DEBUG=ON` still works) |
+  | Config: `<ns>_debug_message`, `<ns>_find_dependency_for_component`, `<ns>_*` variables | C | no | n/a | keep: prefixed by the namespace, temporaries unset (`test_no_variable_leaks_into_the_consumer`) |
+  | compile profiles | csCMake targets | yes | per target | keep: `PRIVATE`; the `INTERFACE` link options of static libraries are their link requirements (documented) |
+  | install RPATH (4c) | csCMake targets | default, `OFF` | yes | keep |
+- Done (user: all): the three changes above (`CMAKE_CXX_STANDARD_REQUIRED` / `CMAKE_CXX_EXTENSIONS` and
+  `CMAKE_EXPORT_COMPILE_COMMANDS` only if not defined; no `option()` in the Config), each with a configure test that the
+  project's value wins (or that the consumer has no cache entry); the lifecycle page gets the reach of each setting
+  (folder, build, consumers) and the reasons for the kept ones (MSVC runtime, output folders, imported configuration
+  mapping, `enable_testing`).
+
+### Code structure assessment (Phase 4 step 4g, user 2026-11-10)
+- [x] (4g, done) Re-evaluate how csCMake is divided into files and folders, and reorganise where it helps (one subject per module,
+  the module named after its subject, sizes in balance). Observations (inventory 2026-11-10, `wc -l`, public commands
+  per module):
+  - names that do not say what is inside: `csCompileEachInstalledInclude` holds `cs_target_check_installed_headers`;
+    `csPathUtils` the generated folders (`cs_get_generated_dir`, `cs_get_generated_config_dir`); `csPrintInitialState`
+    `cs_print_state`; `csMSVCUtils` the Visual Studio debugger `PATH` (a use of the runtime dependencies of
+    `csTargetDependencies`); `csDefaultTargets` has no public command (the base include target);
+  - mixed subjects: `csAddLibraryExecutable` (303) has the target registry, `cs_finalize_target` and now the install
+    RPATH (an install concern); `csInstall` (714) has the install rules, the components, their dependency graph and
+    cycle check, and the generation of `<namespace>Config.cmake`; `csCMake.cmake` (369) the initialization steps;
+  - the debug / print commands are spread over every module (`cs_print_*`) plus `csDebugMessage`, `csDebugUtils`,
+    `csPrintInitialState`;
+  - big modules: `csInstall` 714, `csBuildConfigurations` 678, `csCompileProfiles` 608, `csTargetDependencies` 550 lines;
+    small ones: `csDebugMessage` 39, `csMSVCUtils` 42, `csListUtils` 45, `csOpenMP` 47;
+  - folders: every module flat in `utils/` (a generic name); Python: `src/cscmake/utils/` holds a single module
+    (`generate_cs_preset_variants.py`, used by `presets/`).
+- Constraints: projects use `include(csCMake)` only (module include paths are internal: check the docs never promise
+  more); the reference pages are one per module (`docs/reference/<module>.rst`), so renaming a module changes its URL
+  (fine before 1.0, mention in CHANGELOG); `cscmake-check-docs`, the docs toctree, `.cmake-format.json`, the skill and
+  CLAUDE.md name modules; import-linter layers for Python. Proposal first (target layout, moves, names), reviewed,
+  then one commit per move with the installed files of the smoke projects byte-identical (as in 4b).
+
+### Running executables: shared libraries of other packages (deferred, user 2026-11-10)
+Context: how an executable finds its shared libraries, per platform (user doc: `docs/advanced/runtime-dependencies.md`,
+"Running the executables"):
+- Linux: `RUNPATH` of the binary (not transitive: each library needs its own), then `LD_LIBRARY_PATH`, then the system.
+  macOS: libraries have an id (`@rpath/libX.dylib` with CMake's defaults), executables `LC_RPATH` entries;
+  `DYLD_LIBRARY_PATH` is stripped for many processes (SIP), so it is not a reliable fallback. Windows: no RPATH; the
+  executable's folder, the system, then `PATH`.
+- Build folder: CMake writes the absolute folders of every linked library (Linux / macOS): runs. Windows: the project's
+  DLLs share `<build>/bin[/<config>]`; other packages' DLLs only in the Visual Studio debugger (`VS_DEBUGGER_ENVIRONMENT`).
+- Install folder (4c): `cs_finalize_target` sets the `INSTALL_RPATH` target property of the csCMake executables
+  (`$ORIGIN/<bin to lib>`) and shared / module libraries (`$ORIGIN`; `@loader_path` on macOS), unless the target has
+  its own or `CSCMAKE_INSTALL_RPATH` / `INSTALL_RPATH OFF`: a package's own executables and libraries run, relocatable
+  (needed by csorchestrator bundles, built on one CI and unpacked elsewhere). `CMAKE_INSTALL_RPATH_USE_LINK_PATH`
+  rejected: absolute paths of the CI machine, useless after download. Not in the presets (user, 2026-11-10): projects
+  using the presets without csCMake (OpenCV, the forks) keep their upstream behaviour (OpenCV's
+  `ocv_update(CMAKE_INSTALL_RPATH ...)` sets it only if not defined, so a preset value would silently replace it).
+- Evidence (2026-11-10, csImgTracker workspace, Linux): the build-tree `csImgTracker` has a `RUNPATH` with the absolute
+  `workspace/libs/<variant>/opencv/lib` and `qt6/lib` and runs; the installed one has none: `libopencv_*.so.500 => not
+  found`, and Qt resolves to the **system** `libQt6Core` (wrong version). The downloaded OpenCV libraries have
+  `RUNPATH $ORIGIN` (they find each other).
+
+To do when the applications are migrated (csImgTracker, csSkiTracker):
+- [ ] **Deploy an application with its dependencies** (situation "final application"): e.g.
+  `cs_install_runtime_dependencies(<app> [DIRECTORIES ...] [PRE_EXCLUDE_REGEXES ...])`, with CMake's
+  `install(RUNTIME_DEPENDENCY_SET ...)` / `install(IMPORTED_RUNTIME_ARTIFACTS ...)` (3.21+): copy the shared libraries of
+  the other packages (`libs/`, `install/`) into the app's `lib/` (Linux, macOS) or `bin/` (Windows); with the install
+  RPATH of 4c the installed app then runs anywhere. Exclude the system libraries. Inputs: csCMake already knows the
+  runtime libraries per configuration (`cs_get_target_runtime_libraries`). Qt: plugins (platform, image formats) need
+  Qt's deploy script (`qt_generate_deploy_app_script`) or `windeployqt` / `macdeployqt`. Smoke: an app using
+  csSmokeShared from another package, installed with its dependencies and run.
+- [ ] **Windows build folder outside Visual Studio** (ctest, a terminal, VS Code): the DLLs of other packages need
+  `PATH`. Options: tests get `ENVIRONMENT_MODIFICATION PATH=path_list_prepend:<folders>` (the folders csCMake computes
+  for the debugger; csCMake does not wrap `add_test`, so a helper or a step of `cs_finalize_project` over the tests of
+  the project); the run scripts below; or copying `$<TARGET_RUNTIME_DLLS>` next to the executables (what
+  `csSmokePlainConsumer` does, plain CMake).
+- [ ] **Run scripts** (see "Run scripts (future)"): `<build>/run/<target>-<config>.sh|.bat` setting
+  `LD_LIBRARY_PATH` / `PATH` from `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`: also the interim answer for installed apps that
+  use other packages' libraries, until the deployment command exists.
+
 ### Open after Phase 3
-- [ ] When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
+- [ ] Other projects still on the v0.1.0 presets (found 2026-11-10): csopencvcpu (and probably csopencvcuda): the
+  OpenCV fork's `csCMakeProjectSetup.json` includes `presets/csCMakeProjectSetup-base.json` and inherits
+  `cscmake-project-setup-base` (gone in v0.2.0: `presets/csCMakeProjectSetup.json`, `cscmake-common-project-setup`, the
+  `CSCMAKE_*` environment, MIGRATION.md "Project setup presets"); csqt6 (its release is used by csfoundation; Qt itself
+  is built by its `configure`, check what else uses csCMake).
+- [x] (done 2026-11-10, all 19 merged into `dev`, checked first) When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
   `feature/productize` branches, remote and local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL,
   third_party_base_libs and its 12 forks (user).
 
@@ -301,6 +456,37 @@ Decided (user, 2026-11-10): version **v0.2.0** (v1.0.0 when more projects are on
 `ci`, `smoke`, `docs` as reusable workflows (they drop their own tag trigger), then `publish`; `SHA256SUMS`; the Python
 package is not released; pre-release tags are GitHub pre-releases.
 
+### Documentation appeal (future, user 2026-11-10)
+- [ ] Theme: a modern Sphinx theme (Furo proposed: clean, light/dark, works with MyST and the CMake domain;
+  pydata-sphinx-theme as alternative).
+- [ ] Landing page: what csCMake is, why, what it solves, with concrete before / after cases (plain CMake vs csCMake):
+  a package with components and its generated `<Package>Config.cmake`, Debug / Release side by side in one prefix, a
+  custom Paranoid configuration with sanitizers, one preset per platform / compiler, DLLs found in the Visual Studio
+  debugger, install RPATH; who it is for and when not to use it.
+- [ ] A "Design decisions" page: the decisions worth keeping from this PLAN (no build behaviour in the presets, install
+  RPATH per target, include folders per configuration, gersemi + own linter, ...).
+
+### Clean first stable release (future, user 2026-11-10, to decide)
+- User idea: after Phase 5, a full clean-up and a first clean release, without references to the past (PLAN removed).
+- Proposal: keep the repository and its history (blame, tags `v0.1.0` / `v0.2.0` used by third_party_base_libs and
+  csfoundation, Pages, CI); remove `PLAN.md` from the repository: decisions -> docs "Design decisions", user-visible
+  changes -> `CHANGELOG.md`, open items -> GitHub issues / project; MIGRATION "from 0.x to 1.0". Tag 1.0.0 (API
+  stability promise) once more projects use the API (csqt6, csopencvcpu, a tracker). A new single-commit repository
+  stays possible at the 1.0 moment (old one archived), same cost then as now.
+
+### Organisation: shared standards (future, user 2026-11-10, to decide)
+- Repositories: the copier template (adopted by every project), csCMake, csorchestrator, then the other projects; aligned
+  on the same standards.
+- Proposal: rules rendered into each repository, not fetched at build time (no code dependency between repositories):
+  `cs-template` (copier: presets includes, pre-commit, `.clang-format`, `.clang-tidy` tiers, gersemi config, `.vscode`,
+  shared CLAUDE.md / AGENTS.md rules, licence, CI stub; its docs are the human handbook: naming, versioning, branching,
+  releases, "no hidden side effects"); `cscosine/.github` (org profile, default CONTRIBUTING / SECURITY, issue and PR
+  templates, maybe reusable workflows); csCMake (CMake API, presets, `cs_*` signatures for the formatter, pinned by
+  tag); csorchestrator (builds, generated CI, releases; reads csCMake's variant list). The template pins compatible
+  csCMake / csorchestrator versions: updating the template aligns a project.
+- Order: finish csCMake (4h, Phase 5 sign-off) -> `cs-template` with csCMake as first adopter -> csorchestrator (and its
+  variant matrix from csCMake) -> the other projects one by one.
+
 ### Run scripts (future)
 - [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
   `cs_finalize_project`, `file(GENERATE)` `<build>/run/<target>-$<CONFIG>.bat` / `.sh` from the target property
@@ -310,7 +496,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 ### Project template with copier (future)
 - [ ] Consumer project scaffolding with copier (`copier copy` / `copier update`): `CMakePresets.json`,
   `csCMakeProjectSetup.json`, top `CMakeLists.txt` (`cs_initialize_project(NAMESPACE ...)`), pre-commit config,
-  cmake-format/lint style. Split ownership: the **style policy** (line width, anchored lint patterns, disabled codes) in
+  gersemi / cscmake-lint style. Split ownership: the **style policy** (line width, indentation) in
   the template repository (csCMake itself could take it via `copier update`); the **`cs_*` command signatures** stay in
   csCMake (versioned with the API), e.g. `cmake-format/cscmake-commands.py`, loaded by the template's
   `.cmake-format.py` from the csCMake checkout (two files: no merge conflicts on `copier update`; `.py` allows comments,
@@ -334,8 +520,8 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | not started | Internal quality (non-breaking) |
-| 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a-4g done; 4h (gersemi + `cscmake-lint`, cmakelang removed, Python 3.15 in CI) under review; then sign-off. |
+| 5 | done | Signed off 2026-11-10: v0.2.0 released (package, docs, checksums; `release.yml` with `ci` / `smoke` / `docs` as reusable workflows), csfoundation `dev` green on third_party_base_libs `v0.1.0-rc5`; `feature/productize` branches deleted (19 repositories). Next release: v0.3.0. |
 
 ## CHANGELOG
 
@@ -895,3 +1081,143 @@ package is not released; pre-release tags are GitHub pre-releases.
   their tag triggers removed), then `publish` (`gh release create`, `--prerelease` for `-` tags).
 - `CHANGELOG.md` (v0.2.0, v0.1.0); `pyproject.toml` 0.2.0; `MIGRATION.md` "from v0.1.0 to v0.2.0"; docs: Releasing page,
   getting started (a release or a clone), README status. Checked: the unpacked package builds tclap.
+
+### 2026-11-10 (Phase 4 plan, step 4a — Python coverage)
+- Phase 4 steps (user: start now, on `dev`): 4a Python coverage 100% and enforced; 4b CMake complexity (the
+  `R0912`/`R0915`/`R0913` pragmas, flattened comments); 4c smoke gaps (shared library, components depending on each
+  other and the cyclic dependency error, a consumer without csCMake); 4d presets: no unused `CMAKE_C_COMPILER` warning
+  for C++-only projects; 4e cmakelang replacement evaluation.
+- 4a: 94% → 100% line + branch coverage of `src/cscmake`: tests for the comment / empty line / end of file after a
+  `.. command::` block (`check_docs`), `download` (`cmake_inventory`, `file://` URL), the template tool without a
+  config, with a cmake-format failure, with changed placeholders, a clean lint, `TemplateError` in `main`
+  (`cmake_template`), a missing package entry (`release`), the Linux generator preference without
+  `generate_all_combinations` (`registry`). `pyproject.toml`: `fail_under = 100`, `exclude_also` for the `__main__`
+  blocks and `case _: assert_never(...)`. CI (`shell: bash`, `pipefail`) fails on it.
+
+### 2026-11-10 (Phase 4 step 4b — CMake complexity)
+- No complexity pragma left (only the intentional `W0106` of `cs_print_state_info`):
+  - `_cs_parse_additional_configurations`: arguments, namespace, standard and profiles; the configurations through
+    `_cs_add_mapped_configurations`, `_cs_add_custom_configurations` (with `_cs_set_custom_config_output_directories`),
+    `_cs_split_base_config` (the comma parsing both had) and `_cs_set_msvc_runtime_library_variables`; the triples /
+    quintuples read with `list(POP_FRONT)`; messages unchanged;
+  - `_cs_recursive_analyze_target`: a work list; one dependency per `_cs_analyze_dependency`, the debug summary in
+    `_cs_debug_analyzed_target`; the unused `TYPE` read and the empty `else()` removed;
+  - `_cs_configure_config_cmake`: keyword arguments (`cmake_parse_arguments(PARSE_ARGV ...)`, one value each, so the
+    lists and the injected code keep their `;` and newlines); the file-level `R0913` pragma of `csInstall.cmake` removed.
+- Checked: all tests with the local smoke builds (`--run-all`, 162 passed); the installed files of csSmokeBase and
+  csSmokeMidA (Configs, target files, four configurations) byte-identical to the ones of `f71995c`.
+
+### 2026-11-10 (Phase 4 step 4c — smoke gaps, install RPATH)
+- Found: an installed executable linking a shared library of its own package does not run on Linux (no install RPATH:
+  `libX.so: cannot open shared object file`); also in csImgTracker (see "Running executables: shared libraries of other
+  packages"). The smoke projects used only static and interface libraries.
+- Install RPATH by default (user: "like linking a target", on by default, can be turned off): `cs_finalize_target`
+  sets the `INSTALL_RPATH` target property of executables (`$ORIGIN/<bin to lib>`, from `CMAKE_INSTALL_BINDIR` /
+  `CMAKE_INSTALL_LIBDIR`) and shared / module libraries (`$ORIGIN`), `@loader_path` on macOS, nothing on Windows; kept
+  when the target has its own (not empty; CMake initializes it from `CMAKE_INSTALL_RPATH`). Off:
+  `cs_initialize_project(... INSTALL_RPATH OFF)` or the directory variable `CSCMAKE_INSTALL_RPATH`. First tried in the
+  host presets, moved (user): presets used without csCMake (OpenCV `csopencvcpu`, the forks; Qt does not use them) must
+  keep their upstream behaviour. Configure tests `tests/cmake/test_install_rpath.py`; user guide (installed packages,
+  "Shared libraries"), runtime dependencies page.
+- Smoke: `csSmokeShared` (two SHARED libraries, one using the other, and an application whose installed copy is run in
+  the four configurations); `csSmokePlainConsumer` (plain CMake, `find_package(csSmokeShared COMPONENTS text)`, ctest
+  from the build folder; Windows: `$<TARGET_RUNTIME_DLLS>` copied; Debug and Release: `Project.plain` in
+  `run_smoke.py`, no Config checks). Checked locally: installed `csSmokeSharedApp` runs (`RUNPATH $ORIGIN/../lib` on the
+  app and the libraries).
+- Cyclic dependencies between components: message `[cs_finalize_project] cyclic dependency between the components: a ->
+  b -> a: ...` (was the internal function name), configure test `test_cyclic_dependency_between_components`.
+- Docs: smoke tests page (two projects, graph), presets (install RPATH), runtime dependencies ("Running the
+  executables"). Deferred (user): deployment command, Windows build folder outside Visual Studio, run scripts.
+
+### 2026-11-10 (rule: no hidden side effects)
+- User: no unintended, obscure side effects (lesson of the install RPATH first put in the host presets). Rule added to
+  CLAUDE.md and `docs/contributing/code.md` (CMake conventions); assessment of the existing global settings planned as
+  Phase 4 step 4f ("Side-effect assessment", with the inventory of candidates).
+- User: re-evaluate the code structure (files, folders) and reorganise where needed: Phase 4 step 4g ("Code structure
+  assessment", with the observations of today's layout).
+
+### 2026-11-10 (Phase 4 step 4d — unused CMAKE_C_COMPILER warning)
+- The presets give `CMAKE_C_COMPILER` (projects with C sources need it: without it the Clang variants would build C
+  with the default `cc`); a C++-only project got "Manually-specified variables were not used by the project:
+  CMAKE_C_COMPILER". `cs_initialize_project` reads it (a debug message): CMake counts a value read (not
+  `if(DEFINED)`) as a use. Rejected under the "no hidden side effects" rule: `warnings.unusedCli: false` in the
+  presets (would hide the unused variables of every project using them, e.g. a mistyped option in a project's own
+  setup preset); removing `CMAKE_C_COMPILER` from the presets. Projects using the presets without csCMake keep the
+  warning. Configure test `test_the_c_compiler_of_the_presets_is_not_reported_unused` (fails on `4da7212`).
+
+### 2026-11-10 (Phase 4 step 4e — cmakelang evaluation)
+- Evaluation in "Tooling (cmakelang)": Python 3.15 breaks cmakelang's lexer (reported, confirmed in the code); gersemi
+  prototyped as formatter (comments untouched, templates parsed, `cs_*` signatures need an extension); no maintained
+  linter replacement. Recommendation: gersemi + an own `cscmake-lint` for the rules we use, after 4f / 4g; until
+  then keep cmakelang with Python <= 3.14. Decided (user): option 2, Phase 4 step 4h.
+
+### 2026-11-10 (Phase 4 step 4f — side-effect assessment)
+- Assessment table in "Side-effect assessment". Changed: `CMAKE_CXX_STANDARD_REQUIRED` / `CMAKE_CXX_EXTENSIONS` set
+  only if not defined (new macro `_cs_set_cxx_standard`, also keeps `cs_initialize_project` under the statement limit);
+  `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` only if empty (CMake creates it as an empty cache entry with Ninja: `NOT
+  DEFINED` would never be true); the Config reads `<ns>_DEBUG` as a plain variable (was `option()`: a cache entry in
+  every consumer). Configure tests fail on `754dfc2`, pass now. Lifecycle page: "What reaches beyond the csCMake
+  targets" (reach and reason of each kept setting).
+
+### 2026-11-10 (fix: installed include folders follow the selected configuration)
+- CI (`9037b82`+): the smoke plain consumer failed to generate on Visual Studio (MSVC, clang-cl) and Xcode: `Imported
+  target "csSmokeShared::sharedText" includes non-existent path .../include/MinSizeRel`. The packages exported
+  `include/$<CONFIG>`, evaluated with the consumer's configuration (Visual Studio and Xcode generate MinSizeRel too); the
+  imported configuration mapping chooses the libraries only. Now `cscmake_base_include` exports one entry per
+  configuration, `$<$<CONFIG:<config>>:$<INSTALL_PREFIX>/include/<config>>` (`_cs_installed_include_dirs`):
+  `$<CONFIG:...>` in the usage requirements of imported targets also matches the mapped configurations
+  (`MAP_IMPORTED_CONFIG_<CONFIG>`; CMake >= 4.2 with CMP0199 NEW: the selected one), so headers and library come from
+  the same configuration; an unmapped missing configuration gets no folder (generates; built, it needs a mapping).
+  Absolute entries (`$<INSTALL_PREFIX>`): CMake prefixes relative ones even when they evaluate to nothing. Install
+  side unchanged (`cs_get_install_include_dir`, `include/$<CONFIG>` evaluated at install: kept, documented as the
+  install destination). Configure tests `tests/cmake/test_installed_include_dirs.py` (fail on `8678142`); docs:
+  installed packages, build configurations, packages internals.
+
+### 2026-11-10 (Phase 4 step 4g — code structure)
+- User: proposal approved, OpenMP in a folder for integrations (`modules/integrations/`, more to come), one commit (mechanical).
+- `utils/` -> `modules/`, by subject (110 functions moved by a script: each with the comment block above it, each placed
+  once, checked): `csProject` (`cs_initialize_project`, `cs_finalize_project`, `cs_get_namespace`, the project scope
+  mechanism, from `csCMake.cmake` and `csBuildConfigurations`), `csTargets` (was `csAddLibraryExecutable`; the install
+  RPATH moved to `csInstall`), `csBaseInclude` (`csDefaultTargets` + the generated folders of `csPathUtils`),
+  `csTargetDependencies` (+ `csMSVCUtils`, the Visual Studio debugger `PATH`; name kept, not `csRuntimeDependencies`:
+  it also has the project dependencies of the targets), `csInstall` / `csPackageConfig` (component graph and
+  `<namespace>Config.cmake`), `csCheckInstalledHeaders` (was `csCompileEachInstalledInclude`), `csCompileProfiles` /
+  `csCompileProfilesShipped` (the `cscmake_*` definitions), `csDebug` (`csDebugMessage`, `csDebugUtils`,
+  `csPrintInitialState`), `csInternal` (`csListUtils` + path helpers, no page), `integrations/csOpenMP`.
+  `csCMake.cmake`: entry point only (version, policies, includes, root folder). Variables / properties documented in
+  the module that writes them.
+- Python: `src/cscmake/utils/generate_cs_preset_variants.py` -> `src/cscmake/presets/render.py` (test
+  `tests/cscmake/presets/test_render.py`); import-linter layers `presets | devtools`, presets `generate` above
+  `registry | render`.
+- Followed: reference pages (`:doc:` links between them: `.. cmake-module::` pages are not `:module:` targets) and
+  toctree, `cscmake-check-docs` (`modules/**/*.cmake`), pre-commit, `run_smoke.py`, `release.py`, README, AGENTS.md,
+  CLAUDE.md, the skill, contributing pages, `.vscode/launch.json`; CHANGELOG "Unreleased" (renamed reference pages).
+- Checked: fast checks, the installed files of csSmokeBase and csSmokeShared byte-identical to `2ab2dfa` (44 files, 4
+  configurations), local smoke run.
+
+### 2026-11-10 (Phase 4 step 4h — gersemi + cscmake-lint)
+- gersemi formats every CMake file (`.gersemirc`: 120 columns, indent 2, `list_expansion: favour-inlining`; the `cs_*`
+  signatures in the extension `gersemi/cscmake.py`, the single source of them, shipped in the release package). One-time
+  reformat of 32 of 38 files with `--safe` (gersemi checks the meaning is kept); comments untouched (no more
+  `literal_comment_pattern` / reflow rules). gersemi resolves `extensions` paths from the current folder: run from the
+  project folder (documented for the projects).
+- `cscmake-lint` (`src/cscmake/devtools/cmake_lint.py`, stdlib, own small tokenizer: quoted and bracket arguments,
+  bracket comments): `CS101`-`CS103` lowercase names (functions / macros, arguments, function locals), `CS104` comment
+  block above every function / macro, `CS105`-`CS107` at most 5 arguments, 50 statements, 12 branches, `CS108` 120
+  columns; `@VAR@` placeholders count as lowercase names; `# cscmake-lint: disable=<codes>` at the start of a body.
+  Counts in line with cmakelang's (largest: 45 statements, 12 branches). Tests, 100% coverage.
+- Removed: cmakelang (dev dep, constraints -> `gersemi==0.29.2`), the cmake-format / cmake-lint hooks,
+  `cscmake-cmake-template` (gersemi parses `@VAR@` templates as they are), `.cmake-format.json`, the `W0106` pragma.
+  `run_smoke.py` lints the installed Config with `cscmake-lint --disable CS101,CS102,CS103,CS108` (no LF copy needed);
+  smoke workflow installs only csCMake's package. CI: Python 3.15 added.
+- Docs: formatting page for the projects (gersemi, `.gersemirc` with the extension, pre-commit), contributing pages,
+  CLAUDE.md, the skill, releasing (package content), CHANGELOG.
+- Checked: fast checks; installed files of csSmokeBase / csSmokeShared identical to `748d563` except the two
+  `Config.cmake` (template reformatted): same commands and arguments (parsed), lint-clean.
+
+### 2026-11-10 (Phase 5 sign-off, v0.3.0)
+- Phase 5 signed off (user): v0.2.0 published, csfoundation `dev` green. `feature/productize` deleted, remote and
+  local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL, third_party_base_libs and its 12 forks (each
+  checked merged into `origin/dev` first).
+- v0.3.0 (user): `pyproject.toml` 0.3.0, CHANGELOG "Unreleased" -> "v0.3.0" (fixes of 4c-4f and the include folders,
+  install RPATH, gersemi, the `modules/` reorganisation); release from `main` as v0.2.0 (`dev` -> `main`, tag).

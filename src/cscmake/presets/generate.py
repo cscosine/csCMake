@@ -43,7 +43,7 @@ from cscmake.presets.registry import (
     short_os_name,
     short_os_version,
 )
-from cscmake.utils.generate_cs_preset_variants import (
+from cscmake.presets.render import (
     generate_from_template_single_config_generator_all,
     load_template,
     render_template,

@@ -3,6 +3,36 @@
 The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
 Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
 
+## v0.3.0 (2026-11-10)
+
+Fixes for projects consumed in configurations they were not built in, install RPATH, and gersemi as formatter. No
+change of the `cs_*` commands. Action for projects formatting with csCMake's `.cmake-format.json`: switch to gersemi
+(see Formatting your CMake files).
+
+### Changed
+
+- Formatting: gersemi, with the `cs_*` signatures in the extension `gersemi/cscmake.py` and the configuration
+  `.gersemirc` (both in the release package, instead of `.cmake-format.json`); see Formatting your CMake files.
+- The CMake modules are in `modules/` (`modules/integrations/` for third-party integrations, e.g. OpenMP), reorganised
+  by subject: the reference pages are renamed (`csProject`, `csTargets`, `csBaseInclude`, `csPackageConfig`,
+  `csCheckInstalledHeaders`, `csCompileProfilesShipped`, `csDebug`). The commands are unchanged: projects include
+  `csCMake` only.
+- `CMAKE_CXX_STANDARD_REQUIRED`, `CMAKE_CXX_EXTENSIONS` and `CMAKE_EXPORT_COMPILE_COMMANDS` set by a project are kept.
+- The installed `<namespace>Config.cmake` reads `<namespace>_DEBUG` as a plain variable: no cache entry in the
+  consumers.
+
+### New
+
+- Install RPATH: installed executables and shared libraries find the shared libraries of their package (Linux, macOS);
+  `INSTALL_RPATH OFF` of `cs_initialize_project` or `CSCMAKE_INSTALL_RPATH` turns it off.
+
+### Fixed
+
+- A consumer configuration that a package was not built in (e.g. `MinSizeRel` with Visual Studio and Xcode) no longer
+  fails with a non-existent include folder: the include folders of a package follow the configuration CMake selects
+  for it (`CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>`), like its libraries.
+- C++-only projects: no "not used" warning for the `CMAKE_C_COMPILER` of the presets.
+
 ## v0.2.0 (2026-11-10)
 
 A consistent API, compile profiles, macOS, and documentation. This release breaks compatibility with v0.1.0, with no

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cscmake"
-version = "0.2.0"
+version = "0.3.0"
 description = "cscmake facilities for C++ projects config, build, deployment"
 authors = [
   { name = "cscosine-dev", email = "cscosine@gmail.com" }
@@ -17,7 +17,7 @@ dependencies = []
 
 [project.scripts]
 cscmake-generate-presets = "cscmake.presets.generate:main"
-cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
+cscmake-lint = "cscmake.devtools.cmake_lint:main"
 cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
 cscmake-check-docs = "cscmake.devtools.check_docs:main"
 cscmake-release = "cscmake.devtools.release:main"
@@ -34,7 +34,7 @@ dev = [
     "ruff>=0.4",
     "pre-commit>=4",
     "import-linter[ui]>=2.11",
-    "cmakelang>=0.6.13",
+    "gersemi>=0.29.2",
     # documentation (Sphinx, CMake domain, Markdown pages)
     "sphinx>=8.1",
     "sphinxcontrib-moderncmakedomain>=3.29",
@@ -125,6 +125,12 @@ source = ["cscmake"]
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 100
+# unreachable by design: the script entry points, and the exhaustiveness checks of the match statements
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "case _:\\n\\s*assert_never\\(",
+]
 
 # ===============================
 # import linter
@@ -136,13 +142,13 @@ root_package = "cscmake"
 [[tool.importlinter.contracts]]
 name = "high level layers"
 type = "layers"
-layers = ["presets | devtools", "utils"]
+layers = ["presets | devtools"]
 containers = ["cscmake"]
 exhaustive = true
 
 [[tool.importlinter.contracts]]
 name = "presets layers"
 type = "layers"
-layers = ["generate", "registry"]
+layers = ["generate", "registry | render"]
 containers = ["cscmake.presets"]
 exhaustive = true

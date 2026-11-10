@@ -123,3 +123,46 @@ def test_base_dir_is_the_install_prefix(tmp_path: Path, prefix: Path) -> None:
 
     assert result.returncode == 0, result.output
     assert Path(result.reports["base"]).resolve() == prefix.resolve()
+
+
+def test_cyclic_dependency_between_components(tmp_path: Path) -> None:
+    """The targets do not form a cycle (ta -> tb -> tc), their components do (a -> b -> a)."""
+    body = """
+project(C VERSION 1.0.0 LANGUAGES NONE)
+cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
+cs_add_library(tc INTERFACE)
+cs_install_target(tc a)
+cs_finalize_target(tc)
+cs_add_library(tb INTERFACE)
+cs_target_link_libraries(tb INTERFACE tc)
+cs_install_target(tb b)
+cs_finalize_target(tb)
+cs_add_library(ta INTERFACE)
+cs_target_link_libraries(ta INTERFACE tb)
+cs_install_target(ta a)
+cs_finalize_target(ta)
+cs_finalize_project()
+"""
+    result = configure(tmp_path, body)
+
+    assert result.returncode != 0
+    message = " ".join(result.output.split())  # CMake wraps the message over several lines
+    assert "[cs_finalize_project] cyclic dependency between the components: a -> b -> a" in message
+
+
+@pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
+def test_the_debug_option_of_a_package_adds_no_cache_entry(tmp_path: Path, prefix: Path, debug: bool) -> None:
+    body = """
+find_package(B COMPONENTS core REQUIRED CONFIG)
+get_property(cached CACHE B_DEBUG PROPERTY TYPE SET)
+cstest_report(cached "${cached}")
+"""
+    args = [f"-DCMAKE_PREFIX_PATH={prefix.as_posix()}"]
+    if debug:
+        body = "set(B_DEBUG ON)\n" + body
+
+    result = configure(tmp_path / "consumer", body, args=args)
+
+    assert result.returncode == 0, result.output
+    assert result.reports["cached"] == "0"
+    assert ("[BConfig] entry point" in result.output) == debug

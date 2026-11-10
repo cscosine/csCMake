@@ -34,13 +34,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # the files and folders of the package, relative to the repository root
 PACKAGE_CONTENT = [
     "csCMake.cmake",
-    "utils",
+    "modules",
     "templates",
     "presets/csCMakeProjectSetup.json",
     "presets/common",
     "presets/csv1",
     "presets/layout",
-    ".cmake-format.json",
+    ".gersemirc",
+    "gersemi",
     "README.md",
     "MIGRATION.md",
     "CHANGELOG.md",

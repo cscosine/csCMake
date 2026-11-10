@@ -41,7 +41,7 @@ def _repo(tmp_path: Path, version: str = "0.2.0") -> Path:
     root = tmp_path / "repo"
     for entry in PACKAGE_CONTENT:
         path = root / entry
-        if path.suffix or entry == "LICENSE":
+        if path.suffix or entry in ("LICENSE", ".gersemirc"):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(entry, encoding="utf-8")
         else:
@@ -144,3 +144,11 @@ def test_main(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert "SHA256SUMS" in capsys.readouterr().out
     assert main(["--tag", "v0.3.0", *args]) == 1
     assert "does not match the version" in capsys.readouterr().err
+
+
+def test_a_missing_package_entry(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "LICENSE").unlink()
+
+    with pytest.raises(ReleaseError, match="LICENSE is missing"):
+        build_release("v0.2.0", tmp_path / "html", tmp_path / "dist", root)

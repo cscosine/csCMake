@@ -47,8 +47,8 @@ endfunction()
 
 
 def _repo(tmp_path: Path, module: str, page: bool = True) -> Path:
-    (tmp_path / "utils").mkdir()
-    (tmp_path / "utils" / "csThing.cmake").write_text(module, encoding="utf-8")
+    (tmp_path / "modules").mkdir()
+    (tmp_path / "modules" / "csThing.cmake").write_text(module, encoding="utf-8")
     if page:
         (tmp_path / "docs" / "reference").mkdir(parents=True)
         (tmp_path / "docs" / "reference" / "csThing.rst").write_text(".. cmake-module:: x\n", encoding="utf-8")
@@ -99,7 +99,7 @@ def test_a_command_block_not_above_its_function(tmp_path: Path) -> None:
 def test_a_documented_module_needs_its_page(tmp_path: Path) -> None:
     problems = check(_repo(tmp_path, HEADER + DOCUMENTED, page=False))
 
-    assert problems == ["utils/csThing.cmake:1: no reference page docs/reference/csThing.rst"]
+    assert problems == ["modules/csThing.cmake:1: no reference page docs/reference/csThing.rst"]
 
 
 def test_names_in_code() -> None:
@@ -128,3 +128,23 @@ def test_main(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--root", str(root)]) == 1
     assert "CSCMAKE_STUFF is not documented" in capsys.readouterr().out
     assert main([]) == 0
+
+
+def test_a_comment_between_a_command_block_and_its_function(tmp_path: Path) -> None:
+    module = HEADER + DOCUMENTED.replace("function(cs_thing target_name)", "  # a note\nfunction(cs_thing target_name)")
+
+    assert check(_repo(tmp_path, module)) == []
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        HEADER + DOCUMENTED.replace("function(cs_thing target_name)", "\nfunction(cs_thing target_name)"),
+        HEADER + "#.rst:\n# .. command:: cs_thing\n#\n#   Do a thing.\n",
+    ],
+    ids=["an empty line before the function", "the end of the file"],
+)
+def test_a_command_block_followed_by_no_function(tmp_path: Path, module: str) -> None:
+    problems = check(_repo(tmp_path, module))
+
+    assert any("'.. command:: cs_thing' is not right above its function" in p for p in problems), problems

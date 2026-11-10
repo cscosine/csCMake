@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csTargetLinkLibraries.cmake
+.. cmake-module:: ../../modules/csTargetLinkLibraries.cmake

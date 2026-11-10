@@ -184,3 +184,38 @@ cs_finalize_project()
     assert "$<$<CONFIG:Debug>:MultiThreadedDebug>" in runtime
     assert "$<$<CONFIG:Paranoid>:MultiThreadedDebug>" in runtime  # Paranoid is based on Debug
     assert "$<$<CONFIG:Release>:MultiThreadedDLL>" in runtime
+
+
+def test_the_c_compiler_of_the_presets_is_not_reported_unused(tmp_path: Path) -> None:
+    """The presets give CMAKE_C_COMPILER, a project without C sources does not use it: no unused-cli warning."""
+    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-DCMAKE_C_COMPILER=cc"])
+
+    assert result.returncode == 0, result.output
+    assert "Manually-specified variables were not used" not in result.output
+
+
+REPORT_LANGUAGE = """
+cstest_report(standard "${CMAKE_CXX_STANDARD}")
+cstest_report(required "${CMAKE_CXX_STANDARD_REQUIRED}")
+cstest_report(extensions "${CMAKE_CXX_EXTENSIONS}")
+cstest_report(compile_commands "${CMAKE_EXPORT_COMPILE_COMMANDS}")
+"""
+
+
+def test_language_and_compile_commands_defaults(tmp_path: Path) -> None:
+    result = configure(tmp_path, INIT + REPORT_LANGUAGE + FINALIZE)
+
+    assert result.returncode == 0, result.output
+    assert result.reports == {"standard": "17", "required": "ON", "extensions": "OFF", "compile_commands": "ON"}
+
+
+def test_the_choices_of_the_project_win(tmp_path: Path) -> None:
+    """Set by the project before cs_initialize_project (or on the command line): kept."""
+    before = "set(CMAKE_CXX_STANDARD_REQUIRED OFF)\nset(CMAKE_CXX_EXTENSIONS ON)\n"
+
+    result = configure(
+        tmp_path, before + INIT + REPORT_LANGUAGE + FINALIZE, args=["-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF"]
+    )
+
+    assert result.returncode == 0, result.output
+    assert result.reports == {"standard": "17", "required": "OFF", "extensions": "ON", "compile_commands": "OFF"}

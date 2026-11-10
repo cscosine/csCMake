@@ -38,12 +38,34 @@ lib/cmake/<namespace>/
 Headers go in an `include/<CONFIG>/` sub-folder when the project has more than one configuration, so that every
 configuration can be installed in the same prefix.
 
+### Shared libraries
+
+Installed executables and shared libraries find the shared libraries of their own package, wherever the install folder
+is moved: nothing to write. On Linux and macOS, `cs_finalize_target` gives them a relative install RPATH (on Windows,
+the DLLs are installed in `bin/`, next to the executables). To turn it off:
+
+| For | Write |
+|---|---|
+| the whole project | `cs_initialize_project(... INSTALL_RPATH OFF)` |
+| the targets of a folder | `set(CSCMAKE_INSTALL_RPATH OFF)` in that folder, before their `cs_finalize_target` |
+| one target, with your own value | `set_target_properties(<target> PROPERTIES INSTALL_RPATH ...)` before `cs_finalize_target` |
+
+A project setting `CMAKE_INSTALL_RPATH` keeps its value too. The shared libraries of **other** packages are not found
+from the install folder: see [Runtime dependencies](../advanced/runtime-dependencies.md#running-the-executables).
+
 ## Using an installed package
 
 ```cmake
 find_package(myApp COMPONENTS core REQUIRED CONFIG)
 target_link_libraries(consumer PRIVATE myApp::core)
 ```
+
+A package built in several configurations gives a consumer the headers and the libraries of the same configuration.
+A configuration of the consumer that the package does not have (e.g. `MinSizeRel`, which Visual Studio and Xcode
+always configure): map it to one the package has, `-DCMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL=Release` (csCMake projects
+map theirs with `MAPPED_TO` / `BASED_ON`, see [Build configurations](build-configurations.md)). Without a mapping it
+configures, but does not find the headers of the package when built (with CMake 4.2 or newer and policy `CMP0199`
+`NEW`, CMake selects an installed configuration itself).
 
 The generated `<namespace>Config.cmake`:
 
@@ -54,7 +76,8 @@ The generated `<namespace>Config.cmake`:
   makes `find_package` fail, with the list of the available ones in `<namespace>_NOT_FOUND_MESSAGE`;
 - sets `<namespace>_BASE_DIR` (the install prefix of the package), `<namespace>_CMAKE_DIR`,
   `<namespace>_COMPONENTS_LIST`, `<namespace>_DEFAULT_COMPONENTS_LIST` and `<namespace>_<component>_DEPENDENCIES`;
-- has its own debug option: `-D<namespace>_DEBUG=ON` prints what it loads (a `-` in the namespace becomes `_`).
+- has its own debug switch: `-D<namespace>_DEBUG=ON` prints what it loads (a `-` in the namespace becomes `_`); it adds
+  no cache entry to the consumer.
 
 ## Inside the project
 

@@ -12,12 +12,12 @@
       "justMyCode": false
     },
     {
-      "name": "\ud83d\udcc1 tests/cscmake/utils tests",
+      "name": "\ud83d\udcc1 tests/cscmake/devtools tests",
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
       "args": [
-        "tests/cscmake/utils"
+        "tests/cscmake/devtools"
       ],
       "justMyCode": false
     },

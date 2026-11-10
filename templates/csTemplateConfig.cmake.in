@@ -7,13 +7,12 @@
 #   @export_namespace@_<component>_DEPENDENCIES
 # * every other variable is _@export_namespace_sanitized@_* or @export_namespace_sanitized@_* and is unset at the end
 
-# debug messages of this package: -D@export_namespace_sanitized@_DEBUG=ON
-option(@export_namespace_sanitized@_DEBUG "print the debug messages of the @export_namespace@ package configuration"
-       OFF)
+# debug messages of this package: -D@export_namespace_sanitized@_DEBUG=ON (a plain variable, read only: no cache entry
+# in the consumer)
 
 # Print msg as a STATUS message when @export_namespace_sanitized@_DEBUG is ON.
 function(@export_namespace_sanitized@_debug_message msg)
-  if(${@export_namespace_sanitized@_DEBUG})
+  if(@export_namespace_sanitized@_DEBUG)
     message(STATUS "${msg}")
   endif()
 endfunction()
@@ -50,26 +49,34 @@ set(_@export_namespace_sanitized@_dependencies_found "")
 foreach(@export_namespace_sanitized@_component IN LISTS _@export_namespace_sanitized@_components)
   if(NOT @export_namespace_sanitized@_component IN_LIST @export_namespace@_COMPONENTS_LIST)
     @export_namespace_sanitized@_debug_message(
-      "[@export_namespace@Config] unknown component ${@export_namespace_sanitized@_component}")
+      "[@export_namespace@Config] unknown component ${@export_namespace_sanitized@_component}"
+    )
     set(@export_namespace@_${@export_namespace_sanitized@_component}_FOUND FALSE)
     if(@export_namespace@_FIND_REQUIRED_${@export_namespace_sanitized@_component})
       set(@export_namespace@_FOUND FALSE)
       list(JOIN @export_namespace@_COMPONENTS_LIST ", " _@export_namespace_sanitized@_available)
-      string(CONCAT @export_namespace@_NOT_FOUND_MESSAGE
-                    "unknown component ${@export_namespace_sanitized@_component}, "
-                    "available: ${_@export_namespace_sanitized@_available}")
+      string(
+        CONCAT @export_namespace@_NOT_FOUND_MESSAGE
+        "unknown component ${@export_namespace_sanitized@_component}, "
+        "available: ${_@export_namespace_sanitized@_available}"
+      )
       unset(_@export_namespace_sanitized@_available)
     endif()
     continue()
   endif()
 
   # the components it depends on, then the component itself
-  foreach(@export_namespace_sanitized@_load IN
-          LISTS @export_namespace@_${@export_namespace_sanitized@_component}_DEPENDENCIES
-                @export_namespace_sanitized@_component)
+  foreach(
+    @export_namespace_sanitized@_load
+    IN
+    LISTS
+      @export_namespace@_${@export_namespace_sanitized@_component}_DEPENDENCIES
+      @export_namespace_sanitized@_component
+  )
     @export_namespace_sanitized@_find_dependency_for_component(${@export_namespace_sanitized@_load})
     @export_namespace_sanitized@_debug_message(
-      "[@export_namespace@Config] including ${@export_namespace_sanitized@_load}Targets.cmake")
+      "[@export_namespace@Config] including ${@export_namespace_sanitized@_load}Targets.cmake"
+    )
     include("${@export_namespace@_CMAKE_DIR}/targets/${@export_namespace_sanitized@_load}Targets.cmake")
   endforeach()
   set(@export_namespace@_${@export_namespace_sanitized@_component}_FOUND TRUE)

@@ -1,10 +1,7 @@
 cs_add_executable(csSmokeEnvApp)
 
 # found in the workspace given by the environment
-cs_find_package(
-  csSmokeEnvApp PUBLIC csSmokeBase
-  COMPONENTS text
-  REQUIRED CONFIG)
+cs_find_package(csSmokeEnvApp PUBLIC csSmokeBase COMPONENTS text REQUIRED CONFIG)
 
 cs_target_sources(csSmokeEnvApp PRIVATE main.cpp)
 

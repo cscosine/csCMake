@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csTargetDependencies.cmake
+.. cmake-module:: ../../modules/csTargetDependencies.cmake

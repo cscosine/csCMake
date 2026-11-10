@@ -94,3 +94,10 @@ def test_main_reports_the_written_file(
 
     assert cmake_inventory.main([]) == 0
     assert f"{docs_url(CMAKE_DOCS_VERSION)}/objects.inv" in capsys.readouterr().out
+
+
+def test_download_reads_the_url(tmp_path: Path) -> None:
+    path = tmp_path / "objects.inv"
+    path.write_bytes(_inventory())
+
+    assert cmake_inventory.download(path.as_uri()) == _inventory()

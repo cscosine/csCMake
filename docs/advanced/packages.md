@@ -12,7 +12,9 @@ components. For the use of the package, see [Installed packages](../user/install
 - installs its headers queued by `cs_target_sources` (`*_INSTALL`): to
   `${CMAKE_INSTALL_INCLUDEDIR}[/$<CONFIG>]/<path from the project folder>`; the `$<CONFIG>` folder is there when the
   project has more than one configuration (`cs_get_install_include_dir`), so that the headers of every
-  configuration, generated ones included, can be installed in one prefix;
+  configuration, generated ones included, can be installed in one prefix. The consumers get them through
+  `<namespace>::cscmake_base_include`: one include folder per configuration, `$<$<CONFIG:<config>>:<prefix>/include/<config>>`,
+  so they follow the configuration CMake selects for the imported targets (the same as the libraries);
 - records the component: `CSCMAKE_COMPONENT` on the target,
   `CSCMAKE_<namespace>_COMPONENTS` (and `_DEFAULT_COMPONENTS` with `DEFAULT`),
   `CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`, and the `PUBLIC` `cs_find_package` arguments of
@@ -55,4 +57,4 @@ When loaded by `find_package(<namespace> [COMPONENTS ...])`, it:
 3. unsets its own work variables: everything it sets other than the public variables starts with
    `<namespace>_` / `_<namespace>_`.
 
-The namespace with `-` replaced by `_` names its debug option (`<namespace>_DEBUG`) and its helper function and macro.
+The namespace with `-` replaced by `_` names its debug switch (`<namespace>_DEBUG`, a plain variable) and its helper function and macro.

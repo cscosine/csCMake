@@ -36,6 +36,9 @@ cs_initialize_project(
 
 `DEFAULT_CONFIG_MAPPED` and `CUSTOM_CONFIG` can be repeated.
 
+The mapping chooses both the libraries and the headers of a csCMake package (see
+[Installed packages](install.md#using-an-installed-package)).
+
 ## Postfixes
 
 The output files of a target get the postfix of the configuration (`libcored.a`, `libcore.a`, `libcorerd.a`,

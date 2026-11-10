@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csBuildConfigurations.cmake
+.. cmake-module:: ../../modules/csBuildConfigurations.cmake

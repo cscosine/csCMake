@@ -8,5 +8,5 @@ Entry point for coding agents working in this repository.
 - **State of the work**: [PLAN.md](PLAN.md): roadmap, open findings, `PLAN_STATE` and the changelog. Read it first.
 - **Repository map and recipes**: [.agents/skills/cscmake-development/SKILL.md](.agents/skills/cscmake-development/SKILL.md).
 - **How csCMake works**: the documentation in `docs/`: user guide, advanced pages (lifecycle, runtime dependencies,
-  installed packages, presets internals), and the reference in the `#.rst:` blocks of `csCMake.cmake` and `utils/`.
+  installed packages, presets internals), and the reference in the `#.rst:` blocks of `csCMake.cmake` and `modules/`.
 - **Contributing**: [code](docs/contributing/code.md) and [documentation](docs/contributing/documentation.md).

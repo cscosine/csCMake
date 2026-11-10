@@ -7,8 +7,8 @@ code. Read it before changing a public command, a variable, a property or a page
 
 | Part | Source | Format |
 |---|---|---|
-| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake` and `utils/*.cmake`, right above the code they describe | reStructuredText, the format of CMake's own modules |
-| Reference pages | `docs/reference/<module>.rst`: one line, `.. cmake-module:: ../../utils/<module>.cmake` | reStructuredText |
+| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake` and `modules/`, right above the code they describe | reStructuredText, the format of CMake's own modules |
+| Reference pages | `docs/reference/<module>.rst`: one line, `.. cmake-module:: ../../modules/<module>.cmake` | reStructuredText |
 | Guides and other pages | `docs/**/*.md` | Markdown (MyST): readable on GitHub too |
 | Site configuration | `docs/conf.py` | Python (Sphinx) |
 | CMake documentation inventory | `docs/_inventories/cmake-<version>.inv` (see its `README.md`) | Sphinx inventory, never edited by hand |
@@ -82,8 +82,8 @@ include_guard(GLOBAL)
 ```
 
 A new documented module needs its page: `docs/reference/<module>.rst` containing
-`.. cmake-module:: ../../utils/<module>.cmake`, and an entry in the `Reference` table of contents of `docs/index.md`.
-A module without public commands or documented state (`csListUtils`, `csMSVCUtils`) keeps a plain `#` header and has
+`.. cmake-module:: ../../modules/<module>.cmake`, and an entry in the `Reference` table of contents of `docs/index.md`.
+A module without public commands or documented state (`csInternal`) keeps a plain `#` header and has
 no page.
 
 ### A public command
@@ -144,11 +144,10 @@ lines of a field are indented 2 more spaces than the field name:
 #     :prop_gbl:`CSCMAKE_<namespace>_DEFAULT_COMPONENTS`
 ```
 
-cmake-format leaves `#.rst:` blocks exactly as written (`literal_comment_pattern` in `.cmake-format.json`), so wrap
-them by hand at 120 columns: cmake-lint checks the line length and takes the block as the docstring of the function.
+gersemi leaves comments exactly as written, so wrap `#.rst:` blocks by hand at 120 columns: `cscmake-lint` checks the
+line length and that a comment block is right above every function.
 
-A changed signature also goes in `.cmake-format.json` (`parse.additional_commands`), so cmake-format lays out the
-keyword arguments of the calls.
+A changed signature also goes in `gersemi/cscmake.py`, so gersemi lays out the keyword arguments of the calls.
 
 ### Variables and properties
 
@@ -185,8 +184,8 @@ of the file), grouped under `Variables`, `Target properties` and `Global propert
 ### Private functions
 
 Private `_cs_*` functions are not documented in the reference: they keep a plain `#` comment above them, a one-line
-summary (plus details), and `Reads:` / `Writes:` when they touch state. cmake-format reflows plain comments: keep an
-empty `#` line between paragraphs and before bullet lists.
+summary (plus details), and `Reads:` / `Writes:` when they touch state. Keep an empty `#` line between paragraphs and
+before bullet lists.
 
 ## Writing pages
 
@@ -224,6 +223,6 @@ Pages describe the current behaviour only: history goes in the `PLAN.md` changel
 
 1. The `#.rst:` block of the command: summary, signature, details, arguments, `:Reads:` / `:Writes:`.
 2. The variables and properties it introduces: an entry in the module that sets them.
-3. `.cmake-format.json`: its signature in `parse.additional_commands`.
+3. `gersemi/cscmake.py`: its signature.
 4. The guides that show it, `README.md` if it appears there, `MIGRATION.md` if it replaces something.
 5. `sphinx-build -W -n docs docs/_build/html`, and look at the page.

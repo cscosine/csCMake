@@ -8,7 +8,7 @@ Agent-facing guide for working in the csCMake repository. This file lives at
 csCMake wraps CMake for common C++ project setup: targets, dependencies, install/export,
 compile-option defaults, and CMake presets. It has two parts:
 
-1. **CMake utility library** (`csCMake.cmake` + `utils/`) — turns a plain `CMakeLists.txt`
+1. **CMake utility library** (`csCMake.cmake` + `modules/`) — turns a plain `CMakeLists.txt`
    into a well-structured project (custom build configurations, consistent output layout,
    MSVC handling, recursive dependency analysis, namespace-based install/export).
 2. **Python preset generator** (`src/cscmake/`) — renders a full matrix of CMake Presets
@@ -18,23 +18,29 @@ compile-option defaults, and CMake presets. It has two parts:
 
 | Path | Role |
 |------|------|
-| `csCMake.cmake` | Main entry point. `include(csCMake)` from a consumer `CMakeLists.txt`. Defines `cs_initialize_project` / `cs_finalize_project`. |
-| `utils/csAddLibraryExecutable.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
-| `utils/csTargetSources.cmake` | `cs_target_sources` — sources + install-aware variants. |
-| `utils/csTargetLinkLibraries.cmake` | `cs_target_link_libraries` — scoped linking with dependency analysis. |
-| `utils/csFindPackage.cmake` | `cs_find_package` — PUBLIC/PRIVATE propagation for install. |
-| `utils/csTargetDependencies.cmake` | Recursive DLL/runtime dependency analysis per configuration. |
-| `utils/csInstall.cmake` | `cs_install_target`, install layout, `<Ns>Config.cmake` generation from template. |
-| `utils/csBuildConfigurations.cmake` | Build-configuration registration, postfixes, MSVC runtime per config. |
-| `utils/csCompileEachInstalledInclude.cmake` | Compile every installed header standalone. |
-| `utils/csClangTidy.cmake` / `utils/csOpenMP.cmake` | Optional per-target helpers. |
-| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). Format/lint with `cscmake-cmake-template`. |
-| `.cmake-format.json` | cmake-format / cmake-lint configuration (width, naming patterns, disabled codes). |
-| `src/cscmake/devtools/cmake_template.py` | `cscmake-cmake-template format\|lint`: cmakelang on `@VAR@` templates via parseable stand-ins. |
+| `csCMake.cmake` | Entry point: `include(csCMake)` from a consumer `CMakeLists.txt`; CMake version and policies, includes the modules. |
+| `modules/csProject.cmake` | `cs_initialize_project`, `cs_finalize_project`, `cs_get_namespace`; the variables set in the project scope. |
+| `modules/csBuildConfigurations.cmake` | Build configurations: default, mapped, custom; postfixes, MSVC runtime per configuration. |
+| `modules/csTargets.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
+| `modules/csTargetSources.cmake` | `cs_target_sources`: sources and the headers to install. |
+| `modules/csTargetLinkLibraries.cmake` | `cs_target_link_libraries`. |
+| `modules/csFindPackage.cmake` | `cs_find_package`: PUBLIC/PRIVATE propagation to the installed package. |
+| `modules/csBaseInclude.cmake` | `<ns>::cscmake_base_include`, the generated files folders, the installed include folders. |
+| `modules/csTargetDependencies.cmake` | Project and runtime dependencies of the targets, per configuration; Visual Studio debugger `PATH`. |
+| `modules/csInstall.cmake` | `cs_install_target`, the components, the install RPATH. |
+| `modules/csPackageConfig.cmake` | Component dependencies (cycles, sorting), `<Ns>Config.cmake` generation from the template. |
+| `modules/csCheckInstalledHeaders.cmake` | `cs_target_check_installed_headers`: every installed header compiled on its own. |
+| `modules/csCompileProfiles.cmake` / `csCompileProfilesShipped.cmake` | Compile profiles: the mechanism / the `cscmake_*` profiles. |
+| `modules/csDebug.cmake` | `cs_debug_message`, `cs_print_state`, `cs_print_target_properties`. |
+| `modules/csInternal.cmake` | Private helpers (lists, properties, paths); no reference page. |
+| `modules/integrations/csOpenMP.cmake` | `cs_target_use_openmp` (integrations with third-party tools and libraries). |
+| `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |
+| `.gersemirc`, `gersemi/cscmake.py` | gersemi configuration (width 120, indent 2) and the `cs_*` signatures (shipped to projects). |
+| `src/cscmake/devtools/cmake_lint.py` | `cscmake-lint`: names, comment above every function, complexity, line length. |
 | `presets/common/` | Reusable preset building blocks (hosts, compilers, generators, build types, tests). |
 | `presets/csv1/` | **Generated** preset matrix — do not edit by hand. |
 | `presets/template/` | `@VAR@` templates used to generate `presets/csv1/`. |
-| `src/cscmake/utils/generate_cs_preset_variants.py` | Template renderer (`@VAR@` delimiter) with JSON validation. |
+| `src/cscmake/presets/render.py` | Template renderer (`@VAR@` delimiter) with JSON validation. |
 | `src/cscmake/presets/registry.py` | Built-in variant matrix (OS/arch/compiler/generator) and short forms. |
 | `src/cscmake/presets/generate.py` | Preset generator; console script `cscmake-generate-presets` (`--check` to verify). |
 | `pyproject.toml` | Project metadata, ruff/mypy/pytest/coverage/import-linter config. |
@@ -43,7 +49,7 @@ compile-option defaults, and CMake presets. It has two parts:
 ## Conventions
 
 - **CMake:** public functions `cs_*`, private helpers `_cs_`. File names `cs<Name>.cmake`.
-  Formatted and linted by cmake-format / cmake-lint (`.cmake-format.json`, line width 120); every
+  Formatted by gersemi (`.gersemirc`, line width 120) and linted by `cscmake-lint`; every
   `function`/`macro` has a docstring comment block right above it: a `#.rst:` reStructuredText block for the public
   ones (the reference documentation, built by Sphinx from `docs/`), a plain `#` comment for the private ones. See the
   docs rule in `CLAUDE.md`.
@@ -64,8 +70,8 @@ source .venv/bin/activate
 
 ### Run quality gates
 ```bash
-pre-commit run --all-files   # hygiene, ruff, ruff-format, actionlint, mypy, cmake-format, cmake-lint,
-                             # cmake-format/-lint (templates), generate-csv1-presets, import-linter
+pre-commit run --all-files   # hygiene, ruff, ruff-format, actionlint, mypy, gersemi, cscmake-lint,
+                             # generate-csv1-presets, check-docs, import-linter
 ```
 
 ### Run tests

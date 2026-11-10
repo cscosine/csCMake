@@ -12,8 +12,8 @@
 *.bat text eol=crlf
 *.ps1 text eol=crlf
 
-# CMake sources: LF on every OS (cmake-format / cmake-lint expect unix line endings, and the generated
-# <Ns>Config.cmake keeps the line endings of templates/csTemplateConfig.cmake.in)
+# CMake sources: LF on every OS (the generated <Ns>Config.cmake keeps the line endings of
+# templates/csTemplateConfig.cmake.in)
 *.cmake text eol=lf
 *.cmake.in text eol=lf
 CMakeLists.txt text eol=lf

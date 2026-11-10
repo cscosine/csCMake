@@ -16,5 +16,7 @@ cs_install_target(csSmokeTop csSmokeTop DEFAULT)
 cs_finalize_target(csSmokeTop)
 
 add_test(NAME csSmokeTopOutput COMMAND csSmokeTop)
-set_tests_properties(csSmokeTopOutput PROPERTIES PASS_REGULAR_EXPRESSION
-                                                 "mid-a\\(text\\(base-core\\)\\) mid-b\\(base-core\\)")
+set_tests_properties(
+  csSmokeTopOutput
+  PROPERTIES PASS_REGULAR_EXPRESSION "mid-a\\(text\\(base-core\\)\\) mid-b\\(base-core\\)"
+)

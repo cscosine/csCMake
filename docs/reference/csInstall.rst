@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csInstall.cmake
+.. cmake-module:: ../../modules/csInstall.cmake

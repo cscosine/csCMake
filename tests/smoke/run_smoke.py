@@ -3,14 +3,14 @@
 
 Lays out a workspace the way csCMake consumers do (the presets expect ``${sourceParentDir}/csCMake``):
 
-    <workspace>/csCMake            copy of csCMake.cmake, utils/, presets/, templates/
+    <workspace>/csCMake            copy of csCMake.cmake, modules/, presets/, templates/
     <workspace>/<project>          every project of PROJECTS (see tests/smoke/README.md)
     <workspace>/build, install     created by the presets
 
 then, for the variant and in the order of PROJECTS (each project finds the previous ones in the install
 folder), runs the csv1 workflow presets (configure, build, install, ctest) for every build configuration,
 runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
-``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cmake-lint.
+``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cscmake-lint.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -20,7 +20,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -43,7 +42,7 @@ from cscmake.presets.registry import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SMOKE_DIR = Path(__file__).resolve().parent
-CSCMAKE_CONTENT = ("csCMake.cmake", "utils", "presets", "templates")
+CSCMAKE_CONTENT = ("csCMake.cmake", "modules", "presets", "templates")
 
 
 @dataclass(frozen=True)
@@ -74,6 +73,9 @@ class Project:
     find_dependencies: tuple[str, ...] = ()  # exactly the packages of find_dependency() in its installed Config
     apps: tuple[App, ...] = ()  # installed applications to run
     standalone: bool = False  # standalone layout: its own workspace, <project>/workspace (csCMake copied there)
+    # a consumer without csCMake: plain CMake, Debug and Release only (the configurations CMake knows), no installed
+    # package to check
+    plain: bool = False
 
 
 # build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
@@ -94,6 +96,10 @@ PROJECTS = (
         apps=(App("csSmokeEnvApp", ("env(text(base-core))",)),),
     ),
     Project("csSmokeStandalone", apps=(App("csSmokeStandaloneApp", ("standalone",)),), standalone=True),
+    # shared libraries: the installed application runs from the install folder
+    Project("csSmokeShared", apps=(App("csSmokeSharedApp", ("shared-text(shared-core)",)),)),
+    # plain CMake consumer of csSmokeShared (its ctest checks the output)
+    Project("csSmokePlainConsumer", plain=True),
 )
 
 # default targets created by cs_initialize_project, installed in the cscmake_common component
@@ -114,16 +120,17 @@ def find_variant(variant: str) -> ContextOsArchitectureCompilerGenerator:
     raise SmokeError(f"unknown variant {variant!r} (not in the csCMake preset registry)")
 
 
-def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator) -> list[str]:
-    """Return the workflow presets that build every configuration of ``ctx``."""
+def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, plain: bool = False) -> list[str]:
+    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release for a plain project)."""
     variant = create_context_os_architecture_compiler_generator_string(ctx)
     generator_type = ctx.context_compiler_generator.build_generator.generator_type
+    configs = CONFIGS[:2] if plain else CONFIGS
     if generator_type == GeneratorType.MULTI_CONFIG:
         # a single build tree, all the configurations in one workflow
-        all_configs = BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
+        all_configs = BuildConfig.DEBUG_RELEASE if plain else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
         assert all_configs in get_supported_build_configs_for_generator_type(generator_type)
         return [f"workflow-{variant}-{all_configs.value}"]
-    return [f"workflow-{variant}-{config.preset}" for config in CONFIGS]
+    return [f"workflow-{variant}-{config.preset}" for config in configs]
 
 
 @contextmanager
@@ -252,27 +259,18 @@ def check_installed_default_targets(workspace: Path, variant: str, project: Proj
 
 
 def lint_installed_config(workspace: Path, variant: str, project: Project) -> None:
-    """cmake-lint the installed ``<project>Config.cmake`` with the repository configuration.
+    """cscmake-lint the installed ``<project>Config.cmake`` (comments, complexity).
 
-    C0103 (naming) and C0301 (line length) are not checked: the names in a package config are dictated by CMake
-    (``<Package>_FIND_COMPONENTS``, ...) and by the package/component names chosen by the user.
-
-    The file is written by CMake with the line endings of the build platform: they only have to be
-    consistent (checked here), and an LF copy is linted, because cmakelang 0.6.13 cannot lint CRLF
-    files (``line_ending: auto`` crashes, ``windows`` flags the last line).
+    The naming rules and the line length are not checked: the names in a package config are dictated by CMake
+    (``<Package>_FIND_COMPONENTS``, ...) and by the package and component names chosen by the user. The file is written
+    with the line endings of the build platform: they only have to be consistent (checked here).
     """
     config_file = installed_config(workspace, variant, project)
     print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
-    lint_config = json.loads((REPO_ROOT / ".cmake-format.json").read_text(encoding="utf-8"))
-    lint_config.setdefault("lint", {}).setdefault("disabled_codes", []).extend(["C0103", "C0301"])
-    with tempfile.TemporaryDirectory() as tmp:
-        cfg = Path(tmp) / "cmake-format.json"
-        cfg.write_text(json.dumps(lint_config), encoding="utf-8")
-        lf_copy = Path(tmp) / config_file.name
-        lf_copy.write_bytes(config_file.read_bytes().replace(b"\r\n", b"\n"))
-        print(f"linting an LF copy of {config_file}", flush=True)
-        # -c last: it takes one or more values and would swallow the input file
-        run([sys.executable, "-m", "cmakelang.lint", lf_copy, "-c", cfg], cwd=workspace)
+    run(
+        [sys.executable, "-m", "cscmake.devtools.cmake_lint", "--disable", "CS101,CS102,CS103,CS108", config_file],
+        cwd=workspace,
+    )
 
 
 def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
@@ -281,9 +279,11 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     with group(f"prepare workspace {workspace}"):
         prepare_workspace(workspace)
     for project in PROJECTS:
-        for workflow in workflow_presets(ctx):
+        for workflow in workflow_presets(ctx, project.plain):
             with group(f"{project.name}: cmake --workflow {workflow}"):
                 run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
+        if project.plain:
+            continue
         with group(f"{project.name}: find_dependency in the installed {project.name}Config.cmake"):
             check_installed_config_dependencies(workspace, variant, project)
             check_installed_default_targets(workspace, variant, project)
@@ -291,7 +291,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
             with group(f"{project.name}: run the installed applications"):
                 check_installed_apps(workspace, variant, project)
         if lint:
-            with group(f"{project.name}: cmake-lint installed {project.name}Config.cmake"):
+            with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
 
 
@@ -299,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--variant", required=True, help="preset variant id, e.g. csv1-linux-ubuntu24.04-...")
     parser.add_argument("--workspace", type=Path, help="workspace folder (default: a new temporary folder)")
-    parser.add_argument("--no-lint", action="store_true", help="skip cmake-lint of the installed configs")
+    parser.add_argument("--no-lint", action="store_true", help="skip cscmake-lint of the installed configs")
     args = parser.parse_args(argv)
 
     workspace = args.workspace or Path(tempfile.mkdtemp(prefix="cscmake-smoke-"))
