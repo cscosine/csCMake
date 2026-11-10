@@ -59,7 +59,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 3) Template `csTemplateConfig.cmake.in`: the TODO about `@EXPORT_NAMESPACE_SANITIZED@`-prefixed function/macro names (needed to avoid clashes between installed packages) is still open.
 - [x] Template: the standalone `@INJECTED_FIND_PACKAGES_CODE@` line is indented inside the macro → `_cs_finalize_install` now always wraps the injected code without leading spaces on the first line (also fixes a whitespace-only line when nothing is injected, found by linting the generated Config in Phase 2).
 - [x] Phase 2: cmake-lint on the installed `csSmokeConfig.cmake` (`run_smoke.py`; C0103 skipped there: names come from CMake's `<Package>_*` conventions and the user's package/export names).
-- [ ] The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
+- [x] (4d: read by `cs_initialize_project`) The presets set `CMAKE_C_COMPILER` for every variant, so C++-only projects get a "Manually-specified variables were not used: CMAKE_C_COMPILER" warning at configure (seen in the smoke projects) → harmless; consider setting it only when C is enabled, or document it.
 - [x] (Phase 3a step 5) cmake-format does not know the `cs_*` command signatures, so calls like `cs_initialize_project(...)` / `cs_target_sources(...)` are laid out one argument per line or flattened → declare them in `.cmake-format.json` (`parse.additional_commands`: flags, keyword arguments).
 
 ### csCMake location (presets)
@@ -429,7 +429,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed); next 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation), 4f (side-effect assessment), 4g (code structure assessment). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d (unused `CMAKE_C_COMPILER` warning) under review; next 4e (cmakelang evaluation), 4f (side-effect assessment), 4g (code structure assessment). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -1044,3 +1044,12 @@ package is not released; pre-release tags are GitHub pre-releases.
   Phase 4 step 4f ("Side-effect assessment", with the inventory of candidates).
 - User: re-evaluate the code structure (files, folders) and reorganise where needed: Phase 4 step 4g ("Code structure
   assessment", with the observations of today's layout).
+
+### 2026-11-10 (Phase 4 step 4d — unused CMAKE_C_COMPILER warning)
+- The presets give `CMAKE_C_COMPILER` (projects with C sources need it: without it the Clang variants would build C
+  with the default `cc`); a C++-only project got "Manually-specified variables were not used by the project:
+  CMAKE_C_COMPILER". `cs_initialize_project` reads it (a debug message): CMake counts a value read (not
+  `if(DEFINED)`) as a use. Rejected under the "no hidden side effects" rule: `warnings.unusedCli: false` in the
+  presets (would hide the unused variables of every project using them, e.g. a mistyped option in a project's own
+  setup preset); removing `CMAKE_C_COMPILER` from the presets. Projects using the presets without csCMake keep the
+  warning. Configure test `test_the_c_compiler_of_the_presets_is_not_reported_unused` (fails on `4da7212`).

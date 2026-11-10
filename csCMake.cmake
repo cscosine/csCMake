@@ -134,6 +134,9 @@ macro(cs_initialize_project)
   option(${PROJECT_NAME}_CSCMAKE_DEBUG "csCMake: print the csCMake debug messages of ${PROJECT_NAME}" OFF)
   set(_cscmake_debug_option ${PROJECT_NAME}_CSCMAKE_DEBUG)
   cs_debug_message("cs_initialize_project ${ARGN}")
+  # the presets give CMAKE_C_COMPILER for the projects with C sources: read here, so that a C++-only project does not
+  # get the "Manually-specified variables were not used by the project" warning
+  cs_debug_message("cs_initialize_project C compiler (presets): ${CMAKE_C_COMPILER}")
 
   if(NOT PROJECT_VERSION)
     message(

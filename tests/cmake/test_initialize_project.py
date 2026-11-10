@@ -184,3 +184,11 @@ cs_finalize_project()
     assert "$<$<CONFIG:Debug>:MultiThreadedDebug>" in runtime
     assert "$<$<CONFIG:Paranoid>:MultiThreadedDebug>" in runtime  # Paranoid is based on Debug
     assert "$<$<CONFIG:Release>:MultiThreadedDLL>" in runtime
+
+
+def test_the_c_compiler_of_the_presets_is_not_reported_unused(tmp_path: Path) -> None:
+    """The presets give CMAKE_C_COMPILER, a project without C sources does not use it: no unused-cli warning."""
+    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-DCMAKE_C_COMPILER=cc"])
+
+    assert result.returncode == 0, result.output
+    assert "Manually-specified variables were not used" not in result.output
