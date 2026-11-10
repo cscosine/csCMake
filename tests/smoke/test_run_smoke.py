@@ -16,7 +16,9 @@ from tests.smoke.run_smoke import (
     PROJECTS,
     SMOKE_DIR,
     SmokeError,
+    check_debugger_environment,
     config_find_dependencies,
+    debugger_environments,
     find_variant,
     line_ending,
     prepare_workspace,
@@ -122,3 +124,56 @@ endmacro()
 """
     assert config_find_dependencies(text) == {"csSmokeBase", "Eigen3"}
     assert config_find_dependencies("# nothing injected\n") == set()
+
+
+VCXPROJ = """<?xml version="1.0" encoding="UTF-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerEnvironment>PATH=C:\\ws\\runtime\\Debug;C:/ws/build/bin/Debug;%PATH%</LocalDebuggerEnvironment>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LocalDebuggerEnvironment Condition="'$(Configuration)|$(Platform)'=='Release|x64'"
+      >PATH=C:/r;%PATH%</LocalDebuggerEnvironment>
+  </PropertyGroup>
+</Project>
+"""
+
+
+def test_debugger_environments_of_each_configuration(tmp_path: Path) -> None:
+    """The condition on the property group or on the element itself (both are valid MSBuild)."""
+    vcxproj = tmp_path / "app.vcxproj"
+    vcxproj.write_text(VCXPROJ, encoding="utf-8")
+
+    assert debugger_environments(vcxproj) == {
+        "Debug": "PATH=C:\\ws\\runtime\\Debug;C:/ws/build/bin/Debug;%PATH%",
+        "Release": "PATH=C:/r;%PATH%",
+    }
+
+
+def _vs_workspace(tmp_path: Path, path_of: str) -> Path:
+    """A workspace with a csSmokeSharedApp.vcxproj whose debugger PATH of each configuration is ``path_of``."""
+    groups = "".join(
+        f"<PropertyGroup Condition=\"'$(Configuration)|$(Platform)'=='{c.cmake}|x64'\">"
+        f"<LocalDebuggerEnvironment>{path_of.format(config=c.cmake)}</LocalDebuggerEnvironment></PropertyGroup>"
+        for c in CONFIGS
+    )
+    vcxproj = tmp_path / "build" / "variant" / "csSmokeShared" / "csSmokeSharedApp.vcxproj"
+    vcxproj.parent.mkdir(parents=True)
+    vcxproj.write_text(f'<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">{groups}</Project>')
+    return tmp_path
+
+
+def test_check_debugger_environment(tmp_path: Path) -> None:
+    good = "CSSMOKE_CONFIG={config}\n" + r"PATH=C:\ws\csSmokeShared\runtime\{config};C:/ws/build/bin/{config};%PATH%"
+    check_debugger_environment(_vs_workspace(tmp_path / "good", good), "variant")
+
+    swapped = "CSSMOKE_CONFIG={config}\n" + r"PATH=C:/ws/build/bin/{config};C:/ws/csSmokeShared/runtime/{config};%PATH%"
+    with pytest.raises(SmokeError, match="must come before"):
+        check_debugger_environment(_vs_workspace(tmp_path / "swapped", swapped), "variant")
+
+    with pytest.raises(SmokeError, match="expected CSSMOKE_CONFIG="):
+        check_debugger_environment(_vs_workspace(tmp_path / "none", "A=1"), "variant")
+
+    no_dlls = "CSSMOKE_CONFIG={config}\n" + r"PATH=C:/ws/csSmokeShared/runtime/{config};%PATH%"
+    with pytest.raises(SmokeError, match="expected PATH="):
+        check_debugger_environment(_vs_workspace(tmp_path / "no_dlls", no_dlls), "variant")

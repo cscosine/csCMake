@@ -64,4 +64,13 @@ cs_finalize_project()
 
 When the project is finalized, each executable and shared library gets a Visual Studio debugger environment whose
 `PATH` contains the folders of the DLLs it needs, per configuration (CMake's `$<TARGET_RUNTIME_DLL_DIRS>`), so running
-or debugging it from Visual Studio finds them; see [Runtime dependencies](../advanced/runtime-dependencies.md).
+or debugging it from Visual Studio finds them. Nothing to write for that.
+
+What CMake cannot know, a project adds with `cs_target_runtime_environment`: folders of plugins or of libraries loaded
+at run time, and variables the program reads (e.g. Qt's plugin folder):
+
+```cmake
+cs_target_runtime_environment(app PATH "${MYSDK_ROOT}/bin" SET "QT_PLUGIN_PATH=${QT_ROOT}/plugins")
+```
+
+See [Runtime dependencies](../advanced/runtime-dependencies.md).

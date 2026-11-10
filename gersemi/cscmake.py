@@ -86,4 +86,9 @@ command_definitions = {
         ],
     },
     "cs_target_use_compile_profiles": {"front_positional_arguments": ["target"]},
+    "cs_target_runtime_environment": {
+        "front_positional_arguments": ["target"],
+        "one_value_keywords": ["DEBUGGER_PATH"],
+        "multi_value_keywords": ["PATH", "SET"],
+    },
 }

@@ -48,8 +48,25 @@ outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packag
 ## Uses
 
 - **Visual Studio debugger environment**: for each executable and shared or module library, `VS_DEBUGGER_ENVIRONMENT`
-  is `PATH=<the folders of its DLLs>;%PATH%` (Visual Studio expands `%PATH%`: the rest of the environment is kept),
-  empty when it needs none; running or debugging the target from Visual Studio finds the DLLs of its dependencies.
+  gets a line `PATH=<the folders of its DLLs>;%PATH%` (Visual Studio expands `%PATH%`: the rest of the environment is
+  kept), none when there are no folders; running or debugging the target from Visual Studio finds the DLLs of its
+  dependencies. Nothing to write in the project for that.
+- **What CMake cannot know**: `cs_target_runtime_environment` adds to the run-time environment of a target. Needed only
+  for libraries loaded at run time (plugins, `dlopen` / `LoadLibrary`), DLLs linked by file name instead of a target,
+  tools the program starts, and variables the program reads:
+
+  ```cmake
+  cs_target_runtime_environment(app
+    PATH "${MYSDK_ROOT}/bin" "$<$<CONFIG:Debug>:${PLUGINS_DIR}/debug>"
+    SET "QT_PLUGIN_PATH=${QT_ROOT}/plugins")
+  ```
+
+  The `PATH` folders come first, before the DLL folders; each variable is a line of its own. Call it before
+  `cs_finalize_project`, as many times as needed.
+- **A `VS_DEBUGGER_ENVIRONMENT` written by the project** is kept: its lines come first. When it has a `PATH` line of its
+  own, csCMake puts its folders in that line, before the project's (the default) or after them:
+  `cs_target_runtime_environment(app DEBUGGER_PATH AFTER)`; `DEBUGGER_PATH OFF` leaves the debugger environment of the
+  target as the project wrote it.
 - **Component dependencies**: the project dependencies of the targets of a component give the components it depends
   on, and the other csCMake packages of the build it needs (see [Installed packages internals](packages.md)).
 - A target linking a target of the other project makes its component `find_dependency` that package in the installed

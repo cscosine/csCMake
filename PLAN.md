@@ -389,3 +389,15 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `CSCMAKE_*RUNTIME_LIBRARIES*` / `CSCMAKE_LINKED_*` properties, the missing-file warning, two unused helpers.
   Host smoke (Ninja, GCC) before / after: the 84 installed text files identical (Config, targets, headers). MIGRATION
   section for the next release; docs (runtime dependencies, dependencies).
+
+### 2026-11-11 (Phase 6a — D1 follow-up: runtime folders, project environment, Visual Studio check)
+- `cs_target_runtime_environment(<target> [PATH ...] [SET <name>=<value> ...])` (user: extra folders for plugins /
+  dynamically loaded libraries, variables such as `QT_PLUGIN_PATH`, as a `cs_` command; documented as rarely needed):
+  stored in `CSCMAKE_RUNTIME_DIRS` / `CSCMAKE_RUNTIME_ENVIRONMENT`, rendered by `cs_finalize_project` in the debugger
+  environment (later also the run scripts and the test environment). A `VS_DEBUGGER_ENVIRONMENT` of the project is kept,
+  its `PATH` line merged: `cs_target_runtime_environment(<t> DEBUGGER_PATH BEFORE|AFTER|OFF)` (default `BEFORE`; per
+  target only, user: no project-wide setting until a project needs one; not `PREPEND` / `APPEND`: `set_property()`
+  takes them as its own keywords). Configure tests for every case.
+- Smoke: csSmokeSharedApp calls `cs_target_runtime_environment` (a folder and a variable per configuration); on the Visual Studio variants `run_smoke.py`
+  checks the `LocalDebuggerEnvironment` of its `.vcxproj` for every configuration (extra folder first, then
+  `bin/<config>`, then `%PATH%`); parser and check unit-tested.

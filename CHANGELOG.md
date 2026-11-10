@@ -13,6 +13,15 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   were missing). Set on executables and shared / module libraries.
 - The targets a target depends on (`CSCMAKE_PROJECT_DEPENDENCIES`, the dependencies between components) are resolved
   once by `cs_finalize_project`, following `$<LINK_ONLY:...>` links too.
+- A `VS_DEBUGGER_ENVIRONMENT` set by the project is kept: csCMake adds its lines after the project's, and merges its
+  folders into the project's `PATH` line (`DEBUGGER_PATH` of `cs_target_runtime_environment`).
+
+### New
+
+- `cs_target_runtime_environment(<target> [PATH <folder>...] [SET <name>=<value>...] [DEBUGGER_PATH ...])`: what
+  CMake cannot know about the run-time environment of a target (plugins, libraries loaded at run time, variables such
+  as `QT_PLUGIN_PATH`), added to its Visual Studio debugger environment; `DEBUGGER_PATH` `BEFORE` (default) / `AFTER`
+  / `OFF` for a target whose `VS_DEBUGGER_ENVIRONMENT` the project writes itself.
 
 ### Removed
 

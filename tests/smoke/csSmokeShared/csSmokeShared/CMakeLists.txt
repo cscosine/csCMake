@@ -19,6 +19,13 @@ cs_finalize_target(sharedText)
 cs_add_executable(csSmokeSharedApp)
 cs_target_sources(csSmokeSharedApp PRIVATE main.cpp)
 cs_target_link_libraries(csSmokeSharedApp PRIVATE sharedText)
+# an extra folder on its PATH and a variable in the Visual Studio debugger (checked by run_smoke.py, Visual Studio
+# variants)
+cs_target_runtime_environment(
+  csSmokeSharedApp
+  PATH "${CMAKE_CURRENT_SOURCE_DIR}/runtime/$<CONFIG>"
+  SET "CSSMOKE_CONFIG=$<CONFIG>"
+)
 cs_install_target(csSmokeSharedApp app)
 cs_finalize_target(csSmokeSharedApp)
 

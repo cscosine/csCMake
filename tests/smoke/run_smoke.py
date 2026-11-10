@@ -30,10 +30,12 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from xml.etree import ElementTree
 
 from cscmake.presets.registry import (
     BuildConfig,
     ContextOsArchitectureCompilerGenerator,
+    Generator,
     GeneratorType,
     create_context_os_architecture_compiler_generator_string,
     get_supported_build_configs_for_generator_type,
@@ -101,6 +103,8 @@ PROJECTS = (
     # plain CMake consumer of csSmokeShared (its ctest checks the output)
     Project("csSmokePlainConsumer", plain=True),
 )
+
+VISUAL_STUDIO = (Generator.MSVC_17_2022, Generator.MSVC_18_2026)
 
 # default targets created by cs_initialize_project, installed in the cscmake_common component
 DEFAULT_TARGETS = ("cscmake_base_include",)
@@ -211,6 +215,44 @@ def check_installed_apps(workspace: Path, variant: str, project: Project) -> Non
                 )
 
 
+_DEBUGGER_CONFIG = re.compile(r"==\s*'([^|']+)\|")
+
+
+def debugger_environments(vcxproj: Path) -> dict[str, str]:
+    """Return the ``LocalDebuggerEnvironment`` of each configuration of a Visual Studio project file."""
+    environments: dict[str, str] = {}
+    for group_element in ElementTree.parse(vcxproj).getroot().iter():
+        for child in group_element:
+            if not child.tag.endswith("LocalDebuggerEnvironment"):
+                continue
+            condition = child.get("Condition") or group_element.get("Condition") or ""
+            if match := _DEBUGGER_CONFIG.search(condition):
+                environments[match.group(1)] = child.text or ""
+    return environments
+
+
+def check_debugger_environment(workspace: Path, variant: str) -> None:
+    """Visual Studio: the debugger environment of csSmokeSharedApp (cs_target_runtime_environment), for each
+    configuration: the line CSSMOKE_CONFIG=<config>, then a PATH line with its runtime/<config> folder first, then the
+    folder of the DLLs it links (bin/<config> of the build), then %PATH%."""
+    projects = sorted((workspace / "build").rglob("csSmokeSharedApp.vcxproj"))
+    if not projects:
+        raise SmokeError(f"csSmokeSharedApp.vcxproj not found in {workspace / 'build'}")
+    environments = debugger_environments(projects[0])
+    print(f"{projects[0].name}: LocalDebuggerEnvironment {environments}", flush=True)
+    for config in CONFIGS:
+        lines = [line.strip() for line in environments.get(config.cmake, "").splitlines() if line.strip()]
+        variable = f"CSSMOKE_CONFIG={config.cmake}"
+        if len(lines) != 2 or lines[0] != variable:
+            raise SmokeError(f"{config.cmake}: debugger environment {lines}, expected {variable} then a PATH line")
+        path = lines[1].replace("\\", "/").lower()
+        runtime, dlls = f"/runtime/{config.cmake}".lower(), f"/bin/{config.cmake}".lower()
+        if not (path.startswith("path=") and runtime in path and dlls in path and path.endswith(";%path%")):
+            raise SmokeError(f"{config.cmake}: debugger {path!r}, expected PATH=...{runtime};...{dlls};%PATH%")
+        if path.index(runtime) > path.index(dlls):
+            raise SmokeError(f"{config.cmake}: {runtime} must come before {dlls} in {path!r}")
+
+
 def line_ending(path: Path) -> str:
     """Return the line ending of ``path`` ("unix" or "windows"); fail on mixed line endings."""
     data = path.read_bytes()
@@ -290,6 +332,12 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
         if project.apps:
             with group(f"{project.name}: run the installed applications"):
                 check_installed_apps(workspace, variant, project)
+        if (
+            project.name == "csSmokeShared"
+            and ctx.context_compiler_generator.build_generator.generator in VISUAL_STUDIO
+        ):
+            with group(f"{project.name}: Visual Studio debugger environment"):
+                check_debugger_environment(workspace, variant)
         if lint:
             with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
