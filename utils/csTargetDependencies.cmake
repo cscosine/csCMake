@@ -12,6 +12,70 @@ include(utils/csDebugMessage)
 include(utils/csListUtils)
 include(utils/csDebugUtils)
 
+# Analyze one dependency (dependency, a name target_name links to, or target_name itself) and return the names it links
+# to in linked_libs_var.
+#
+# Writes:
+#
+# * target property CSCMAKE_LINKED_PROJECT_TARGETS of target_name: dependency, if a target of the project
+# * target property CSCMAKE_LINKED_NON_TARGETS of target_name: dependency, if not a target (yet)
+# * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG> of target_name: the files of dependency, if an imported
+#   shared, module or interface library
+function(_cs_analyze_dependency target_name dependency linked_libs_var)
+  set(${linked_libs_var}
+      ""
+      PARENT_SCOPE)
+
+  if(NOT TARGET ${dependency})
+    if(NOT ${dependency} STREQUAL ${target_name})
+      cs_debug_message("[_cs_recursive_analyze_target] ${dependency} is not a target, add it to the non resolved "
+                       "dependencies")
+      _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_NON_TARGETS ${dependency})
+    endif()
+    return()
+  endif()
+
+  get_target_property(dependency_type ${dependency} TYPE)
+  get_target_property(dependency_imported ${dependency} IMPORTED)
+  get_target_property(aliased_dependency ${dependency} ALIASED_TARGET)
+  if(aliased_dependency)
+    set(dependency "${aliased_dependency}")
+  endif()
+  cs_debug_message(
+    "[_cs_recursive_analyze_target] ${dependency} TYPE ${dependency_type} IMPORTED ${dependency_imported}")
+
+  _cs_get_all_linked_libs(${dependency} linked_libs)
+  cs_debug_message("[_cs_recursive_analyze_target] ${dependency} links to ${linked_libs}")
+  set(${linked_libs_var}
+      "${linked_libs}"
+      PARENT_SCOPE)
+
+  if(NOT dependency_imported)
+    # a target of the project: its own runtime dependencies are resolved by cs_finalize_project
+    if(NOT ${dependency} STREQUAL ${target_name})
+      _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_PROJECT_TARGETS ${dependency})
+    endif()
+  elseif(dependency_type MATCHES "^(MODULE|SHARED|INTERFACE)_LIBRARY$")
+    cs_debug_message("[_cs_recursive_analyze_target] ${dependency} is imported, populate its library path")
+    _cs_add_imported_target_locations(${target_name} ${dependency})
+  endif()
+endfunction()
+
+# Print the result of _cs_recursive_analyze_target for target_name (debug messages).
+function(_cs_debug_analyzed_target target_name)
+  cs_get_build_configurations(configs_list)
+  foreach(config ${configs_list})
+    string(TOUPPER "${config}" config_ucase)
+    _cs_get_target_direct_runtime_libraries(${target_name} ${config} runtime_libraries)
+    cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase}: "
+                     "${runtime_libraries}")
+  endforeach()
+  _cs_get_target_linked_project_targets(${target_name} project_targets)
+  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: ${project_targets}")
+  _cs_get_target_linked_non_targets(${target_name} non_targets)
+  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_NON_TARGETS: ${non_targets}")
+endfunction()
+
 # Walk every library target_name links to, directly or not: record the targets of the project and the names that are not
 # targets, and the existing files of the imported shared libraries per configuration.
 #
@@ -21,114 +85,14 @@ include(utils/csDebugUtils)
 # * target property CSCMAKE_LINKED_NON_TARGETS: names that are not targets (yet)
 # * target property CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>: shared libraries of the imported targets
 function(_cs_recursive_analyze_target target_name)
-  # cmake-lint: disable=R0915
-  # get target type
-  get_target_property(target_type ${target_name} TYPE)
-
-  # initialize the iterative list of target to analyze
-  set(targets_to_analyze_list ${target_name})
-  list(LENGTH targets_to_analyze_list targets_to_analyze_size)
-
-  # loop
-  while(targets_to_analyze_size GREATER 0)
-    # get the first target in the list
-    list(GET targets_to_analyze_list 0 target_to_analyze)
-    # and remove it
-    list(REMOVE_AT targets_to_analyze_list 0)
-
-    # get target type
-    if(TARGET ${target_to_analyze})
-      # get type and imported properties
-      get_target_property(target_to_analyze_type ${target_to_analyze} TYPE)
-      get_target_property(target_to_analyze_imported ${target_to_analyze} IMPORTED)
-
-      # check aliasing and retrieve original name
-      get_target_property(aliased_target_to_analyze ${target_to_analyze} ALIASED_TARGET)
-      if(aliased_target_to_analyze)
-        cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} ALIAS "
-          "${aliased_target_to_analyze} TYPE ${target_to_analyze_type} IMPORTED ${target_to_analyze_imported}")
-        set(target_to_analyze "${aliased_target_to_analyze}")
-      else()
-        cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} TYPE ${target_to_analyze_type} "
-          "IMPORTED ${target_to_analyze_imported}")
-      endif()
-
-      # get all link libraries of the TARGET_TO_ANALYZE and add as recoursive dependecies to analyze
-      set(target_to_analyze_linked_libs "")
-      _cs_get_all_linked_libs(${target_to_analyze} target_to_analyze_linked_libs)
-      cs_debug_message(
-        "[_cs_recursive_analyze_target] ${target_to_analyze} has the following dependencies to be further "
-        "analyzed TARGET_TO_ANALYZE_LINKED_LIBS: ${target_to_analyze_linked_libs}")
-      # add to continue the analysis loop
-      _cs_list_add_list_unique_values(targets_to_analyze_list "${target_to_analyze_linked_libs}")
-
-      if(NOT target_to_analyze_imported)
-        # not imported target, i.e., a target specified inside the project, will be analyzed further for recursive
-        # dependencies
-        if(NOT ${target_to_analyze} STREQUAL ${target_name})
-          cs_debug_message(
-            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported (i.e., is defined in this "
-            "project), add it to the list of non resolved recursive dependencies")
-          _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_PROJECT_TARGETS ${target_to_analyze})
-        else()
-          cs_debug_message(
-            "[_cs_recursive_analyze_target] ${target_to_analyze} is not imported, but is the base target to "
-            "analyze, do not add it recursively")
-        endif()
-      else()
-        # if the target is a shared, interface or module library, add its paths
-        if((${target_to_analyze_type} STREQUAL "MODULE_LIBRARY")
-           OR (${target_to_analyze_type} STREQUAL "SHARED_LIBRARY")
-           OR (${target_to_analyze_type} STREQUAL "INTERFACE_LIBRARY"))
-          cs_debug_message("[_cs_recursive_analyze_target] ${target_to_analyze} is imported, populate its library path")
-          _cs_add_imported_target_locations(${target_name} ${target_to_analyze})
-        else()
-
-        endif()
-      endif()
-
-    else()
-      if(NOT ${target_to_analyze} STREQUAL ${target_name})
-        cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, add it to the "
-          "list of non resolved recursive dependencies")
-        _cs_add_to_target_property_unique_value(${target_name} CSCMAKE_LINKED_NON_TARGETS ${target_to_analyze})
-      else()
-        cs_debug_message(
-          "[_cs_recursive_analyze_target] TARGET_TO_ANALYZE ${target_to_analyze} is not a target, but is the "
-          "base target to analyze, do not add it recursively")
-      endif()
-    endif()
-
-    # finally refresh while condition variable
-    list(LENGTH targets_to_analyze_list targets_to_analyze_size)
+  # a work list: each name analyzed adds the names it links to, once
+  set(to_analyze ${target_name})
+  while(NOT "${to_analyze}" STREQUAL "")
+    list(POP_FRONT to_analyze dependency)
+    _cs_analyze_dependency(${target_name} ${dependency} linked_libs)
+    _cs_list_add_list_unique_values(to_analyze "${linked_libs}")
   endwhile()
-
-  # print for debug purposes
-
-  # per config
-  cs_get_build_configurations(configs_list)
-  foreach(config ${configs_list})
-    string(TOUPPER "${config}" config_ucase)
-
-    _cs_get_target_direct_runtime_libraries(${target_name} ${config} target_to_analyze_dependencies)
-    cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_DIRECT_RUNTIME_LIBRARIES_${config_ucase}: "
-                     "${target_to_analyze_dependencies}")
-
-  endforeach()
-
-  _cs_get_target_linked_project_targets(${target_name} target_to_analyze_dependencies_not_imported_targets)
-  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_PROJECT_TARGETS: "
-                   "${target_to_analyze_dependencies_not_imported_targets}")
-
-  _cs_get_target_linked_non_targets(${target_name} target_to_analyze_dependencies_non_targets)
-  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} CSCMAKE_LINKED_NON_TARGETS: "
-                   "${target_to_analyze_dependencies_non_targets}")
-
-  cs_debug_message("[_cs_recursive_analyze_target] ${target_name} end")
-
+  _cs_debug_analyzed_target(${target_name})
 endfunction()
 
 # Return in output_variable_name the shared libraries of the imported targets target_name links to, for config.

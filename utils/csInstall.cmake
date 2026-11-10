@@ -8,9 +8,6 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
-# cmake-lint: disable=R0913
-# (only _cs_configure_config_cmake has more than 5 arguments: the install folder plus one per @VAR@ placeholder of the
-# template)
 include(utils/csFindPackage)
 include(utils/csListUtils)
 include(utils/csPathUtils)
@@ -470,13 +467,21 @@ function(_cs_finalize_install export_namespace)
 
   # Write the Config.cmake file
   _cs_configure_config_cmake(
-    ${output_folder}
-    ${install_configdir}
-    ${export_namespace}
-    ${export_namespace_sanitized}
+    OUTPUT_FOLDER
+    "${output_folder}"
+    INSTALL_CONFIGDIR
+    "${install_configdir}"
+    EXPORT_NAMESPACE
+    "${export_namespace}"
+    EXPORT_NAMESPACE_SANITIZED
+    "${export_namespace_sanitized}"
+    COMPONENTS_LIST
     "${components_list}"
+    DEFAULT_COMPONENTS_LIST
     "${default_components_list}"
+    INJECTED_FIND_PACKAGES_CODE
     "${injected_find_packages_code}"
+    INJECTED_EXPORT_DEPENDENCIES
     "${injected_export_dependencies}")
 
   # Write a ConfigVersion.cmake file
@@ -491,32 +496,32 @@ function(_cs_finalize_install export_namespace)
 
 endfunction()
 
-# Generate <output_folder>/<export_namespace>Config.cmake from templates/csTemplateConfig.cmake.in, to be installed in
-# install_configdir (relative to the install prefix). The other argument names are @VAR@ placeholders of the template.
-function(
-  _cs_configure_config_cmake
-  output_folder
-  install_configdir
-  export_namespace
-  export_namespace_sanitized
-  components_list
-  default_components_list
-  injected_find_packages_code
-  injected_export_dependencies)
+# Generate <OUTPUT_FOLDER>/<EXPORT_NAMESPACE>Config.cmake from templates/csTemplateConfig.cmake.in, to be installed in
+# INSTALL_CONFIGDIR (relative to the install prefix). The other keywords, lowercase, are @VAR@ placeholders of the
+# template. Keyword arguments, one value each (lists and code quoted): PARSE_ARGV keeps their ; and newlines.
+function(_cs_configure_config_cmake)
+  set(placeholders EXPORT_NAMESPACE EXPORT_NAMESPACE_SANITIZED COMPONENTS_LIST DEFAULT_COMPONENTS_LIST
+                   INJECTED_FIND_PACKAGES_CODE INJECTED_EXPORT_DEPENDENCIES)
+  cmake_parse_arguments(PARSE_ARGV 0 arg "" "OUTPUT_FOLDER;INSTALL_CONFIGDIR;${placeholders}" "")
+
   # templates/csTemplateConfig.cmake.in uses these variables as @variable@ placeholders: rename them together
   #
   # * export_namespace, export_namespace_sanitized
   # * components_list, default_components_list
   # * injected_find_packages_code, injected_export_dependencies
   # * config_dir_to_prefix
+  foreach(keyword IN LISTS placeholders)
+    string(TOLOWER "${keyword}" placeholder)
+    set(${placeholder} "${arg_${keyword}}")
+  endforeach()
 
   # path from the installed Config folder to the install prefix (e.g. ../../.. for lib/cmake/<namespace>) (computed
   # against an absolute folder, the build folder: "/" is not absolute on Windows)
-  file(RELATIVE_PATH config_dir_to_prefix "${CMAKE_BINARY_DIR}/${install_configdir}" "${CMAKE_BINARY_DIR}")
+  file(RELATIVE_PATH config_dir_to_prefix "${CMAKE_BINARY_DIR}/${arg_INSTALL_CONFIGDIR}" "${CMAKE_BINARY_DIR}")
 
   _cs_get_root_dir(base_path)
-  configure_file("${base_path}/templates/csTemplateConfig.cmake.in" "${output_folder}/${export_namespace}Config.cmake"
-                 @ONLY)
+  configure_file("${base_path}/templates/csTemplateConfig.cmake.in"
+                 "${arg_OUTPUT_FOLDER}/${export_namespace}Config.cmake" @ONLY)
 
 endfunction()
 
