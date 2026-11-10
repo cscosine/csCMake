@@ -1,0 +1,151 @@
+{
+  "format": {
+    "line_width": 120
+  },
+  "lint": {
+    "disabled_codes": [
+      "C0307"
+    ],
+    "function_pattern": "[0-9a-z_]+$",
+    "macro_pattern": "[0-9a-z_]+$",
+    "global_var_pattern": "\"?[A-Z][0-9A-Z_]*\"?$|\"\"$",
+    "internal_var_pattern": "_[A-Z][0-9A-Z_]+$",
+    "local_var_pattern": "[a-z][a-z0-9_]+$",
+    "private_var_pattern": "_[0-9a-z_]+$",
+    "public_var_pattern": "[A-Z][0-9A-Z_]+$",
+    "argument_var_pattern": "[a-z][a-z0-9_]+$",
+    "keyword_pattern": "[A-Z][0-9A-Z_]+$"
+  },
+  "markup": {
+    "literal_comment_pattern": "^\\s*(cmake-lint: |\\.rst:)"
+  },
+  "parse": {
+    "additional_commands": {
+      "cs_initialize_project": {
+        "kwargs": {
+          "NAMESPACE": 1,
+          "CXX_STANDARD": 1,
+          "DEFAULT_CONFIG": "+",
+          "DEFAULT_CONFIG_MAPPED": 1,
+          "MAPPED_TO": 1,
+          "CUSTOM_CONFIG": 1,
+          "BASED_ON": 1,
+          "POSTFIX": 1,
+          "DEFAULT_COMPILE_PROFILES": "+"
+        }
+      },
+      "cs_finalize_project": {
+        "pargs": 0
+      },
+      "cs_add_library": {
+        "pargs": {
+          "nargs": "1+",
+          "flags": [
+            "STATIC",
+            "SHARED",
+            "MODULE",
+            "OBJECT",
+            "INTERFACE",
+            "IMPORTED",
+            "ALIAS",
+            "GLOBAL",
+            "EXCLUDE_FROM_ALL"
+          ]
+        }
+      },
+      "cs_add_executable": {
+        "pargs": {
+          "nargs": "1+",
+          "flags": [
+            "WIN32",
+            "MACOSX_BUNDLE",
+            "EXCLUDE_FROM_ALL",
+            "IMPORTED",
+            "ALIAS",
+            "GLOBAL"
+          ]
+        }
+      },
+      "cs_target_sources": {
+        "pargs": 1,
+        "kwargs": {
+          "PUBLIC": "*",
+          "PRIVATE": "*",
+          "INTERFACE": "*",
+          "PRIVATE_INSTALL": "*",
+          "PUBLIC_INSTALL": "*",
+          "INTERFACE_INSTALL": "*",
+          "PRIVATE_INSTALL_ABSOLUTE_PATH": "*",
+          "PUBLIC_INSTALL_ABSOLUTE_PATH": "*",
+          "INTERFACE_INSTALL_ABSOLUTE_PATH": "*"
+        }
+      },
+      "cs_target_link_libraries": {
+        "pargs": 1,
+        "kwargs": {
+          "PUBLIC": "*",
+          "PRIVATE": "*",
+          "INTERFACE": "*"
+        }
+      },
+      "cs_find_package": {
+        "pargs": {
+          "nargs": "3+",
+          "flags": [
+            "EXACT",
+            "QUIET",
+            "REQUIRED",
+            "CONFIG",
+            "MODULE",
+            "NO_MODULE",
+            "GLOBAL",
+            "NO_POLICY_SCOPE"
+          ]
+        },
+        "kwargs": {
+          "COMPONENTS": "+",
+          "OPTIONAL_COMPONENTS": "+"
+        }
+      },
+      "cs_install_target": {
+        "pargs": {
+          "nargs": "2+",
+          "flags": [
+            "DEFAULT"
+          ]
+        }
+      },
+      "cs_finalize_target": {
+        "pargs": 1
+      },
+      "cs_target_check_installed_headers": {
+        "pargs": 1,
+        "kwargs": {
+          "COMPILE_PROFILES": "+"
+        }
+      },
+      "cs_target_use_openmp": {
+        "pargs": 2
+      },
+      "cs_add_compile_profile_rule": {
+        "flags": [
+          "CLANG_TIDY"
+        ],
+        "kwargs": {
+          "PROFILE": 1,
+          "CONFIGS": "+",
+          "COMPILERS": "+",
+          "FRONTENDS": "+",
+          "PLATFORMS": "+",
+          "COMPILE_OPTIONS": "+",
+          "COMPILE_DEFINITIONS": "+",
+          "LINK_OPTIONS": "+",
+          "PROFILES": "+"
+        }
+      },
+      "cs_target_use_compile_profiles": {
+        "pargs": "1+"
+      }
+    }
+  }
+}

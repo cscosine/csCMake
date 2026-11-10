@@ -1,0 +1,66 @@
+name: smoke
+
+# configure, build, install and test the smoke projects (tests/smoke/) with every preset variant of the
+# csCMake registry: the matrix is generated from src/cscmake/presets/registry.py by tests/smoke/ci_matrix.py.
+# CMake and Ninja come from the runner images (as in the projects using csCMake).
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [ main, dev ]
+  # release tags: called by release.yml
+  workflow_call:
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install cscmake
+        run: python -m pip install -e .
+
+      - name: Generate the matrix from the preset registry
+        id: matrix
+        run: python tests/smoke/ci_matrix.py
+
+  smoke:
+    needs: matrix
+    name: ${{ matrix.variant }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Ninja generators on Windows: cl / clang-cl and the SDK come from the Visual Studio developer environment
+      - name: Visual Studio developer environment
+        if: ${{ matrix.msvc_dev_env == 'true' }}
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
+      - name: Install cscmake and cmakelang
+        run: python -m pip install -e . "cmakelang==0.6.13"
+
+      - name: Tool versions
+        run: |
+          cmake --version
+          python --version
+        shell: bash
+
+      - name: Smoke test ${{ matrix.variant }}
+        run: python tests/smoke/run_smoke.py --variant "${{ matrix.variant }}" --workspace "${{ runner.temp }}/ws"
+        shell: bash

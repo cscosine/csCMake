@@ -21,9 +21,9 @@
                 "cs-compiler-windows-msvc-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-windows-v10-x64-generic-msvc-default-msvc2022",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1wv10x64gmdms22"
+                "CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR": "",
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-windows-v10-x64-generic-msvc-default-msvc2022",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1wv10x64gmdms22"
             }
         }
     ]

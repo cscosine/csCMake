@@ -1,7 +1,11 @@
 {
   "recommendations": [
     "ms-python.python",
+    "ms-python.vscode-pylance",
     "ms-python.debugpy",
-    "iulian-radu-at.vscode-tasks-sidebar"
+    "charliermarsh.ruff",
+    "ms-python.mypy-type-checker",
+    "iulian-radu-at.vscode-tasks-sidebar",
+    "bierner.markdown-mermaid"
   ]
 }

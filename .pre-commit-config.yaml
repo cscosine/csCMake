@@ -30,10 +30,18 @@ repos:
         args: [--fix]
       - id: ruff-format
 
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.20.2
     hooks:
       - id: mypy
+        # docs/conf.py: Sphinx configuration, its libraries (docutils, sphinx, the CMake domain) are not in the hook
+        # environment and ship no stubs; ruff checks it
+        exclude: ^docs/
         args:
           [
             "--config-file=pyproject.toml",
@@ -42,28 +50,56 @@ repos:
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
+      # config: .cmake-format.json (line width 120, lint naming/disabled codes)
+      # templates (*.cmake.in) are handled by the local cmake-*-templates hooks below
       - id: cmake-format
-      # TODO disabled format on template files, crashes, to be checked (see also csTemplateConfig.cmake.in)
-      #- id: cmake-format
-      #  name: cmake-format (templates)
-      #  types: [file]
-      #  files: \.cmake\.in$
-
-      #- id: cmake-lint
-      #  additional_dependencies:
-      #    - cmakelang==0.6.13
+      - id: cmake-lint
 
   - repo: local
     hooks:
-      # TODO activate this hook once we can use csorchestrator as a dependency in pyproject.toml
-      # - id: generate-csv1-presets
-      #   name: Generate CSV1 presets
-      #   entry: python
-      #   args: ["tools/generate_all_csv1_presets.py"]
-      #   language: python
-      #   additional_dependencies:
-      #   - ".[dev]"
-      #   pass_filenames: false
+      # regenerates presets/csv1 in place; fails (files modified) when the committed
+      # presets were out of date, then `git add presets/csv1` and commit again.
+      # requires the dev venv (./setup.sh, source .venv/bin/activate): it runs the installed
+      # cscmake-generate-presets command. A local hook cannot install this repo itself
+      # (additional_dependencies: [".[dev]"] installs pre-commit's placeholder package).
+      - id: generate-csv1-presets
+        name: Generate csv1 presets
+        entry: cscmake-generate-presets --quiet
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      # configure_file templates: @VAR@ placeholders are swapped for valid CMake stand-ins, then
+      # cmake-format / cmake-lint run and the placeholders are restored (cscmake.devtools.cmake_template).
+      # require the dev venv, like generate-csv1-presets
+      - id: cmake-format-templates
+        name: cmake-format (templates)
+        entry: cscmake-cmake-template format
+        language: system
+        files: \.cmake\.in$
+
+      - id: cmake-lint-templates
+        name: cmake-lint (templates)
+        entry: cscmake-cmake-template lint
+        language: system
+        files: \.cmake\.in$
+
+      # reference documentation complete: every public command, variable and property of the CMake modules has its
+      # #.rst: entry (cscmake.devtools.check_docs); requires the dev venv, like generate-csv1-presets
+      - id: check-docs
+        name: Check the reference documentation
+        entry: cscmake-check-docs
+        language: system
+        pass_filenames: false
+        files: ^(csCMake\.cmake|utils/.*\.cmake|docs/reference/.*)$
+
+      # requires the dev venv, like generate-csv1-presets
+      - id: import-linter
+        name: Import Linter
+        entry: lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
 
       - id: no-unstaged-changes
         name: Fail if unstaged changes exist

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from string import Template
-from typing import Any, Dict, Mapping
+from typing import Any
 
 TEMPLATE_NAME = "cs-single-config-generator-ALL.json.template"
 
@@ -38,7 +39,7 @@ def load_template(path: Path | str) -> str:
 
 
 def render_template(template_text: str, substitutions: Mapping[str, Any]) -> str:
-    data: Dict[str, str] = {k: str(v) for k, v in substitutions.items()}
+    data: dict[str, str] = {k: str(v) for k, v in substitutions.items()}
     return AtTemplate(template_text).substitute(data)
 
 
@@ -75,5 +76,5 @@ def generate_from_template_single_config_generator_all(
     filename = build_output_filename(substitutions, suffix=output_filename_suffix)
     output_path = output_dir / filename
 
-    output_path.write_text(rendered, encoding="utf-8")
+    output_path.write_text(rendered, encoding="utf-8", newline="\n")
     return filename

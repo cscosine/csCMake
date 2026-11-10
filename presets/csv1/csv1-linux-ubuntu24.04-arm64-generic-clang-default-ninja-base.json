@@ -25,8 +25,8 @@
                 "cs-compiler-linux-clang-default"
             ],
             "environment": {
-                "CS_CMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja",
-                "CS_CMAKE_CSV1_SUB_DIR_SHORT": "v1lu24.04a64gcdn"
+                "CSCMAKE_CSV1_SUB_DIR": "csv1-linux-ubuntu24.04-arm64-generic-clang-default-ninja",
+                "CSCMAKE_CSV1_SUB_DIR_SHORT": "v1lu24.04a64gcdn"
             }
         }
     ]

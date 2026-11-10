@@ -1,20 +1,26 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "cscmake"
-version = "0.1.0"
+version = "0.2.0"
 description = "cscmake facilities for C++ projects config, build, deployment"
 authors = [
   { name = "cscosine-dev", email = "cscosine@gmail.com" }
 ]
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.11"
-dependencies = [
-    # TODO add csOrchestrator as a dependency when it's published on PyPI
-]
+# runtime: standard library only
+dependencies = []
+
+[project.scripts]
+cscmake-generate-presets = "cscmake.presets.generate:main"
+cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
+cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
+cscmake-check-docs = "cscmake.devtools.check_docs:main"
+cscmake-release = "cscmake.devtools.release:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -27,6 +33,13 @@ dev = [
     "mypy>=1.0",
     "ruff>=0.4",
     "pre-commit>=4",
+    "import-linter[ui]>=2.11",
+    "cmakelang>=0.6.13",
+    # documentation (Sphinx, CMake domain, Markdown pages)
+    "sphinx>=8.1",
+    "sphinxcontrib-moderncmakedomain>=3.29",
+    "myst-parser>=4.0",
+    "sphinxcontrib-mermaid>=1.0",
 ]
 
 # ===============================
@@ -46,7 +59,12 @@ target-version = "py311"
 # F  -> Pyflakes (logical errors / unused imports)
 # I  -> Import sorting
 # B  -> Bugbear (common bug patterns)
-select = ["E", "F", "I", "B"]
+# UP -> modern Python suggestions
+# SIM -> catches simplifications
+# N  -> PEP8 naming conventions
+# C4 -> flake8-comprehensions (more Pythonic comprehensions)
+# W  -> Pycodestyle warnings
+select = ["E", "F", "I", "B", "UP", "SIM", "N", "C4", "W"]
 
 [tool.ruff.format]
 # Force double quotes in formatted code.
@@ -89,6 +107,42 @@ disallow_untyped_decorators = false
 # ===============================
 
 [tool.pytest.ini_options]
-
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["-ra", "--strict-markers"]
 markers = [
+    "slow: long tests (CMake smoke builds), skipped unless --run-all is given",
+    "requires(*tools): skipped when one of the executables is not on PATH",
 ]
+
+# ===============================
+# coverage
+# ===============================
+
+[tool.coverage.run]
+branch = true
+source = ["cscmake"]
+
+[tool.coverage.report]
+show_missing = true
+
+# ===============================
+# import linter
+# ===============================
+
+[tool.importlinter]
+root_package = "cscmake"
+
+[[tool.importlinter.contracts]]
+name = "high level layers"
+type = "layers"
+layers = ["presets | devtools", "utils"]
+containers = ["cscmake"]
+exhaustive = true
+
+[[tool.importlinter.contracts]]
+name = "presets layers"
+type = "layers"
+layers = ["generate", "registry"]
+containers = ["cscmake.presets"]
+exhaustive = true
