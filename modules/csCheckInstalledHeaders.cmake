@@ -50,7 +50,7 @@ function(cs_target_check_installed_headers target_name)
   endif()
 
   # get all the headers of this target that needs to be installed
-  cs_get_target_sources_to_install(${target_name} files_to_install)
+  _cs_get_target_sources_to_install(${target_name} files_to_install)
   if(NOT files_to_install)
     return()
   endif()

@@ -187,22 +187,14 @@ macro(_cs_set_generator_variables)
   endif()
 endmacro()
 
-#.rst:
-# .. command:: cs_get_namespace
+# Return the namespace of the project (NAMESPACE of :command:`cs_initialize_project`).
 #
-#   Return the namespace of the project (NAMESPACE of :command:`cs_initialize_project`).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_namespace(<out-var>)
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :variable:`CSCMAKE_NAMESPACE`
-function(cs_get_namespace output_variable_name)
+# * variable CSCMAKE_NAMESPACE
+function(_cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
-    message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
+    message(FATAL_ERROR "[_cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
   endif()
   set(${output_variable_name} ${CSCMAKE_NAMESPACE} PARENT_SCOPE)
 endfunction()
@@ -231,12 +223,12 @@ function(cs_finalize_project)
       "cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
     )
   endif()
-  cs_get_namespace(export_namespace)
+  _cs_get_namespace(export_namespace)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${export_namespace} TRUE)
 
   # debug: targets, components, state
-  cs_print_project_targets()
-  cs_print_components()
+  _cs_print_project_targets()
+  _cs_print_components()
   cs_print_state("final state")
 
   _cs_check_targets_finalized()

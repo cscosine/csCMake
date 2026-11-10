@@ -19,7 +19,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | Path | Role |
 |------|------|
 | `csCMake.cmake` | Entry point: `include(csCMake)` from a consumer `CMakeLists.txt`; CMake version and policies, includes the modules. |
-| `modules/csProject.cmake` | `cs_initialize_project`, `cs_finalize_project`, `cs_get_namespace`; the variables set in the project scope. |
+| `modules/csProject.cmake` | `cs_initialize_project`, `cs_finalize_project`; the variables set in the project scope. |
 | `modules/csBuildConfigurations.cmake` | Build configurations: default, mapped, custom; postfixes, MSVC runtime per configuration. |
 | `modules/csTargets.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
 | `modules/csTargetSources.cmake` | `cs_target_sources`: sources and the headers to install. |

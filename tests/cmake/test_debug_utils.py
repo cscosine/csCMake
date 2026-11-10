@@ -1,4 +1,4 @@
-"""Debug printers: cs_print_target_properties, cs_print_components, cs_print_state."""
+"""Debug printers: cs_print_target_properties, _cs_print_components, cs_print_state."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ cs_add_library(lib_default INTERFACE)
 cs_install_target(lib_default comp_default DEFAULT)
 cs_add_library(lib_other INTERFACE)
 cs_install_target(lib_other comp_other)
-cs_print_components()
+_cs_print_components()
 cs_finalize_target(lib_default)
 cs_finalize_target(lib_other)
 cs_finalize_project()
@@ -49,7 +49,7 @@ def test_print_components_lists_the_default_components(tmp_path: Path) -> None:
     result = configure(tmp_path, INIT + COMPONENTS)
 
     assert result.returncode == 0, result.output
-    line = next(x for x in result.output.splitlines() if "[cs_print_components] default components:" in x)
+    line = next(x for x in result.output.splitlines() if "[_cs_print_components] default components:" in x)
     assert "comp_default" in line
     assert "comp_other" not in line
 

@@ -81,5 +81,5 @@ The generated `<namespace>Config.cmake`:
 
 ## Inside the project
 
-`cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_dependencies` and
-`cs_get_target_component` return what the project installs; `cs_print_components` prints it with the debug messages.
+With the debug messages on (`-D<project>_CSCMAKE_DEBUG=ON`), `cs_finalize_project` prints the components, their
+targets, the packages they need and the components they depend on.

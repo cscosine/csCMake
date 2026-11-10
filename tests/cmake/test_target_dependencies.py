@@ -30,9 +30,9 @@ cs_finalize_target(mid)
 """
 REPORT = """
 cs_finalize_project()
-cs_get_target_project_dependencies(app deps)
+_cs_get_target_project_dependencies(app deps)
 cstest_report(app "${deps}")
-cs_get_target_project_dependencies(base deps)
+_cs_get_target_project_dependencies(base deps)
 cstest_report(base "${deps}")
 """
 

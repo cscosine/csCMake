@@ -123,6 +123,6 @@ too: `PUBLIC` and `INTERFACE`, and `PRIVATE` on a static library. Clang on Linux
 ## Debug messages
 
 Every csCMake project has the cache option `<project>_CSCMAKE_DEBUG` (`<project>` is the `project()` name of
-`cs_initialize_project`): `-DmyApp_CSCMAKE_DEBUG=ON` prints what csCMake does for it. The `cs_print_*` commands
-print the state of a target or of the project (`cs_print_project_targets`,
-`cs_print_target_properties`, `cs_print_components`, ...) as debug messages.
+`cs_initialize_project`): `-DmyApp_CSCMAKE_DEBUG=ON` prints what csCMake does for it (its targets, components and
+configurations among them). `cs_print_target_properties(<target>)` prints every property set on a target, and
+`cs_print_state(<header>)` the search paths and configurations, as debug messages.

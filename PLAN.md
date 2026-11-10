@@ -135,14 +135,32 @@ Cleanup:
 - [x] (done for the dead branch; the printers with D2) C5 dead code: the empty `elseif(propagate_mode STREQUAL "PRIVATE")` branch, `set(targets "")` before a getter,
   the `count GREATER 0` / `list(LENGTH)` dances in the printers.
 
-- [ ] **Last 6a step: the public commands no project uses** (keep / make internal / drop, MIGRATION entries; then
-  the 6b inventory starts from what is left): `cs_get_*` (18 after D1), `cs_print_*` (8), `cs_get_namespace`,
-  `cs_debug_message`. Proposal: keep `cs_get_generated_dir` / `cs_get_generated_config_dir` (generated headers),
-  `cs_get_build_configurations`, `cs_get_install_include_dir`; the other getters become internal (state accessors of
-  csCMake); the eight printers become two that always print (`cs_print_target(<target>)`: csCMake view of a target,
-  plus its CMake properties with `ALL_PROPERTIES`; `cs_print_project()`: configurations, targets, components,
-  dependencies, search paths; their output and D2 in 6b). Steps: a table (command, what it is for, used by csCMake /
-  projects / docs, proposal), agreed, then the changes.
+- [x] (done: the 20 internal ones renamed `_cs_*`, MIGRATION; 22 public) **Last 6a step: the public commands no project uses** (keep / make internal / drop, MIGRATION entries; then
+  the 6b inventory starts from what is left). Inventory 2026-11-11: projects (csfoundation, trackers, OpenCV forks,
+  csqt6, third_party_base_libs) call 9 commands: `cs_initialize_project`, `cs_finalize_project`, `cs_add_library`,
+  `cs_add_executable`, `cs_target_sources`, `cs_target_link_libraries`, `cs_find_package`, `cs_install_target`,
+  `cs_finalize_target`. The documented features without a project yet (compile profiles, OpenMP, the header check,
+  `cs_target_runtime_environment`) stay public. The other 29 (calls in csCMake / tests / docs pages):
+
+  | Command | What for | csCMake / tests / docs | Proposal |
+  |---|---|---|---|
+  | `cs_get_build_configurations` | the configurations of the build | 11 / 0 / 0 | **keep**: per-configuration code of a project (loops over the configurations) |
+  | `cs_get_generated_dir`, `cs_get_generated_config_dir` | the folders for generated headers (`configure_file`, per configuration) | 4, 1 / 0 / 1 | **keep**: generated headers are a project need |
+  | `cs_get_install_include_dir` | the install folder of the headers (per configuration) | 1 / 0 / 1 | **keep**: installing extra files next to the headers |
+  | `cs_get_project_targets` | the targets of the project | 3 / 0 / 0 | **keep**: a project applying something to all its targets (e.g. IDE folders) |
+  | `cs_get_namespace` | the namespace of the project | 2 / 0 / 0 | **internal**: the project gave it; `CSCMAKE_NAMESPACE` is documented |
+  | `cs_get_default_build_configurations` | the default ones among them | 2 / 0 / 0 | **internal** |
+  | `cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_find_packages`, `cs_get_component_dependencies`, `cs_get_component_dependencies_sorted`, `cs_get_target_component` | the component bookkeeping of the package | 1-6 / 0 / 0-1 | **internal**: state of the generated Config; inspection through the printer |
+  | `cs_get_target_find_packages`, `cs_get_target_sources_to_install`, `cs_get_target_sources_to_install_absolute_path`, `cs_get_target_project_dependencies`, `cs_get_target_compile_profiles` | per-target bookkeeping | 1-3 / 0-1 / 0 | **internal**: inspection through the printer |
+  | `cs_print_target_properties` | every set property of a target | 0 / 1 / 1 | **keep, renamed** `cs_print_target` in 6b (D2: always prints, plus the csCMake view: sources to install, find packages, component, dependencies, profiles) |
+  | `cs_print_state` | search paths, configurations | 2 / 1 / 0 | **keep, renamed** `cs_print_project` in 6b (plus targets and components) |
+  | `cs_print_project_targets`, `cs_print_components`, `cs_print_target_find_packages`, `cs_print_target_sources_to_install`, `cs_print_all_configurations_variables`, `cs_print_configuration_variables` | pieces of the two above | 0-1 / 0-1 / 0-2 | **drop** as public (folded into the two printers in 6b; internal until then) |
+  | `cs_debug_message` | a message under the csCMake debug switch | 85 / 0 / 1 | **decide in 6c** (with the switch) |
+
+  Internal = renamed `_cs_*` (same code), the reference entries removed, MIGRATION rows "removed: <what to use>".
+  Result: public API 9 core + 5 features (`cs_add_compile_profile_rule`, `cs_target_use_compile_profiles`,
+  `cs_target_use_openmp`, `cs_target_check_installed_headers`, `cs_target_runtime_environment`) + 5 queries + 2 printers
+  (+ `cs_debug_message`, pending 6c): 22 instead of 43.
 
 Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public commands are the last 6a step.
 
@@ -347,7 +365,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a: B1-B6, D1, D5, D7, S1-S5, C1, C3, C5 done and pushed (CI pending for the Visual Studio check); D8 decided; last step: the unused public commands. Then 6b (API: D2-D4, D6, C4), 6c (debug: S6, C2). |
+| 6 | in progress | 6a done (B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public), to sign off after CI. Then 6b (API: printers D2, D3, D4, D6, C4), 6c (debug: S6, C2, `cs_debug_message`). |
 
 ## CHANGELOG
 
@@ -417,3 +435,9 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 ### 2026-11-11 (Phase 6a — status)
 - 6a section brought up to date: the committed findings marked done, D8 closed (kept), D2-D4, D6, C4 marked for 6b and
   S6, C2 for 6c; the unused public commands (keep / internal / drop) recorded as the last 6a step.
+
+### 2026-11-11 (Phase 6a — unused public commands)
+- 20 commands made internal (`_cs_*`, plain comments instead of reference entries, no gersemi signatures):
+  `cs_get_namespace`, `cs_get_default_build_configurations`, the 7 component getters, the 5 per-target getters, 6
+  printers. Public: 22 (9 core, 5 features, 5 queries, 2 printers, `cs_debug_message`). MIGRATION rows with what to use;
+  user docs (install, targets) no longer name them; csPackageConfig has no public command (its page: properties).

@@ -267,24 +267,13 @@ function(_cs_finalize_runtime_dependencies)
   endforeach()
 endfunction()
 
-#.rst:
-# .. command:: cs_get_target_project_dependencies
+# Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
+# :command:`cs_finalize_project`.
 #
-#   Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
-#   :command:`cs_finalize_project`.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_project_dependencies(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`
-function(cs_get_target_project_dependencies target_name output_variable_name)
+# * target property CSCMAKE_PROJECT_DEPENDENCIES
+function(_cs_get_target_project_dependencies target_name output_variable_name)
   # empty when the property is not set
   get_property(values TARGET ${target_name} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES)
   set(${output_variable_name} "${values}" PARENT_SCOPE)

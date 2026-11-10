@@ -80,80 +80,51 @@ function(cs_target_sources target_name)
   endforeach()
 endfunction()
 
-#.rst:
-# .. command:: cs_get_target_sources_to_install
+# Return the sources of a target installed with it, relative to its folder.
 #
-#   Return the sources of a target installed with it, relative to its folder.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_sources_to_install(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`
-function(cs_get_target_sources_to_install target_name output_variable_name)
+# * target property CSCMAKE_SOURCES_TO_INSTALL
+function(_cs_get_target_sources_to_install target_name output_variable_name)
   # empty when the property is not set
   get_property(list_values TARGET ${target_name} PROPERTY CSCMAKE_SOURCES_TO_INSTALL)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-#.rst:
-# .. command:: cs_get_target_sources_to_install_absolute_path
+# Return the sources of a target installed with it, given by absolute path.
 #
-#   Return the sources of a target installed with it, given by absolute path.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_sources_to_install_absolute_path(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
-function(cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
+# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
+function(_cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
   # empty when the property is not set
   get_property(list_values TARGET ${target_name} PROPERTY CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-#.rst:
-# .. command:: cs_print_target_sources_to_install
+# Print the sources of a target installed with it (debug messages of the project).
 #
-#   Print the sources of a target installed with it (debug messages of the project).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_print_target_sources_to_install(<target>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
-function(cs_print_target_sources_to_install target_name)
+# * target property CSCMAKE_SOURCES_TO_INSTALL
+# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
+function(_cs_print_target_sources_to_install target_name)
   set(values "")
 
-  cs_get_target_sources_to_install("${target_name}" values)
+  _cs_get_target_sources_to_install("${target_name}" values)
   list(LENGTH values count)
   if(count GREATER 0)
-    cs_debug_message("cs_print_target_sources_to_install ${target_name}: ${values}")
+    cs_debug_message("_cs_print_target_sources_to_install ${target_name}: ${values}")
   else()
-    cs_debug_message("cs_print_target_sources_to_install ${target_name}: empty")
+    cs_debug_message("_cs_print_target_sources_to_install ${target_name}: empty")
   endif()
 
-  cs_get_target_sources_to_install_absolute_path("${target_name}" values)
+  _cs_get_target_sources_to_install_absolute_path("${target_name}" values)
   list(LENGTH values count)
   if(count GREATER 0)
-    cs_debug_message("cs_print_target_sources_to_install (absolute path) ${target_name}: ${values}")
+    cs_debug_message("_cs_print_target_sources_to_install (absolute path) ${target_name}: ${values}")
   else()
-    cs_debug_message("cs_print_target_sources_to_install (absolute path) ${target_name}: empty")
+    cs_debug_message("_cs_print_target_sources_to_install (absolute path) ${target_name}: empty")
   endif()
 endfunction()
 

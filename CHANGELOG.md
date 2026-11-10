@@ -31,6 +31,10 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ### Removed
 
+- 20 commands no project uses became internal (see MIGRATION.md): `cs_get_namespace`,
+  `cs_get_default_build_configurations`, the component and per-target getters (`cs_get_components`,
+  `cs_get_target_find_packages`, ...), and the printers other than `cs_print_target_properties` and `cs_print_state`.
+  The public API: 22 commands.
 - `cs_get_target_runtime_libraries` and the target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`,
   `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`: use
   `$<TARGET_RUNTIME_DLLS>` / `$<TARGET_RUNTIME_DLL_DIRS>` (see MIGRATION.md).

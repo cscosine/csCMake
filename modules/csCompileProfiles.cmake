@@ -132,23 +132,13 @@ function(cs_target_use_compile_profiles target_name)
   set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
 endfunction()
 
-#.rst:
-# .. command:: cs_get_target_compile_profiles
+# Return the compile profiles of a target: the default profiles of the project, then its own ones.
 #
-#   Return the compile profiles of a target: the default profiles of the project, then its own ones.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_compile_profiles(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
-function(cs_get_target_compile_profiles target_name profiles_out)
+# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES
+# * target property CSCMAKE_COMPILE_PROFILES
+function(_cs_get_target_compile_profiles target_name profiles_out)
   set(profiles ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
   get_target_property(own ${target_name} CSCMAKE_COMPILE_PROFILES)
   if(own)
@@ -165,7 +155,7 @@ function(_cs_apply_compile_profiles target_name)
   if(type STREQUAL "INTERFACE_LIBRARY")
     return()
   endif()
-  cs_get_target_compile_profiles(${target_name} profiles)
+  _cs_get_target_compile_profiles(${target_name} profiles)
   cs_debug_message("[_cs_apply_compile_profiles] ${target_name}: ${profiles}")
   foreach(profile ${profiles})
     _cs_apply_compile_profile(${target_name} ${profile} "" TRUE "")

@@ -131,7 +131,7 @@ endfunction()
 # * target property EXPORT_NAME
 function(_cs_target_create_default target_sub_name target_type target_name_out)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
-  cs_get_namespace(namespace)
+  _cs_get_namespace(namespace)
   cs_add_library(${target_name} ${target_type})
   set_target_properties(${target_name} PROPERTIES EXPORT_NAME ${target_sub_name})
   cs_add_library(${namespace}::${target_sub_name} ALIAS ${target_name})

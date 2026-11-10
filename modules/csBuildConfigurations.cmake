@@ -58,20 +58,12 @@ function(cs_get_build_configurations configs_list)
   set(${configs_list} ${val} PARENT_SCOPE)
 endfunction()
 
-#.rst:
-# .. command:: cs_get_default_build_configurations
+# Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
 #
-#   Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_default_build_configurations(<out-var>)
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_gbl:`CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS`
-function(cs_get_default_build_configurations configs_list)
+# * global property CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
+function(_cs_get_default_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS)
   set(${configs_list} ${val} PARENT_SCOPE)
 endfunction()
@@ -93,7 +85,7 @@ endfunction()
 # * global property CSCMAKE_BUILD_CONFIGURATIONS, CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
 function(_cs_add_default_build_configuration config)
   cs_get_build_configurations(configs_list)
-  cs_get_default_build_configurations(configs_list_default)
+  _cs_get_default_build_configurations(configs_list_default)
 
   set(valid_default_configs "Debug;Release;RelWithDebInfo")
 
@@ -148,7 +140,7 @@ endfunction()
 # * variable CSCMAKE_<CONFIG>_POSTFIX: project scope
 function(_cs_add_custom_build_configuration config base_config postfix base_config_and_fallback)
   cs_get_build_configurations(configs_list)
-  cs_get_default_build_configurations(configs_list_default)
+  _cs_get_default_build_configurations(configs_list_default)
 
   if(NOT "${config}" IN_LIST configs_list)
     list(APPEND configs_list ${config})
@@ -566,46 +558,23 @@ function(_cs_copy_build_configuration config_from_in config_to_in base_config_an
   )
 endfunction()
 
-#.rst:
-# .. command:: cs_print_all_configurations_variables
-#
-#   Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
-#
-#   .. code-block:: cmake
-#
-#     cs_print_all_configurations_variables(<message>)
-#
-#   ``<message>``
-#     A text printed with the name of each configuration.
-function(cs_print_all_configurations_variables add_message)
+# Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
+function(_cs_print_all_configurations_variables add_message)
   cs_get_build_configurations(config_var_list)
-  cs_debug_message("[cs_print_all_configurations_variables] configs are ${config_var_list}")
+  cs_debug_message("[_cs_print_all_configurations_variables] configs are ${config_var_list}")
   foreach(config ${config_var_list})
-    cs_debug_message("[cs_print_all_configurations_variables] CONFIG ${config} ${add_message}")
-    cs_print_configuration_variables(${config} "  ")
-    cs_debug_message("[cs_print_all_configurations_variables] -------")
+    cs_debug_message("[_cs_print_all_configurations_variables] CONFIG ${config} ${add_message}")
+    _cs_print_configuration_variables(${config} "  ")
+    cs_debug_message("[_cs_print_all_configurations_variables] -------")
   endforeach()
-  cs_debug_message("[cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "
+  cs_debug_message("[_cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "
                    "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
   )
-  cs_debug_message("[cs_print_all_configurations_variables] end --------")
+  cs_debug_message("[_cs_print_all_configurations_variables] end --------")
 endfunction()
 
-#.rst:
-# .. command:: cs_print_configuration_variables
-#
-#   Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
-#
-#   .. code-block:: cmake
-#
-#     cs_print_configuration_variables(<config> <prefix>)
-#
-#   ``<config>``
-#     A configuration of the build (any case).
-#
-#   ``<prefix>``
-#     A text printed at the start of each line.
-function(cs_print_configuration_variables config_in print_prefix)
+# Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
+function(_cs_print_configuration_variables config_in print_prefix)
   _cs_get_per_config_variables(config_var_list)
   string(TOUPPER "${config_in}" config)
 

@@ -21,7 +21,6 @@ command_definitions = {
         "multi_value_keywords": ["DEFAULT_CONFIG", "DEFAULT_COMPILE_PROFILES"],
     },
     "cs_finalize_project": {},
-    "cs_get_namespace": {"front_positional_arguments": ["out-var"]},
     "cs_add_library": {
         "front_positional_arguments": ["name"],
         "options": [

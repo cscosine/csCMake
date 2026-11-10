@@ -9,6 +9,11 @@ the sections below cover the older versions.
 | target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`, `_CSCMAKE_PENDING_DEPENDENCIES` | removed | the same generator expressions; the project targets a target depends on: `CSCMAKE_PROJECT_DEPENDENCIES` (`cs_get_target_project_dependencies`) |
 | `VS_DEBUGGER_ENVIRONMENT_<CONFIG>` set by csCMake | not set | `VS_DEBUGGER_ENVIRONMENT` holds the value of every configuration |
 | warning "depends on the imported target ..., whose file ... does not exist" | not printed | CMake reports a missing imported file when it is needed |
+| `cs_get_namespace` | internal | the namespace given to `cs_initialize_project`, or the variable `CSCMAKE_NAMESPACE` |
+| `cs_get_default_build_configurations` | internal | `cs_get_build_configurations` (all of them) |
+| `cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_find_packages`, `cs_get_component_dependencies`, `cs_get_component_dependencies_sorted`, `cs_get_target_component` | internal | the debug messages of `cs_finalize_project` (`-D<project>_CSCMAKE_DEBUG=ON`); the installed `<namespace>Config.cmake` lists the components and their dependencies |
+| `cs_get_target_find_packages`, `cs_get_target_sources_to_install`, `cs_get_target_sources_to_install_absolute_path`, `cs_get_target_project_dependencies`, `cs_get_target_compile_profiles` | internal | `cs_print_target_properties(<target>)` prints the `CSCMAKE_*` target properties they read |
+| `cs_print_project_targets`, `cs_print_components`, `cs_print_target_find_packages`, `cs_print_target_sources_to_install`, `cs_print_all_configurations_variables`, `cs_print_configuration_variables` | internal | the debug messages of `cs_finalize_project`; `cs_print_target_properties`, `cs_print_state` |
 | a compile profile rule (`cs_add_compile_profile_rule`) applied to C sources too | applied to C++ sources only | `LANGUAGES C CXX` on the rules whose options are valid in C |
 | check targets `<target>_<header>` of `cs_target_check_installed_headers` | `<target>_installed_headers` | rename in build commands that name them |
 

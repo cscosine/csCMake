@@ -4,56 +4,32 @@
 #
 # The installed package: the dependencies between its components (from the links of their
 # targets, checked for cycles, sorted) and the generated ``<namespace>Config.cmake``
-# (``find_package(<namespace> [COMPONENTS ...])``), written by :command:`cs_finalize_project`.
-#
-# Commands
-# ^^^^^^^^
+# (``find_package(<namespace> [COMPONENTS ...])``), written by :command:`cs_finalize_project`. No commands of its own:
+# its state is in the global properties below.
 
 include_guard(GLOBAL)
 include(modules/csInstall)
 
 include(CMakePackageConfigHelpers)
 
-#.rst:
-# .. command:: cs_get_component_dependencies
+# Return the components a component depends on.
 #
-#   Return the components a component depends on.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_component_dependencies(<component> <out-var>)
-#
-#   ``<component>``
-#     A component of the project (:command:`cs_install_target`).
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES`
-function(cs_get_component_dependencies export_name output_variable_name)
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
+function(_cs_get_component_dependencies export_name output_variable_name)
   # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-#.rst:
-# .. command:: cs_get_component_dependencies_sorted
+# Return the components a component depends on, each one after the ones it depends on (computed by
+# :command:`cs_finalize_project`).
 #
-#   Return the components a component depends on, each one after the ones it depends on (computed by
-#   :command:`cs_finalize_project`).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_component_dependencies_sorted(<component> <out-var>)
-#
-#   ``<component>``
-#     A component of the project (:command:`cs_install_target`).
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED`
-function(cs_get_component_dependencies_sorted export_name output_variable_name)
+# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
+function(_cs_get_component_dependencies_sorted export_name output_variable_name)
   # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
@@ -71,19 +47,19 @@ endfunction()
 # * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
 # * global property CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
 function(_cs_populate_component_dependencies export_name)
-  cs_get_component_targets(${export_name} targets_list)
+  _cs_get_component_targets(${export_name} targets_list)
   cs_debug_message(
     "[_cs_populate_component_dependencies] EXPORT ${export_name} has the following targets: ${targets_list}"
   )
 
   foreach(target_name ${targets_list})
-    cs_get_target_project_dependencies(${target_name} target_deps)
+    _cs_get_target_project_dependencies(${target_name} target_deps)
     cs_debug_message(
       "[_cs_populate_component_dependencies] -- target ${target_name} depends on internal targets ${target_deps}"
     )
 
     foreach(target_dep_name ${target_deps})
-      cs_get_target_component(${target_dep_name} export_dep_name)
+      _cs_get_target_component(${target_dep_name} export_dep_name)
 
       # a target of another csCMake project of the build (nested project): its package is a dependency of this component
       get_target_property(dep_namespace ${target_dep_name} CSCMAKE_NAMESPACE)
@@ -107,7 +83,7 @@ function(_cs_populate_component_dependencies export_name)
     endforeach()
   endforeach()
 
-  cs_get_component_dependencies(${export_name} dependent_exports)
+  _cs_get_component_dependencies(${export_name} dependent_exports)
   cs_debug_message(
     "[_cs_populate_component_dependencies] final result, EXPORT ${export_name} depends on EXPORTS ${dependent_exports}"
   )
@@ -139,7 +115,7 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
 
   list(APPEND visited_list ${export_name})
 
-  cs_get_component_dependencies(${export_name} next_elements_list)
+  _cs_get_component_dependencies(${export_name} next_elements_list)
   foreach(next_element ${next_elements_list})
     cs_debug_message(
       "[_cs_check_component_cycles_recursive] -- for export ${export_name} call recursive on ${next_element} "
@@ -164,7 +140,7 @@ endfunction()
 #
 # * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
 function(_cs_sort_component_dependencies export_name)
-  cs_get_component_dependencies(${export_name} dependent_exports_unsorted)
+  _cs_get_component_dependencies(${export_name} dependent_exports_unsorted)
   cs_debug_message("[_cs_sort_component_dependencies] -- for export ${export_name} sort ${dependent_exports_unsorted}")
 
   # initialize the iterative list of target to analyze
@@ -184,7 +160,7 @@ function(_cs_sort_component_dependencies export_name)
     list(REMOVE_AT dependent_exports_list 0)
 
     # get the dependencies of the current element
-    cs_get_component_dependencies(${current_element} current_element_dependent_exports)
+    _cs_get_component_dependencies(${current_element} current_element_dependent_exports)
     cs_debug_message("[_cs_sort_component_dependencies] ---- analyze ${current_element}, it depends on: "
                      "${current_element_dependent_exports}"
     )
@@ -243,7 +219,7 @@ function(_cs_finalize_install export_namespace)
   set(install_configdir ${CMAKE_INSTALL_LIBDIR}/cmake/${export_namespace})
 
   # get export list
-  cs_get_components(exports)
+  _cs_get_components(exports)
   # and install cmake files of them
   foreach(name ${exports})
     install(
@@ -259,7 +235,7 @@ function(_cs_finalize_install export_namespace)
     _cs_populate_component_dependencies(${export_name})
 
     # retrieve for debug purposes
-    cs_get_component_dependencies(${export_name} dependent_exports)
+    _cs_get_component_dependencies(${export_name} dependent_exports)
     cs_debug_message(
       "[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (unsorted) ${dependent_exports}"
     )
@@ -273,7 +249,7 @@ function(_cs_finalize_install export_namespace)
   # then sort the dependencies in order to have independent exports before
   foreach(export_name ${exports})
     _cs_sort_component_dependencies(${export_name})
-    cs_get_component_dependencies_sorted(${export_name} ${export_name}_DEPENDENT_EXPORTS_SORTED)
+    _cs_get_component_dependencies_sorted(${export_name} ${export_name}_DEPENDENT_EXPORTS_SORTED)
     cs_debug_message("[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (sorted) "
                      "${${export_name}_DEPENDENT_EXPORTS_SORTED}"
     )
@@ -297,7 +273,7 @@ function(_cs_finalize_install export_namespace)
   set(injected_find_packages_code "")
   set(debug_message "${export_namespace_sanitized}_debug_message")
   foreach(export_name ${exports})
-    cs_get_component_find_packages(${export_name} find_packages_list)
+    _cs_get_component_find_packages(${export_name} find_packages_list)
     if(find_packages_list)
       string(APPEND injected_find_packages_code "if(\"\${component_name}\" STREQUAL \"${export_name}\")\n")
       foreach(find_args ${find_packages_list})
@@ -316,9 +292,9 @@ function(_cs_finalize_install export_namespace)
   set(injected_find_packages_code "# -- find_dependency() per component --\n    ${injected_find_packages_code}# --")
 
   # get list of components when find_package without arguments is used
-  cs_get_components(components_list)
+  _cs_get_components(components_list)
   # get list of default components when find_package without arguments is used
-  cs_get_default_components(default_components_list)
+  _cs_get_default_components(default_components_list)
 
   # retrieve output folder for generated files
   cs_get_generated_dir(output_folder)

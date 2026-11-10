@@ -72,7 +72,7 @@ function(cs_print_state header_message)
   cs_get_build_configurations(list)
   cs_debug_message("  CSCMAKE_BUILD_CONFIGURATIONS ${list}")
 
-  cs_print_all_configurations_variables("[${header_message} state]")
+  _cs_print_all_configurations_variables("[${header_message} state]")
   cs_debug_message("--- csCMake ---")
 endfunction()
 
