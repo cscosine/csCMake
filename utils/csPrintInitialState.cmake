@@ -1,9 +1,22 @@
-# Debug print of the csCMake state: cs_print_state.
+#.rst:
+# csPrintInitialState
+# -------------------
+#
+# Debug print of the csCMake state.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# Print the csCMake state (debug messages): module and prefix paths, install prefix, configurations and their variables.
+#.rst:
+# .. command:: cs_print_state
 #
-# cs_print_state(<header>)
+#   Print the csCMake state (debug messages): module and prefix paths, install prefix, configurations and their
+#   variables.
+#
+#   .. code-block:: cmake
+#
+#     cs_print_state(<header>)
 function(cs_print_state header_message)
   # cmake-lint: disable=W0106
   # (the "ENV{CMAKE_PREFIX_PATH}" label below is intentional text, not a broken variable reference)

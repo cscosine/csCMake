@@ -1,17 +1,26 @@
-# Debug messages of csCMake: cs_debug_message.
+#.rst:
+# csDebugMessage
+# --------------
+#
+# Debug messages of csCMake.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# Print a debug message of csCMake.
+#.rst:
+# .. command:: cs_debug_message
 #
-# cs_debug_message(<text>...)
+#   Print a debug message of csCMake.
 #
-# The arguments are concatenated like message() does (also when they contain ";") and printed as a STATUS message when
-# the debug messages of the current project are enabled.
+#   .. code-block:: cmake
 #
-# Reads:
+#     cs_debug_message(<text>...)
 #
-# * variable _cscmake_debug_option: name of the debug option of the project
-# * cache variable <project>_CSCMAKE_DEBUG
+#   The arguments are concatenated like message() does (also when they contain ";") and printed as a STATUS message when
+#   the debug messages of the current project are enabled.
+#
+#   :Reads: :variable:`_cscmake_debug_option`, :variable:`<project>_CSCMAKE_DEBUG`
 function(cs_debug_message)
   if(NOT _cscmake_debug_option OR NOT ${_cscmake_debug_option})
     return()

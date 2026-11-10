@@ -26,6 +26,8 @@ python tests/smoke/run_smoke.py --variant <id>      # smoke test one preset vari
 pre-commit run --all-files                          # ruff, mypy --strict, cmake-format/-lint, preset regen, ...
 cscmake-generate-presets                            # regenerate presets/csv1
 cscmake-generate-presets --check                    # verify presets/csv1 is in sync
+sphinx-build -W -n docs docs/_build/html            # documentation (reference from the #.rst: blocks); CI: docs.yml
+cscmake-update-cmake-inventory                      # refresh docs/_inventories (after changing CMAKE_DOCS_VERSION)
 ```
 
 ## Rules
@@ -42,17 +44,29 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
   docstring comment block directly above it (C0111). Silence a finding only with a scoped
   `# cmake-lint: disable=<code>` as first line of the function body, plus a reason. Do not mix a file-level
   pragma with function-level ones in the same file: cmakelang 0.6.13 then ignores the function-level ones.
-- Docstrings (comment block right above each `function`/`macro`, and one line at the top of each module):
-  * public `cs_*`: one-line summary; the signature (`cs_x(<target> [KEYWORD <value>...])`); details paragraphs;
-    `Arguments:`, `Reads:`, `Writes:` sections as `* ` bullet lists (each section preceded by an empty `#` line);
-  * private `_cs_*`: one-line summary (+ details), `Reads:` / `Writes:` when it touches state;
-  * `Reads:` / `Writes:` bullets start with the kind — `variable`, `cache variable`, `environment variable`,
-    `global property`, `target property` — then the name (placeholders `<namespace>`, `<CONFIG>`, `<component>`),
-    then optionally `: <meaning>`. They are the source of the variables / properties reference.
+- Docs of the CMake modules: reStructuredText in `#.rst:` comment blocks (CMake's own format), extracted by
+  Sphinx (`sphinxcontrib-moderncmakedomain`, `docs/reference/<module>.rst` = `.. cmake-module::`):
+  * module: a `#.rst:` block before `include_guard`: title (the module name, `---` underline), summary, a `Commands`
+    section (`^^^` underline);
+  * public `cs_*`: a `#.rst:` block right above the function: `.. command:: cs_x`, summary, `.. code-block:: cmake`
+    signature, details, the arguments as a definition list (``` ``KEYWORD`` ``` then the indented meaning),
+    `:Reads:` / `:Writes:` fields with the roles `:variable:`, `:prop_tgt:`, `:prop_gbl:`, `:envvar:` (wrapped lines
+    of a field indented 2 more spaces);
+  * the variables and properties a module writes: `.. variable::` / `.. prop_tgt::` / `.. prop_gbl::` in a
+    `#.rst:` block of that module (section `Variables`, `Target properties`, `Global properties`);
+  * cmake-format keeps `#.rst:` blocks as written (`literal_comment_pattern`): wrap them by hand at 120 columns, indent
+    directive content by 2 spaces;
+  * private `_cs_*`: plain `#` comment, one-line summary (+ details), `Reads:` / `Writes:` when it touches state;
+  * a module without public commands or documented state (`csListUtils`, `csMSVCUtils`): plain `#` header, no page;
+  * a new documented module → `docs/reference/<module>.rst` and an entry in the toctree of `docs/index.md`;
+  * `sphinx-build -W -n docs <out>` must pass: every reference resolves (CMake's own commands and variables through
+    `docs/_inventories/cmake-<version>.inv`, the local copy of the cmake.org inventory: never edit it; a new minimum
+    CMake version → `CMAKE_DOCS_VERSION` in `src/cscmake/devtools/cmake_inventory.py`, then
+    `cscmake-update-cmake-inventory`).
 - New or changed public `cs_*` command → update its signature in `.cmake-format.json` (`parse.additional_commands`),
   so cmake-format lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+$`, arguments and locals
   `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).
-- CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
+- Plain CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
   an empty `#` line between paragraphs and bullet lists (`* item`, preceded by an empty `#` line).
 - Docs, code comments, README and test docstrings describe the current behaviour only (no "was", "no longer",
   "not FORCE", "(was X)"). History goes in the PLAN.md CHANGELOG and commit messages; `MIGRATION.md` maps old → new as
@@ -73,5 +87,5 @@ cscmake-generate-presets --check                    # verify presets/csv1 is in 
   `ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src tests && lint-imports
   && python -m pytest && cscmake-generate-presets --check && cmake-format --check csCMake.cmake utils/*.cmake
   && cmake-lint csCMake.cmake utils/*.cmake && cscmake-cmake-template format --check templates/*.cmake.in
-  && cscmake-cmake-template lint templates/*.cmake.in`.
+  && cscmake-cmake-template lint templates/*.cmake.in && sphinx-build -W -n -q docs docs/_build/html`.
 - Do not run CI locally (no recreating the CI matrix / minimum-deps venvs); the user runs CI on GitHub.

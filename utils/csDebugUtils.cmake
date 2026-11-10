@@ -1,12 +1,24 @@
-# Debug helpers: cs_print_target_properties.
+#.rst:
+# csDebugUtils
+# ------------
+#
+# Debug helpers.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# Print the properties set on a target (debug messages).
+#.rst:
+# .. command:: cs_print_target_properties
 #
-# cs_print_target_properties(<target>)
+#   Print the properties set on a target (debug messages).
 #
-# Every property CMake knows (cmake --help-property-list), with <CONFIG> expanded to each configuration of the build and
-# <LANG> to CXX.
+#   .. code-block:: cmake
+#
+#     cs_print_target_properties(<target>)
+#
+#   Every property CMake knows (cmake --help-property-list), with <CONFIG> expanded to each configuration of the build
+#   and <LANG> to CXX.
 function(cs_print_target_properties tgt)
   cs_debug_message("cs_print_target_properties ${tgt}")
   if(NOT TARGET ${tgt})

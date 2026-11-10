@@ -1,37 +1,91 @@
+#.rst:
+# csCompileProfiles
+# -----------------
+#
 # Compile profiles: named sets of rules. A rule applies compile options, compile definitions, link options, clang-tidy
-# and other profiles (PROFILES) under conditions on the build configuration, the compiler, its command-line style and
-# the platform. Profiles are applied by cs_finalize_target: the default profiles of the project
-# (DEFAULT_COMPILE_PROFILES of cs_initialize_project) and the ones given to cs_target_use_compile_profiles. Compile
-# options and definitions are PRIVATE: consumers never get them. The link options of static and object libraries are
-# INTERFACE too: link requirements, e.g. the sanitizer runtime.
+# and other profiles (``PROFILES``) under conditions on the build configuration, the compiler, its command-line style
+# and the platform. Profiles are applied by :command:`cs_finalize_target`: the default profiles of the project
+# (``DEFAULT_COMPILE_PROFILES`` of :command:`cs_initialize_project`) and the ones given to
+# :command:`cs_target_use_compile_profiles`. Compile options and definitions are ``PRIVATE``: consumers never get them.
+# The link options of static and object libraries are ``INTERFACE`` too: link requirements, e.g. the sanitizer runtime.
+#
+# Profiles shipped with csCMake:
+#
+# ``cscmake_default``
+#   MSVC: ``/MP`` (parallel compilation), ``/Zc:__cplusplus``. The default of :command:`cs_initialize_project`.
+#
+# ``cscmake_warnings``
+#   High warning level, the same essential checks on every compiler.
+#
+# ``cscmake_warnings_as_errors``
+#   ``-Werror`` / ``/WX``.
+#
+# ``cscmake_strict_warnings``
+#   ``cscmake_warnings`` and ``cscmake_warnings_as_errors``.
+#
+# ``cscmake_sanitize_undefined``, ``cscmake_sanitize_address``
+#   UndefinedBehaviorSanitizer, AddressSanitizer (GCC, Clang, AppleClang on Linux and macOS; AddressSanitizer also
+#   MSVC).
+#
+# ``cscmake_hardening_fast``
+#   The cheap standard library checks, usable in release builds: ``_GLIBCXX_ASSERTIONS`` (libstdc++),
+#   ``_LIBCPP_HARDENING_MODE_FAST`` (libc++).
+#
+# ``cscmake_hardening_debug``
+#   Every standard library check, expensive, for test configurations: ``_GLIBCXX_ASSERTIONS``,
+#   ``_LIBCPP_HARDENING_MODE_DEBUG``.
+#
+# ``cscmake_clang_tidy``
+#   clang-tidy, with the checks of the ``.clang-tidy`` of the project.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# Add a rule to a compile profile (created by its first rule).
+#.rst:
+# .. command:: cs_add_compile_profile_rule
 #
-# cs_add_compile_profile_rule(PROFILE <name> [CONFIGS <config>...] [COMPILERS <CMAKE_CXX_COMPILER_ID>...] [FRONTENDS
-# GNU|MSVC...] [PLATFORMS <CMAKE_SYSTEM_NAME>...] [COMPILE_OPTIONS <option>...] [COMPILE_DEFINITIONS <definition>...]
-# [LINK_OPTIONS <option>...] [PROFILES <profile>...] [CLANG_TIDY])
+#   Add a rule to a compile profile (created by its first rule).
 #
-# A condition not given matches anything; the conditions of the rule apply to the profiles of PROFILES too. CLANG_TIDY
-# runs clang-tidy (checks from the .clang-tidy of the project): mandatory where the rule matches the build, not run by
-# the Visual Studio and Xcode generators (warning).
+#   .. code-block:: cmake
 #
-# Arguments:
+#     cs_add_compile_profile_rule(PROFILE <name>
+#       [CONFIGS <config>...]
+#       [COMPILERS <CMAKE_CXX_COMPILER_ID>...]
+#       [FRONTENDS GNU|MSVC...]
+#       [PLATFORMS <CMAKE_SYSTEM_NAME>...]
+#       [COMPILE_OPTIONS <option>...]
+#       [COMPILE_DEFINITIONS <definition>...]
+#       [LINK_OPTIONS <option>...]
+#       [PROFILES <profile>...]
+#       [CLANG_TIDY])
 #
-# * PROFILE: name of the profile
-# * CONFIGS, COMPILERS, FRONTENDS, PLATFORMS: conditions (FRONTENDS: command-line style, GNU or MSVC)
-# * COMPILE_OPTIONS, COMPILE_DEFINITIONS: private to the targets
-# * LINK_OPTIONS: private, and interface for static and object libraries
-# * PROFILES: other profiles applied under the conditions of the rule
-# * CLANG_TIDY: run clang-tidy
+#   A condition not given matches anything; the conditions of the rule apply to the profiles of PROFILES too. CLANG_TIDY
+#   runs clang-tidy (checks from the .clang-tidy of the project): mandatory where the rule matches the build, not run by
+#   the Visual Studio and Xcode generators (warning).
 #
-# Writes:
+#   ``PROFILE``
+#     Name of the profile.
 #
-# * global property CSCMAKE_COMPILE_PROFILES: the profiles
-# * global property CSCMAKE_COMPILE_PROFILE_<profile>_RULES: the rules of a profile
-# * global property _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>, _CSCMAKE_COMPILE_PROFILE_RULE_COUNT
+#   ``CONFIGS``, ``COMPILERS``, ``FRONTENDS``, ``PLATFORMS``
+#     Conditions (FRONTENDS: command-line style, GNU or MSVC).
+#
+#   ``COMPILE_OPTIONS``, ``COMPILE_DEFINITIONS``
+#     Private to the targets.
+#
+#   ``LINK_OPTIONS``
+#     Private, and interface for static and object libraries.
+#
+#   ``PROFILES``
+#     Other profiles applied under the conditions of the rule.
+#
+#   ``CLANG_TIDY``
+#     Run clang-tidy.
+#
+#   :Writes: :prop_gbl:`CSCMAKE_COMPILE_PROFILES`, :prop_gbl:`CSCMAKE_COMPILE_PROFILE_<profile>_RULES`,
+#     :prop_gbl:`_CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>`, :prop_gbl:`_CSCMAKE_COMPILE_PROFILE_RULE_COUNT`
 function(cs_add_compile_profile_rule)
   set(options CLANG_TIDY)
   set(onevalue PROFILE)
@@ -64,15 +118,18 @@ function(cs_add_compile_profile_rule)
   _cs_add_to_global_property_unique_value(CSCMAKE_COMPILE_PROFILES ${arg_PROFILE})
 endfunction()
 
-# Use compile profiles for a target, in addition to the default profiles of the project.
+#.rst:
+# .. command:: cs_target_use_compile_profiles
 #
-# cs_target_use_compile_profiles(<target> <profile>...)
+#   Use compile profiles for a target, in addition to the default profiles of the project.
 #
-# Applied by cs_finalize_target.
+#   .. code-block:: cmake
 #
-# Writes:
+#     cs_target_use_compile_profiles(<target> <profile>...)
 #
-# * target property CSCMAKE_COMPILE_PROFILES: the compile profiles of the target
+#   Applied by :command:`cs_finalize_target`.
+#
+#   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
 function(cs_target_use_compile_profiles target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -84,14 +141,16 @@ function(cs_target_use_compile_profiles target_name)
     PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
 endfunction()
 
-# Return the compile profiles of a target: the default profiles of the project, then its own ones.
+#.rst:
+# .. command:: cs_get_target_compile_profiles
 #
-# cs_get_target_compile_profiles(<target> <out-var>)
+#   Return the compile profiles of a target: the default profiles of the project, then its own ones.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES
-# * target property CSCMAKE_COMPILE_PROFILES
+#     cs_get_target_compile_profiles(<target> <out-var>)
+#
+#   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
 function(cs_get_target_compile_profiles target_name profiles_out)
   set(profiles ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
   get_target_property(own ${target_name} CSCMAKE_COMPILE_PROFILES)
@@ -478,3 +537,45 @@ function(_cs_add_cscmake_compile_profiles)
   cs_add_compile_profile_rule(PROFILE cscmake_clang_tidy CLANG_TIDY)
 endfunction()
 _cs_add_cscmake_compile_profiles()
+
+#.rst:
+# Variables
+# ^^^^^^^^^
+#
+# .. variable:: CLANG_TIDY_EXE
+#
+#   Cache variable: the clang-tidy executable (``find_program``), when a compile profile runs clang-tidy.
+#
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_COMPILE_PROFILES
+#
+#   The compile profiles of the target, in addition to the default ones (:command:`cs_target_use_compile_profiles`).
+#
+# .. prop_tgt:: _CSCMAKE_CLANG_TIDY_CONDITIONS
+#
+#   Internal: the conditions of the rules running clang-tidy on the target.
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_COMPILE_PROFILES
+#
+#   The compile profiles defined in the build.
+#
+# .. prop_gbl:: CSCMAKE_COMPILE_PROFILE_<profile>_RULES
+#
+#   The rules of a profile (rule numbers).
+#
+# .. prop_gbl:: _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>
+#
+#   Internal: a field of a rule (``CONFIGS``, ``COMPILE_OPTIONS``, ...).
+#
+# .. prop_gbl:: _CSCMAKE_COMPILE_PROFILE_RULE_COUNT
+#
+#   Internal: the number of rules.
+#
+# .. prop_gbl:: _CSCMAKE_CLANG_TIDY_GENERATOR_WARNED
+#
+#   Internal: the warning about clang-tidy with the Visual Studio and Xcode generators was printed.

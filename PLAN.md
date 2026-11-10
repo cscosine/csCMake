@@ -182,17 +182,29 @@ variables, properties, preset environment variables, default targets) guides the
   project name, default targets linked, components depending on each other, a third project consuming two packages.
   In 3b add two packages with the same component name (fails today: the generated Config sets
   `${COMPONENT}_DEPENDENT_EXPORTS` globally, which is why csfoundation names components `csCameraAssert`, `<P>Sol_csCMakeCommon`, ...).
-- **3c — In-source docs**: one docstring format (signature, summary, arguments, *Reads*/*Writes*: variables, global
-  and target properties); rewrite the comments flattened by cmake-format; full variables/properties reference.
+- **3c — In-source docs**: CMake's own documentation format: reStructuredText in `#.rst:` blocks of the modules
+  (`command`, `variable`, `prop_tgt`, `prop_gbl` with `:Reads:` / `:Writes:` fields), built by Sphinx
+  (`sphinxcontrib-moderncmakedomain`, MyST pages) into the reference: commands, variables, properties; `docs.yml`
+  builds it on every push (artifact) and publishes it on GitHub Pages from `main`.
 - **3d — Docs**: `README.md` (pitch, quickstart, map), `AGENTS.md`, `MIGRATION.md`, `docs/user/` (quickstart,
   tutorials = smoke projects, reference of functions/user variables, troubleshooting), `docs/advanced/` (concepts and
   lifecycle, build configurations, target tracking, install/export, variables/properties reference, presets
   internals, extending, conventions), "Formatting your CMake files" (consumers reuse the `cs_*` signatures: cmake-format
   only finds `.cmake-format.*` in parent folders, csCMake is a sibling). Plain Markdown on GitHub, diagrams in Mermaid. Every user entry links its
   "under the hood" advanced section and vice versa.
-- **3e — Doc checks**: `cscmake-check-docs` (`src/cscmake/devtools`) + pre-commit hook: every public `cs_*` documented
-  (and no stale entries), every variable/property in the reference, links/anchors resolve, tutorial snippets equal
-  the smoke files.
+- **3d+ — The docs explain themselves** (user): the documentation (a "Contributing to the docs" page, linked from the
+  README) tells well how to build it (command line, VS Code task, CI artifact, Pages), how to document a module /
+  command / variable / property (the `#.rst:` format with a full example, the roles, the 2-space continuation of
+  fields, what is internal), how to add a page (MyST, toctree), how to update the CMake inventory, and how the docs CI
+  and publishing work. CLAUDE.md keeps the short rules and links to it.
+- **Versioned documentation (decide before the first release tag)**: GitHub Pages hosts one site, overwritten by each
+  deployment (today: `main`); the docs of `v1.0.0` can always be rebuilt from the tag, but are not hosted. Options:
+  attach the built HTML (zip) to the GitHub Release of each `v*.*.*` tag (simple, durable; build artifacts expire after
+  90 days); per-version folders on a `gh-pages` branch with a version switcher (`/latest/`, `/v1.0.0/`); Read the Docs
+  (versions per tag and branch built in).
+- **3e — Doc checks**: references and anchors: `sphinx-build -W -n` (in `docs.yml`); still to add: every public `cs_*`
+  has a `.. command::` entry, every csCMake variable / property used in the code has an entry, tutorial snippets equal
+  the smoke files (a small check, in CI).
 - **3m — macOS** (early, right after 3a step 1, so the smoke tests find the macOS issues before 3b hardening and the
   docs): the registry has stubs only (`OS.MACOS`, `Compiler.APPLE_CLANG` + short `ac`, presets `cs-host-macos`,
   `cs-compiler-macos-appleclang-default`; `get_supported_os_version_list(OS.MACOS)` returns `[]`, "TODO add MACOS").
@@ -290,7 +302,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | 0 | done | `c399f7f` was partial; gaps completed in `fa2eefc` (see CHANGELOG). CI green on GitHub, signed off 2026-11-09. |
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
-| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b done; 3c step 1 (docstrings) done, next: variables / properties reference. |
+| 3 | in progress | Productize on `feature/productize`: 3a, 3m, 3b done; 3c: reference in CMake's documentation format (Sphinx), under review; then 3d docs. Pages: Settings → Pages → Source "GitHub Actions" (user). |
 | 4 | not started | Internal quality (non-breaking) |
 | 5 | not started | Release |
 
@@ -667,3 +679,27 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   Override removed (`_cs_set_generator_variables` keeps `CMAKE_EXPORT_COMPILE_COMMANDS`); with Xcode the hardening
   profiles add `-Wno-macro-redefined`: Xcode's definition comes first on the command line (first log), the one of the
   profile wins. Other targets keep the Xcode setting. To confirm on GitHub.
+
+### 2026-11-10 (Phase 3c step 2 — reference in CMake's documentation format)
+- User question "are we reinventing the wheel?": CMake documents its modules in reStructuredText (`#.rst:` comments,
+  Sphinx CMake domain); adopted instead of a custom Markdown generator for the `Reads:` / `Writes:` sections.
+- Every documented module: a `#.rst:` header (title, summary, `Commands`), one `#.rst:` block per public command
+  (`.. command::`, signature, details, arguments, `:Reads:` / `:Writes:` links), and the variables and properties it
+  writes (`.. variable::`, `.. prop_tgt::`, `.. prop_gbl::`, internal ones marked "Internal"). Private functions keep
+  plain `#` comments; `csListUtils` and `csMSVCUtils` (no public content) have no page.
+- `.cmake-format.json`: `literal_comment_pattern` keeps `#.rst:` blocks as written (plain comments still reflowed);
+  cmake-lint takes them as docstrings (C0111) and checks their line length.
+- `docs/`: `conf.py` (CMake domain, MyST, `nitpicky`, `primary_domain = "cmake"`; `prop_tgt` / `prop_gbl` registered
+  as directives, so properties are described in the module that writes them instead of one page per property;
+  intersphinx to cmake.org 3.31 through the local inventory `docs/_inventories/cmake-3.31.inv`, with a resolver for its
+  `<type>:<name>` object names), `index.md`, `reference/<module>.rst`. `sphinx-build -W -n` clean.
+- Build: command line or VS Code task "Docs: build"; not in pre-commit (user choice); `.github/workflows/docs.yml`:
+  build on every push / pull request (artifact), deploy to GitHub Pages from `main`. Built HTML not committed.
+- Dev dependencies `sphinx`, `sphinxcontrib-moderncmakedomain`, `myst-parser` (minimums in `constraints-minimum.txt`).
+  README "Documentation", `CLAUDE.md` docs rule, agent skill updated.
+- CMake inventory (user: documented, with a tool): `cscmake-update-cmake-inventory`
+  (`src/cscmake/devtools/cmake_inventory.py`, stdlib): downloads `objects.inv` of `CMAKE_DOCS_VERSION` (also read by
+  `docs/conf.py`), checks it is a Sphinx inventory of CMake objects, writes `docs/_inventories/cmake-<version>.inv`,
+  removes other versions; VS Code task "Docs: update CMake inventory", `docs/_inventories/README.md`, tests
+  (`test_cmake_inventory.py`: no network, committed inventory matches the version).
+- Workflows `ci`, `smoke`, `docs` also run on release tags `v*.*.*` (as csfoundation; also matches `v1.2.3-rc1`).

@@ -442,7 +442,8 @@ Quality gates, driven by **pre-commit**:
 - `import-linter`: layer contracts in `pyproject.toml` (`presets` → `utils`)
 - `actionlint` for the GitHub workflows
 - `cmake-format` and `cmake-lint` for the CMake sources (`.cmake-format.json`,
-  120 columns, docstring comment required on every function/macro)
+  120 columns, docstring comment required on every function/macro: a `#.rst:` block for the public ones, see
+  "Documentation")
 - `cmake-format` / `cmake-lint` for the `templates/*.cmake.in` files too, through
   `cscmake-cmake-template` (the `@VAR@` placeholders are swapped for parseable
   stand-ins and restored afterwards)
@@ -459,6 +460,31 @@ python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc
 python -m pytest --cov=cscmake
 pre-commit run --all-files
 ```
+
+### Documentation
+
+The documentation is built with [Sphinx](https://www.sphinx-doc.org) and published on GitHub Pages by the `docs`
+workflow (`.github/workflows/docs.yml`: every push and pull request builds it and uploads it as an artifact; pushes to
+`main` publish it). The built HTML is not committed.
+
+- **Reference**: generated from the CMake modules. Each module, public command, variable and property is documented
+  in a `#.rst:` comment block of the `.cmake` file (reStructuredText, the format of CMake's own modules), right above
+  the code it describes; `docs/reference/<module>.rst` includes the module with `.. cmake-module::`. The
+  `sphinxcontrib-moderncmakedomain` extension provides the `command`, `variable`, `prop_tgt` and `prop_gbl` entries and
+  the `:command:` / `:variable:` / ... references; references to CMake's own commands and variables link to the
+  CMake documentation of the minimum CMake version (3.31), through a local copy of its inventory: see
+  [`docs/_inventories/README.md`](docs/_inventories/README.md) (updated with `cscmake-update-cmake-inventory`, or the
+  VS Code task **Docs: update CMake inventory**, when the minimum CMake version changes).
+- **Pages**: Markdown (MyST) in `docs/`, starting from `docs/index.md`.
+
+Build it locally (or run the VS Code task **Docs: build**), then open `docs/_build/html/index.html`:
+
+```bash
+sphinx-build -W -n docs docs/_build/html    # -W: warnings are errors, -n: every reference must resolve
+```
+
+To change the reference, edit the `#.rst:` block in the `.cmake` file and rebuild. cmake-format leaves `#.rst:` blocks
+as written (`literal_comment_pattern` in `.cmake-format.json`): wrap them by hand at 120 columns.
 
 ### Smoke tests
 

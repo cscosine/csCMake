@@ -1,4 +1,25 @@
-# csCMake: include(csCMake) from a project, then cs_initialize_project ... cs_finalize_project.
+#.rst:
+# csCMake
+# -------
+#
+# The entry point of csCMake: a project includes it after :command:`project`, then calls
+# :command:`cs_initialize_project` and, at the end of the same ``CMakeLists.txt``, :command:`cs_finalize_project`.
+#
+# .. code-block:: cmake
+#
+#   cmake_minimum_required(VERSION 3.31)
+#   project(myApp VERSION 1.0.0 LANGUAGES CXX)
+#   include(csCMake)
+#   cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
+#   cs_add_library(core STATIC core.cpp)
+#   cs_finalize_target(core)
+#   cs_install_target(core core DEFAULT)
+#   cs_finalize_project()
+#
+# csCMake needs CMake 3.31; its functions and macros run with the 3.31 policies.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
 # csCMake needs CMake 3.31 (the csv1 presets use schema version 10); the including project declares its own
@@ -56,44 +77,50 @@ function(_cs_get_root_dir path)
       PARENT_SCOPE)
 endfunction()
 
-# Initialize the project: namespace, C++ standard, build configurations, compile profiles, default target.
+#.rst:
+# .. command:: cs_initialize_project
 #
-# cs_initialize_project(NAMESPACE <namespace> CXX_STANDARD <standard> [DEFAULT_CONFIG <config>...]
-# [DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"]... [CUSTOM_CONFIG <config> BASED_ON
-# "<config>,<fallback>," POSTFIX "<postfix>"]... [DEFAULT_COMPILE_PROFILES <profile>...|NONE])
+#   Initialize the project: namespace, C++ standard, build configurations, compile profiles, default target.
 #
-# Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project; cs_finalize_project() is then
-# required at the end of the same CMakeLists.txt (checked). A macro: the variables it sets belong to the project scope
-# (inherited by the subfolders).
+#   .. code-block:: cmake
 #
-# Arguments:
+#     cs_initialize_project(NAMESPACE <namespace> CXX_STANDARD <standard>
+#       [DEFAULT_CONFIG <config>...]
+#       [DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"]...
+#       [CUSTOM_CONFIG <config> BASED_ON "<config>,<fallback>," POSTFIX "<postfix>"]...
+#       [DEFAULT_COMPILE_PROFILES <profile>...|NONE])
 #
-# * NAMESPACE: prefix of the installed targets (<namespace>::<target>) and package name (find_package(<namespace>))
-# * CXX_STANDARD: CMAKE_CXX_STANDARD of the project
-# * DEFAULT_CONFIG: configurations among Debug, Release, RelWithDebInfo
-# * DEFAULT_CONFIG_MAPPED: one of them, with the configurations of imported targets to use
-#   (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>)
-# * CUSTOM_CONFIG: a copy of a default configuration (BASED_ON, then fallbacks) with its own output name postfix
-#   (POSTFIX "" for none)
-# * DEFAULT_COMPILE_PROFILES: compile profiles of every target (default cscmake_default, NONE for none)
+#   Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project; cs_finalize_project() is then
+#   required at the end of the same CMakeLists.txt (checked). A macro: the variables it sets belong to the project scope
+#   (inherited by the subfolders).
 #
-# Reads:
+#   ``NAMESPACE``
+#     Prefix of the installed targets (<namespace>::<target>) and package name (``find_package(<namespace>)``).
 #
-# * cache variable CSCMAKE_PREFIX_PATH_HEAD, CSCMAKE_PREFIX_PATH_TAIL: paths added before / after CMAKE_PREFIX_PATH
-# * cache variable CSCMAKE_MODULE_PATH_HEAD, CSCMAKE_MODULE_PATH_TAIL: paths added before / after CMAKE_MODULE_PATH
+#   ``CXX_STANDARD``
+#     CMAKE_CXX_STANDARD of the project.
 #
-# Writes:
+#   ``DEFAULT_CONFIG``
+#     Configurations among Debug, Release, RelWithDebInfo.
 #
-# * cache variable <project>_CSCMAKE_DEBUG: option, csCMake debug messages of the project
-# * variable CSCMAKE_NAMESPACE: the namespace (read-only)
-# * variable CSCMAKE_SOURCE_DIR: the folder of cs_initialize_project, base of the install paths of the headers
-# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES: the default compile profiles
-# * variable CMAKE_CXX_STANDARD, CMAKE_CXX_STANDARD_REQUIRED, CMAKE_CXX_EXTENSIONS
-# * variable CMAKE_PREFIX_PATH, CMAKE_MODULE_PATH: with the HEAD and TAIL paths
-# * variable CMAKE_RUNTIME_OUTPUT_DIRECTORY, CMAKE_LIBRARY_OUTPUT_DIRECTORY, CMAKE_ARCHIVE_OUTPUT_DIRECTORY:
-#   <build>/bin, <build>/lib (/<config> with multi-config generators), unless set
-# * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
-# * variable _cscmake_debug_option: name of the debug option of the project
+#   ``DEFAULT_CONFIG_MAPPED``
+#     One of them, with the configurations of imported targets to use (CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>).
+#
+#   ``CUSTOM_CONFIG``
+#     A copy of a default configuration (BASED_ON, then fallbacks) with its own output name postfix (POSTFIX "" for
+#     none).
+#
+#   ``DEFAULT_COMPILE_PROFILES``
+#     Compile profiles of every target (default cscmake_default, NONE for none).
+#
+#   :Reads: :variable:`CSCMAKE_PREFIX_PATH_HEAD`, :variable:`CSCMAKE_PREFIX_PATH_TAIL`,
+#     :variable:`CSCMAKE_MODULE_PATH_HEAD`, :variable:`CSCMAKE_MODULE_PATH_TAIL`
+#   :Writes: :variable:`<project>_CSCMAKE_DEBUG`, :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_SOURCE_DIR`,
+#     :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CMAKE_CXX_STANDARD`,
+#     :variable:`CMAKE_CXX_STANDARD_REQUIRED`, :variable:`CMAKE_CXX_EXTENSIONS`, :variable:`CMAKE_PREFIX_PATH`,
+#     :variable:`CMAKE_MODULE_PATH`, :variable:`CMAKE_RUNTIME_OUTPUT_DIRECTORY`,
+#     :variable:`CMAKE_LIBRARY_OUTPUT_DIRECTORY`, :variable:`CMAKE_ARCHIVE_OUTPUT_DIRECTORY`,
+#     :variable:`CMAKE_EXPORT_COMPILE_COMMANDS`, :variable:`_cscmake_debug_option`
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
   # temporaries are _cs_init_* and are unset at the end.
@@ -196,13 +223,16 @@ macro(_cs_set_generator_variables)
   endif()
 endmacro()
 
-# Return the namespace of the project (NAMESPACE of cs_initialize_project).
+#.rst:
+# .. command:: cs_get_namespace
 #
-# cs_get_namespace(<out-var>)
+#   Return the namespace of the project (NAMESPACE of :command:`cs_initialize_project`).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * variable CSCMAKE_NAMESPACE
+#     cs_get_namespace(<out-var>)
+#
+#   :Reads: :variable:`CSCMAKE_NAMESPACE`
 function(cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
     message(FATAL_ERROR "[cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
@@ -212,17 +242,20 @@ function(cs_get_namespace output_variable_name)
       PARENT_SCOPE)
 endfunction()
 
-# Finalize the project: check its targets, resolve their runtime dependencies, install its components and generate
-# <namespace>Config.cmake.
+#.rst:
+# .. command:: cs_finalize_project
 #
-# cs_finalize_project()
+#   Finalize the project: check its targets, resolve their runtime dependencies, install its components and generate
+#   <namespace>Config.cmake.
 #
-# Mandatory, at the end of the CMakeLists.txt of cs_initialize_project (checked). Fails for the targets not finalized
-# with cs_finalize_target and for the ones whose links changed after it.
+#   .. code-block:: cmake
 #
-# Writes:
+#     cs_finalize_project()
 #
-# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>: TRUE
+#   Mandatory, at the end of the CMakeLists.txt of :command:`cs_initialize_project` (checked). Fails for the targets not
+#   finalized with :command:`cs_finalize_target` and for the ones whose links changed after it.
+#
+#   :Writes: :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`
 function(cs_finalize_project)
   if(ARGN)
     message(FATAL_ERROR "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
@@ -264,3 +297,59 @@ function(_cs_check_project_finalized namespace source_dir)
 endfunction()
 
 cmake_policy(POP)
+
+#.rst:
+# Variables
+# ^^^^^^^^^
+#
+# .. variable:: CSCMAKE_NAMESPACE
+#
+#   The namespace of the project (``NAMESPACE`` of :command:`cs_initialize_project`): the prefix of the installed
+#   targets (``<namespace>::<target>``) and the package name (``find_package(<namespace>)``). Set in the folder of
+#   :command:`cs_initialize_project`, inherited by its subfolders; read-only.
+#
+# .. variable:: CSCMAKE_SOURCE_DIR
+#
+#   The folder of :command:`cs_initialize_project`: the installed headers keep their path relative to it.
+#
+# .. variable:: CSCMAKE_DEFAULT_COMPILE_PROFILES
+#
+#   The compile profiles of every target of the folder (``DEFAULT_COMPILE_PROFILES`` of
+#   :command:`cs_initialize_project`). A directory variable: a subfolder can set its own.
+#
+# .. variable:: <project>_CSCMAKE_DEBUG
+#
+#   Cache option: print the csCMake debug messages of the project ``<project>`` (``PROJECT_NAME`` at
+#   :command:`cs_initialize_project`). ``OFF`` by default.
+#
+# .. variable:: CSCMAKE_PREFIX_PATH_HEAD
+#
+#   Paths added before :variable:`CMAKE_PREFIX_PATH` by :command:`cs_initialize_project` (``-D``, or the environment
+#   variable of the same name through the presets).
+#
+# .. variable:: CSCMAKE_PREFIX_PATH_TAIL
+#
+#   Paths added after :variable:`CMAKE_PREFIX_PATH`.
+#
+# .. variable:: CSCMAKE_MODULE_PATH_HEAD
+#
+#   Paths added before :variable:`CMAKE_MODULE_PATH`.
+#
+# .. variable:: CSCMAKE_MODULE_PATH_TAIL
+#
+#   Paths added after :variable:`CMAKE_MODULE_PATH`.
+#
+# .. variable:: _cscmake_debug_option
+#
+#   Internal: the name of the debug option of the project (:variable:`<project>_CSCMAKE_DEBUG`).
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_ROOT_DIR
+#
+#   The csCMake folder (one per build: including csCMake from two folders fails).
+#
+# .. prop_gbl:: _CSCMAKE_PROJECT_FINALIZED_<namespace>
+#
+#   Internal: ``TRUE`` once :command:`cs_finalize_project` ran for the namespace.

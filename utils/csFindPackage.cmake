@@ -1,19 +1,29 @@
-# Dependencies found with find_package and propagated to the installed package: cs_find_package.
+#.rst:
+# csFindPackage
+# -------------
+#
+# Dependencies found with :command:`find_package` and propagated to the installed package.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# Find a package for a target, like find_package, and propagate it to the installed package if PUBLIC.
+#.rst:
+# .. command:: cs_find_package
 #
-# cs_find_package(<target> PUBLIC|PRIVATE <find_package arguments>...)
+#   Find a package for a target, like :command:`find_package`, and propagate it to the installed package if PUBLIC.
 #
-# A macro: the variables of find_package are visible to the caller. PUBLIC: the same find_package arguments become a
-# find_dependency() of the component of the target in the installed <namespace>Config.cmake; PRIVATE: found for the
-# build only.
+#   .. code-block:: cmake
 #
-# Writes:
+#     cs_find_package(<target> PUBLIC|PRIVATE <find_package arguments>...)
 #
-# * target property CSCMAKE_FIND_PACKAGES: the PUBLIC find_package arguments
+#   A macro: the variables of :command:`find_package` are visible to the caller. PUBLIC: the same
+#   :command:`find_package` arguments become a :command:`find_dependency` of the component of the target in the
+#   installed <namespace>Config.cmake; PRIVATE: found for the build only.
+#
+#   :Writes: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 macro(cs_find_package target_name propagate_mode)
   cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
 
@@ -22,13 +32,16 @@ macro(cs_find_package target_name propagate_mode)
   _cs_add_find_package_args_to_target("${target_name}" "${propagate_mode}" "${ARGN}")
 endmacro()
 
-# Return the PUBLIC find_package arguments of a target (cs_find_package).
+#.rst:
+# .. command:: cs_get_target_find_packages
 #
-# cs_get_target_find_packages(<target> <out-var>)
+#   Return the PUBLIC :command:`find_package` arguments of a target (:command:`cs_find_package`).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_FIND_PACKAGES
+#     cs_get_target_find_packages(<target> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 function(cs_get_target_find_packages target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_FIND_PACKAGES)
   if(list_values)
@@ -44,9 +57,14 @@ function(cs_get_target_find_packages target_name output_variable_name)
   endif()
 endfunction()
 
-# Print the PUBLIC find_package arguments of a target (debug messages).
+#.rst:
+# .. command:: cs_print_target_find_packages
 #
-# cs_print_target_find_packages(<target>)
+#   Print the PUBLIC :command:`find_package` arguments of a target (debug messages).
+#
+#   .. code-block:: cmake
+#
+#     cs_print_target_find_packages(<target>)
 function(cs_print_target_find_packages target_name)
   set(packages "")
   cs_get_target_find_packages("${target_name}" packages)
@@ -79,3 +97,12 @@ function(_cs_add_find_package_args_to_target target_name propagate_mode)
         "PROPAGATE_MODE=${propagate_mode})")
   endif()
 endfunction()
+
+#.rst:
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_FIND_PACKAGES
+#
+#   The ``PUBLIC`` :command:`find_package` arguments of the target (:command:`cs_find_package`), one ``;``-escaped entry
+#   per call.

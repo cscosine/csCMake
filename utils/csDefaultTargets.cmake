@@ -1,4 +1,12 @@
-# The default target of a project: <namespace>::cscmake_base_include.
+#.rst:
+# csDefaultTargets
+# ----------------
+#
+# The default target of a project, ``<namespace>::cscmake_base_include``, created by :command:`cs_initialize_project`:
+# the include folders of the project (the folder of :command:`cs_initialize_project`, the generated files folders of
+# :command:`cs_get_generated_dir` and :command:`cs_get_generated_config_dir`), the same name in the build tree and once
+# installed, installed in the ``cscmake_common`` component (a default component). Link it from the targets of the
+# project.
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 

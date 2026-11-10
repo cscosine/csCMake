@@ -1,13 +1,25 @@
-# OpenMP: cs_target_use_openmp.
+#.rst:
+# csOpenMP
+# --------
+#
+# OpenMP.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csFindPackage)
 
-# Enable OpenMP on a target.
+#.rst:
+# .. command:: cs_target_use_openmp
 #
-# cs_target_use_openmp(<target> PUBLIC|PRIVATE|INTERFACE)
+#   Enable OpenMP on a target.
 #
-# ClangCL on Windows: /openmp and vcomp; otherwise find_package(OpenMP) (propagated to the installed package) and
-# OpenMP::OpenMP_CXX.
+#   .. code-block:: cmake
+#
+#     cs_target_use_openmp(<target> PUBLIC|PRIVATE|INTERFACE)
+#
+#   ClangCL on Windows: /openmp and vcomp; otherwise ``find_package(OpenMP)`` (propagated to the installed
+#   package) and OpenMP::OpenMP_CXX.
 function(cs_target_use_openmp target_name visibility)
   if(NOT TARGET ${target_name})
     message(FATAL_ERROR "Target '${target_name}' does not exist")

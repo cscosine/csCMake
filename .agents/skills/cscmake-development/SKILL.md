@@ -44,8 +44,9 @@ compile-option defaults, and CMake presets. It has two parts:
 
 - **CMake:** public functions `cs_*`, private helpers `_cs_`. File names `cs<Name>.cmake`.
   Formatted and linted by cmake-format / cmake-lint (`.cmake-format.json`, line width 120); every
-  `function`/`macro` has a docstring comment block right above it. Long string literals are allowed
-  (C0301 off: cmake-format cannot wrap strings).
+  `function`/`macro` has a docstring comment block right above it: a `#.rst:` reStructuredText block for the public
+  ones (the reference documentation, built by Sphinx from `docs/`), a plain `#` comment for the private ones. See the
+  docs rule in `CLAUDE.md`.
 - **Python:** strict mypy, ruff line-length 120, double quotes, docstrings on public functions.
 - **Commit style:** short imperative summary, e.g. `add presets for arm64`.
 - **Presets:** checked-in `presets/csv1/*.json` and `presets/csCMakeProjectSetup.json` and `presets/layout/*.json`

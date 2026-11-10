@@ -39,6 +39,9 @@ repos:
     rev: v1.20.2
     hooks:
       - id: mypy
+        # docs/conf.py: Sphinx configuration, its libraries (docutils, sphinx, the CMake domain) are not in the hook
+        # environment and ship no stubs; ruff checks it
+        exclude: ^docs/
         args:
           [
             "--config-file=pyproject.toml",

@@ -1,4 +1,12 @@
-# Installation: components (cs_install_target), dependencies between them, the generated <namespace>Config.cmake.
+#.rst:
+# csInstall
+# ---------
+#
+# Installation: the components of the package of the project (:command:`cs_install_target`), the dependencies between
+# them, the generated ``<namespace>Config.cmake`` (``find_package(<namespace> [COMPONENTS ...])``).
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 # cmake-lint: disable=R0913
 # (only _cs_configure_config_cmake has more than 5 arguments: the install folder plus one per @VAR@ placeholder of the
@@ -11,10 +19,15 @@ include(utils/csTargetDependencies)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Return the install folder of the headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-folder when the project has
-# more than one configuration.
+#.rst:
+# .. command:: cs_get_install_include_dir
 #
-# cs_get_install_include_dir(<out-var>)
+#   Return the install folder of the headers: CMAKE_INSTALL_INCLUDEDIR, plus a $<CONFIG> sub-folder when the project has
+#   more than one configuration.
+#
+#   .. code-block:: cmake
+#
+#     cs_get_install_include_dir(<out-var>)
 function(cs_get_install_include_dir install_folder_expression)
   cs_get_build_configurations(configs_list)
   list(LENGTH configs_list count)
@@ -32,25 +45,24 @@ function(cs_get_install_include_dir install_folder_expression)
   endif()
 endfunction()
 
-# Install a target in a component of the package of the project.
+#.rst:
+# .. command:: cs_install_target
 #
-# cs_install_target(<target> <component> [DEFAULT])
+#   Install a target in a component of the package of the project.
 #
-# The target, its PDB file (Windows) and its headers queued by cs_target_sources (*_INSTALL) are installed; the
-# component is a find_package(<namespace> COMPONENTS ...) component, DEFAULT adds it to the components loaded when none
-# is requested.
+#   .. code-block:: cmake
 #
-# Reads:
+#     cs_install_target(<target> <component> [DEFAULT])
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL, CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE, CSCMAKE_FIND_PACKAGES
-# * variable CSCMAKE_SOURCE_DIR, CSCMAKE_NAMESPACE
+#   The target, its PDB file (Windows) and its headers queued by :command:`cs_target_sources` (``*_INSTALL``) are
+#   installed; the component is a ``find_package(<namespace> COMPONENTS ...)`` component, DEFAULT adds it to the
+#   components loaded when none is requested.
 #
-# Writes:
-#
-# * target property CSCMAKE_COMPONENT: the component of the target
-# * global property CSCMAKE_<namespace>_COMPONENTS, CSCMAKE_<namespace>_DEFAULT_COMPONENTS
-# * global property CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS,
-#   CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
+#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`,
+#     :prop_tgt:`CSCMAKE_FIND_PACKAGES`, :variable:`CSCMAKE_SOURCE_DIR`, :variable:`CSCMAKE_NAMESPACE`
+#   :Writes: :prop_tgt:`CSCMAKE_COMPONENT`, :prop_gbl:`CSCMAKE_<namespace>_COMPONENTS`,
+#     :prop_gbl:`CSCMAKE_<namespace>_DEFAULT_COMPONENTS`, :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`,
+#     :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`
 function(cs_install_target target_name export_name)
   cs_debug_message("[cs_install_target] target ${target_name} export to ${export_name}")
 
@@ -133,13 +145,16 @@ function(cs_install_target target_name export_name)
 
 endfunction()
 
-# Return the components of the project.
+#.rst:
+# .. command:: cs_get_components
 #
-# cs_get_components(<out-var>)
+#   Return the components of the project.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_COMPONENTS
+#     cs_get_components(<out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENTS`
 function(cs_get_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS)
   if(list_values)
@@ -155,13 +170,16 @@ function(cs_get_components output_variable_name)
   endif()
 endfunction()
 
-# Return the default components of the project (loaded by find_package without COMPONENTS).
+#.rst:
+# .. command:: cs_get_default_components
 #
-# cs_get_default_components(<out-var>)
+#   Return the default components of the project (loaded by :command:`find_package` without COMPONENTS).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_DEFAULT_COMPONENTS
+#     cs_get_default_components(<out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_DEFAULT_COMPONENTS`
 function(cs_get_default_components output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS)
   if(list_values)
@@ -177,13 +195,16 @@ function(cs_get_default_components output_variable_name)
   endif()
 endfunction()
 
-# Return the component of a target (cs_install_target).
+#.rst:
+# .. command:: cs_get_target_component
 #
-# cs_get_target_component(<target> <out-var>)
+#   Return the component of a target (:command:`cs_install_target`).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_COMPONENT
+#     cs_get_target_component(<target> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_COMPONENT`
 function(cs_get_target_component target_name output_variable_name)
   get_target_property(value ${target_name} CSCMAKE_COMPONENT)
   set(${output_variable_name}
@@ -474,13 +495,16 @@ function(
 
 endfunction()
 
-# Return the targets of a component.
+#.rst:
+# .. command:: cs_get_component_targets
 #
-# cs_get_component_targets(<component> <out-var>)
+#   Return the targets of a component.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS
+#     cs_get_component_targets(<component> <out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`
 function(cs_get_component_targets export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_TARGETS)
   if(list_values)
@@ -496,13 +520,16 @@ function(cs_get_component_targets export_name output_variable_name)
   endif()
 endfunction()
 
-# Return the components a component depends on.
+#.rst:
+# .. command:: cs_get_component_dependencies
 #
-# cs_get_component_dependencies(<component> <out-var>)
+#   Return the components a component depends on.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
+#     cs_get_component_dependencies(<component> <out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES`
 function(cs_get_component_dependencies export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES)
   if(list_values)
@@ -518,13 +545,17 @@ function(cs_get_component_dependencies export_name output_variable_name)
   endif()
 endfunction()
 
-# Return the components a component depends on, each one after the ones it depends on (computed by cs_finalize_project).
+#.rst:
+# .. command:: cs_get_component_dependencies_sorted
 #
-# cs_get_component_dependencies_sorted(<component> <out-var>)
+#   Return the components a component depends on, each one after the ones it depends on (computed by
+#   :command:`cs_finalize_project`).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
+#     cs_get_component_dependencies_sorted(<component> <out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED`
 function(cs_get_component_dependencies_sorted export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED)
   if(list_values)
@@ -540,13 +571,17 @@ function(cs_get_component_dependencies_sorted export_name output_variable_name)
   endif()
 endfunction()
 
-# Return the find_package arguments propagated by a component (find_dependency in the installed package).
+#.rst:
+# .. command:: cs_get_component_find_packages
 #
-# cs_get_component_find_packages(<component> <out-var>)
+#   Return the :command:`find_package` arguments propagated by a component (:command:`find_dependency` in the installed
+#   package).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
+#     cs_get_component_find_packages(<component> <out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`
 function(cs_get_component_find_packages export_name output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
   if(list_values)
@@ -562,9 +597,15 @@ function(cs_get_component_find_packages export_name output_variable_name)
   endif()
 endfunction()
 
-# Print the components of the project with their targets, find_package arguments and dependencies (debug messages).
+#.rst:
+# .. command:: cs_print_components
 #
-# cs_print_components()
+#   Print the components of the project with their targets, :command:`find_package` arguments and dependencies (debug
+#   messages).
+#
+#   .. code-block:: cmake
+#
+#     cs_print_components()
 function(cs_print_components)
   cs_get_components(exports)
   foreach(export ${exports})
@@ -581,3 +622,38 @@ function(cs_print_components)
   cs_get_default_components(exports_default)
   cs_debug_message("[cs_print_components] default components: ${exports_default}")
 endfunction()
+
+#.rst:
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_COMPONENT
+#
+#   The component of the target (:command:`cs_install_target`).
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_COMPONENTS
+#
+#   The components of the project.
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_DEFAULT_COMPONENTS
+#
+#   The components loaded by ``find_package(<namespace>)`` without ``COMPONENTS``.
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS
+#
+#   The targets of a component.
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
+#
+#   The :command:`find_package` arguments of a component: ``find_dependency`` calls of the installed package.
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES
+#
+#   The components a component depends on.
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
+#
+#   The same, each one after the ones it depends on.

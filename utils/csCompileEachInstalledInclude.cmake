@@ -1,18 +1,27 @@
-# Check that the installed headers of a target are self-contained: cs_target_check_installed_headers.
+#.rst:
+# csCompileEachInstalledInclude
+# -----------------------------
+#
+# Check that the installed headers of a target are self-contained.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
-# Check that each installed header of a target compiles on its own.
+#.rst:
+# .. command:: cs_target_check_installed_headers
 #
-# cs_target_check_installed_headers(<target> [COMPILE_PROFILES <profile>...])
+#   Check that each installed header of a target compiles on its own.
 #
-# For each header queued for installation (cs_target_sources ... *_INSTALL) a .cpp including only it is generated and
-# built as a static library <target>_<header> linking <target>, with the default compile profiles of the project and the
-# COMPILE_PROFILES given.
+#   .. code-block:: cmake
 #
-# Reads:
+#     cs_target_check_installed_headers(<target> [COMPILE_PROFILES <profile>...])
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL
-# * variable CSCMAKE_SOURCE_DIR
+#   For each header queued for installation (:command:`cs_target_sources` ... ``*_INSTALL``) a .cpp including only it is
+#   generated and built as a static library <target>_<header> linking <target>, with the default compile profiles of the
+#   project and the COMPILE_PROFILES given.
+#
+#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :variable:`CSCMAKE_SOURCE_DIR`
 function(cs_target_check_installed_headers target_name)
   cmake_parse_arguments(arg "" "" "COMPILE_PROFILES" ${ARGN})
   if(arg_UNPARSED_ARGUMENTS)

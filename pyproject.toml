@@ -18,6 +18,7 @@ dependencies = []
 [project.scripts]
 cscmake-generate-presets = "cscmake.presets.generate:main"
 cscmake-cmake-template = "cscmake.devtools.cmake_template:main"
+cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -32,6 +33,10 @@ dev = [
     "pre-commit>=4",
     "import-linter[ui]>=2.11",
     "cmakelang>=0.6.13",
+    # documentation (Sphinx, CMake domain, Markdown pages)
+    "sphinx>=8.1",
+    "sphinxcontrib-moderncmakedomain>=3.29",
+    "myst-parser>=4.0",
 ]
 
 # ===============================

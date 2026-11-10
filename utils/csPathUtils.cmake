@@ -1,4 +1,11 @@
-# Paths: generated files folders, path lists.
+#.rst:
+# csPathUtils
+# -----------
+#
+# Paths: the folders of the generated files.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
 # Normalize (cmake_path NORMALIZE) every path of the list variable input_list_name of the caller.
@@ -25,10 +32,15 @@ function(_cs_unique_parent_dirs out_list)
       PARENT_SCOPE)
 endfunction()
 
-# Return the folder of the generated files shared by all the configurations: <build>/gen/ (an include folder of
-# <namespace>::cscmake_base_include).
+#.rst:
+# .. command:: cs_get_generated_dir
 #
-# cs_get_generated_dir(<out-var>)
+#   Return the folder of the generated files shared by all the configurations: <build>/gen/ (an include folder of
+#   <namespace>::cscmake_base_include).
+#
+#   .. code-block:: cmake
+#
+#     cs_get_generated_dir(<out-var>)
 function(cs_get_generated_dir output_folder)
   set(folder "${CMAKE_BINARY_DIR}/gen/")
   set(${output_folder}
@@ -36,10 +48,15 @@ function(cs_get_generated_dir output_folder)
       PARENT_SCOPE)
 endfunction()
 
-# Return the folder of the configuration-specific generated files: <build>/gen-$<CONFIG>/ with multi-config generators,
-# <build>/gen/ otherwise (an include folder of <namespace>::cscmake_base_include).
+#.rst:
+# .. command:: cs_get_generated_config_dir
 #
-# cs_get_generated_config_dir(<out-var>)
+#   Return the folder of the configuration-specific generated files: <build>/gen-$<CONFIG>/ with multi-config
+#   generators, <build>/gen/ otherwise (an include folder of <namespace>::cscmake_base_include).
+#
+#   .. code-block:: cmake
+#
+#     cs_get_generated_config_dir(<out-var>)
 function(cs_get_generated_config_dir output_folder)
 
   get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

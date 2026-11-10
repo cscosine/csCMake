@@ -1,13 +1,25 @@
-# Links between targets: cs_target_link_libraries.
+#.rst:
+# csTargetLinkLibraries
+# ---------------------
+#
+# Links between targets.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# Link a target, like target_link_libraries, resolving the aliases of the project targets.
+#.rst:
+# .. command:: cs_target_link_libraries
 #
-# cs_target_link_libraries(<target> <target_link_libraries arguments>...)
+#   Link a target, like :command:`target_link_libraries`, resolving the aliases of the project targets.
 #
-# The scope keywords stay where they are; an ALIAS of a project target becomes the target itself, imported targets and
-# names that are not targets are passed unchanged.
+#   .. code-block:: cmake
+#
+#     cs_target_link_libraries(<target> <target_link_libraries arguments>...)
+#
+#   The scope keywords stay where they are; an ALIAS of a project target becomes the target itself, imported targets and
+#   names that are not targets are passed unchanged.
 function(cs_target_link_libraries target_name)
   cs_debug_message("[cs_target_link_libraries] ${target_name} ${ARGN}")
 

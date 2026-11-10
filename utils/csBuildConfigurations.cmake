@@ -1,11 +1,13 @@
-# Build configurations of the project (DEFAULT_CONFIG, DEFAULT_CONFIG_MAPPED, CUSTOM_CONFIG of cs_initialize_project).
+#.rst:
+# csBuildConfigurations
+# ---------------------
 #
-# Writes:
+# The build configurations of the build tree (``DEFAULT_CONFIG``, ``DEFAULT_CONFIG_MAPPED``, ``CUSTOM_CONFIG`` of
+# :command:`cs_initialize_project`): the first csCMake project defines them, a nested project uses some of them, defined
+# the same way.
 #
-# * cache variable CSCMAKE_DEBUG_POSTFIX, CSCMAKE_RELEASE_POSTFIX, CSCMAKE_RELWITHDEBINFO_POSTFIX: output name postfix
-#   of the default configurations ("d", "", "rd")
-# * cache variable CSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG, CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE,
-#   CSCMAKE_MSVC_RUNTIME_LIBRARY_RELWITHDEBINFO: MSVC runtime library of the default configurations
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 
 # Defaults chosen by csCMake are cache variables: override them with -D<variable>=<value>. Values derived from the
@@ -64,13 +66,16 @@ function(_cs_apply_project_scope_variables)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
 endfunction()
 
-# Return the build configurations of the build (default, mapped and custom ones).
+#.rst:
+# .. command:: cs_get_build_configurations
 #
-# cs_get_build_configurations(<out-var>)
+#   Return the build configurations of the build (default, mapped and custom ones).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_BUILD_CONFIGURATIONS
+#     cs_get_build_configurations(<out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_BUILD_CONFIGURATIONS`
 function(cs_get_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS)
   set(${configs_list}
@@ -78,13 +83,16 @@ function(cs_get_build_configurations configs_list)
       PARENT_SCOPE)
 endfunction()
 
-# Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
+#.rst:
+# .. command:: cs_get_default_build_configurations
 #
-# cs_get_default_build_configurations(<out-var>)
+#   Return the default configurations of the build (DEFAULT_CONFIG and DEFAULT_CONFIG_MAPPED).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
+#     cs_get_default_build_configurations(<out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS`
 function(cs_get_default_build_configurations configs_list)
   get_property(val GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS)
   set(${configs_list}
@@ -539,9 +547,14 @@ function(_cs_copy_build_configuration config_from_in config_to_in base_config_an
 
 endfunction()
 
-# Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
+#.rst:
+# .. command:: cs_print_all_configurations_variables
 #
-# cs_print_all_configurations_variables(<message>)
+#   Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
+#
+#   .. code-block:: cmake
+#
+#     cs_print_all_configurations_variables(<message>)
 function(cs_print_all_configurations_variables add_message)
   cs_get_build_configurations(config_var_list)
   cs_debug_message("[cs_print_all_configurations_variables] configs are ${config_var_list}")
@@ -556,9 +569,14 @@ function(cs_print_all_configurations_variables add_message)
 
 endfunction()
 
-# Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
+#.rst:
+# .. command:: cs_print_configuration_variables
 #
-# cs_print_configuration_variables(<config> <prefix>)
+#   Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
+#
+#   .. code-block:: cmake
+#
+#     cs_print_configuration_variables(<config> <prefix>)
 function(cs_print_configuration_variables config_in print_prefix)
 
   _cs_get_per_config_variables(config_var_list)
@@ -574,3 +592,61 @@ function(cs_print_configuration_variables config_in print_prefix)
   cs_debug_message("${print_prefix} CSCMAKE_${config}_POSTFIX = ${CSCMAKE_${config}_POSTFIX}")
 
 endfunction()
+
+#.rst:
+# Variables
+# ^^^^^^^^^
+#
+# .. variable:: CSCMAKE_DEBUG_POSTFIX
+#
+#   Cache variable: output name postfix of the targets in the Debug configuration (default ``d``).
+#
+# .. variable:: CSCMAKE_RELEASE_POSTFIX
+#
+#   Cache variable: output name postfix in the Release configuration (default none).
+#
+# .. variable:: CSCMAKE_RELWITHDEBINFO_POSTFIX
+#
+#   Cache variable: output name postfix in the RelWithDebInfo configuration (default ``rd``).
+#
+# .. variable:: CSCMAKE_<CONFIG>_POSTFIX
+#
+#   Output name postfix of a custom configuration (``POSTFIX`` of ``CUSTOM_CONFIG``), in the project scope.
+#
+# .. variable:: CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>
+#
+#   Cache variable: MSVC runtime library of a configuration (``MultiThreadedDebugDLL`` in Debug, ``MultiThreadedDLL``
+#   in Release and RelWithDebInfo; a custom configuration copies the one of its base configuration).
+#
+# .. variable:: CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
+#
+#   The MSVC runtime library of every configuration as one generator expression (also
+#   :variable:`CMAKE_MSVC_RUNTIME_LIBRARY`), in the project scope.
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_BUILD_CONFIGURATIONS
+#
+#   The configurations of the build: default, mapped and custom ones.
+#
+# .. prop_gbl:: CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS
+#
+#   The default configurations of the build (``DEFAULT_CONFIG`` and ``DEFAULT_CONFIG_MAPPED``).
+#
+# .. prop_gbl:: CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION
+#
+#   How a configuration is defined: ``default``, ``mapped <fallbacks>`` or ``custom <base and fallbacks> postfix
+#   <postfix>`` (a nested project must define it the same way).
+#
+# .. prop_gbl:: CSCMAKE_PER_CONFIG_VARIABLES
+#
+#   The CMake variables with a ``<CONFIG>`` part (``CMAKE_CXX_FLAGS_<CONFIG>``, ...), copied for custom configurations.
+#
+# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLES
+#
+#   Internal: the variables to set in the project scope at the end of :command:`cs_initialize_project`.
+#
+# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
+#
+#   Internal: the value of such a variable.

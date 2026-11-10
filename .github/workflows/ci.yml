@@ -5,6 +5,8 @@ on:
   pull_request:
   push:
     branches: [ main, dev, "feature/**" ]
+    # release tags, e.g. v1.2.3 (also v1.2.3-rc1)
+    tags: [ "v*.*.*" ]
 
 jobs:
   checks:

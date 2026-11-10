@@ -11,3 +11,6 @@ htmlcov/
 .coverage
 .coverage.*
 coverage*.xml
+
+# Sphinx output
+docs/_build/

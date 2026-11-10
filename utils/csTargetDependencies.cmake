@@ -1,4 +1,12 @@
-# Runtime dependencies of the targets: the shared libraries each target needs, per configuration.
+#.rst:
+# csTargetDependencies
+# --------------------
+#
+# Runtime dependencies of the targets: the shared libraries each target needs, per configuration, resolved by
+# :command:`cs_finalize_project` (also for the Visual Studio debugger environment).
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
@@ -178,14 +186,17 @@ function(_cs_get_target_linked_non_targets target_name output_variable_name)
   endif()
 endfunction()
 
-# Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
-# cs_finalize_project.
+#.rst:
+# .. command:: cs_get_target_project_dependencies
 #
-# cs_get_target_project_dependencies(<target> <out-var>)
+#   Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
+#   :command:`cs_finalize_project`.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_PROJECT_DEPENDENCIES
+#     cs_get_target_project_dependencies(<target> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`
 function(cs_get_target_project_dependencies target_name output_variable_name)
   get_target_property(values ${target_name} CSCMAKE_PROJECT_DEPENDENCIES)
   if(values)
@@ -389,14 +400,17 @@ function(_cs_prepare_finalize_target target_name)
 
 endfunction()
 
-# Return the shared libraries a target needs at run time for a configuration, also through its dependencies (resolved by
-# cs_finalize_project).
+#.rst:
+# .. command:: cs_get_target_runtime_libraries
 #
-# cs_get_target_runtime_libraries(<target> <config> <out-var>)
+#   Return the shared libraries a target needs at run time for a configuration, also through its dependencies (resolved
+#   by :command:`cs_finalize_project`).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>
+#     cs_get_target_runtime_libraries(<target> <config> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`
 function(cs_get_target_runtime_libraries target_name config output_variable_name)
   string(TOUPPER "${config}" config_ucase)
   get_target_property(values ${target_name} CSCMAKE_RUNTIME_LIBRARIES_${config_ucase})
@@ -527,3 +541,31 @@ function(_cs_get_all_linked_libs target_to_analyze target_to_analyze_linked_libs
       ${target_to_analyze_linked_libs}
       PARENT_SCOPE)
 endfunction()
+
+#.rst:
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_PROJECT_DEPENDENCIES
+#
+#   The targets of the project (or of nested csCMake projects) the target depends on.
+#
+# .. prop_tgt:: CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>
+#
+#   The shared libraries the target needs at run time, also through its dependencies.
+#
+# .. prop_tgt:: CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>
+#
+#   The shared libraries of the imported targets the target links to.
+#
+# .. prop_tgt:: CSCMAKE_LINKED_PROJECT_TARGETS
+#
+#   The targets of the project the target links to, directly or not.
+#
+# .. prop_tgt:: CSCMAKE_LINKED_NON_TARGETS
+#
+#   The linked names that were not targets when the target was finalized (targets defined later, or plain libraries).
+#
+# .. prop_tgt:: _CSCMAKE_PENDING_DEPENDENCIES
+#
+#   Internal: the dependencies whose runtime libraries are not resolved yet.

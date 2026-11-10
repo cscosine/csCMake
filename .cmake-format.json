@@ -17,7 +17,7 @@
     "keyword_pattern": "[A-Z][0-9A-Z_]+$"
   },
   "markup": {
-    "literal_comment_pattern": "^\\s*cmake-lint: "
+    "literal_comment_pattern": "^\\s*(cmake-lint: |\\.rst:)"
   },
   "parse": {
     "additional_commands": {

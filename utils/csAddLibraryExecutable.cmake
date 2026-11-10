@@ -1,26 +1,43 @@
-# Targets of the project: cs_add_library, cs_add_executable, cs_finalize_target.
+#.rst:
+# csAddLibraryExecutable
+# ----------------------
+#
+# The targets of the project.
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 include(utils/csListUtils)
 
-# Add a library to the project, like add_library.
+#.rst:
+# .. command:: cs_add_library
 #
-# cs_add_library(<target> <add_library arguments>...)
+#   Add a library to the project, like :command:`add_library`.
 #
-# The library gets the output name postfix of each configuration and the MSVC runtime library of the project, and is
-# registered in the project (cs_finalize_target is then mandatory for it). An ALIAS is created as with add_library and
-# not registered.
+#   .. code-block:: cmake
+#
+#     cs_add_library(<target> <add_library arguments>...)
+#
+#   The library gets the output name postfix of each configuration and the MSVC runtime library of the project, and is
+#   registered in the project (:command:`cs_finalize_target` is then mandatory for it). An ALIAS is created as with
+#   :command:`add_library` and not registered.
 function(cs_add_library target_name)
   add_library("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
 
-# Add an executable to the project, like add_executable.
+#.rst:
+# .. command:: cs_add_executable
 #
-# cs_add_executable(<target> <add_executable arguments>...)
+#   Add an executable to the project, like :command:`add_executable`.
 #
-# As cs_add_library: output name postfixes, MSVC runtime library, registered in the project (cs_finalize_target is
-# mandatory).
+#   .. code-block:: cmake
+#
+#     cs_add_executable(<target> <add_executable arguments>...)
+#
+#   As :command:`cs_add_library`: output name postfixes, MSVC runtime library, registered in the project
+#   (:command:`cs_finalize_target` is mandatory).
 function(cs_add_executable target_name)
   add_executable("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
@@ -76,16 +93,19 @@ function(_cs_add_target_to_project_targets target_name)
   endif()
 endfunction()
 
-# Finalize a target: apply its compile profiles, analyze its runtime dependencies, record its links.
+#.rst:
+# .. command:: cs_finalize_target
 #
-# cs_finalize_target(<target>)
+#   Finalize a target: apply its compile profiles, analyze its runtime dependencies, record its links.
 #
-# Mandatory for every target of cs_add_library / cs_add_executable, after its links: cs_finalize_project fails for a
-# target not finalized, or whose links changed afterwards.
+#   .. code-block:: cmake
 #
-# Writes:
+#     cs_finalize_target(<target>)
 #
-# * target property _CSCMAKE_FINALIZED_LINKS: the links at finalization
+#   Mandatory for every target of :command:`cs_add_library` / :command:`cs_add_executable`, after its links:
+#   :command:`cs_finalize_project` fails for a target not finalized, or whose links changed afterwards.
+#
+#   :Writes: :prop_tgt:`_CSCMAKE_FINALIZED_LINKS`
 function(cs_finalize_target target_name)
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -157,13 +177,16 @@ function(_cs_check_targets_finalized)
   endif()
 endfunction()
 
-# Return the targets of the project (cs_add_library, cs_add_executable, the default target).
+#.rst:
+# .. command:: cs_get_project_targets
 #
-# cs_get_project_targets(<out-var>)
+#   Return the targets of the project (:command:`cs_add_library`, :command:`cs_add_executable`, the default target).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * global property CSCMAKE_<namespace>_PROJECT_TARGETS
+#     cs_get_project_targets(<out-var>)
+#
+#   :Reads: :prop_gbl:`CSCMAKE_<namespace>_PROJECT_TARGETS`
 function(cs_get_project_targets output_variable_name)
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS)
   if(list_values)
@@ -179,9 +202,14 @@ function(cs_get_project_targets output_variable_name)
   endif()
 endfunction()
 
-# Print the targets of the project (debug messages).
+#.rst:
+# .. command:: cs_print_project_targets
 #
-# cs_print_project_targets()
+#   Print the targets of the project (debug messages).
+#
+#   .. code-block:: cmake
+#
+#     cs_print_project_targets()
 function(cs_print_project_targets)
   set(targets "")
   cs_get_project_targets(targets)
@@ -192,3 +220,22 @@ function(cs_print_project_targets)
     cs_debug_message("cs_print_project_targets empty")
   endif()
 endfunction()
+
+#.rst:
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_NAMESPACE
+#
+#   The namespace of the project of the target.
+#
+# .. prop_tgt:: _CSCMAKE_FINALIZED_LINKS
+#
+#   Internal: the links of the target when :command:`cs_finalize_target` ran.
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: CSCMAKE_<namespace>_PROJECT_TARGETS
+#
+#   The targets of the project: :command:`cs_add_library`, :command:`cs_add_executable`, the default target.

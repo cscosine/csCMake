@@ -1,33 +1,45 @@
-# Sources of the targets, and the ones installed with them (headers): cs_target_sources.
+#.rst:
+# csTargetSources
+# ---------------
+#
+# The sources of the targets, and the ones installed with them (headers).
+#
+# Commands
+# ^^^^^^^^
 include_guard(GLOBAL)
 include(utils/csDebugMessage)
 
-# Add sources to a target, like target_sources, and queue the ones to install with it.
+#.rst:
+# .. command:: cs_target_sources
 #
-# cs_target_sources(<target> [PRIVATE|PUBLIC|INTERFACE <file>...] [PRIVATE_INSTALL|PUBLIC_INSTALL|INTERFACE_INSTALL
-# <file>...] [PRIVATE_INSTALL_ABSOLUTE_PATH|PUBLIC_INSTALL_ABSOLUTE_PATH|INTERFACE_INSTALL_ABSOLUTE_PATH <file>...])
+#   Add sources to a target, like :command:`target_sources`, and queue the ones to install with it.
 #
-# Every file is a source of the target in the build tree, with the given scope. The *_INSTALL files (usually headers,
-# relative to the current folder) are installed by cs_install_target, keeping their path relative to the folder of
-# cs_initialize_project; the *_INSTALL_ABSOLUTE_PATH files (absolute paths, e.g. generated headers) are installed in the
-# include folder of the current folder. Headers do not need to be PUBLIC: PRIVATE and PRIVATE_INSTALL are usual.
+#   .. code-block:: cmake
 #
-# Arguments:
+#     cs_target_sources(<target>
+#       [PRIVATE|PUBLIC|INTERFACE <file>...]
+#       [PRIVATE_INSTALL|PUBLIC_INSTALL|INTERFACE_INSTALL <file>...]
+#       [PRIVATE_INSTALL_ABSOLUTE_PATH|PUBLIC_INSTALL_ABSOLUTE_PATH|INTERFACE_INSTALL_ABSOLUTE_PATH <file>...])
 #
-# * target: a target of the project
-# * PRIVATE, PUBLIC, INTERFACE: sources, as in target_sources
-# * PRIVATE_INSTALL, PUBLIC_INSTALL, INTERFACE_INSTALL: sources installed with the target
-# * PRIVATE_INSTALL_ABSOLUTE_PATH, PUBLIC_INSTALL_ABSOLUTE_PATH, INTERFACE_INSTALL_ABSOLUTE_PATH: sources given by
-#   absolute path, installed with the target
+#   Every file is a source of the target in the build tree, with the given scope. Headers do not need to be
+#   ``PUBLIC``: ``PRIVATE`` and ``PRIVATE_INSTALL`` are usual.
 #
-# Reads:
+#   ``<target>``
+#     A target of the project.
 #
-# * variable CSCMAKE_SOURCE_DIR
+#   ``PRIVATE``, ``PUBLIC``, ``INTERFACE``
+#     Sources, as in :command:`target_sources`.
 #
-# Writes:
+#   ``PRIVATE_INSTALL``, ``PUBLIC_INSTALL``, ``INTERFACE_INSTALL``
+#     Sources installed with the target by :command:`cs_install_target` (usually headers, relative to the current
+#     folder), keeping their path relative to the folder of :command:`cs_initialize_project`.
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL: the *_INSTALL files
-# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE: the *_INSTALL_ABSOLUTE_PATH files
+#   ``PRIVATE_INSTALL_ABSOLUTE_PATH``, ``PUBLIC_INSTALL_ABSOLUTE_PATH``, ``INTERFACE_INSTALL_ABSOLUTE_PATH``
+#     Sources given by absolute path (e.g. generated headers), installed with the target in the include folder of the
+#     current folder.
+#
+#   :Reads: :variable:`CSCMAKE_SOURCE_DIR`
+#   :Writes: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_target_sources target_name)
   cs_debug_message("[cs_target_sources] target ${target_name}: ${ARGN}")
 
@@ -75,13 +87,16 @@ function(cs_target_sources target_name)
   endforeach()
 endfunction()
 
-# Return the sources of a target installed with it, relative to its folder.
+#.rst:
+# .. command:: cs_get_target_sources_to_install
 #
-# cs_get_target_sources_to_install(<target> <out-var>)
+#   Return the sources of a target installed with it, relative to its folder.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL
+#     cs_get_target_sources_to_install(<target> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`
 function(cs_get_target_sources_to_install target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL)
   if(list_values)
@@ -97,13 +112,16 @@ function(cs_get_target_sources_to_install target_name output_variable_name)
   endif()
 endfunction()
 
-# Return the sources of a target installed with it, given by absolute path.
+#.rst:
+# .. command:: cs_get_target_sources_to_install_absolute_path
 #
-# cs_get_target_sources_to_install_absolute_path(<target> <out-var>)
+#   Return the sources of a target installed with it, given by absolute path.
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
+#     cs_get_target_sources_to_install_absolute_path(<target> <out-var>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_get_target_sources_to_install_absolute_path target_name output_variable_name)
   get_target_property(list_values ${target_name} CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE)
   if(list_values)
@@ -119,14 +137,16 @@ function(cs_get_target_sources_to_install_absolute_path target_name output_varia
   endif()
 endfunction()
 
-# Print the sources of a target installed with it (debug messages).
+#.rst:
+# .. command:: cs_print_target_sources_to_install
 #
-# cs_print_target_sources_to_install(<target>)
+#   Print the sources of a target installed with it (debug messages of the project).
 #
-# Reads:
+#   .. code-block:: cmake
 #
-# * target property CSCMAKE_SOURCES_TO_INSTALL
-# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
+#     cs_print_target_sources_to_install(<target>)
+#
+#   :Reads: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_print_target_sources_to_install target_name)
   set(values "")
 
@@ -146,3 +166,17 @@ function(cs_print_target_sources_to_install target_name)
     cs_debug_message("cs_print_target_sources_to_install (absolute path) ${target_name}: empty")
   endif()
 endfunction()
+
+#.rst:
+# Target properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_tgt:: CSCMAKE_SOURCES_TO_INSTALL
+#
+#   The sources of the target installed with it (``*_INSTALL`` of :command:`cs_target_sources`), relative to the
+#   folder of the target.
+#
+# .. prop_tgt:: CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
+#
+#   The sources of the target installed with it, given by absolute path (``*_INSTALL_ABSOLUTE_PATH`` of
+#   :command:`cs_target_sources`).
