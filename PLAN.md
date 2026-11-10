@@ -23,7 +23,7 @@ it shrinks what 6b and 6c have to organise. How the 6a findings flow into the ne
 
 | Finding | Done in | Effect on the next steps |
 |---|---|---|
-| B1, B2, B4, B5, C1, C3, C5, S1-S5 | 6a | none on the API; smaller, cleaner code for 6b / 6c |
+| B1, B2, B4-B6, C1, C3, C5, S1-S5 | 6a | none on the API; smaller, cleaner code for 6b / 6c |
 | D1 (+ B3) runtime DLLs with CMake's genex | 6a | removes ~400 lines and 26 of the ~113 debug call sites (6c smaller; S3 removes ~15 more); drops `cs_get_target_runtime_libraries` and the `CSCMAKE_*RUNTIME_LIBRARIES*` / `CSCMAKE_LINKED_*` properties (6b inventory smaller); the runtime deployment ideas ("Later") use the genex too |
 | D5 per-configuration cache copies, D7 C files | 6a | none on the API (D7 to decide) |
 | D8 clang-tidy: kept (user) | 6a / later | C4 renames the cache variable (6b); maturity with csCore: "Professional C++ projects" |
@@ -44,10 +44,15 @@ it shrinks what 6b and 6c have to organise. How the 6a findings flow into the ne
 **6a findings (review 2026-11-10, to agree; B = bug, D = design, S = simplification, C = cleanup).**
 
 Bugs, confirmed or to confirm with a configure test first:
-- [ ] B1 (confirmed) `cs_target_check_installed_headers`: one target and one generated file per header, named after
+- [x] (fixed, under review) B1 (confirmed) `cs_target_check_installed_headers`: one target and one generated file per header, named after
   `NAME_WE`: `a/util.h` + `b/util.h`, or `util.h` + `util.hpp`, fail with "add_library cannot create target
   lib_util". Fix: one STATIC library per checked target with one generated `.cpp` per header, named after the
   relative path (also fewer targets).
+- [x] (fixed, under review; found by the B1 test) B6 `cs_target_sources(<t> PUBLIC|INTERFACE[_INSTALL] <relative>)`
+  failed at generate ("Target contains relative path in its INTERFACE_SOURCES"): the paths are wrapped in
+  `$<BUILD_INTERFACE:...>`, which CMake does not make absolute. Every caller used `PRIVATE`, so header-only libraries
+  with `INTERFACE_INSTALL` were never tried. Fix: absolute paths (relative to the current folder).
+  Also: headers at the base of the project were checked with `#include </x.h>` (empty install folder).
 - [ ] B2 (confirmed) single-config generator with an empty `CMAKE_BUILD_TYPE` (no preset): accepted silently, the
   build has none of the configurations (no flags of the configuration, no postfix, compile profile rules with
   `CONFIGS` never apply); the check `if(NOT ${CMAKE_BUILD_TYPE} IN_LIST ...)` degenerates. Fix: a clear error, or
@@ -346,3 +351,10 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   unused public commands assessed (input for 6b). Nothing changed in the code yet.
 - D8 decided (user): clang-tidy kept, matured with csCore. "Professional C++ projects" listed (quality, tests, IDE
   experience, project basics), with owners (csCMake, template, csorchestrator).
+
+### 2026-11-10 (Phase 6a — B1, B6)
+- B1: `cs_target_check_installed_headers` builds one library `<target>_installed_headers`, one generated source per
+  header named after its path (`gen/shc/<path>.cpp`); headers at the base of the project included correctly; no
+  target without headers. B6 (found by its test): `cs_target_sources` gives absolute paths to `target_sources`.
+  Configure + build tests `tests/cmake/test_check_installed_headers.py` (fail on the old code); docs (targets,
+  tutorial, smoke tests page).

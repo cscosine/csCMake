@@ -53,7 +53,7 @@ flowchart BT
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
             text["csSmokeBase::text<br/>STATIC, Text.hpp/.cpp"]
             textTest["textTest<br/>(ctest)"]
-            shc["core_Core<br/>(cs_target_check_installed_headers)"]
+            shc["core_installed_headers<br/>(cs_target_check_installed_headers)"]
         end
     end
     root --> common

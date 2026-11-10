@@ -103,10 +103,11 @@ cs_target_check_installed_headers(core COMPILE_PROFILES cscmake_strict_warnings)
 ```
 
 `cs_target_check_installed_headers` compiles each header queued for installation (`*_INSTALL`) on its
-own: for each header it generates a `.cpp` file that only includes it, and builds it as a static library
-`<target>_<header>` (e.g. `core_Greeting`) linking the target. A header that does not include what it uses fails the
-build. The libraries use the default compile profiles of the project plus the `COMPILE_PROFILES` given (e.g. strict
-warnings only for this check).
+own: for each header it generates a `.cpp` file that only includes it (named after the path of the header, so
+`a/util.h` and `b/util.h` are both checked), and builds them in one static library `<target>_installed_headers` (e.g.
+`core_installed_headers`) linking the target. A header that does not include what it uses fails the build. The
+library uses the default compile profiles of the project plus the `COMPILE_PROFILES` given (e.g. strict warnings only
+for this check).
 
 ## OpenMP
 

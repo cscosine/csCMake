@@ -3,6 +3,16 @@
 The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
 Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
 
+## Unreleased
+
+### Fixed
+
+- `cs_target_check_installed_headers`: headers with the same name (`a/util.h` and `b/util.h`, `util.h` and
+  `util.hpp`) and headers at the base of the project are checked; the check is one library
+  `<target>_installed_headers` (instead of one library `<target>_<header>` per header).
+- `cs_target_sources`: `PUBLIC` / `INTERFACE` files (and `*_INSTALL`) given by relative path no longer fail at the
+  generate step.
+
 ## v0.4.0 (2026-11-10)
 
 The documentation site and the supported variants as data. No change of the `cs_*` commands or of the presets.
