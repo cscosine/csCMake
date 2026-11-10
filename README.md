@@ -278,9 +278,9 @@ cs_add_compile_profile_rule(PROFILE myApp_checks CONFIGS Release RelWithDebInfo 
 cs_initialize_project(... DEFAULT_COMPILE_PROFILES cscmake_default myApp_checks)
 ```
 
-With Xcode, csCMake sets the Xcode setting `CLANG_CXX_STANDARD_LIBRARY_HARDENING` to `none` (it would define
-`_LIBCPP_HARDENING_MODE` too), so the compile profiles choose the checks as with the other generators; a project
-setting `CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING` before `cs_initialize_project` keeps its value.
+With Xcode, its setting `CLANG_CXX_STANDARD_LIBRARY_HARDENING` defines `_LIBCPP_HARDENING_MODE` too: in the targets
+with a hardening profile, the definition of the profile wins (the hardening profiles add `-Wno-macro-redefined` with
+Xcode); the other targets keep the Xcode setting.
 
 ### Nested csCMake projects
 

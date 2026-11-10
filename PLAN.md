@@ -660,3 +660,10 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - Smoke: csSmokeBase profile `csSmokeBase_paranoid` → `csSmokeBase_checks`: `cscmake_hardening_debug` in Debug and
   Paranoid, `cscmake_hardening_fast` in Release and RelWithDebInfo (UBSan and clang-tidy in Paranoid as before). README
   recipe with both levels.
+
+### 2026-11-10 (Phase 3b step 6a follow-up — Xcode hardening, second attempt)
+- macOS CI (Xcode, Paranoid) still failed compiling the header check with the `CLANG_CXX_STANDARD_LIBRARY_HARDENING`
+  override (`none`): presumably Xcode then defines `_LIBCPP_HARDENING_MODE_NONE` (log without the compiler error).
+  Override removed (`_cs_set_generator_variables` keeps `CMAKE_EXPORT_COMPILE_COMMANDS`); with Xcode the hardening
+  profiles add `-Wno-macro-redefined`: Xcode's definition comes first on the command line (first log), the one of the
+  profile wins. Other targets keep the Xcode setting. To confirm on GitHub.

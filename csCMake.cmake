@@ -93,7 +93,6 @@ endfunction()
 # * variable CMAKE_RUNTIME_OUTPUT_DIRECTORY, CMAKE_LIBRARY_OUTPUT_DIRECTORY, CMAKE_ARCHIVE_OUTPUT_DIRECTORY:
 #   <build>/bin, <build>/lib (/<config> with multi-config generators), unless set
 # * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
-# * variable CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING: none with Xcode, unless set
 # * variable _cscmake_debug_option: name of the debug option of the project
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
@@ -190,16 +189,10 @@ endmacro()
 # Writes:
 #
 # * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
-# * variable CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING: none with Xcode, unless set; the standard
-#   library checks of libc++ come from the compile profiles (cscmake_hardening_fast, cscmake_hardening_debug), as with
-#   the other generators, and Xcode would define _LIBCPP_HARDENING_MODE too (macro redefined)
 macro(_cs_set_generator_variables)
   if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
     cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  endif()
-  if(CMAKE_GENERATOR STREQUAL "Xcode" AND NOT DEFINED CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING)
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING "none")
   endif()
 endmacro()
 
