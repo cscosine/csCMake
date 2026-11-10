@@ -2,8 +2,10 @@
 include_guard(GLOBAL)
 include(utils/csPathUtils)
 
-# Set the Visual Studio debugger environment of each target of targets_list, per configuration: PATH with the folders of
-# its runtime libraries.
+# Set the Visual Studio debugger environment of each target of targets_list, per configuration: PATH starts with the
+# folders of its runtime libraries, then the PATH of the environment (%PATH%, expanded by Visual Studio). A
+# configuration without runtime libraries keeps the default debugger_environment; a target without any keeps
+# VS_DEBUGGER_ENVIRONMENT unset.
 #
 # Reads:
 #
@@ -14,48 +16,27 @@ include(utils/csPathUtils)
 # * target property VS_DEBUGGER_ENVIRONMENT, VS_DEBUGGER_ENVIRONMENT_<CONFIG>
 function(_cs_set_vs_debugger_env_variable targets_list)
   cs_debug_message("[_cs_set_vs_debugger_env_variable] targets: ${targets_list}")
+  cs_get_build_configurations(configs_list)
 
-  # for each target, get the path with unique folders
   foreach(target_name IN ITEMS ${targets_list})
-
-    set(p_cumulated "")
-    cs_get_build_configurations(configs_list)
+    set(debugger_environment "")
     foreach(config ${configs_list})
       string(TOUPPER "${config}" config_ucase)
-      cs_get_target_runtime_libraries(${target_name} ${config} target_${config_ucase}_dlls)
-      _cs_unique_parent_dirs(target_${config_ucase}_folders ${target_${config_ucase}_dlls})
+      cs_get_target_runtime_libraries(${target_name} ${config} libraries)
+      _cs_unique_parent_dirs(folders ${libraries})
+      cs_debug_message("[_cs_set_vs_debugger_env_variable] target: ${target_name} PATH ${config_ucase} ${folders}")
+      if(NOT folders)
+        continue()
+      endif()
 
-      cs_debug_message("[_cs_set_vs_debugger_env_variable] target: ${target_name} PATH ${config_ucase} "
-                       "${target_${config_ucase}_folders}")
-
-      set(target_${config_ucase}_folders_path "PATH=${target_${config_ucase}_folders}\n")
-
-      # TODO(sc) add extra env variable here, e.g. qt plugins etc can be managed in a second line with
-      # "QT_PLUGIN_PATH=..."
-      set(extra_env_variables_${config_ucase} "")
-
-      # set the full ENV
-      set(vs_debugger_environment_${config_ucase}
-          "${target_${config_ucase}_folders_path}${extra_env_variables_${config_ucase}}")
-
-      # set the full ENV to a target property
-      set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_ENVIRONMENT_${config_ucase}
-                                                  "${vs_debugger_environment_${config_ucase}}")
-
-      # set a generator expression that retrieve the target properties
-      set(p_${config_ucase} "$<TARGET_PROPERTY:${target_name},VS_DEBUGGER_ENVIRONMENT_${config_ucase}>") # helper
-                                                                                                         # variable
-
-      # set a string with generator expression that retrieve the target properties
-      set(p_${config_ucase}_full "$<$<CONFIG:${config}>:${p_${config_ucase}}>")
-
-      # cumulate on loop
-      set(p_cumulated "${p_cumulated}${p_${config_ucase}_full}")
+      # the value of each configuration in its own property, selected by configuration in VS_DEBUGGER_ENVIRONMENT
+      set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_ENVIRONMENT_${config_ucase} "PATH=${folders};%PATH%")
+      string(APPEND debugger_environment
+             "$<$<CONFIG:${config}>:$<TARGET_PROPERTY:${target_name},VS_DEBUGGER_ENVIRONMENT_${config_ucase}>>")
     endforeach()
 
-    # set special VS variable, need to use generator expressions
-    set_target_properties(${target_name} PROPERTIES VS_DEBUGGER_ENVIRONMENT "${p_cumulated}")
-
+    if(debugger_environment)
+      set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_ENVIRONMENT "${debugger_environment}")
+    endif()
   endforeach()
-
 endfunction()

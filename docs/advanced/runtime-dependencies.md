@@ -45,8 +45,9 @@ The libraries built by the project itself are not listed: they are written to th
 
 ## Uses
 
-- **Visual Studio debugger environment**: for each target and configuration, `VS_DEBUGGER_ENVIRONMENT` is
-  `PATH=<the folders of its runtime libraries>`, so running or debugging the target from Visual Studio finds the DLLs
+- **Visual Studio debugger environment**: for each target and configuration with runtime libraries,
+  `VS_DEBUGGER_ENVIRONMENT` is `PATH=<the folders of its runtime libraries>;%PATH%` (Visual Studio expands `%PATH%`: the
+  rest of the environment is kept), so running or debugging the target from Visual Studio finds the DLLs
   of its dependencies.
 - **Component dependencies**: the project dependencies of the targets of a component give the components it depends
   on, and the other csCMake packages of the build it needs (see [Installed packages internals](packages.md)).

@@ -42,3 +42,27 @@ def test_runtime_libraries_of_every_dependency(tmp_path: Path, app_first: bool) 
 
     assert result.returncode == 0, result.output
     assert sorted(Path(p).name for p in result.report_list("app")) == ["libA.so", "libB.so"]
+
+
+def test_visual_studio_debugger_path(tmp_path: Path) -> None:
+    """A target with runtime libraries: PATH starts with their folders and keeps the environment (%PATH%); a target
+    without any keeps the default debugger environment."""
+    body = "cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)\n" + IMPORTED + APP
+    body += """
+cs_add_library(alone INTERFACE)
+cs_finalize_target(alone)
+cs_finalize_project()
+get_target_property(value app VS_DEBUGGER_ENVIRONMENT_DEBUG)
+cstest_report(app_debug "${value}")
+get_target_property(value app VS_DEBUGGER_ENVIRONMENT)
+cstest_report(app "${value}")
+get_target_property(value alone VS_DEBUGGER_ENVIRONMENT)
+cstest_report(alone "${value}")
+"""
+    result = configure(tmp_path, body, {"libA.so": "", "libB.so": ""})
+
+    assert result.returncode == 0, result.output
+    folder = tmp_path.as_posix()
+    assert result.reports["app_debug"] == f"PATH={folder};%PATH%"
+    assert result.reports["app"] == "$<$<CONFIG:Debug>:$<TARGET_PROPERTY:app,VS_DEBUGGER_ENVIRONMENT_DEBUG>>"
+    assert result.reports["alone"] == "value-NOTFOUND"
