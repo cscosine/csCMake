@@ -14,6 +14,7 @@ cs_add_compile_profile_rule(
   COMPILERS GNU Clang               # CMAKE_CXX_COMPILER_ID
   FRONTENDS GNU                     # command-line style: GNU, or MSVC (cl, clang-cl)
   PLATFORMS Linux                   # CMAKE_SYSTEM_NAME
+  LANGUAGES C CXX                   # source languages of the compile options and definitions (default: CXX)
   COMPILE_OPTIONS -fno-inline
   COMPILE_DEFINITIONS MY_CHECKS=1
   LINK_OPTIONS ...
@@ -22,6 +23,11 @@ cs_add_compile_profile_rule(
 
 Every condition is optional: a rule without conditions always applies. The conditions of a rule also apply to the
 profiles it includes with `PROFILES`. A profile can have any number of rules, e.g. one per compiler.
+
+The compile options and definitions of a rule go to the C++ sources of the target; `LANGUAGES C CXX` also to its C
+sources, for options valid in C (a C++-only option such as `-Wold-style-cast` makes the C compiler warn). The shipped
+profiles do that: their C-compatible options apply to C sources too. Visual Studio and Xcode cannot give the files of
+one target different options per language: they apply the C++ ones to every file of a target with C++ sources.
 
 ## Which targets get which profiles
 

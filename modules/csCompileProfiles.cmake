@@ -30,6 +30,7 @@ include(modules/csInternal)
 #       [COMPILERS <CMAKE_CXX_COMPILER_ID>...]
 #       [FRONTENDS GNU|MSVC...]
 #       [PLATFORMS <CMAKE_SYSTEM_NAME>...]
+#       [LANGUAGES <language>...]
 #       [COMPILE_OPTIONS <option>...]
 #       [COMPILE_DEFINITIONS <definition>...]
 #       [LINK_OPTIONS <option>...]
@@ -45,6 +46,13 @@ include(modules/csInternal)
 #
 #   ``CONFIGS``, ``COMPILERS``, ``FRONTENDS``, ``PLATFORMS``
 #     Conditions (FRONTENDS: command-line style, GNU or MSVC).
+#
+#   ``LANGUAGES``
+#     The source languages the compile options and definitions of the rule apply to (``$<COMPILE_LANGUAGE:...>``):
+#     ``CXX`` when not given, e.g. ``LANGUAGES C CXX`` for options valid in C too. The compiler conditions are on the
+#     C++ compiler (the C compiler of a preset is of the same family). Visual Studio and Xcode cannot give the files of
+#     one target different options per language (CMake applies the ``CXX`` ones to every file of a target with C++
+#     sources).
 #
 #   ``COMPILE_OPTIONS``, ``COMPILE_DEFINITIONS``
 #     Private to the targets.
@@ -69,6 +77,7 @@ function(cs_add_compile_profile_rule)
     COMPILERS
     FRONTENDS
     PLATFORMS
+    LANGUAGES
     COMPILE_OPTIONS
     COMPILE_DEFINITIONS
     LINK_OPTIONS
@@ -216,15 +225,24 @@ function(
   endforeach()
 endfunction()
 
-# Add the compile options, definitions and link options of rule to target_name under condition; the link options of a
-# static or object library are also INTERFACE (link requirements, e.g. the sanitizer runtime).
+# Add the compile options, definitions and link options of rule to target_name under condition; the compile options and
+# definitions only for the sources of the LANGUAGES of the rule (CXX when not given); the link options of a static or
+# object library are also INTERFACE (link requirements, e.g. the sanitizer runtime).
 function(_cs_apply_compile_profile_rule_options target_name rule condition)
+  get_property(languages GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_LANGUAGES)
+  if(NOT languages)
+    set(languages CXX)
+  endif()
+  list(JOIN languages "," languages)
+  _cs_genex_and("${condition}" "$<COMPILE_LANGUAGE:${languages}>" compile_condition)
   foreach(field COMPILE_OPTIONS COMPILE_DEFINITIONS LINK_OPTIONS)
     get_property(values GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_${field})
     if(NOT values)
       continue()
     endif()
-    if(condition)
+    if(NOT field STREQUAL "LINK_OPTIONS")
+      set(values "$<${compile_condition}:${values}>")
+    elseif(condition)
       set(values "$<${condition}:${values}>")
     endif()
     if(field STREQUAL "COMPILE_OPTIONS")

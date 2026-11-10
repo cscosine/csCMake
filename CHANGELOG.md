@@ -20,6 +20,10 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ### New
 
+- Compile profile rules take `LANGUAGES <language>...`: the source languages of their compile options and definitions,
+  `CXX` when not given. The shipped profiles give C sources only the options valid in C (warnings, warnings as errors,
+  sanitizers, `/MP`): C files no longer get `-Wold-style-cast` and the other C++-only options. Rules of a project
+  without `LANGUAGES` no longer apply to its C sources: add `LANGUAGES C CXX` where they should.
 - `cs_target_runtime_environment(<target> [PATH <folder>...] [SET <name>=<value>...] [DEBUGGER_PATH ...])`: what
   CMake cannot know about the run-time environment of a target (plugins, libraries loaded at run time, variables such
   as `QT_PLUGIN_PATH`), added to its Visual Studio debugger environment; `DEBUGGER_PATH` `BEFORE` (default) / `AFTER`

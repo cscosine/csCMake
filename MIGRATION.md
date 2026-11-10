@@ -9,6 +9,7 @@ the sections below cover the older versions.
 | target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`, `_CSCMAKE_PENDING_DEPENDENCIES` | removed | the same generator expressions; the project targets a target depends on: `CSCMAKE_PROJECT_DEPENDENCIES` (`cs_get_target_project_dependencies`) |
 | `VS_DEBUGGER_ENVIRONMENT_<CONFIG>` set by csCMake | not set | `VS_DEBUGGER_ENVIRONMENT` holds the value of every configuration |
 | warning "depends on the imported target ..., whose file ... does not exist" | not printed | CMake reports a missing imported file when it is needed |
+| a compile profile rule (`cs_add_compile_profile_rule`) applied to C sources too | applied to C++ sources only | `LANGUAGES C CXX` on the rules whose options are valid in C |
 | check targets `<target>_<header>` of `cs_target_check_installed_headers` | `<target>_installed_headers` | rename in build commands that name them |
 
 # Migrating from v0.1.0 to v0.2.0

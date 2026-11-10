@@ -91,7 +91,7 @@ Design (behaviour or API changes):
 - [ ] D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
   <find_package args>)` validates the mode after `find_package` ran and stores the arguments as one string: keyword
   style and early checks (with 6b).
-- [ ] D7 compile profiles apply their options to every language of the target (`-Wold-style-cast` on a C file warns):
+- [x] (done, under review: `LANGUAGES` per rule, default CXX; user) D7 compile profiles apply their options to every language of the target (`-Wold-style-cast` on a C file warns):
   wrap them in `$<COMPILE_LANGUAGE:CXX>` (or per-rule `LANGUAGES`), to decide.
 - [ ] D8 clang-tidy: the old `cs_target_enable_clang_tidy` / `cs_exec_clang_tidy` were removed in Phase 3 (they never
   ran clang-tidy), but the compile profiles brought it back: the rule keyword `CLANG_TIDY`, the shipped profile
@@ -406,3 +406,9 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - A custom configuration copies only the per-configuration variables defined for its base (C++ project, Paranoid: 65
   cache entries -> 6, the non-empty values identical); configure test (fails on the old code); docs (build
   configurations, lifecycle).
+
+### 2026-11-11 (Phase 6a — D7)
+- Compile profile rules: `LANGUAGES` (default `CXX`), the compile options and definitions wrapped in
+  `$<COMPILE_LANGUAGE:...>`; the shipped profiles split into C-and-C++ rules (warnings valid in C, `-Werror` / `/WX`,
+  sanitizers, `/MP`) and C++-only rules (`-Wold-style-cast` ..., `/permissive-`, `/Zc:__cplusplus`, hardening).
+  Test on `compile_commands.json` (a C and a C++ source); expectations of the profile tests updated; docs, MIGRATION.
