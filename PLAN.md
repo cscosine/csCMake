@@ -15,7 +15,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [ ] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
 - [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
-- [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries)
+- [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
 
 ## Governance
 
@@ -186,22 +186,26 @@ variables, properties, preset environment variables, default targets) guides the
   (`command`, `variable`, `prop_tgt`, `prop_gbl` with `:Reads:` / `:Writes:` fields), built by Sphinx
   (`sphinxcontrib-moderncmakedomain`, MyST pages) into the reference: commands, variables, properties; `docs.yml`
   builds it on every push (artifact) and publishes it on GitHub Pages from `main`.
-- **3d — Docs**: `README.md` (pitch, quickstart, map), `AGENTS.md`, `MIGRATION.md`, `docs/user/` (quickstart,
-  tutorials = smoke projects, reference of functions/user variables, troubleshooting), `docs/advanced/` (concepts and
-  lifecycle, build configurations, target tracking, install/export, variables/properties reference, presets
-  internals, extending, conventions), "Formatting your CMake files" (consumers reuse the `cs_*` signatures: cmake-format
-  only finds `.cmake-format.*` in parent folders, csCMake is a sibling). Plain Markdown on GitHub, diagrams in Mermaid. Every user entry links its
-  "under the hood" advanced section and vice versa.
+- **3d — Docs** (Sphinx site, pages in MyST Markdown readable on GitHub too, diagrams in Mermaid; every user page links
+  its "under the hood" advanced page and vice versa), in reviewable steps:
+  1. skeleton (Mermaid support, sections) + "Contributing to the documentation" (`docs/contributing/documentation.md`);
+  2. user guide `docs/user/`: getting started (wiring csCMake: sibling / standalone / environment layouts, first
+     project), targets and sources, dependencies (`cs_find_package`, nested projects), install and components, build
+     configurations, compile profiles (with the tiers recipe: core / app / sample), presets, troubleshooting;
+  3. tutorials = the smoke projects (`tests/smoke/README.md` moves to an advanced page, snippets taken from them);
+  4. advanced `docs/advanced/`: concepts and lifecycle (initialize → targets → finalize, deferred checks), target
+     tracking and runtime dependencies, install/export and the generated Config, presets internals (generator,
+     registry, layouts), extending csCMake, conventions; "Formatting your CMake files" (consumers reuse the `cs_*`
+     signatures: cmake-format only finds `.cmake-format.*` in parent folders, csCMake is a sibling);
+  5. reference completeness: an argument list for every command with arguments (most have only the signature);
+  6. `README.md` slimmed to pitch, quickstart and map (links to the docs), `AGENTS.md`, `MIGRATION.md` reviewed.
 - **3d+ — The docs explain themselves** (user): the documentation (a "Contributing to the docs" page, linked from the
   README) tells well how to build it (command line, VS Code task, CI artifact, Pages), how to document a module /
   command / variable / property (the `#.rst:` format with a full example, the roles, the 2-space continuation of
   fields, what is internal), how to add a page (MyST, toctree), how to update the CMake inventory, and how the docs CI
   and publishing work. CLAUDE.md keeps the short rules and links to it.
-- **Versioned documentation (decide before the first release tag)**: GitHub Pages hosts one site, overwritten by each
-  deployment (today: `main`); the docs of `v1.0.0` can always be rebuilt from the tag, but are not hosted. Options:
-  attach the built HTML (zip) to the GitHub Release of each `v*.*.*` tag (simple, durable; build artifacts expire after
-  90 days); per-version folders on a `gh-pages` branch with a version switcher (`/latest/`, `/v1.0.0/`); Read the Docs
-  (versions per tag and branch built in).
+- **Versioned documentation**: decided (user): each release tag publishes its documentation with the release (see
+  Phase 5 "Release package"); GitHub Pages shows the docs of `main`.
 - **3e — Doc checks**: references and anchors: `sphinx-build -W -n` (in `docs.yml`); still to add: every public `cs_*`
   has a `.. command::` entry, every csCMake variable / property used in the code has an entry, tutorial snippets equal
   the smoke files (a small check, in CI).
@@ -269,6 +273,17 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - [ ] **Warnings from dependencies**: the targets of a nested csCMake project (same build) are not `SYSTEM`, so its headers
   trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
 - [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
+
+### Phase 5 — Release package (agreed)
+A `release` workflow on `v*.*.*` tags: after `ci`, `smoke` and `docs` pass for the tag, create the GitHub Release of
+the tag with, as assets:
+- `csCMake-<version>.tar.gz` / `.zip`: what a consumer needs (`csCMake.cmake`, `utils/`, `templates/`,
+  `presets/`; no tests, no Python sources), unpacked as a `csCMake/` folder (the sibling layout of the presets);
+- `csCMake-docs-<version>.zip`: the built documentation of the tag (durable: build artifacts expire after 90 days);
+- release notes from the CHANGELOG section of the version.
+To decide: one workflow `release.yml` (`contents: write`, `gh release create`) waiting for the others, or the jobs
+in one workflow; checksums (`SHA256SUMS`); whether the Python package (`cscmake`, the preset generator) is also
+released (wheel asset, or PyPI); pre-release tags (`v1.2.3-rc1`) as GitHub pre-releases.
 
 ### Run scripts (future)
 - [ ] Per-target scripts to run an executable from a terminal with its runtime `PATH`: at the end of
@@ -703,3 +718,14 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   removes other versions; VS Code task "Docs: update CMake inventory", `docs/_inventories/README.md`, tests
   (`test_cmake_inventory.py`: no network, committed inventory matches the version).
 - Workflows `ci`, `smoke`, `docs` also run on release tags `v*.*.*` (as csfoundation; also matches `v1.2.3-rc1`).
+
+### 2026-11-10 (Phase 3d step 1 — docs skeleton, contributing to the documentation)
+- `docs/contributing/documentation.md`: where each part of the docs lives, building (command line, VS Code task, CI
+  artifact, Pages), documenting a module / command (the real `cs_target_sources` block as example) / variable /
+  property (directives and roles table, placeholders, internal entries, CMake's own names), private functions, writing
+  pages (MyST, Mermaid, cross-references), checklist for a new or changed public command. Linked from the README and
+  `CLAUDE.md`.
+- Mermaid: `sphinxcontrib-mermaid` (dev dependency), MyST `myst_fence_as_directive = ["mermaid"]`: the same
+  ` ```mermaid ` blocks render on GitHub and in the site.
+- Release package with the docs (Phase 5, user): recorded in "Phase 5 — Release package".
+- VS Code: `bierner.markdown-mermaid` recommended (Mermaid in the Markdown preview).

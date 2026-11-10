@@ -44,8 +44,9 @@ cscmake-update-cmake-inventory                      # refresh docs/_inventories 
   docstring comment block directly above it (C0111). Silence a finding only with a scoped
   `# cmake-lint: disable=<code>` as first line of the function body, plus a reason. Do not mix a file-level
   pragma with function-level ones in the same file: cmakelang 0.6.13 then ignores the function-level ones.
-- Docs of the CMake modules: reStructuredText in `#.rst:` comment blocks (CMake's own format), extracted by
-  Sphinx (`sphinxcontrib-moderncmakedomain`, `docs/reference/<module>.rst` = `.. cmake-module::`):
+- Docs of the CMake modules (full guide: `docs/contributing/documentation.md`): reStructuredText in `#.rst:` comment
+  blocks (CMake's own format), extracted by Sphinx (`sphinxcontrib-moderncmakedomain`, `docs/reference/<module>.rst` =
+  `.. cmake-module::`):
   * module: a `#.rst:` block before `include_guard`: title (the module name, `---` underline), summary, a `Commands`
     section (`^^^` underline);
   * public `cs_*`: a `#.rst:` block right above the function: `.. command:: cs_x`, summary, `.. code-block:: cmake`

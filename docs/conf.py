@@ -16,6 +16,7 @@ author = "cscosine"
 extensions = [
     "myst_parser",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.mermaid",
     "sphinxcontrib.moderncmakedomain",
 ]
 
@@ -25,6 +26,8 @@ root_doc = "index"
 # command, variable, prop_tgt, ... without the cmake: prefix
 primary_domain = "cmake"
 exclude_patterns = ["_build", "_inventories"]
+# ```mermaid blocks: diagrams on GitHub and in the built documentation alike
+myst_fence_as_directive = ["mermaid"]
 
 # every reference must resolve (CMake commands and variables: the CMake documentation)
 nitpicky = True

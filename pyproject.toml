@@ -37,6 +37,7 @@ dev = [
     "sphinx>=8.1",
     "sphinxcontrib-moderncmakedomain>=3.29",
     "myst-parser>=4.0",
+    "sphinxcontrib-mermaid>=1.0",
 ]
 
 # ===============================

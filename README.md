@@ -477,6 +477,8 @@ workflow (`.github/workflows/docs.yml`: every push and pull request builds it an
   VS Code task **Docs: update CMake inventory**, when the minimum CMake version changes).
 - **Pages**: Markdown (MyST) in `docs/`, starting from `docs/index.md`.
 
+How to document code and write pages: [Contributing to the documentation](docs/contributing/documentation.md).
+
 Build it locally (or run the VS Code task **Docs: build**), then open `docs/_build/html/index.html`:
 
 ```bash

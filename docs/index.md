@@ -24,3 +24,10 @@ reference/csDebugMessage
 reference/csDebugUtils
 reference/csPrintInitialState
 ```
+
+```{toctree}
+:caption: Contributing
+:maxdepth: 1
+
+contributing/documentation
+```
