@@ -286,6 +286,56 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   trigger the strict warnings of the outer project → mark them `SYSTEM` for consumers (target property, CMake 3.25).
 - [ ] **MSVC ASan**: the ASan runtime DLLs must be on the debugger `PATH` (Visual Studio debugger environment).
 
+### Side-effect assessment (Phase 4 step 4f, user 2026-11-10)
+Rule (CLAUDE.md, `docs/contributing/code.md` "No hidden side effects"): csCMake changes only what its own targets need
+or what the user asks; target properties of csCMake targets first, then directory / project variables, then global or
+cache settings; no build behaviour in the presets. Found with the install RPATH: a value in the host presets would have
+replaced OpenCV's `ocv_update(CMAKE_INSTALL_RPATH ...)` default without any sign.
+- [ ] Review every setting wider than a csCMake target: for each, who it reaches (csCMake targets, every target of the
+  project folder including third-party projects added with `add_subdirectory` / `FetchContent`, the nested csCMake
+  projects, the consumers of the installed package, the projects using the presets without csCMake), whether a value
+  set by the project wins, whether it is documented and can be turned off; then keep (documented), narrow (target
+  property in `cs_finalize_target` / `cs_add_*`), or make opt-in. Candidates (inventory 2026-11-10):
+  - `cs_initialize_project` (project scope, reach the third-party targets of the folder too):
+    `CMAKE_RUNTIME/LIBRARY/ARCHIVE_OUTPUT_DIRECTORY` (+ `_<CUSTOM>`), `CMAKE_CXX_STANDARD` / `_REQUIRED` /
+    `CMAKE_CXX_EXTENSIONS` (overwritten even if the project set them?), `CMAKE_PREFIX_PATH` / `CMAKE_MODULE_PATH`
+    (HEAD/TAIL), `enable_testing()`, `CMAKE_EXPORT_COMPILE_COMMANDS` (Ninja);
+  - build configurations: `CMAKE_CONFIGURATION_TYPES`, `CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>` (every imported target of
+    the folder), the copied `CMAKE_<LANG>_FLAGS_<CUSTOM>` / linker flags cache entries, `CMAKE_MSVC_RUNTIME_LIBRARY`
+    (the fallback for targets not created by `cs_add_*`: third-party targets of the folder get the csCMake runtime);
+  - presets (`presets/common`, `csCMakeProjectSetup.json`): `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER`,
+    `CMAKE_BUILD_TYPE`, `CMAKE_PREFIX_PATH`, `CMAKE_MODULE_PATH`, the `CSCMAKE_*` path variables, install and build
+    folders, generator toolsets and architectures (`config-generators.json`): check none is build behaviour;
+  - the installed `<namespace>Config.cmake`: what it defines in the consumer's scope (functions / macros prefixed by the
+    sanitized namespace, variables; `test_no_variable_leaks_into_the_consumer` covers the variables);
+  - compile profiles: `PRIVATE` options only (consumers unaffected), `INTERFACE` link options of static libraries
+    (sanitizer runtime): documented.
+- [ ] For each kept global setting: a configure test that a value set by the project before `cs_initialize_project` (or
+  per target) wins, where it should.
+
+### Code structure assessment (Phase 4 step 4g, user 2026-11-10)
+- [ ] Re-evaluate how csCMake is divided into files and folders, and reorganise where it helps (one subject per module,
+  the module named after its subject, sizes in balance). Observations (inventory 2026-11-10, `wc -l`, public commands
+  per module):
+  - names that do not say what is inside: `csCompileEachInstalledInclude` holds `cs_target_check_installed_headers`;
+    `csPathUtils` the generated folders (`cs_get_generated_dir`, `cs_get_generated_config_dir`); `csPrintInitialState`
+    `cs_print_state`; `csMSVCUtils` the Visual Studio debugger `PATH` (a use of the runtime dependencies of
+    `csTargetDependencies`); `csDefaultTargets` has no public command (the base include target);
+  - mixed subjects: `csAddLibraryExecutable` (303) has the target registry, `cs_finalize_target` and now the install
+    RPATH (an install concern); `csInstall` (714) has the install rules, the components, their dependency graph and
+    cycle check, and the generation of `<namespace>Config.cmake`; `csCMake.cmake` (369) the initialization steps;
+  - the debug / print commands are spread over every module (`cs_print_*`) plus `csDebugMessage`, `csDebugUtils`,
+    `csPrintInitialState`;
+  - big modules: `csInstall` 714, `csBuildConfigurations` 678, `csCompileProfiles` 608, `csTargetDependencies` 550 lines;
+    small ones: `csDebugMessage` 39, `csMSVCUtils` 42, `csListUtils` 45, `csOpenMP` 47;
+  - folders: every module flat in `utils/` (a generic name); Python: `src/cscmake/utils/` holds a single module
+    (`generate_cs_preset_variants.py`, used by `presets/`).
+- Constraints: projects use `include(csCMake)` only (module include paths are internal: check the docs never promise
+  more); the reference pages are one per module (`docs/reference/<module>.rst`), so renaming a module changes its URL
+  (fine before 1.0, mention in CHANGELOG); `cscmake-check-docs`, the docs toctree, `.cmake-format.json`, the skill and
+  CLAUDE.md name modules; import-linter layers for Python. Proposal first (target layout, moves, names), reviewed,
+  then one commit per move with the installed files of the smoke projects byte-identical (as in 4b).
+
 ### Running executables: shared libraries of other packages (deferred, user 2026-11-10)
 Context: how an executable finds its shared libraries, per platform (user doc: `docs/advanced/runtime-dependencies.md`,
 "Running the executables"):
@@ -379,7 +429,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`); 4b done (`00093d7`); 4c (smoke gaps, install RPATH) under review; next 4c (smoke gaps), 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed); next 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation), 4f (side-effect assessment), 4g (code structure assessment). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -987,3 +1037,10 @@ package is not released; pre-release tags are GitHub pre-releases.
   b -> a: ...` (was the internal function name), configure test `test_cyclic_dependency_between_components`.
 - Docs: smoke tests page (two projects, graph), presets (install RPATH), runtime dependencies ("Running the
   executables"). Deferred (user): deployment command, Windows build folder outside Visual Studio, run scripts.
+
+### 2026-11-10 (rule: no hidden side effects)
+- User: no unintended, obscure side effects (lesson of the install RPATH first put in the host presets). Rule added to
+  CLAUDE.md and `docs/contributing/code.md` (CMake conventions); assessment of the existing global settings planned as
+  Phase 4 step 4f ("Side-effect assessment", with the inventory of candidates).
+- User: re-evaluate the code structure (files, folders) and reorganise where needed: Phase 4 step 4g ("Code structure
+  assessment", with the observations of today's layout).

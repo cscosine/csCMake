@@ -71,6 +71,13 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
   `[a-z][a-z0-9_]+$` (cmake-lint patterns, anchored with `$`).
 - Plain CMake comments are reflowed by cmake-format: consecutive comment lines become one paragraph. Keep structure with
   an empty `#` line between paragraphs and bullet lists (`* item`, preceded by an empty `#` line).
+- **No hidden side effects.** csCMake changes only what its own targets need, or what the user asks for. In order of
+  preference: a target property of the csCMake targets (e.g. set by `cs_finalize_target`), a directory / project
+  variable, a global or cache setting. The presets are also used by projects without csCMake (third-party forks,
+  OpenCV): they carry the toolchain, generator, folders and search paths only, never build behaviour (an
+  `INSTALL_RPATH` in the host presets would have silently replaced OpenCV's own default). Anything wider: only if not
+  already set by the project, documented (`:Writes:`, user guide), with a way to turn it off, and a configure test
+  showing that a project's own value wins.
 - Docs, code comments, README and test docstrings describe the current behaviour only (no "was", "no longer",
   "not FORCE", "(was X)"). History goes in the PLAN.md CHANGELOG and commit messages; `MIGRATION.md` maps old → new as
   tables and actions.

@@ -37,6 +37,11 @@ docs/                               this documentation
 - State lives in properties: global properties for the project and the build, target properties for a target; names
   `CSCMAKE_*`, internal ones `_CSCMAKE_*`. Per-namespace global properties (`CSCMAKE_<namespace>_...`) keep several
   csCMake projects of one build apart.
+- **No hidden side effects**: csCMake changes only what its own targets need, or what the user asks for. Prefer a
+  target property of the csCMake targets (set by `cs_finalize_target`, like the install RPATH) to a directory or
+  project variable, and that to a global or cache setting; never put build behaviour in the presets, which projects
+  without csCMake use too. A wider setting is applied only if the project has not set it, is documented (`:Writes:`,
+  user guide), can be turned off, and has a configure test showing that the project's own value wins.
 - Errors: `message(FATAL_ERROR "[<command>] <what is wrong>: <what to do>")`, naming the command the user called.
 - Debug output: `cs_debug_message`, shown with `<project>_CSCMAKE_DEBUG`.
 - Every module starts with `include_guard(GLOBAL)` and includes the modules it uses.
