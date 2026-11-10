@@ -504,7 +504,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 
 ### cscmake ↔ csorchestrator alignment (future)
 - [ ] csorchestrator keeps its own copy of the supported matrix (`frontend/cscmake_presets/supported_variants.py` + `domain/context/*`); `src/cscmake/presets/registry.py` is the source of truth. Prevent silent drift **without a code dependency in either direction**: csCMake is checked out next to projects (never pip-installed) and must not be checked out automatically by csorchestrator.
-  - csCMake: the generator also writes a committed manifest `presets/csv1/variants.json` (per variant: id, os/os_version/architecture/variant/compiler/compiler_version/generator/generator_type, short forms). Kept in sync by the `generate-csv1-presets` hook and the sync test — a data contract, not code.
+  - [x] (done 2026-11-10) csCMake: the generator also writes a committed manifest `presets/csv1/variants.json` (per variant: id, os/os_version/architecture/variant/compiler/compiler_version/generator/generator_type, short forms). Kept in sync by the `generate-csv1-presets` hook and the sync test — a data contract, not code.
   - csorchestrator: a test loads `variants.json` from an already-present csCMake checkout (sibling `../csCMake`, or a path given via env var / pytest option) and asserts its own `get_supported_context_os_architecture_list()` + `short_*` match it exactly. Skipped (not failed) when no checkout is found; never clones. In csorchestrator CI the checkout is an explicit workflow step (`actions/checkout` of csCMake at a pinned ref), not done by csorchestrator code.
   - Adding a variant in csCMake then makes csorchestrator's test fail until it catches up (or is pinned to the older ref).
 
@@ -1236,3 +1236,9 @@ package is not released; pre-release tags are GitHub pre-releases.
   presets), the rest in short, who it is for and when not (not a package manager); the toctrees hidden there (they
   drive the sidebar). New `docs/advanced/design-decisions.md` (the decisions worth keeping from this PLAN). README map,
   CHANGELOG "Unreleased".
+
+### 2026-11-10 (variants manifest, csCMake side of the csorchestrator alignment)
+- `cscmake-generate-presets` also writes `presets/csv1/variants.json` (`variants_manifest`): per variant the id, every
+  field and its short form, the generator type and the build configurations of its workflow presets (42 variants).
+  Covered by `--check` / the `generate-csv1-presets` hook like the presets; test that every id has its `-ALL` preset.
+  Docs: presets internals. Next (csorchestrator): a test comparing its matrix to this file, then follow it.

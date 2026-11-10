@@ -5,6 +5,11 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ## Unreleased
 
+### New
+
+- `presets/csv1/variants.json`: the supported variants as data (id, fields, short forms, generator type, build
+  configurations), generated with the presets, for tools that follow them.
+
 ### Documentation
 
 - A new theme (Furo, light and dark), a landing page with what csCMake solves (examples with and without csCMake),

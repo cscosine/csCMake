@@ -12,6 +12,7 @@ from cscmake.presets.generate import (
     PROJECT_SETUP_PRESETS,
     SETUP_OUTPUT_DIR,
     TEMPLATE_DIR,
+    VARIANTS_JSON,
     check_presets_up_to_date,
     generate_all_csv1_presets,
     generate_project_setup_presets,
@@ -39,9 +40,11 @@ def test_generates_full_matrix(tmp_path: Path) -> None:
     names = generate_all_csv1_presets(TEMPLATE_DIR, tmp_path)
     n_variants = len(get_supported_context_os_architecture_list())
 
-    assert len(names) == len(set(names)) == n_variants * FILES_PER_VARIANT + 1
+    # + cs-presets-all.json and variants.json
+    assert len(names) == len(set(names)) == n_variants * FILES_PER_VARIANT + 2
     assert sorted(p.name for p in tmp_path.iterdir()) == sorted(names)
     assert CS_PRESETS_ALL_JSON in names
+    assert VARIANTS_JSON in names
 
 
 def test_generated_files_are_valid_json_with_lf_endings(generated: Path) -> None:
@@ -210,3 +213,27 @@ def test_common_setup_preset_passes_the_path_variables_from_the_environment() ->
     ):
         assert cache[var] == f"$penv{{{var}}}"
     assert "PREFIX_PATH" not in cache["CMAKE_PREFIX_PATH"]  # only the workspace folders, HEAD/TAIL are joined by CMake
+
+
+def test_variants_manifest_lists_every_variant_of_the_registry() -> None:
+    """presets/csv1/variants.json: the data contract for tools following the registry (csorchestrator)."""
+    manifest = json.loads((OUTPUT_DIR / VARIANTS_JSON).read_text(encoding="utf-8"))
+    ids = [v["id"] for v in manifest["variants"]]
+
+    assert manifest["schema"] == "csv1"
+    assert len(ids) == len(set(ids)) > 0
+    for variant in manifest["variants"]:
+        assert (OUTPUT_DIR / f"{variant['id']}-ALL.json").is_file()
+        assert variant["short"]["csVersion"] == "v1"
+        assert set(variant["short"]) == {
+            "csVersion",
+            "host",
+            "osVersion",
+            "architecture",
+            "architectureVariant",
+            "compiler",
+            "compiler_version",
+            "generator",
+        }
+        expected_configs = {"singleconfig": 4, "multiconfig": 6}[variant["generator_type"]]
+        assert len(variant["build_configs"]) == expected_configs
