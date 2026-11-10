@@ -175,6 +175,20 @@ Details:
   - multi-config generators: `<build>/bin/<CONFIG>`, `<build>/lib/<CONFIG>`
   - single-config generators: `<build>/bin`, `<build>/lib`
 
+#### MSVC runtime library
+
+The runtime of each configuration is the cache variable `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` (values of CMake's
+`MSVC_RUNTIME_LIBRARY`): `MultiThreadedDebugDLL` for Debug, `MultiThreadedDLL` for Release and RelWithDebInfo; a custom
+configuration copies the one of the configuration it is based on. The static runtime, for example:
+
+```bash
+cmake --preset <preset> -DCSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG=MultiThreadedDebug \
+      -DCSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE=MultiThreaded -DCSCMAKE_MSVC_RUNTIME_LIBRARY_RELWITHDEBINFO=MultiThreaded
+```
+
+(or the same values in the `cacheVariables` of a preset of the project). Every library linked into one executable
+(the project's packages and the third-party ones) must use the same runtime: build them all with the same values.
+
 ### Dependencies
 
 Wrap `find_package` so that transitive requirements are recorded and replayed

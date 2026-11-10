@@ -45,7 +45,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 2) `cmake_minimum_required(VERSION 3.31.5)` inside `csCMake.cmake` (non-standard in an included file; 3.31.5 is very new) → remove, add version guard.
 - [x] ~~`cs_target_link_libraries` mishandles scope keywords when not first in `ARGN`~~ → not an issue: keywords are kept in place, the result equals `target_link_libraries` (`tests/cmake/test_target_link_libraries.py`, 3b step 1).
 - [x] (3b step 2) `cs_target_sources` uses `CMAKE_SOURCE_DIR` for relative path → use `CMAKE_CURRENT_SOURCE_DIR`.
-- [ ] MSVC runtime hardcoded to `MultiThreaded*DLL` → add static-runtime option.
+- [x] (3b step 6b) MSVC runtime hardcoded to `MultiThreaded*DLL` → overridable per configuration (`-DCSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>`), documented; no extra option.
 - [x] (3b step 1) Error messages reference functions that do not exist / undefined variables → fixed.
 - [x] (3b step 2) Silent skips in `csTargetDependencies.cmake` only emit debug messages → promote to `WARNING`.
 - [x] (3b step 4) `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
@@ -558,3 +558,9 @@ variables, properties, preset environment variables, default targets) guides the
   process environment (`$penv{...}`) as cache variables (`-D` overrides); `CSCMAKE_PREFIX_PATH_PREFIX/SUFFIX` gone.
   `cs_initialize_project` joins HEAD / value / TAIL without empty items. Tests: configure test (join), preset test (both
   base files pass the four variables). README, `MIGRATION.md`.
+
+### 2026-11-10 (Phase 3b step 6b — static MSVC runtime)
+- No new option: `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>` are overridable cache variables (step 2); a custom
+  configuration copies the runtime of its base. README "MSVC runtime library": defaults, the static-runtime command
+  line (or preset `cacheVariables`), same runtime for every library linked into one executable. Configure test: the
+  override reaches `MSVC_RUNTIME_LIBRARY` of the targets, also for Paranoid (based on Debug).

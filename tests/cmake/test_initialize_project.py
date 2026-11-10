@@ -164,3 +164,23 @@ cs_finalize_project()
     assert result.report_list("prefix") == ["/head", "/middle", "/tail1", "/tail2"]
     assert result.report_list("module")[-1] == "/module_tail"
     assert "" not in result.report_list("module")
+
+
+def test_static_msvc_runtime_from_the_command_line(tmp_path: Path) -> None:
+    """The runtime of a configuration is overridable; a custom configuration copies the one it is based on."""
+    body = (
+        INIT
+        + LIB
+        + """
+get_target_property(runtime lib MSVC_RUNTIME_LIBRARY)
+cstest_report(runtime "${runtime}")
+cs_finalize_project()
+"""
+    )
+    result = configure(tmp_path, body, args=["-DCSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG=MultiThreadedDebug"])
+
+    assert result.returncode == 0, result.output
+    runtime = result.reports["runtime"]
+    assert "$<$<CONFIG:Debug>:MultiThreadedDebug>" in runtime
+    assert "$<$<CONFIG:Paranoid>:MultiThreadedDebug>" in runtime  # Paranoid is based on Debug
+    assert "$<$<CONFIG:Release>:MultiThreadedDLL>" in runtime
