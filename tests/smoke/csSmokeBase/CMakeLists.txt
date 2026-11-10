@@ -15,11 +15,11 @@ project(
 
 include(csCMake)
 
-# Paranoid: undefined behavior sanitizer, standard library checks, clang-tidy with Clang on Linux (.clang-tidy)
+# Paranoid: undefined behavior sanitizer, every standard library check, clang-tidy with Clang on Linux (.clang-tidy)
 cs_add_compile_profile_rule(
   PROFILE csSmokeBase_paranoid
   CONFIGS Paranoid
-  PROFILES cscmake_sanitize_undefined cscmake_hardening)
+  PROFILES cscmake_sanitize_undefined cscmake_hardening_debug)
 cs_add_compile_profile_rule(
   PROFILE csSmokeBase_paranoid
   CONFIGS Paranoid

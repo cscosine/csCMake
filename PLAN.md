@@ -643,3 +643,14 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `environment variable`, `global property`, `target property`) and are the source of the variables / properties
   reference (next step).
 - Applied to `csCMake.cmake` and every `utils/*.cmake` module; the compile profiles overview moved to the module header.
+
+### 2026-11-10 (Phase 3b step 6a follow-up — hardening levels)
+- Xcode (macOS CI, Paranoid): Xcode defined `_LIBCPP_HARDENING_MODE` (debug mode) and `cscmake_hardening` defined it
+  again (macro redefined, `-Werror`). With Xcode, `cs_initialize_project` sets
+  `CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING` to `none` unless the project sets it
+  (`_cs_set_generator_variables`, also `CMAKE_EXPORT_COMPILE_COMMANDS` with Ninja): the compile profiles choose the
+  checks, as with the other generators. Amended into the step 6a commit.
+- Two levels: `cscmake_hardening` (libc++ fast mode, `_GLIBCXX_ASSERTIONS`: release-usable) and
+  `cscmake_hardening_debug` (libc++ debug mode, `_GLIBCXX_ASSERTIONS`: test configurations). Not in `cscmake_default`
+  (it applies to every configuration and hardening changes the behaviour of a buggy program): README recipe for the
+  debug configurations. Smoke Paranoid uses `cscmake_hardening_debug`; `test_hardening_levels`.

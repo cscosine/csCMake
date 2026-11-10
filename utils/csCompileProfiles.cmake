@@ -456,11 +456,17 @@ function(_cs_add_cscmake_compile_profiles)
     COMPILERS MSVC
     COMPILE_OPTIONS /fsanitize=address)
 
-  # checks of the standard library: libstdc++ and libc++ (each one ignores the other definition)
+  # checks of the standard library, libstdc++ and libc++ (each one ignores the other definition): the cheap ones (usable
+  # in release builds) and all of them (libc++ debug mode, expensive: for test configurations); MSVC STL: the Debug
+  # runtime has them
   cs_add_compile_profile_rule(
     PROFILE cscmake_hardening
     FRONTENDS GNU
     COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST)
+  cs_add_compile_profile_rule(
+    PROFILE cscmake_hardening_debug
+    FRONTENDS GNU
+    COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG)
 
   cs_add_compile_profile_rule(PROFILE cscmake_clang_tidy CLANG_TIDY)
 endfunction()
