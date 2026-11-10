@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from cscmake.devtools import cmake_template
 from cscmake.devtools.cmake_template import (
     TemplateError,
     find_config,
@@ -135,3 +136,44 @@ def test_standin_case_follows_the_identifier_around_it(text: str, lowercase: boo
 
     assert standin is not None
     assert standin.group(0).islower() == lowercase
+
+
+def test_find_config_without_a_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cmake_template, "CONFIG_FILE_NAMES", ("no-such-config.json",))
+
+    assert find_config(tmp_path / "Config.cmake.in") is None
+
+
+def test_format_without_a_config_uses_the_cmake_format_defaults() -> None:
+    assert format_text("set(X   1)\n", None) == "set(X 1)\n"
+
+
+def test_format_reports_a_cmake_format_failure() -> None:
+    with pytest.raises(TemplateError, match="cmake-format failed"):
+        format_text("if(\n", None)
+
+
+def test_format_rejects_changed_placeholders(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cmake_template, "restore", lambda text, names: text)
+
+    with pytest.raises(TemplateError, match="changed the @VAR@ placeholders"):
+        format_text("set(X @NS@)\n", None)
+
+
+def test_main_lint_of_a_clean_template(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (tmp_path / ".cmake-format.json").write_text(CONFIG.read_text(encoding="utf-8"), encoding="utf-8")
+    first = tmp_path / "First.cmake.in"
+    second = tmp_path / "Second.cmake.in"
+    first.write_text("set(FIRST @NS@)\n", encoding="utf-8")
+    second.write_text("set(SECOND @NS@)\n", encoding="utf-8")
+
+    assert main(["lint", str(first), str(second)]) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_reports_template_errors(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    template = tmp_path / "Config.cmake.in"
+    template.write_text("set(csatph0x 1)\n", encoding="utf-8")
+
+    assert main(["format", "--check", str(template)]) == 1
+    assert str(template) in capsys.readouterr().err

@@ -1,3 +1,5 @@
+import pytest
+
 from cscmake.presets.generate import OUTPUT_DIR, check_presets_up_to_date
 from cscmake.presets.registry import (
     CS_SCHEMA_VERSION,
@@ -5,9 +7,11 @@ from cscmake.presets.registry import (
     Architecture,
     Generator,
     GeneratorType,
+    GeneratorWithType,
     create_context_os_architecture_compiler_generator_string,
     create_context_os_architecture_compiler_generator_string_without_schema,
     get_supported_context_os_architecture_list,
+    get_supported_generators_linux,
     short_generator,
     short_os_name,
     short_os_version,
@@ -91,3 +95,19 @@ def test_windows_variants_visual_studio_and_ninja() -> None:
         if c.context_os_architecture.os == OS.WINDOWS
     }
     assert without_ninja == visual_studio
+
+
+@pytest.mark.parametrize(
+    ("arch", "use_ninja", "use_ninjamulti", "expected"),
+    [
+        (Architecture.X64, True, True, [GeneratorWithType.NINJA_MULTI]),
+        (Architecture.X64, True, False, [GeneratorWithType.NINJA]),
+        (Architecture.ARM64, True, True, [GeneratorWithType.NINJA]),
+        (Architecture.ARM64, False, True, [GeneratorWithType.NINJA_MULTI]),
+        (Architecture.X64, False, False, []),
+    ],
+)
+def test_linux_generator_preference(
+    arch: Architecture, use_ninja: bool, use_ninjamulti: bool, expected: list[GeneratorWithType]
+) -> None:
+    assert get_supported_generators_linux(arch, use_ninja, use_ninjamulti, generate_all_combinations=False) == expected

@@ -51,7 +51,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 4) `cs_finalize_project` does reporting + install finalization + VS debugger setup → split concerns.
 - [x] `templates/csTemplateConfig.cmake.in` breaks cmake-format (`@...@` substitution) → formatted/linted via `cscmake-cmake-template` (placeholder stand-ins).
 - [ ] Refactor the functions over the cmake-lint complexity limits (scoped `# cmake-lint: disable` today): `_cs_parse_additional_configurations` (R0912 16/12 branches, R0915 103/50 statements), `_cs_recursive_analyze_target` (R0915 54/50); `_cs_configure_config_cmake` has 7 positional args (R0913, file-level pragma in `csInstall.cmake`) → keyword args.
-- [ ] Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
+- [x] (3a) Naming: public camelCase API (`csUseOpenMPOnTarget`, `cs_compileEachInstalledInclude`, `csGetConfigurationWithStrictFlags`) and private `_csPopulateTargetDependencies`/`_csCheckPathExistsAndAddToTargetProperty`/`_csSetConfigurationWithStrictFlags` do not follow `cs_snake_case`; cmake-lint patterns are prefix matches so they pass. Rename with deprecated aliases for the public ones.
 - [x] (3b step 1) `cs_print_target_properties` iterates `${PROP_LIST}` but builds `CMAKE_PROPERTY_LIST` → prints nothing (bug).
 - [ ] Some old comments were flattened by earlier cmake-format runs (bullet lists merged into prose, e.g. `_cs_recursive_analyze_target`, `_cs_configure_config_cmake`, `_cs_parse_additional_configurations`) → rewrite them.
 - [x] No CMake-level tests → smoke projects `tests/smoke/` (Phase 2), run on all 20 variants by `smoke.yml`.
@@ -71,11 +71,12 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] (3b step 6d) The standalone layout is not tested: add it to the smoke tests (a project with `workspace/csCMake` inside, using `csCMakeProjectSetup-default-standalone.json`), and likewise any configurable-root variant if added. Today the smoke tests cover the default layout with `csCMakeProjectSetup-shortBuildPath.json` (csSmokeMidB) and `csCMakeProjectSetup-default.json` (the other chain projects).
 
 ### Python code coverage
-- [ ] Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
+- [x] (4a) Reach **100% line + branch coverage** of `src/cscmake` (baseline 2026-11-09: 88% overall, 415 statements / 102 branches, `pytest --cov=cscmake --cov-branch`):
   - `presets/registry.py` 79%: non-default variant selection (`use_ninja_for_windows`, `use_ninja` / `use_ninjamulti` without `generate_all_combinations`), MSVC versions for Ninja on Windows, `MACOS` branches, `assert_never` fallbacks;
   - `devtools/cmake_template.py` 90%: cmake-format failure, restored placeholders differing from the original, `TemplateError` reported by `main`, the `__main__` entry point;
   - `presets/generate.py` 98%: the `__main__` entry point.
-- [ ] Then enforce it: `[tool.coverage.report] fail_under = 100` in `pyproject.toml` (CI already runs `pytest --cov=cscmake --cov-branch`); exclude only `if __name__ == "__main__":` blocks (`exclude_also`), no other `# pragma: no cover`.
+- [x] (4a) Then enforce it: `[tool.coverage.report] fail_under = 100` in `pyproject.toml` (CI already runs `pytest --cov=cscmake --cov-branch`); exclude only `if __name__ == "__main__":` blocks and the `case _: assert_never(...)` exhaustiveness checks
+  (`exclude_also`), no `# pragma: no cover`.
 - Scope: only `src/cscmake` (`[tool.coverage.run] source = ["cscmake"]`). The CI helpers in `tests/smoke/` (`run_smoke.py`, `ci_matrix.py`) do **not** count for coverage (decided 2026-11-09).
 
 ### Tooling (cmakelang)
@@ -334,7 +335,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | not started | Internal quality (non-breaking) |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a (Python coverage 100%) under review; next 4b (CMake complexity), 4c (smoke gaps), 4d (unused `CMAKE_C_COMPILER` warning), 4e (cmakelang evaluation). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -895,3 +896,15 @@ package is not released; pre-release tags are GitHub pre-releases.
   their tag triggers removed), then `publish` (`gh release create`, `--prerelease` for `-` tags).
 - `CHANGELOG.md` (v0.2.0, v0.1.0); `pyproject.toml` 0.2.0; `MIGRATION.md` "from v0.1.0 to v0.2.0"; docs: Releasing page,
   getting started (a release or a clone), README status. Checked: the unpacked package builds tclap.
+
+### 2026-11-10 (Phase 4 plan, step 4a — Python coverage)
+- Phase 4 steps (user: start now, on `dev`): 4a Python coverage 100% and enforced; 4b CMake complexity (the
+  `R0912`/`R0915`/`R0913` pragmas, flattened comments); 4c smoke gaps (shared library, components depending on each
+  other and the cyclic dependency error, a consumer without csCMake); 4d presets: no unused `CMAKE_C_COMPILER` warning
+  for C++-only projects; 4e cmakelang replacement evaluation.
+- 4a: 94% → 100% line + branch coverage of `src/cscmake`: tests for the comment / empty line / end of file after a
+  `.. command::` block (`check_docs`), `download` (`cmake_inventory`, `file://` URL), the template tool without a
+  config, with a cmake-format failure, with changed placeholders, a clean lint, `TemplateError` in `main`
+  (`cmake_template`), a missing package entry (`release`), the Linux generator preference without
+  `generate_all_combinations` (`registry`). `pyproject.toml`: `fail_under = 100`, `exclude_also` for the `__main__`
+  blocks and `case _: assert_never(...)`. CI (`shell: bash`, `pipefail`) fails on it.

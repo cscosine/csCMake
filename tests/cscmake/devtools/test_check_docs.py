@@ -128,3 +128,23 @@ def test_main(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--root", str(root)]) == 1
     assert "CSCMAKE_STUFF is not documented" in capsys.readouterr().out
     assert main([]) == 0
+
+
+def test_a_comment_between_a_command_block_and_its_function(tmp_path: Path) -> None:
+    module = HEADER + DOCUMENTED.replace("function(cs_thing target_name)", "  # a note\nfunction(cs_thing target_name)")
+
+    assert check(_repo(tmp_path, module)) == []
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        HEADER + DOCUMENTED.replace("function(cs_thing target_name)", "\nfunction(cs_thing target_name)"),
+        HEADER + "#.rst:\n# .. command:: cs_thing\n#\n#   Do a thing.\n",
+    ],
+    ids=["an empty line before the function", "the end of the file"],
+)
+def test_a_command_block_followed_by_no_function(tmp_path: Path, module: str) -> None:
+    problems = check(_repo(tmp_path, module))
+
+    assert any("'.. command:: cs_thing' is not right above its function" in p for p in problems), problems

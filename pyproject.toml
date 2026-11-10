@@ -125,6 +125,12 @@ source = ["cscmake"]
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 100
+# unreachable by design: the script entry points, and the exhaustiveness checks of the match statements
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "case _:\\n\\s*assert_never\\(",
+]
 
 # ===============================
 # import linter
