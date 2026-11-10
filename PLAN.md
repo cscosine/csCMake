@@ -15,7 +15,7 @@ Single source of truth for project maturity. Update `PLAN_STATE` and the checkbo
 - [x] **Phase 2 — Tests** (Python unit tests + CMake smoke projects run on the full preset matrix in a dedicated CI workflow; see "Phase 2 plan")
 - [x] **Phase 3 — Productize (breaking): naming, hardening, docs** on branch `feature/productize`, validated on csfoundation before merging to `dev` (see "Phase 3 plan")
 - [ ] **Phase 4 — Internal quality (non-breaking)**: complexity refactors, re-enable C0301, Python 100% coverage, remaining smoke gaps (macOS, non-csCMake consumer), cmakelang replacement evaluation
-- [ ] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
+- [x] **Phase 5 — Release** (version bump — `v0.2.0` or `v1.0.0`, to decide —, tag, CHANGELOG entries; release package with the docs: see "Phase 5 — Release package")
 
 ## Governance
 
@@ -441,7 +441,7 @@ To do when the applications are migrated (csImgTracker, csSkiTracker):
   `cscmake-project-setup-base` (gone in v0.2.0: `presets/csCMakeProjectSetup.json`, `cscmake-common-project-setup`, the
   `CSCMAKE_*` environment, MIGRATION.md "Project setup presets"); csqt6 (its release is used by csfoundation; Qt itself
   is built by its `configure`, check what else uses csCMake).
-- [ ] When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
+- [x] (done 2026-11-10, all 19 merged into `dev`, checked first) When csfoundation is on `dev` with the third_party_base_libs release built from `dev` (`v0.1.0-rc5`): delete the
   `feature/productize` branches, remote and local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL,
   third_party_base_libs and its 12 forks (user).
 
@@ -521,7 +521,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
 | 4 | in progress | Internal quality (non-breaking) on `dev`: 4a-4g done; 4h (gersemi + `cscmake-lint`, cmakelang removed, Python 3.15 in CI) under review; then sign-off. |
-| 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
+| 5 | done | Signed off 2026-11-10: v0.2.0 released (package, docs, checksums; `release.yml` with `ci` / `smoke` / `docs` as reusable workflows), csfoundation `dev` green on third_party_base_libs `v0.1.0-rc5`; `feature/productize` branches deleted (19 repositories). Next release: v0.3.0. |
 
 ## CHANGELOG
 
@@ -1214,3 +1214,10 @@ package is not released; pre-release tags are GitHub pre-releases.
   CLAUDE.md, the skill, releasing (package content), CHANGELOG.
 - Checked: fast checks; installed files of csSmokeBase / csSmokeShared identical to `748d563` except the two
   `Config.cmake` (template reformatted): same commands and arguments (parsed), lint-clean.
+
+### 2026-11-10 (Phase 5 sign-off, v0.3.0)
+- Phase 5 signed off (user): v0.2.0 published, csfoundation `dev` green. `feature/productize` deleted, remote and
+  local, in csCMake, csfoundation, csCore, csLie, csCamera, csVisOpenGL, third_party_base_libs and its 12 forks (each
+  checked merged into `origin/dev` first).
+- v0.3.0 (user): `pyproject.toml` 0.3.0, CHANGELOG "Unreleased" -> "v0.3.0" (fixes of 4c-4f and the include folders,
+  install RPATH, gersemi, the `modules/` reorganisation); release from `main` as v0.2.0 (`dev` -> `main`, tag).

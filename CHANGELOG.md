@@ -3,7 +3,11 @@
 The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
 Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
 
-## Unreleased
+## v0.3.0 (2026-11-10)
+
+Fixes for projects consumed in configurations they were not built in, install RPATH, and gersemi as formatter. No
+change of the `cs_*` commands. Action for projects formatting with csCMake's `.cmake-format.json`: switch to gersemi
+(see Formatting your CMake files).
 
 ### Changed
 
