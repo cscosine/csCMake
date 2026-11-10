@@ -191,8 +191,8 @@ endmacro()
 #
 # * variable CMAKE_EXPORT_COMPILE_COMMANDS: ON with the Ninja generators
 # * variable CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_STANDARD_LIBRARY_HARDENING: none with Xcode, unless set; the standard
-#   library checks of libc++ come from the compile profiles (cscmake_hardening), as with the other generators, and Xcode
-#   would define _LIBCPP_HARDENING_MODE too (macro redefined)
+#   library checks of libc++ come from the compile profiles (cscmake_hardening_fast, cscmake_hardening_debug), as with
+#   the other generators, and Xcode would define _LIBCPP_HARDENING_MODE too (macro redefined)
 macro(_cs_set_generator_variables)
   if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
     cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")

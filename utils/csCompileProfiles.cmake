@@ -460,7 +460,7 @@ function(_cs_add_cscmake_compile_profiles)
   # in release builds) and all of them (libc++ debug mode, expensive: for test configurations); MSVC STL: the Debug
   # runtime has them
   cs_add_compile_profile_rule(
-    PROFILE cscmake_hardening
+    PROFILE cscmake_hardening_fast
     FRONTENDS GNU
     COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST)
   cs_add_compile_profile_rule(

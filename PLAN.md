@@ -654,3 +654,9 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `cscmake_hardening_debug` (libc++ debug mode, `_GLIBCXX_ASSERTIONS`: test configurations). Not in `cscmake_default`
   (it applies to every configuration and hardening changes the behaviour of a buggy program): README recipe for the
   debug configurations. Smoke Paranoid uses `cscmake_hardening_debug`; `test_hardening_levels`.
+
+### 2026-11-10 (Phase 3b step 6a follow-up — hardening names)
+- `cscmake_hardening` → `cscmake_hardening_fast` (the libc++ mode in the name, next to `cscmake_hardening_debug`).
+- Smoke: csSmokeBase profile `csSmokeBase_paranoid` → `csSmokeBase_checks`: `cscmake_hardening_debug` in Debug and
+  Paranoid, `cscmake_hardening_fast` in Release and RelWithDebInfo (UBSan and clang-tidy in Paranoid as before). README
+  recipe with both levels.

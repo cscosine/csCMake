@@ -90,7 +90,9 @@ def test_link_options_of_a_static_library_are_also_interface(tmp_path: Path) -> 
     assert result.reports["INTERFACE_LINK_OPTIONS"] == "-fsanitize=undefined"
 
 
-@pytest.mark.parametrize(("profile", "mode"), [("cscmake_hardening", "FAST"), ("cscmake_hardening_debug", "DEBUG")])
+@pytest.mark.parametrize(
+    ("profile", "mode"), [("cscmake_hardening_fast", "FAST"), ("cscmake_hardening_debug", "DEBUG")]
+)
 def test_hardening_levels(tmp_path: Path, profile: str, mode: str) -> None:
     result = configure(
         tmp_path, _body("", f"cs_target_use_compile_profiles(lib {profile})\n", " DEFAULT_COMPILE_PROFILES NONE"), FILES

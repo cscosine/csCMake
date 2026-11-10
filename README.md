@@ -243,7 +243,7 @@ Profiles shipped with csCMake:
 | `cscmake_strict_warnings` | `cscmake_warnings` + `cscmake_warnings_as_errors` |
 | `cscmake_sanitize_undefined` | UndefinedBehaviorSanitizer (GCC, Clang, AppleClang on Linux / macOS) |
 | `cscmake_sanitize_address` | AddressSanitizer (GCC, Clang, AppleClang on Linux / macOS; MSVC `/fsanitize=address`) |
-| `cscmake_hardening` | cheap standard library checks, usable in release builds: `_GLIBCXX_ASSERTIONS` (libstdc++), `_LIBCPP_HARDENING_MODE_FAST` (libc++) |
+| `cscmake_hardening_fast` | cheap standard library checks, usable in release builds: `_GLIBCXX_ASSERTIONS` (libstdc++), `_LIBCPP_HARDENING_MODE_FAST` (libc++) |
 | `cscmake_hardening_debug` | every standard library check, expensive, for test configurations: `_GLIBCXX_ASSERTIONS` (libstdc++), `_LIBCPP_HARDENING_MODE_DEBUG` (libc++) |
 | `cscmake_clang_tidy` | clang-tidy |
 
@@ -269,10 +269,12 @@ adding `-Wno-...` / `/wd....`.
 The standard library checks (*hardening*) turn undefined behaviour in the use of the standard library (`v[i]` out of
 range, `front()` of an empty container, an empty `optional` dereferenced, ...) into an immediate stop of the program.
 The MSVC standard library has them in the Debug runtime. They change the behaviour of a program with such a bug, so no
-default profile has them: a project chooses where, e.g. every check in its debug configurations:
+default profile has them: a project chooses where, e.g. every check while developing and the cheap ones in what it
+ships (Release and RelWithDebInfo alike, so that RelWithDebInfo profiles and debugs the code of Release):
 
 ```cmake
 cs_add_compile_profile_rule(PROFILE myApp_checks CONFIGS Debug Paranoid PROFILES cscmake_hardening_debug)
+cs_add_compile_profile_rule(PROFILE myApp_checks CONFIGS Release RelWithDebInfo PROFILES cscmake_hardening_fast)
 cs_initialize_project(... DEFAULT_COMPILE_PROFILES cscmake_default myApp_checks)
 ```
 
