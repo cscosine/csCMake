@@ -19,7 +19,7 @@ flowchart TD
 - Fails on a CMake older than 3.31.
 - Runs between `cmake_policy(PUSH)` / `cmake_policy(VERSION 3.31)` / `cmake_policy(POP)`: every csCMake function and
   macro records the 3.31 policies where it is defined, whatever the including project declares.
-- Includes the modules of `utils/` (each once: `include_guard(GLOBAL)`), which define the cache defaults (postfixes and
+- Includes the modules of `modules/` (each once: `include_guard(GLOBAL)`), which define the cache defaults (postfixes and
   MSVC runtime of the CMake configurations, [build configurations](../user/build-configurations.md)) and register
   the compile profiles shipped with csCMake.
 - Records the csCMake folder (`CSCMAKE_ROOT_DIR`): a second csCMake folder in the same build fails.

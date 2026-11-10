@@ -1,15 +1,17 @@
 #.rst:
-# csAddLibraryExecutable
-# ----------------------
+# csTargets
+# ---------
 #
-# The targets of the project.
+# The targets of the project: :command:`cs_add_library` / :command:`cs_add_executable` register
+# them, :command:`cs_finalize_target` finalizes them (compile profiles, install RPATH, runtime
+# dependencies), :command:`cs_finalize_project` checks that every one was finalized.
 #
 # Commands
 # ^^^^^^^^
+
 include_guard(GLOBAL)
-include(GNUInstallDirs)
-include(utils/csDebugMessage)
-include(utils/csListUtils)
+include(modules/csDebug)
+include(modules/csInternal)
 
 #.rst:
 # .. command:: cs_add_library
@@ -147,40 +149,6 @@ function(cs_finalize_target target_name)
   _cs_recursive_analyze_target(${target_name})
   _cs_target_links(${target_name} links)
   set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
-endfunction()
-
-# Set the install RPATH of target_name, an executable or a shared or module library, on Linux and macOS: relative to the
-# binary ($ORIGIN, @loader_path), towards CMAKE_INSTALL_LIBDIR. Nothing when the target has its own INSTALL_RPATH (not
-# empty) or CSCMAKE_INSTALL_RPATH is OFF.
-#
-# Writes:
-#
-# * target property INSTALL_RPATH
-function(_cs_set_install_rpath target_name)
-  if(WIN32 OR (DEFINED CSCMAKE_INSTALL_RPATH AND NOT CSCMAKE_INSTALL_RPATH))
-    return()
-  endif()
-  get_target_property(target_type ${target_name} TYPE)
-  # initialized by CMake from CMAKE_INSTALL_RPATH (empty when not set)
-  get_target_property(own_rpath ${target_name} INSTALL_RPATH)
-  if(own_rpath OR NOT target_type MATCHES "^(EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY)$")
-    return()
-  endif()
-
-  if(APPLE)
-    set(origin "@loader_path")
-  else()
-    set(origin "$ORIGIN")
-  endif()
-  # an executable is installed in CMAKE_INSTALL_BINDIR, a library next to the other libraries
-  if(target_type STREQUAL "EXECUTABLE")
-    file(RELATIVE_PATH bin_to_lib "/${CMAKE_INSTALL_BINDIR}" "/${CMAKE_INSTALL_LIBDIR}")
-    set(rpath "${origin}/${bin_to_lib}")
-  else()
-    set(rpath "${origin}")
-  endif()
-  cs_debug_message("[cs_finalize_target] ${target_name} INSTALL_RPATH ${rpath}")
-  set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${rpath}")
 endfunction()
 
 # Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES) as a single string.

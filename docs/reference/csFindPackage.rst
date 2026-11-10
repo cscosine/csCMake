@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csFindPackage.cmake
+.. cmake-module:: ../../modules/csFindPackage.cmake

@@ -7,8 +7,8 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
-include(utils/csDebugMessage)
-include(utils/csListUtils)
+include(modules/csDebug)
+include(modules/csInternal)
 
 #.rst:
 # .. command:: cs_find_package

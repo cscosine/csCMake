@@ -374,7 +374,7 @@ replaced OpenCV's `ocv_update(CMAKE_INSTALL_RPATH ...)` default without any sign
   mapping, `enable_testing`).
 
 ### Code structure assessment (Phase 4 step 4g, user 2026-11-10)
-- [ ] Re-evaluate how csCMake is divided into files and folders, and reorganise where it helps (one subject per module,
+- [x] (4g, done) Re-evaluate how csCMake is divided into files and folders, and reorganise where it helps (one subject per module,
   the module named after its subject, sizes in balance). Observations (inventory 2026-11-10, `wc -l`, public commands
   per module):
   - names that do not say what is inside: `csCompileEachInstalledInclude` holds `cs_target_check_installed_headers`;
@@ -489,7 +489,7 @@ package is not released; pre-release tags are GitHub pre-releases.
 | 1 | done | Signed off 2026-11-09; amended 2026-11-09 (project setup presets generated, see CHANGELOG). Built-in registry + `cscmake-generate-presets`; generated presets byte-identical to `a818f7a`; regen pre-commit hook enabled; CMake format/lint (incl. templates) enabled. `fa2eefc`, CI green on GitHub (incl. Windows case-insensitive glob fix in tests). |
 | 2 | done | Signed off 2026-11-09. Smoke projects (csSmoke, csSmokeConsumer) + `run_smoke.py` + `smoke.yml`: all 20 preset variants green on GitHub (`95190ae`, Windows CRLF lint fix `345dc60`). Remaining coverage gaps tracked in "Phase 2 — not covered by the smoke projects". |
 | 3 | done | Signed off 2026-11-10. Productize (3a, 3m, 3b, 3c, 3d, 3e, 3f) on `feature/productize`, merged into `dev` (`--no-ff`); validated on csfoundation and third_party_base_libs (CI green, release `v0.1.0-rc4`). Pages: Settings → Pages → Source "GitHub Actions" (user), publishes from `main`. |
-| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); 4f done (side-effect assessment); next 4g (code structure assessment), 4h (gersemi + `cscmake-lint`). |
+| 4 | in progress | Internal quality (non-breaking) on `dev`: 4a done (`f71995c`), 4b done (`00093d7`), 4c done (`9037b82`, pushed), 4d done (`05050d9`), 4e done (decision: gersemi + own linter, step 4h); 4f done (side-effect assessment), 4g done (modules/ reorganisation); next 4h (gersemi + `cscmake-lint`). |
 | 5 | in progress | v0.2.0: step 1 (release tool, workflow, CHANGELOG, docs) under review; then merge `dev` into `main`, tag. |
 
 ## CHANGELOG
@@ -1141,3 +1141,25 @@ package is not released; pre-release tags are GitHub pre-releases.
   side unchanged (`cs_get_install_include_dir`, `include/$<CONFIG>` evaluated at install: kept, documented as the
   install destination). Configure tests `tests/cmake/test_installed_include_dirs.py` (fail on `8678142`); docs:
   installed packages, build configurations, packages internals.
+
+### 2026-11-10 (Phase 4 step 4g — code structure)
+- User: proposal approved, OpenMP in a folder for integrations (`modules/integrations/`, more to come), one commit (mechanical).
+- `utils/` -> `modules/`, by subject (110 functions moved by a script: each with the comment block above it, each placed
+  once, checked): `csProject` (`cs_initialize_project`, `cs_finalize_project`, `cs_get_namespace`, the project scope
+  mechanism, from `csCMake.cmake` and `csBuildConfigurations`), `csTargets` (was `csAddLibraryExecutable`; the install
+  RPATH moved to `csInstall`), `csBaseInclude` (`csDefaultTargets` + the generated folders of `csPathUtils`),
+  `csTargetDependencies` (+ `csMSVCUtils`, the Visual Studio debugger `PATH`; name kept, not `csRuntimeDependencies`:
+  it also has the project dependencies of the targets), `csInstall` / `csPackageConfig` (component graph and
+  `<namespace>Config.cmake`), `csCheckInstalledHeaders` (was `csCompileEachInstalledInclude`), `csCompileProfiles` /
+  `csCompileProfilesShipped` (the `cscmake_*` definitions), `csDebug` (`csDebugMessage`, `csDebugUtils`,
+  `csPrintInitialState`), `csInternal` (`csListUtils` + path helpers, no page), `integrations/csOpenMP`.
+  `csCMake.cmake`: entry point only (version, policies, includes, root folder). Variables / properties documented in
+  the module that writes them.
+- Python: `src/cscmake/utils/generate_cs_preset_variants.py` -> `src/cscmake/presets/render.py` (test
+  `tests/cscmake/presets/test_render.py`); import-linter layers `presets | devtools`, presets `generate` above
+  `registry | render`.
+- Followed: reference pages (`:doc:` links between them: `.. cmake-module::` pages are not `:module:` targets) and
+  toctree, `cscmake-check-docs` (`modules/**/*.cmake`), pre-commit, `run_smoke.py`, `release.py`, README, AGENTS.md,
+  CLAUDE.md, the skill, contributing pages, `.vscode/launch.json`; CHANGELOG "Unreleased" (renamed reference pages).
+- Checked: fast checks, the installed files of csSmokeBase and csSmokeShared byte-identical to `2ab2dfa` (44 files, 4
+  configurations), local smoke run.

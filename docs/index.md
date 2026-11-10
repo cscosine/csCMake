@@ -41,21 +41,21 @@ advanced/smoke-tests
 :maxdepth: 1
 
 reference/csCMake
+reference/csProject
 reference/csBuildConfigurations
-reference/csAddLibraryExecutable
+reference/csTargets
 reference/csTargetSources
 reference/csTargetLinkLibraries
 reference/csFindPackage
-reference/csInstall
-reference/csCompileProfiles
-reference/csCompileEachInstalledInclude
-reference/csDefaultTargets
+reference/csBaseInclude
 reference/csTargetDependencies
-reference/csPathUtils
+reference/csInstall
+reference/csPackageConfig
+reference/csCheckInstalledHeaders
+reference/csCompileProfiles
+reference/csCompileProfilesShipped
+reference/csDebug
 reference/csOpenMP
-reference/csDebugMessage
-reference/csDebugUtils
-reference/csPrintInitialState
 ```
 
 ```{toctree}

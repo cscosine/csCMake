@@ -1,6 +1,6 @@
 import pytest
 
-from cscmake.utils.generate_cs_preset_variants import validate_substitutions
+from cscmake.presets.render import validate_substitutions
 
 
 def test_validate_substitutions() -> None:

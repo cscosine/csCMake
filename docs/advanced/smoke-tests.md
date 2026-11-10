@@ -108,7 +108,7 @@ flowchart TD
 
 ```
 <workspace>/
-  csCMake/                          csCMake.cmake, utils/, presets/, templates/ (copied from the checkout)
+  csCMake/                          csCMake.cmake, modules/, presets/, templates/ (copied from the checkout)
   csSmokeBase/ ... csSmokeEnv/      the projects (copied from tests/smoke/)
   csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
   build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)

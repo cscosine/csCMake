@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csTargetSources.cmake
+.. cmake-module:: ../../modules/csTargetSources.cmake

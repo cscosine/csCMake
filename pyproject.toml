@@ -142,13 +142,13 @@ root_package = "cscmake"
 [[tool.importlinter.contracts]]
 name = "high level layers"
 type = "layers"
-layers = ["presets | devtools", "utils"]
+layers = ["presets | devtools"]
 containers = ["cscmake"]
 exhaustive = true
 
 [[tool.importlinter.contracts]]
 name = "presets layers"
 type = "layers"
-layers = ["generate", "registry"]
+layers = ["generate", "registry | render"]
 containers = ["cscmake.presets"]
 exhaustive = true

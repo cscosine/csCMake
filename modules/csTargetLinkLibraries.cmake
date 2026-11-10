@@ -7,7 +7,7 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
-include(utils/csDebugMessage)
+include(modules/csDebug)
 
 #.rst:
 # .. command:: cs_target_link_libraries

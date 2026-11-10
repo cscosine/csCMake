@@ -47,8 +47,8 @@ endfunction()
 
 
 def _repo(tmp_path: Path, module: str, page: bool = True) -> Path:
-    (tmp_path / "utils").mkdir()
-    (tmp_path / "utils" / "csThing.cmake").write_text(module, encoding="utf-8")
+    (tmp_path / "modules").mkdir()
+    (tmp_path / "modules" / "csThing.cmake").write_text(module, encoding="utf-8")
     if page:
         (tmp_path / "docs" / "reference").mkdir(parents=True)
         (tmp_path / "docs" / "reference" / "csThing.rst").write_text(".. cmake-module:: x\n", encoding="utf-8")
@@ -99,7 +99,7 @@ def test_a_command_block_not_above_its_function(tmp_path: Path) -> None:
 def test_a_documented_module_needs_its_page(tmp_path: Path) -> None:
     problems = check(_repo(tmp_path, HEADER + DOCUMENTED, page=False))
 
-    assert problems == ["utils/csThing.cmake:1: no reference page docs/reference/csThing.rst"]
+    assert problems == ["modules/csThing.cmake:1: no reference page docs/reference/csThing.rst"]
 
 
 def test_names_in_code() -> None:

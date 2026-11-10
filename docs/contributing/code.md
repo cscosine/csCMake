@@ -16,8 +16,9 @@ installed in it.
 ## Repository layout
 
 ```text
-csCMake.cmake                       entry point: include(csCMake); cs_initialize_project, cs_finalize_project
-utils/cs<Name>.cmake                one module per subject (targets, sources, install, compile profiles, ...)
+csCMake.cmake                       entry point: include(csCMake) loads the modules
+modules/cs<Name>.cmake              one module per subject (project, targets, sources, install, compile profiles, ...)
+modules/integrations/               integrations with third-party tools and libraries (OpenMP, ...)
 templates/csTemplateConfig.cmake.in the generated <namespace>Config.cmake
 presets/                            the presets (see Presets internals)
 src/cscmake/                        Python: preset generator and registry, dev tools (stdlib only)
@@ -68,7 +69,7 @@ ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src t
 python -m pytest                          # fast tests: Python and CMake configure tests
 python -m pytest --run-all                # + smoke builds of the variants of this machine
 cscmake-generate-presets --check
-cmake-format --check csCMake.cmake utils/*.cmake && cmake-lint csCMake.cmake utils/*.cmake
+cmake-format --check csCMake.cmake modules/*.cmake modules/*/*.cmake && cmake-lint csCMake.cmake modules/*.cmake modules/*/*.cmake
 cscmake-cmake-template format --check templates/*.cmake.in && cscmake-cmake-template lint templates/*.cmake.in
 cscmake-check-docs
 sphinx-build -W -n docs docs/_build/html
@@ -80,7 +81,7 @@ sphinx-build -W -n docs docs/_build/html
 
 - `ruff` (lint and format) and `mypy` (strict) for Python; `import-linter` (layers of `src/cscmake`, in
   `pyproject.toml`);
-- `cmake-format` and `cmake-lint` for `csCMake.cmake` and `utils/`; for `templates/*.cmake.in` through
+- `cmake-format` and `cmake-lint` for `csCMake.cmake` and `modules/`; for `templates/*.cmake.in` through
   `cscmake-cmake-template`, which swaps the `@VAR@` placeholders for parseable stand-ins and restores them;
 - `generate-csv1-presets`: regenerates the presets, and fails when that changes files (stage them and commit again);
 - `check-docs`: every public command, variable and property of the CMake modules is documented

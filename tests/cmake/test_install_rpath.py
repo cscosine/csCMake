@@ -1,4 +1,4 @@
-"""Install RPATH of the targets, set by cs_finalize_target (csAddLibraryExecutable.cmake)."""
+"""Install RPATH of the targets, set by cs_finalize_target (csInstall.cmake)."""
 
 from __future__ import annotations
 

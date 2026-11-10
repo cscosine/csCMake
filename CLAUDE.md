@@ -6,10 +6,11 @@ Roadmap, open issues and session log: [PLAN.md](PLAN.md) — read it first.
 
 ## What this repo is
 
-- **CMake utility library**: `csCMake.cmake` + `utils/cs*.cmake` (public `cs_*`, private `_cs_*`),
+- **CMake utility library**: `csCMake.cmake` + `modules/cs*.cmake` (public `cs_*`, private `_cs_*`; integrations with
+  third-party tools in `modules/integrations/`),
   `templates/csTemplateConfig.cmake.in` for the installed `<Ns>Config.cmake`.
 - **Preset generator** (Python ≥ 3.11, stdlib only): `src/cscmake/presets/registry.py` defines the
-  variant matrix, `src/cscmake/utils/generate_cs_preset_variants.py` renders `@{var}` templates,
+  variant matrix, `src/cscmake/presets/render.py` renders `@{var}` templates,
   `src/cscmake/presets/generate.py` (`cscmake-generate-presets`) writes `presets/csv1/` from
   `presets/template/`.
 - csCMake is cloned next to consumer projects (`$CSCMAKE_WORKSPACE_ROOT/csCMake`); consumers include
@@ -60,7 +61,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
   * cmake-format keeps `#.rst:` blocks as written (`literal_comment_pattern`): wrap them by hand at 120 columns, indent
     directive content by 2 spaces;
   * private `_cs_*`: plain `#` comment, one-line summary (+ details), `Reads:` / `Writes:` when it touches state;
-  * a module without public commands or documented state (`csListUtils`, `csMSVCUtils`): plain `#` header, no page;
+  * a module without public commands or documented state (`csInternal`): plain `#` header, no page;
   * a new documented module → `docs/reference/<module>.rst` and an entry in the toctree of `docs/index.md`;
   * `sphinx-build -W -n docs <out>` must pass: every reference resolves (CMake's own commands and variables through
     `docs/_inventories/cmake-<version>.inv`, the local copy of the cmake.org inventory: never edit it; a new minimum
@@ -95,7 +96,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - Because of that, do not verify with `pre-commit run` (it stashes unstaged changes and checks the index;
   `no-unstaged-changes` fails anyway). Run the tools directly on the working tree instead:
   `ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src tests && lint-imports
-  && python -m pytest && cscmake-generate-presets --check && cmake-format --check csCMake.cmake utils/*.cmake
-  && cmake-lint csCMake.cmake utils/*.cmake && cscmake-cmake-template format --check templates/*.cmake.in
+  && python -m pytest && cscmake-generate-presets --check && cmake-format --check csCMake.cmake modules/*.cmake modules/*/*.cmake
+  && cmake-lint csCMake.cmake modules/*.cmake modules/*/*.cmake && cscmake-cmake-template format --check templates/*.cmake.in
   && cscmake-cmake-template lint templates/*.cmake.in && cscmake-check-docs && sphinx-build -W -n -q docs docs/_build/html`.
 - Do not run CI locally (no recreating the CI matrix / minimum-deps venvs); the user runs CI on GitHub.

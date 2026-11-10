@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csCompileProfiles.cmake
+.. cmake-module:: ../../modules/csCompileProfiles.cmake

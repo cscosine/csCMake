@@ -1,1 +1,1 @@
-.. cmake-module:: ../../utils/csOpenMP.cmake
+.. cmake-module:: ../../modules/integrations/csOpenMP.cmake

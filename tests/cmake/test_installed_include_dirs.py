@@ -1,4 +1,4 @@
-"""The include folders of an installed package, for its consumers (csDefaultTargets.cmake, cscmake_base_include)."""
+"""The include folders of an installed package, for its consumers (csBaseInclude.cmake, cscmake_base_include)."""
 
 from __future__ import annotations
 

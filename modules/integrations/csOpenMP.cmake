@@ -7,7 +7,7 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
-include(utils/csFindPackage)
+include(modules/csFindPackage)
 
 #.rst:
 # .. command:: cs_target_use_openmp

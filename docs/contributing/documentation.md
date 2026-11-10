@@ -7,8 +7,8 @@ code. Read it before changing a public command, a variable, a property or a page
 
 | Part | Source | Format |
 |---|---|---|
-| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake` and `utils/*.cmake`, right above the code they describe | reStructuredText, the format of CMake's own modules |
-| Reference pages | `docs/reference/<module>.rst`: one line, `.. cmake-module:: ../../utils/<module>.cmake` | reStructuredText |
+| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake` and `modules/`, right above the code they describe | reStructuredText, the format of CMake's own modules |
+| Reference pages | `docs/reference/<module>.rst`: one line, `.. cmake-module:: ../../modules/<module>.cmake` | reStructuredText |
 | Guides and other pages | `docs/**/*.md` | Markdown (MyST): readable on GitHub too |
 | Site configuration | `docs/conf.py` | Python (Sphinx) |
 | CMake documentation inventory | `docs/_inventories/cmake-<version>.inv` (see its `README.md`) | Sphinx inventory, never edited by hand |
@@ -82,8 +82,8 @@ include_guard(GLOBAL)
 ```
 
 A new documented module needs its page: `docs/reference/<module>.rst` containing
-`.. cmake-module:: ../../utils/<module>.cmake`, and an entry in the `Reference` table of contents of `docs/index.md`.
-A module without public commands or documented state (`csListUtils`, `csMSVCUtils`) keeps a plain `#` header and has
+`.. cmake-module:: ../../modules/<module>.cmake`, and an entry in the `Reference` table of contents of `docs/index.md`.
+A module without public commands or documented state (`csInternal`) keeps a plain `#` header and has
 no page.
 
 ### A public command

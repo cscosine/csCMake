@@ -1,6 +1,6 @@
 #.rst:
-# csCompileEachInstalledInclude
-# -----------------------------
+# csCheckInstalledHeaders
+# -----------------------
 #
 # Check that the installed headers of a target are self-contained.
 #

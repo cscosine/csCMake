@@ -37,35 +37,6 @@ set(CSCMAKE_MSVC_RUNTIME_LIBRARY_RELEASE
     "MultiThreadedDLL"
     CACHE STRING "csCMake: MSVC runtime library in the Release configuration")
 
-# Record the normal variable var_name = value, set in the project scope by _cs_apply_project_scope_variables (lets
-# functions called at any depth by cs_initialize_project set project variables).
-#
-# Writes:
-#
-# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
-function(_cs_set_in_project_scope var_name value)
-  set_property(GLOBAL APPEND PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES ${var_name})
-  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name} "${value}")
-endfunction()
-
-# Set in the caller's scope (cs_initialize_project: the project scope) the variables recorded by
-# _cs_set_in_project_scope, then forget them.
-#
-# Reads:
-#
-# * global property _CSCMAKE_PROJECT_SCOPE_VARIABLES, _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
-function(_cs_apply_project_scope_variables)
-  get_property(var_names GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
-  foreach(var_name ${var_names})
-    get_property(value GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
-    set(${var_name}
-        "${value}"
-        PARENT_SCOPE)
-    set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLE_${var_name})
-  endforeach()
-  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_SCOPE_VARIABLES)
-endfunction()
-
 #.rst:
 # .. command:: cs_get_build_configurations
 #
@@ -668,11 +639,3 @@ endfunction()
 # .. prop_gbl:: CSCMAKE_PER_CONFIG_VARIABLES
 #
 #   The CMake variables with a ``<CONFIG>`` part (``CMAKE_CXX_FLAGS_<CONFIG>``, ...), copied for custom configurations.
-#
-# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLES
-#
-#   Internal: the variables to set in the project scope at the end of :command:`cs_initialize_project`.
-#
-# .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLE_<name>
-#
-#   Internal: the value of such a variable.

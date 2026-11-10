@@ -3,7 +3,7 @@
 
 Lays out a workspace the way csCMake consumers do (the presets expect ``${sourceParentDir}/csCMake``):
 
-    <workspace>/csCMake            copy of csCMake.cmake, utils/, presets/, templates/
+    <workspace>/csCMake            copy of csCMake.cmake, modules/, presets/, templates/
     <workspace>/<project>          every project of PROJECTS (see tests/smoke/README.md)
     <workspace>/build, install     created by the presets
 
@@ -43,7 +43,7 @@ from cscmake.presets.registry import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SMOKE_DIR = Path(__file__).resolve().parent
-CSCMAKE_CONTENT = ("csCMake.cmake", "utils", "presets", "templates")
+CSCMAKE_CONTENT = ("csCMake.cmake", "modules", "presets", "templates")
 
 
 @dataclass(frozen=True)
