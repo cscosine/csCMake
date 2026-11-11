@@ -104,6 +104,8 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 - A "Compatibility" page: what a project can rely on between releases (the public API, semantic versioning,
   `MIGRATION.md`) and what may change in any release.
+- A Licences page: csCMake's licence (MIT), what the package and the documentation contain, and the licences of the
+  third-party files of the documentation (Sphinx, Furo, sphinx-design, Pygments, Snowball).
 - The getting-started example is a smoke project (`tests/smoke/myApp`), built on every platform by the CI; the page
   shows its files, the README quick start is a checked copy.
 

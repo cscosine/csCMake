@@ -23,7 +23,8 @@ csCMake is made of two parts:
 The documentation site is built from `docs/` and published from `main`
 ([cscosine.github.io/csCMake](https://cscosine.github.io/csCMake/)): it describes the latest release; the
 documentation of each release is `csCMake-docs-<version>.zip` in its GitHub Release. Its pages are Markdown, readable
-here too:
+here too (the diagrams: GitHub draws them; in VS Code, with the extension Markdown Preview Mermaid Support,
+`bierner.markdown-mermaid`):
 
 - **User guide**: [getting started](docs/user/getting-started.md), [targets and sources](docs/user/targets.md),
   [dependencies](docs/user/dependencies.md), [installed packages](docs/user/install.md),

@@ -248,4 +248,5 @@ reference/csOpenMP
 contributing/code
 contributing/documentation
 contributing/releasing
+licences
 ```

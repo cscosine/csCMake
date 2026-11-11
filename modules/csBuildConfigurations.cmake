@@ -483,8 +483,7 @@ function(_cs_process_configurations)
   endif()
 endfunction()
 
-# Collect the CMake variables with a <CONFIG> part (cmake --help-variable-list), once per build tree; inspired by
-# https://stackoverflow.com/q/75823363.
+# Collect the CMake variables with a <CONFIG> part (cmake --help-variable-list), once per build tree.
 #
 # Writes:
 #

@@ -278,7 +278,8 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
   OpenCV fork's `csCMakeProjectSetup.json` includes `presets/csCMakeProjectSetup-base.json` and inherits
   `cscmake-project-setup-base`, gone since v0.2.0: see MIGRATION.md "Project setup presets"), csqt6 (its release is
   used by csfoundation).
-- Licences (user 2026-11-10): check the licences of everything csCMake uses or ships, and comply (notices,
+- Licences (user 2026-11-10). **Done 2026-11-11** (`docs/licences.md`; the template of the projects: when the
+  template is set up): check the licences of everything csCMake uses or ships, and comply (notices,
   attribution, compatibility with csCMake's own licence): what the release package and the docs zip contain
   (the built docs embed Furo, sphinx-design, Sphinx assets and fonts; `docs/_inventories` is cmake.org data), code
   derived from others (e.g. the per-configuration variable list "inspired by" comment in `csBuildConfigurations`),
@@ -624,3 +625,18 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   (`test_readme_example.py`). Host smoke: OK.
 - README: scope sentence; docs version on Pages (latest release; each release has its docs zip), also in the docs
   index; CMake 3.31 because of preset schema 10 (README, getting-started).
+
+### 2026-11-11 (licences)
+- Committed the docs batch (`34ee658`) and the smoke fix for single-config scripts (`d7ec253`: build folders are
+  `<project>/<config>`; pushed).
+- Package: csCMake's own files only (MIT `LICENSE`); `gersemi/` is a configuration of gersemi (MPL-2.0), not its code;
+  the presets name tools only. The Stack Overflow reference of `_cs_process_build_configurations_variables` was the
+  idea only (`cmake --help-variable-list`, filter `<CONFIG>`): removed (user).
+- Docs (site and zip): Sphinx (BSD-2), Furo (MIT, with normalize.css and gumshoe notices in its files), sphinx-design
+  (MIT), Pygments (BSD-2), Snowball stemmer (BSD-3, text kept in `third_party_licences.py`): `docs/licences.md`,
+  filled at build by `docs/conf.py` (`source-read`) from the installed packages' licence files. Mermaid: loaded from
+  a CDN, not shipped. `docs/_inventories`: CMake data (BSD-3), not shipped, but in the repository: CMake's `Copyright.txt` (v3.31.0)
+  next to it as `CMake-Copyright.txt` (README: replace it with the inventory).
+- Found: the docs zip opened offline shows the Mermaid diagrams as text (Mermaid comes from the CDN). Kept (user):
+  README and the Licences page point to the Markdown pages, drawn by GitHub and by the VS Code extension Markdown
+  Preview Mermaid Support (`bierner.markdown-mermaid`, already recommended in `.vscode/extensions.json`).

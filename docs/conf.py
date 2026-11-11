@@ -16,6 +16,7 @@ from sphinx.util.nodes import make_refnode
 from sphinxcontrib.moderncmakedomain.cmake import CMakeObject
 
 from cscmake.devtools.cmake_inventory import docs_url, inventory_path
+from cscmake.devtools.third_party_licences import third_party_licences_markdown
 
 project = "csCMake"
 author = "cscosine"
@@ -125,12 +126,24 @@ def _link_repository_files_to_github(app: Sphinx, doctree: nodes.document) -> No
         download.replace_self(link)
 
 
+THIRD_PARTY_LICENCES_MARKER = "<!-- third-party licences: filled in by docs/conf.py when the documentation is built -->"
+
+
+def _add_third_party_licences(app: Sphinx, docname: str, source: list[str]) -> None:
+    """Put the licence texts of the third-party files of the built documentation in the Licences page."""
+    if docname == "licences":
+        if THIRD_PARTY_LICENCES_MARKER not in source[0]:
+            raise ValueError(f"docs/licences.md: the marker {THIRD_PARTY_LICENCES_MARKER!r} is missing")
+        source[0] = source[0].replace(THIRD_PARTY_LICENCES_MARKER, third_party_licences_markdown())
+
+
 def setup(app: Sphinx) -> None:
     """Properties described next to the code that writes them, and links to the CMake documentation."""
     # the domain creates these objects only from one document per property (CMake's own layout)
     for objtype in ("prop_tgt", "prop_gbl"):
         app.add_directive_to_domain("cmake", objtype, CMakeObject)
     app.connect("missing-reference", _resolve_in_cmake_inventory)
+    app.connect("source-read", _add_third_party_licences)
     app.connect("doctree-resolved", _link_code_to_reference)
     # before the download collector (priority 500) registers them as downloads
     app.connect("doctree-read", _link_repository_files_to_github, priority=400)
