@@ -61,8 +61,8 @@ function(_cs_set_root_dir path)
     if(NOT val STREQUAL "${path}")
       message(
         FATAL_ERROR
-        "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "
-        "configuration."
+        "[csCMake] csCMake is included from two folders, ${val} and ${path}: one csCMake per build (check "
+        "CMAKE_MODULE_PATH and the presets of the projects)"
       )
     endif()
   endif()

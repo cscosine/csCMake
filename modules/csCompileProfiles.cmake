@@ -88,8 +88,8 @@ function(cs_add_compile_profile_rule)
   if(arg_UNPARSED_ARGUMENTS OR NOT arg_PROFILE)
     message(
       FATAL_ERROR
-      "[cs_add_compile_profile_rule] PROFILE <name> is required, unparsed arguments: "
-      "${arg_UNPARSED_ARGUMENTS}"
+      "[cs_add_compile_profile_rule] PROFILE <name> is required, and the other arguments are keywords with "
+      "their values (CONFIGS, COMPILERS, ..., see the reference); unparsed: ${arg_UNPARSED_ARGUMENTS}"
     )
   endif()
 
@@ -105,6 +105,45 @@ function(cs_add_compile_profile_rule)
   endforeach()
   set_property(GLOBAL APPEND PROPERTY CSCMAKE_COMPILE_PROFILE_${arg_PROFILE}_RULES ${rule})
   _cs_add_to_global_property_unique_value(CSCMAKE_COMPILE_PROFILES ${arg_PROFILE})
+
+  _cs_log_level_at_least(DEBUG debug)
+  if(debug)
+    _cs_message_context(cs_add_compile_profile_rule)
+    _cs_describe_compile_profile_rule(${rule} description)
+    message(DEBUG "compile profile ${arg_PROFILE}: rule ${rule}: ${description}")
+  endif()
+endfunction()
+
+# Return in description_out the fields of rule given to cs_add_compile_profile_rule, as "<FIELD> <values>; ...".
+#
+# Reads:
+#
+# * global property _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>
+function(_cs_describe_compile_profile_rule rule description_out)
+  set(parts "")
+  foreach(
+    field
+    COMPILE_OPTIONS
+    COMPILE_DEFINITIONS
+    LINK_OPTIONS
+    PROFILES
+    CLANG_TIDY
+    CONFIGS
+    COMPILERS
+    FRONTENDS
+    PLATFORMS
+    LANGUAGES
+  )
+    get_property(values GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_${field})
+    if(field STREQUAL "CLANG_TIDY" AND values)
+      list(APPEND parts "CLANG_TIDY")
+    elseif(NOT field STREQUAL "CLANG_TIDY" AND NOT "${values}" STREQUAL "")
+      list(JOIN values " " values)
+      list(APPEND parts "${field} ${values}")
+    endif()
+  endforeach()
+  list(JOIN parts "; " description)
+  set(${description_out} "${description}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -131,6 +170,9 @@ function(cs_target_use_compile_profiles target_name)
     set(target_name ${aliased})
   endif()
   set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
+  _cs_message_context(cs_target_use_compile_profiles)
+  list(JOIN ARGN ", " profiles)
+  message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} uses the compile profiles ${profiles}")
 endfunction()
 
 # Return the compile profiles of a target: the default profiles of its folder, then its own ones, each once.
@@ -152,7 +194,9 @@ function(_cs_apply_compile_profiles target_name)
     return()
   endif()
   _cs_get_target_compile_profiles(${target_name} profiles)
-  message(DEBUG "${target_name}: compile profiles ${profiles}")
+  list(JOIN profiles ", " text)
+  message(DEBUG "${target_name}: compile profiles ${text}")
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
   foreach(profile ${profiles})
     _cs_apply_compile_profile(${target_name} ${profile} "" TRUE "")
   endforeach()
@@ -181,8 +225,8 @@ function(
   if(NOT defined)
     message(
       FATAL_ERROR
-      "[csCMake] compile profile ${profile} of ${target_name} is not defined "
-      "(cs_add_compile_profile_rule)"
+      "[csCMake] compile profile ${profile} of ${target_name} is not defined: check the name, or define it "
+      "with cs_add_compile_profile_rule(PROFILE ${profile} ...) in the project"
     )
   endif()
   get_property(rules GLOBAL PROPERTY CSCMAKE_COMPILE_PROFILE_${profile}_RULES)
@@ -195,6 +239,7 @@ function(
     get_property(rule_configs GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_CONFIGS)
     _cs_intersect_configs("${allowed_configs}" "${rule_configs}" rule_configs rule_static_match)
 
+    _cs_report_compile_profile_rule(${profile} ${rule} ${rule_static_match})
     _cs_apply_compile_profile_rule_options(${target_name} ${rule} "${rule_condition}")
     get_property(clang_tidy GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_CLANG_TIDY)
     if(clang_tidy AND rule_static_match)
@@ -203,12 +248,29 @@ function(
     endif()
 
     get_property(nested GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_PROFILES)
+    list(APPEND CMAKE_MESSAGE_INDENT "  ")
     foreach(nested_profile ${nested})
       _cs_apply_compile_profile(${target_name} ${nested_profile} "${rule_condition}" ${rule_static_match}
                                 "${rule_configs}"
       )
     endforeach()
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
   endforeach()
+endfunction()
+
+# Report (DEBUG) a rule of profile applied to a target: its fields, and whether its compiler, frontend and platform
+# match this build (static_match; a rule that does not match adds options under a condition that is never true).
+function(_cs_report_compile_profile_rule profile rule static_match)
+  _cs_log_level_at_least(DEBUG debug)
+  if(NOT debug)
+    return()
+  endif()
+  _cs_describe_compile_profile_rule(${rule} description)
+  if(static_match)
+    message(DEBUG "${profile} rule ${rule}: ${description}")
+  else()
+    message(DEBUG "${profile} rule ${rule} (not for this compiler or platform): ${description}")
+  endif()
 endfunction()
 
 # Add the compile options, definitions and link options of rule to target_name under condition; the compile options and

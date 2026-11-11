@@ -198,7 +198,7 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - Steps: inventory table (command, tier, used by csCMake / projects, keep / internal / rename), agree it, then rename
   with MIGRATION entries; reference split by tier (core pages first, a "Utilities" section).
 
-**6c. Debug mechanism. Done 2026-11-11 (6c-1..6c-3; 6c-4 docs with them), review pending.**
+**6c. Debug mechanism. Done 2026-11-11 (6c-1..6c-5).**
 - Today: a cache option `<project>_CSCMAKE_DEBUG` (on/off for the whole configure), `cs_debug_message` prints
   `STATUS` lines, ~116 call sites with ad-hoc text and hand-made indentation (`"  "`), no structure; the generated
   Config has its own `<Ns>_DEBUG`. After 6a about a third of the call sites are gone (D1 the dependency analysis, S3 the component graph);
@@ -437,7 +437,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. 6b signed off 2026-11-11 (CI green on `b5a8937`); 6d done; 6c done (review pending; public API 19 commands). |
+| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. 6b signed off 2026-11-11 (CI green on `b5a8937`); 6d, 6c (incl. 6c-5 message review) done: public API 19 commands; Phase 6 complete, sign-off after CI. |
 
 ## CHANGELOG
 
@@ -572,3 +572,16 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - Config: `VERBOSE` `<Ns>: component <c>` / unknown component; `DEBUG` `<Ns>: find_dependency(...)`.
 - Tests: levels (none / VERBOSE / DEBUG), context and indent, a `block()`, the Config at each level; docs:
   troubleshooting "Debugging csCMake", targets, install, lifecycle, packages, contributing.
+
+### 2026-11-11 (Phase 6c-5: message review)
+- Committed 6c as `19f8103`. Review of what is missing (user: "is the debug info informative enough?"):
+  `VERBOSE` for `cs_target_use_compile_profiles`, `cs_target_runtime_environment` (what it adds),
+  `cs_target_check_installed_headers` (how many headers), `cs_find_package` (found or not, version, folder), a nested
+  project (configurations from the first project); `DEBUG` for each compile profile rule when defined and when applied
+  to a target (marked when not for this compiler or platform, nested profiles indented).
+- Every error checked against `[<command>] <subject>: <what is wrong>; <what to do>`: 12 rewritten (two csCMake
+  folders, DEFAULT_CONFIG, configuration given twice (one unreachable check removed), nested configurations, build
+  type, header check, profile rule, undefined profile, not a target, OpenMP scope, `SET PATH=`, `CSCMAKE_DEBUGGER_PATH`).
+- Tests: `tests/cmake/test_messages.py` (5). Host smoke: installed files and compile commands identical to 6c.
+- Coverage of `check_docs.py` line 148 (CI, `19f8103`): no entry outside the `CSCMAKE_*` naming is left in the
+  repository (`_cscmake_debug_option` removed); a unit test documents a lowercase variable, used and unused.

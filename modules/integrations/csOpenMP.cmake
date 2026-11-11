@@ -31,10 +31,13 @@ include(modules/csFindPackage)
 function(cs_target_use_openmp target_name visibility)
   _cs_message_context(cs_target_use_openmp)
   if(NOT TARGET ${target_name})
-    message(FATAL_ERROR "[cs_target_use_openmp] ${target_name} is not a target")
+    message(FATAL_ERROR "[cs_target_use_openmp] ${target_name} is not a target: create it before")
   endif()
   if(NOT visibility MATCHES "^(PUBLIC|PRIVATE|INTERFACE)$")
-    message(FATAL_ERROR "[cs_target_use_openmp] the scope is PUBLIC, PRIVATE or INTERFACE, got ${visibility}")
+    message(
+      FATAL_ERROR
+      "[cs_target_use_openmp] ${target_name}: the scope is PUBLIC, PRIVATE or INTERFACE, got ${visibility}"
+    )
   endif()
 
   if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")

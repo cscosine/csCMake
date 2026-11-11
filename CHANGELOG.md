@@ -35,7 +35,9 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 - Messages with CMake's log levels: `VERBOSE` what csCMake does (one line per project, target, package, component,
   dependency), `DEBUG` the details; `--log-context` prefixes `[<namespace>.<command>]`, sub-steps indented; a
   `block()` with `CMAKE_MESSAGE_LOG_LEVEL` shows the messages of some calls only. The installed `<namespace>Config.cmake`
-  says what it loads at `VERBOSE`. Error messages name the public command, not internal functions.
+  says what it loads at `VERBOSE`. `cs_find_package` says whether the package was found, its version and folder; the
+  rules of the compile profiles applied to each target are listed at `DEBUG`. Error messages name the public command,
+  not internal functions, and say what to do.
 
 - The installed `<namespace>ConfigVersion.cmake` accepts the requests of the same major version
   (`SameMajorVersion`: 1.4 for `find_package(<namespace> 1.2)`, not 2.0; it accepted any older request before):

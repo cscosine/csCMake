@@ -93,25 +93,18 @@ function(_cs_add_default_build_configuration config)
   if(NOT "${config}" IN_LIST valid_default_configs)
     message(
       FATAL_ERROR
-      "[cs_initialize_project] DEFAULT_CONFIG called with invalid default config ${config}, choose one of "
-      "${valid_default_configs}"
+      "[cs_initialize_project] DEFAULT_CONFIG ${config}: not a CMake configuration (Debug, Release, "
+      "RelWithDebInfo); other names are CUSTOM_CONFIG"
     )
   endif()
 
   if(NOT "${config}" IN_LIST configs_list)
     list(APPEND configs_list ${config})
   else()
-    message(FATAL_ERROR "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config}")
+    message(FATAL_ERROR "[cs_initialize_project] ${config}: the configuration is given twice")
   endif()
-
-  if(NOT "${config}" IN_LIST configs_list_default)
-    list(APPEND configs_list_default ${config})
-  else()
-    message(
-      FATAL_ERROR
-      "[cs_initialize_project] DEFAULT_CONFIG called with duplicated element ${config} in default list"
-    )
-  endif()
+  # a subset of configs_list: no duplicate here either
+  list(APPEND configs_list_default ${config})
 
   set_property(GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS ${configs_list})
   set_property(GLOBAL PROPERTY CSCMAKE_DEFAULT_BUILD_CONFIGURATIONS ${configs_list_default})
@@ -327,6 +320,17 @@ function(_cs_version_compatibility value out)
   set(${out} ${value} PARENT_SCOPE)
 endfunction()
 
+# Report (VERBOSE) that the project of namespace is nested: the configurations come from the first csCMake project.
+function(_cs_report_nested_configurations namespace)
+  cs_get_build_configurations(configs)
+  list(JOIN configs ", " configs)
+  message(
+    VERBOSE
+    "${namespace}: nested project: the configurations of the build come from the first csCMake project "
+    "(${configs}); the ones of ${namespace} are checked against them"
+  )
+endfunction()
+
 # Parse the arguments of cs_initialize_project: namespace, C++ standard (returned in required_cxx_standard), default
 # compile profiles, build configurations. A nested csCMake project checks its configurations against the build instead
 # of adding them.
@@ -395,6 +399,9 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   # the configurations belong to the build tree: the first csCMake project defines them; a nested project (added with
   # add_subdirectory) uses some of them, defined the same way, and registers nothing (_cs_check_build_configuration)
   get_property(nested GLOBAL PROPERTY CSCMAKE_BUILD_CONFIGURATIONS SET)
+  if(nested)
+    _cs_report_nested_configurations(${arg_NAMESPACE})
+  endif()
 
   foreach(default_config ${arg_DEFAULT_CONFIG})
     if(nested)
@@ -426,14 +433,15 @@ function(_cs_check_build_configuration namespace config definition)
     message(
       FATAL_ERROR
       "[cs_initialize_project] configuration ${config} of ${namespace} is not a configuration of "
-      "the build (${configs_list}): the first csCMake project of the build defines them"
+      "the build (${configs_list}): the first csCMake project of the build defines them; list only those, or add it "
+      "to the first project"
     )
   endif()
   if(NOT defined STREQUAL definition)
     message(
       FATAL_ERROR
       "[cs_initialize_project] configuration ${config} of ${namespace} is '${definition}', in "
-      "the build it is '${defined}'"
+      "the build it is '${defined}'; define it the same way in both projects"
     )
   endif()
 endfunction()
@@ -469,7 +477,7 @@ function(_cs_process_configurations)
       message(
         FATAL_ERROR
         "[cs_initialize_project] CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} is not a configuration of the project "
-        "(${configs_text})"
+        "(${configs_text}); use a preset of the project, or -DCMAKE_BUILD_TYPE=<one of them>"
       )
     endif()
   endif()

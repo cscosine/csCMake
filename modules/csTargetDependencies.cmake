@@ -77,7 +77,7 @@ function(cs_target_runtime_environment target_name)
     )
   endif()
   if(NOT TARGET "${target_name}")
-    message(FATAL_ERROR "[cs_target_runtime_environment] ${target_name} is not a target")
+    message(FATAL_ERROR "[cs_target_runtime_environment] ${target_name} is not a target: create it before")
   endif()
   get_target_property(aliased ${target_name} ALIASED_TARGET)
   if(aliased)
@@ -109,12 +109,36 @@ function(cs_target_runtime_environment target_name)
       message(FATAL_ERROR "[cs_target_runtime_environment] ${target_name}: SET takes <name>=<value>, got ${variable}")
     endif()
     if(variable MATCHES "^PATH=")
-      message(FATAL_ERROR "[cs_target_runtime_environment] ${target_name}: PATH is given with the PATH keyword")
+      message(
+        FATAL_ERROR
+        "[cs_target_runtime_environment] ${target_name}: SET PATH=...: PATH is given with the PATH keyword "
+        "(PATH <folder>...)"
+      )
     endif()
     # one list element per variable: a ";" of the value is written by the generator expression
     string(REPLACE ";" "$<SEMICOLON>" variable "${variable}")
     set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_RUNTIME_ENVIRONMENT "${variable}")
   endforeach()
+  _cs_report_runtime_environment(${target_name} "${arg_PATH}" "${arg_SET}" "${arg_DEBUGGER_PATH}")
+endfunction()
+
+# Report (VERBOSE) what a cs_target_runtime_environment call adds to target_name.
+function(_cs_report_runtime_environment target_name dirs variables mode)
+  _cs_message_context(cs_target_runtime_environment)
+  set(parts "")
+  if(dirs)
+    list(JOIN dirs ", " dirs)
+    list(APPEND parts "PATH ${dirs}")
+  endif()
+  if(variables)
+    list(JOIN variables ", " variables)
+    list(APPEND parts "SET ${variables}")
+  endif()
+  if(mode)
+    list(APPEND parts "DEBUGGER_PATH ${mode}")
+  endif()
+  list(JOIN parts "; " text)
+  message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} run-time environment: ${text}")
 endfunction()
 
 # Set out to the target of the build (not imported) that the link item names, alias resolved; empty for anything else
@@ -229,7 +253,11 @@ function(_cs_debugger_path_mode target_name mode_out)
     set(mode BEFORE)
   endif()
   if(NOT mode MATCHES "^(BEFORE|AFTER|OFF)$")
-    message(FATAL_ERROR "[csCMake] ${target_name}: CSCMAKE_DEBUGGER_PATH is BEFORE, AFTER or OFF, got ${mode}")
+    message(
+      FATAL_ERROR
+      "[csCMake] ${target_name}: CSCMAKE_DEBUGGER_PATH is BEFORE, AFTER or OFF, got ${mode} (set it with "
+      "cs_target_runtime_environment(${target_name} DEBUGGER_PATH ...))"
+    )
   endif()
   set(${mode_out} ${mode} PARENT_SCOPE)
 endfunction()

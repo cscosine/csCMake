@@ -10,10 +10,13 @@ To see what csCMake does, see [Debugging csCMake](#debugging-cscmake).
 
 csCMake says what it does through CMake's own log levels; by default it prints nothing.
 
-- `VERBOSE`: what it does, one line per thing: the project, each target, package found and component, and at the end
-  of the project the dependencies of each target and component;
-- `DEBUG`: also the details: arguments, sources, links, compile profiles, installed files, install RPATH, run-time
-  environment, and the whole project at the end (as `cs_print_project`).
+- `VERBOSE`: what it does, one line per thing: the project, each target, each package (found or not, its version and
+  folder), the compile profiles a target asks for, what `cs_target_runtime_environment` adds, each component, and at
+  the end of the project the dependencies of each target and component; a nested project says where its
+  configurations come from;
+- `DEBUG`: also the details: arguments, sources, links, the rules of the compile profiles (each rule when defined,
+  and the ones applied to each target, marked when not for this compiler or platform), installed files, install
+  RPATH, configuration mapping, run-time environment, and the whole project at the end (as `cs_print_project`).
 
 ### The whole build
 

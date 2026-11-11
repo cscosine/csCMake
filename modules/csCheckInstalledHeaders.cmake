@@ -7,6 +7,7 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
+include(modules/csDebug)
 
 #.rst:
 # .. command:: cs_target_check_installed_headers
@@ -33,7 +34,11 @@ include_guard(GLOBAL)
 function(cs_target_check_installed_headers target_name)
   cmake_parse_arguments(arg "" "" "COMPILE_PROFILES" ${ARGN})
   if(arg_UNPARSED_ARGUMENTS)
-    message(FATAL_ERROR "[cs_target_check_installed_headers] unparsed arguments ${arg_UNPARSED_ARGUMENTS}")
+    message(
+      FATAL_ERROR
+      "[cs_target_check_installed_headers] ${target_name}: unparsed arguments ${arg_UNPARSED_ARGUMENTS} "
+      "(cs_target_check_installed_headers(<target> [COMPILE_PROFILES <profile>...]))"
+    )
   endif()
 
   # folder for generated files shared by all the configurations: the generated .cpp is the same in every configuration,
@@ -70,6 +75,12 @@ function(cs_target_check_installed_headers target_name)
   endforeach()
 
   set(check_target "${target_name}_installed_headers")
+  _cs_message_context(cs_target_check_installed_headers)
+  list(LENGTH sources count)
+  message(
+    VERBOSE
+    "${CSCMAKE_NAMESPACE}: ${check_target} compiles each of the ${count} installed headers of ${target_name}"
+  )
   cs_add_library(${check_target} STATIC)
   cs_target_sources(${check_target} PRIVATE ${sources})
   cs_target_link_libraries(${check_target} PRIVATE ${target_name})

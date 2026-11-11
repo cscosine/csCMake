@@ -6,10 +6,11 @@
 # expected: :command:`cs_print_target` and :command:`cs_print_project`.
 #
 # csCMake writes its messages with CMake's log levels: ``VERBOSE`` what it does, one line per thing (the project, each
-# target, package, component, the finalization); ``DEBUG`` the details (arguments, configuration mapping, run-time
-# environment, the whole project at the finalization). They are shown with ``cmake --log-level=VERBOSE`` (or
-# ``DEBUG``) for the whole build, or with :variable:`CMAKE_MESSAGE_LOG_LEVEL` set in a folder or in a ``block()``
-# around some calls (``--log-level`` wins over it). Each command adds the namespace of the project and its own name to
+# target, package found or not, component, the finalization); ``DEBUG`` the details (arguments, the rules of the
+# compile profiles, configuration mapping, run-time environment, the whole project at the finalization). They are
+# shown with ``cmake --log-level=VERBOSE`` (or ``DEBUG``) for the whole build, or with
+# :variable:`CMAKE_MESSAGE_LOG_LEVEL` set in a folder or in a ``block()`` around some calls (``--log-level`` wins over
+# it). Each command adds the namespace of the project and its own name to
 # :variable:`CMAKE_MESSAGE_CONTEXT` (``--log-context`` prints ``[myLib.cs_add_library]``), and indents its sub-steps.
 #
 # Commands
