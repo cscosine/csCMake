@@ -352,17 +352,23 @@ def check_environment_script_output(script: Path, config: str, output: str) -> N
 
 
 def check_environment_scripts(workspace: Path, variant: str) -> None:
-    """Windows: the run-time environment scripts of the build folder of csSmokeShared, cs-env.bat and cs-env.ps1, for
-    each configuration they list; without a configuration: the only one, or an error (the configurations give
-    different environments: CSSMOKE_CONFIG=$<CONFIG>)."""
-    scripts = sorted((workspace / "build").rglob("csSmokeShared/cs-env.bat"))
+    """Windows: the run-time environment scripts of every build folder of csSmokeShared (one with a multi-config
+    generator, ``<project>/<config>`` each with a single-config one)."""
+    scripts = sorted(path for path in (workspace / "build").rglob("cs-env.bat") if "csSmokeShared" in path.parts)
     if not scripts:
-        raise SmokeError(f"csSmokeShared/cs-env.bat not found in {workspace / 'build'}")
-    match = _ENV_CONFIGS.search(scripts[0].read_text(encoding="utf-8"))
+        raise SmokeError(f"no cs-env.bat in the build folders of csSmokeShared in {workspace / 'build'}")
+    for script in scripts:
+        check_environment_scripts_of(script.parent)
+
+
+def check_environment_scripts_of(build_dir: Path) -> None:
+    """cs-env.bat and cs-env.ps1 of ``build_dir``, for each configuration they list; without a configuration: the only
+    one, or an error (the configurations give different environments: CSSMOKE_CONFIG=$<CONFIG>)."""
+    match = _ENV_CONFIGS.search((build_dir / "cs-env.bat").read_text(encoding="utf-8"))
     configs = match.group(1).split() if match else []
-    print(f"{scripts[0]}: configurations {configs}", flush=True)
+    print(f"{build_dir}: configurations {configs}", flush=True)
     for name in _ENV_WRAPPERS:
-        script = scripts[0].parent / name
+        script = build_dir / name
         for config in configs:
             result = run_environment_script(script, [config])
             if result.returncode != 0:
