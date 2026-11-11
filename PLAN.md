@@ -84,7 +84,7 @@ Design (behaviour or API changes):
   (the result equals `target_link_libraries`, `test_target_link_libraries.py`): is it still needed? If the analysis
   (D1, component dependencies) resolves aliases itself, it is `target_link_libraries` plus debug lines: keep as the
   documented entry point, or drop (9 consumer calls), to decide.
-- [ ] (-> 6b) D4 `<namespace>ConfigVersion.cmake` is always `COMPATIBILITY AnyNewerVersion` (a consumer asking 1.0 accepts
+- [x] (6b-3) D4 `<namespace>ConfigVersion.cmake` is always `COMPATIBILITY AnyNewerVersion` (a consumer asking 1.0 accepts
   2.0): an option of `cs_initialize_project` (e.g. `VERSION_COMPATIBILITY SameMajorVersion`), default to decide.
 - [x] (done) D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
   configuration, e.g. `CMAKE_ASM-ATT_FLAGS_PARANOID`), most of them empty: copy only the ones defined (or the enabled
@@ -168,7 +168,7 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - [x] (done) 6b-1: C4 `CLANG_TIDY_EXE` -> `CSCMAKE_CLANG_TIDY_EXE`; `cs_find_package` checks `PUBLIC` / `PRIVATE` before
   `find_package` runs.
 - [x] (done) 6b-2 (D3): keep `cs_target_link_libraries`, and fail fast: links added after `cs_finalize_target` fail at the call.
-- [ ] 6b-3 (D4): `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|
+- [x] (done) 6b-3 (D4): `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|
   ExactVersion)`, default `SameMajorVersion`.
 - [ ] 6b-4 (D6): `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (keywords after the target, like the
   other `cs_target_*` commands and `install(... COMPONENT)`; breaking, MIGRATION); `cs_find_package(<target>
@@ -473,3 +473,6 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 
 ### 2026-11-11 (Phase 6a sign-off)
 - CI green on `47cb846` (every variant; the Visual Studio debugger environment checked on the `.vcxproj`): 6a signed off.
+- 6b-3: `VERSION_COMPATIBILITY` (default `SameMajorVersion`, checked; `CSCMAKE_VERSION_COMPATIBILITY` set by every
+  project, nested ones included) used by `write_basic_package_version_file`; tests: a 2.0.0 package against requests 1.0,
+  2.0, 2.0.0, 2.5 (default, `AnyNewerVersion`, `ExactVersion`), an unknown value; MIGRATION, CHANGELOG.

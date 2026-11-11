@@ -17,6 +17,7 @@ command_definitions = {
             "BASED_ON",
             "POSTFIX",
             "INSTALL_RPATH",
+            "VERSION_COMPATIBILITY",
         ],
         "multi_value_keywords": ["DEFAULT_CONFIG", "DEFAULT_COMPILE_PROFILES"],
     },

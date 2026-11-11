@@ -214,6 +214,10 @@ endfunction()
 
 # Install the components of the project in the namespace export_namespace: their <component>Targets.cmake, the
 # dependencies between them (failing on cycles), <namespace>Config.cmake and <namespace>ConfigVersion.cmake.
+#
+# Reads:
+#
+# * variable CSCMAKE_VERSION_COMPATIBILITY, PROJECT_VERSION
 function(_cs_finalize_install export_namespace)
   # directory to install cmake files
   set(install_configdir ${CMAKE_INSTALL_LIBDIR}/cmake/${export_namespace})
@@ -323,7 +327,7 @@ function(_cs_finalize_install export_namespace)
   write_basic_package_version_file(
     ${output_folder}/${export_namespace}ConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
+    COMPATIBILITY ${CSCMAKE_VERSION_COMPATIBILITY}
   )
 
   # Install the Config and configVersion files

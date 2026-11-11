@@ -201,3 +201,48 @@ cs_find_package(lib PUBLIK NotAPackage REQUIRED)
     assert result.returncode != 0
     assert "[cs_find_package] lib: the mode is PUBLIC or PRIVATE, got PUBLIK" in " ".join(result.output.split())
     assert "NotAPackage" not in result.output
+
+
+VERSIONED = """
+project(V VERSION 2.0.0 LANGUAGES NONE)
+cs_initialize_project(NAMESPACE V CXX_STANDARD 17 DEFAULT_CONFIG Debug{compatibility})
+cs_add_library(v_core INTERFACE)
+cs_install_target(v_core core DEFAULT)
+cs_finalize_target(v_core)
+cs_finalize_project()
+"""
+
+
+@pytest.mark.parametrize(
+    ("compatibility", "accepted"),
+    [
+        ("", {"1.0": False, "2.0": True, "2.0.0": True, "2.5": False}),
+        (" VERSION_COMPATIBILITY AnyNewerVersion", {"1.0": True, "2.0": True, "2.0.0": True, "2.5": False}),
+        (" VERSION_COMPATIBILITY ExactVersion", {"1.0": False, "2.0": False, "2.0.0": True, "2.5": False}),
+    ],
+    ids=["default-same-major", "any-newer", "exact"],
+)
+def test_version_compatibility(tmp_path: Path, compatibility: str, accepted: dict[str, bool]) -> None:
+    """Package version 2.0.0: which find_package(V <version>) requests accept it."""
+    prefix = tmp_path / "install"
+    result = install(tmp_path / "package", VERSIONED.format(compatibility=compatibility), prefix)
+    assert result.returncode == 0, result.output
+
+    consumer = "".join(
+        f'find_package(V {version} QUIET CONFIG)\ncstest_report("{version}" "${{V_FOUND}}")\nunset(V_FOUND)\n'
+        "unset(V_DIR CACHE)\n"
+        for version in accepted
+    )
+    found = configure(tmp_path / "consumer", consumer, args=[f"-DCMAKE_PREFIX_PATH={prefix.as_posix()}"])
+
+    assert found.returncode == 0, found.output
+    assert {version: found.reports[version] == "1" for version in accepted} == accepted
+
+
+def test_an_unknown_version_compatibility_is_rejected(tmp_path: Path) -> None:
+    result = configure(tmp_path, VERSIONED.format(compatibility=" VERSION_COMPATIBILITY Any"))
+
+    assert result.returncode != 0
+    assert "VERSION_COMPATIBILITY is AnyNewerVersion, SameMajorVersion, SameMinorVersion or ExactVersion, got Any" in (
+        " ".join(result.output.split())
+    )

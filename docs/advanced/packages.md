@@ -35,8 +35,8 @@ After the [runtime dependencies](runtime-dependencies.md) (which give the projec
 4. sorts the dependencies of each component, each after the ones it depends on
    (`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED`);
 5. generates `<namespace>Config.cmake` from `templates/csTemplateConfig.cmake.in` (`configure_file(@ONLY)`) and
-   `<namespace>ConfigVersion.cmake` (`write_basic_package_version_file`, `AnyNewerVersion`), and installs both in
-   `lib/cmake/<namespace>/`.
+   `<namespace>ConfigVersion.cmake` (`write_basic_package_version_file`, `CSCMAKE_VERSION_COMPATIBILITY`), and
+   installs both in `lib/cmake/<namespace>/`.
 
 ## The generated `<namespace>Config.cmake`
 

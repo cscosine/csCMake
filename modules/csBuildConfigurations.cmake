@@ -315,13 +315,30 @@ function(_cs_set_msvc_runtime_library_variables)
   _cs_set_in_project_scope(CMAKE_MSVC_RUNTIME_LIBRARY "${runtime_expression}")
 endfunction()
 
+# Set out to the VERSION_COMPATIBILITY given to cs_initialize_project (value), SameMajorVersion when empty; fail on a
+# value write_basic_package_version_file does not take.
+function(_cs_version_compatibility value out)
+  if("${value}" STREQUAL "")
+    set(value SameMajorVersion)
+  endif()
+  if(NOT value MATCHES "^(AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion)$")
+    message(
+      FATAL_ERROR
+      "[cs_initialize_project] VERSION_COMPATIBILITY is AnyNewerVersion, SameMajorVersion, SameMinorVersion or "
+      "ExactVersion, got ${value}"
+    )
+  endif()
+  set(${out} ${value} PARENT_SCOPE)
+endfunction()
+
 # Parse the arguments of cs_initialize_project: namespace, C++ standard (returned in required_cxx_standard), default
 # compile profiles, build configurations. A nested csCMake project checks its configurations against the build instead
 # of adding them.
 #
 # Writes:
 #
-# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES, CSCMAKE_INSTALL_RPATH (if given): caller scope
+# * variable CSCMAKE_NAMESPACE, CSCMAKE_DEFAULT_COMPILE_PROFILES, CSCMAKE_VERSION_COMPATIBILITY, CSCMAKE_INSTALL_RPATH
+#   (if given): caller scope
 # * global property CSCMAKE_BUILD_CONFIGURATION_<config>_DEFINITION: "default", "mapped <fallbacks>" or "custom <base
 #   and fallbacks> postfix <postfix>"
 # * variable CMAKE_<RUNTIME|LIBRARY|ARCHIVE>_OUTPUT_DIRECTORY_<CONFIG>: project scope, custom configurations, unless set
@@ -330,7 +347,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   cs_debug_message("[_cs_parse_additional_configurations] ${ARGN}")
 
   set(options "")
-  set(onevalue NAMESPACE CXX_STANDARD INSTALL_RPATH)
+  set(onevalue NAMESPACE CXX_STANDARD INSTALL_RPATH VERSION_COMPATIBILITY)
   set(multivalue DEFAULT_CONFIG DEFAULT_CONFIG_MAPPED CUSTOM_CONFIG DEFAULT_COMPILE_PROFILES)
   cmake_parse_arguments(arg "${options}" "${onevalue}" "${multivalue}" ${ARGN})
 
@@ -366,6 +383,10 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   set(CSCMAKE_DEFAULT_COMPILE_PROFILES "${default_profiles}" PARENT_SCOPE)
 
   # install RPATH of the targets (cs_finalize_target): on unless OFF
+  # the compatibility of the installed package version (<namespace>ConfigVersion.cmake), set in every project
+  _cs_version_compatibility("${arg_VERSION_COMPATIBILITY}" compatibility)
+  set(CSCMAKE_VERSION_COMPATIBILITY ${compatibility} PARENT_SCOPE)
+
   if(DEFINED arg_INSTALL_RPATH)
     if(NOT arg_INSTALL_RPATH MATCHES "^(ON|OFF)$")
       message(FATAL_ERROR "[cs_initialize_project] INSTALL_RPATH is ON or OFF, got ${arg_INSTALL_RPATH}")

@@ -26,6 +26,10 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   csCMake resolve them), and fails at the call for links added after `cs_finalize_target` (they were found only by
   `cs_finalize_project`).
 
+- The installed `<namespace>ConfigVersion.cmake` accepts the requests of the same major version
+  (`SameMajorVersion`: 1.4 for `find_package(<namespace> 1.2)`, not 2.0; it accepted any older request before):
+  `VERSION_COMPATIBILITY` of `cs_initialize_project` chooses another one.
+
 ### New
 
 - Compile profile rules take `LANGUAGES <language>...`: the source languages of their compile options and definitions,
@@ -36,6 +40,8 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   CMake cannot know about the run-time environment of a target (plugins, libraries loaded at run time, variables such
   as `QT_PLUGIN_PATH`), added to its Visual Studio debugger environment; `DEBUGGER_PATH` `BEFORE` (default) / `AFTER`
   / `OFF` for a target whose `VS_DEBUGGER_ENVIRONMENT` the project writes itself.
+
+- `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion)`.
 
 ### Removed
 

@@ -10,6 +10,7 @@ the sections below cover the older versions.
 | `VS_DEBUGGER_ENVIRONMENT_<CONFIG>` set by csCMake | not set | `VS_DEBUGGER_ENVIRONMENT` holds the value of every configuration |
 | warning "depends on the imported target ..., whose file ... does not exist" | not printed | CMake reports a missing imported file when it is needed |
 | cache variable `CLANG_TIDY_EXE` (clang-tidy of the compile profiles) | `CSCMAKE_CLANG_TIDY_EXE` | rename in `-D` options and presets |
+| `<namespace>ConfigVersion.cmake`: any older request accepted (`AnyNewerVersion`) | `SameMajorVersion` | `VERSION_COMPATIBILITY AnyNewerVersion` in `cs_initialize_project` keeps the old behaviour |
 | `cs_get_namespace` | internal | the namespace given to `cs_initialize_project`, or the variable `CSCMAKE_NAMESPACE` |
 | `cs_get_default_build_configurations` | internal | `cs_get_build_configurations` (all of them) |
 | `cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_find_packages`, `cs_get_component_dependencies`, `cs_get_component_dependencies_sorted`, `cs_get_target_component` | internal | the debug messages of `cs_finalize_project` (`-D<project>_CSCMAKE_DEBUG=ON`); the installed `<namespace>Config.cmake` lists the components and their dependencies |

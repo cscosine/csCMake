@@ -25,7 +25,8 @@ include(modules/csInternal)
 #       [DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"]...
 #       [CUSTOM_CONFIG <config> BASED_ON "<config>,<fallback>," POSTFIX "<postfix>"]...
 #       [DEFAULT_COMPILE_PROFILES <profile>...|NONE]
-#       [INSTALL_RPATH ON|OFF])
+#       [INSTALL_RPATH ON|OFF]
+#       [VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion])
 #
 #   Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project; cs_finalize_project() is then
 #   required at the end of the same CMakeLists.txt (checked). A macro: the variables it sets belong to the project scope
@@ -54,10 +55,17 @@ include(modules/csInternal)
 #     ``OFF``: no install RPATH set by :command:`cs_finalize_target` (:variable:`CSCMAKE_INSTALL_RPATH`). Default
 #     ``ON``.
 #
+#   ``VERSION_COMPATIBILITY``
+#     Which versions of the installed package a consumer's ``find_package(<namespace> <version>)`` accepts (the
+#     ``COMPATIBILITY`` of :command:`write_basic_package_version_file`): ``SameMajorVersion`` (default: 1.4 for a
+#     request of 1.2, not 2.0), ``AnyNewerVersion``, ``SameMinorVersion``, ``ExactVersion``
+#     (:variable:`CSCMAKE_VERSION_COMPATIBILITY`).
+#
 #   :Reads: :variable:`CSCMAKE_PREFIX_PATH_HEAD`, :variable:`CSCMAKE_PREFIX_PATH_TAIL`,
 #     :variable:`CSCMAKE_MODULE_PATH_HEAD`, :variable:`CSCMAKE_MODULE_PATH_TAIL`
 #   :Writes: :variable:`<project>_CSCMAKE_DEBUG`, :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_SOURCE_DIR`,
-#     :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`, :variable:`CMAKE_CXX_STANDARD`,
+#     :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`,
+#     :variable:`CSCMAKE_VERSION_COMPATIBILITY`, :variable:`CMAKE_CXX_STANDARD`,
 #     :variable:`CMAKE_CXX_STANDARD_REQUIRED`, :variable:`CMAKE_CXX_EXTENSIONS`, :variable:`CMAKE_PREFIX_PATH`,
 #     :variable:`CMAKE_MODULE_PATH`, :variable:`CMAKE_RUNTIME_OUTPUT_DIRECTORY`,
 #     :variable:`CMAKE_LIBRARY_OUTPUT_DIRECTORY`, :variable:`CMAKE_ARCHIVE_OUTPUT_DIRECTORY`,
@@ -304,6 +312,11 @@ endfunction()
 #   ``OFF``: :command:`cs_finalize_target` sets no install RPATH on the targets of the folder. Unset or ``ON``: the
 #   executables and shared libraries find, once installed, the shared libraries of their package (Linux, macOS).
 #   ``INSTALL_RPATH`` of :command:`cs_initialize_project`, or a directory variable: a subfolder can set its own.
+#
+# .. variable:: CSCMAKE_VERSION_COMPATIBILITY
+#
+#   The compatibility of the installed package version (``VERSION_COMPATIBILITY`` of :command:`cs_initialize_project`,
+#   ``SameMajorVersion`` by default), read by :command:`cs_finalize_project` for ``<namespace>ConfigVersion.cmake``.
 #
 # .. variable:: <project>_CSCMAKE_DEBUG
 #
