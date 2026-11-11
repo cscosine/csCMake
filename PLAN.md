@@ -304,10 +304,12 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
     names of `csv1`; semantic versioning;
   * the docs examples are the smoke projects (`literalinclude`: csSmokeStandalone minimal, csSmokeBase / MidA / Top
     multi-library and consumed packages);
-  * the smoke moves the install folder before the consumers build (relocatable packages: relative Config paths,
-    `$ORIGIN` RPATH);
-  * scope sentence in README and docs; why CMake 3.31 (preset schema 10, `$<TARGET_RUNTIME_DLL_DIRS>` 3.27,
-    `cmake_language(DEFER)`); which docs version Pages shows.
+  * the smoke moves the install folder (relocatable packages: relative Config paths, `$ORIGIN` RPATH). **Done
+    2026-11-11, CI to check (every variant).** After every project: `install/` moved to `install-relocated/`, no
+    installed `.cmake` file may name `install/`, the installed applications run from there, csSmokeTop and
+    csSmokePlainConsumer built again from new build folders with the packages found there only;
+  * scope sentence in README and docs; the CMake 3.31 line of getting-started gets "(the csv1 presets use preset
+    schema 10)" (no page of its own, user 2026-11-11); which docs version Pages shows.
 - Tracking after 1.0 (decided, user 2026-11-10): open items in one `TODO.md` (sections per area: API, debug, presets,
   docs, smoke, other projects; one checkbox line per item); no GitHub issues for now.
 
@@ -603,3 +605,10 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   "debug option" from the nested projects list of the user guide.
 - Tests: `tests/cmake/test_runtime_scripts.py` (9), smoke unit test of the output check. Host smoke: installed files
   and compile commands identical to 6c-5, no scripts on Linux.
+### 2026-11-11 (relocation smoke step; CMake 3.31 item)
+- Committed the run-time environment scripts as `33cfa8f`.
+- `run_smoke.py`: `check_relocation` after every project (`relocate_install`, `relocated_prefixes`,
+  `rebuild_against_relocated_install`); `check_installed_apps` takes the install folder of the project. Host smoke:
+  the rebuilt consumers find csSmokeShared, csSmokeMidA, csSmokeMidB, csSmokeBase in `install-relocated/`; first try
+  found nothing to delete (build folders are per configuration, `<project>/<config>`), fixed. Docs: smoke-tests.
+- User: "why CMake 3.31" needs no page: a parenthesis on the getting-started line (docs batch).

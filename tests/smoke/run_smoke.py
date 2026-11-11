@@ -11,6 +11,8 @@ then, for the variant and in the order of PROJECTS (each project finds the previ
 folder), runs the csv1 workflow presets (configure, build, install, ctest) for every build configuration,
 runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
 ``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cscmake-lint.
+Then it moves the install folder (relocation): the installed applications run from there, and two consumers are built
+again against it.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -106,6 +108,12 @@ PROJECTS = (
 
 VISUAL_STUDIO = (Generator.MSVC_17_2022, Generator.MSVC_18_2026)
 
+# relocation: the install folder is moved after every project is built; the installed applications run from there, and
+# these consumers are built again against it (a csCMake one: find_dependency chain csSmokeTop -> csSmokeMidA ->
+# csSmokeBase; a plain CMake one: the DLLs of csSmokeShared copied from there on Windows)
+RELOCATED_INSTALL = "install-relocated"
+RELOCATION_CONSUMERS = ("csSmokeTop", "csSmokePlainConsumer")
+
 # default targets created by cs_initialize_project, installed in the cscmake_common component
 DEFAULT_TARGETS = ("cscmake_base_include",)
 _ADD_LIBRARY = re.compile(r"^add_library\(\s*([^\s)]+)", re.MULTILINE)
@@ -169,7 +177,7 @@ def run(cmd: Sequence[str | Path], cwd: Path, env: dict[str, str] | None = None)
 def prepare_workspace(workspace: Path) -> None:
     """(Re)create the workspace: csCMake and the smoke projects as siblings, no build/install leftovers."""
     workspace.mkdir(parents=True, exist_ok=True)
-    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install"):
+    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install", RELOCATED_INSTALL):
         shutil.rmtree(workspace / name, ignore_errors=True)
     copy_cscmake(workspace / "csCMake")
     for project in PROJECTS:
@@ -196,9 +204,10 @@ def install_dir(workspace: Path, variant: str, project: Project) -> Path:
     return project_workspace / "install" / variant / project.name
 
 
-def check_installed_apps(workspace: Path, variant: str, project: Project) -> None:
-    """Run the installed applications of ``project`` in every configuration and check their output."""
-    bin_dir = install_dir(workspace, variant, project) / "bin"
+def check_installed_apps(project_install_dir: Path, project: Project) -> None:
+    """Run the installed applications of ``project`` (installed in ``project_install_dir``) in every configuration and
+    check their output."""
+    bin_dir = project_install_dir / "bin"
     suffix = ".exe" if os.name == "nt" else ""
     for app_spec in project.apps:
         expected = list(app_spec.output)
@@ -213,6 +222,44 @@ def check_installed_apps(workspace: Path, variant: str, project: Project) -> Non
                 raise SmokeError(
                     f"{config.cmake}: {app} printed {lines} (exit code {result.returncode}), expected {expected}"
                 )
+
+
+def relocate_install(workspace: Path) -> Path:
+    """Move ``<workspace>/install`` to ``<workspace>/install-relocated`` and return it; fail if an installed CMake file
+    names the folder it was installed in (an absolute path: the package could not be moved)."""
+    source, target = workspace / "install", workspace / RELOCATED_INSTALL
+    shutil.rmtree(target, ignore_errors=True)
+    shutil.move(source, target)
+    old = source.as_posix().lower()
+    for path in sorted(target.rglob("*.cmake")):
+        if old in path.read_text(encoding="utf-8", errors="replace").replace("\\", "/").lower():
+            raise SmokeError(f"{path} names the folder the package was installed in, {source}: it cannot be moved")
+    print(f"moved {source} to {target}: no installed CMake file names {source}", flush=True)
+    return target
+
+
+def relocated_prefixes(relocated: Path) -> list[Path]:
+    """The install prefix of every package in the relocated install folder (``<prefix>/lib/cmake/<Package>``)."""
+    return sorted({config.parents[3] for config in relocated.rglob("lib/cmake/*/*Config.cmake")})
+
+
+def rebuild_against_relocated_install(
+    ctx: ContextOsArchitectureCompilerGenerator, workspace: Path, relocated: Path
+) -> None:
+    """Build RELOCATION_CONSUMERS again from new build folders, finding the packages they use in the relocated install
+    folder only (the ``CMAKE_PREFIX_PATH`` environment variable: searched by find_package, csCMake or not)."""
+    prefixes = relocated_prefixes(relocated)
+    env = {**cmake_environment(workspace), "CMAKE_PREFIX_PATH": os.pathsep.join(p.as_posix() for p in prefixes)}
+    print(f"CMAKE_PREFIX_PATH (environment): {env['CMAKE_PREFIX_PATH']}", flush=True)
+    for name in RELOCATION_CONSUMERS:
+        project = next(p for p in PROJECTS if p.name == name)
+        # build/<variant>/<project>[/<config>]: the build folders of every configuration
+        for build_dir in [
+            d for d in (workspace / "build").rglob(name) if d.is_dir() and any(d.rglob("CMakeCache.txt"))
+        ]:
+            shutil.rmtree(build_dir)
+        for workflow in workflow_presets(ctx, project.plain):
+            run(["cmake", "--workflow", workflow], cwd=workspace / name, env=env)
 
 
 _DEBUGGER_CONFIG = re.compile(r"==\s*'([^|']+)\|")
@@ -400,7 +447,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
             check_installed_default_targets(workspace, variant, project)
         if project.apps:
             with group(f"{project.name}: run the installed applications"):
-                check_installed_apps(workspace, variant, project)
+                check_installed_apps(install_dir(workspace, variant, project), project)
         if (
             project.name == "csSmokeShared"
             and ctx.context_compiler_generator.build_generator.generator in VISUAL_STUDIO
@@ -413,6 +460,26 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
         if lint:
             with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
+    check_relocation(ctx, variant, workspace)
+
+
+def check_relocation(ctx: ContextOsArchitectureCompilerGenerator, variant: str, workspace: Path) -> None:
+    """The installed packages can be moved: no installed CMake file names the install folder, the installed
+    applications run from the new folder (install RPATH relative to the binary; DLLs in bin/), and consumers build
+    against it (relative paths in the Config files)."""
+    with group(f"relocation: move {workspace / 'install'}"):
+        relocated = relocate_install(workspace)
+    with group("relocation: run the installed applications from the moved folder"):
+        for project in PROJECTS:
+            if project.apps and not project.standalone:
+                moved = relocated / install_dir(workspace, variant, project).relative_to(workspace / "install")
+                check_installed_apps(moved, project)
+    with group(f"relocation: build {', '.join(RELOCATION_CONSUMERS)} against the moved folder"):
+        rebuild_against_relocated_install(ctx, workspace, relocated)
+    with group("relocation: run the applications of the consumers built against the moved folder"):
+        for project in PROJECTS:
+            if project.name in RELOCATION_CONSUMERS and project.apps:
+                check_installed_apps(install_dir(workspace, variant, project), project)
 
 
 def main(argv: list[str] | None = None) -> int:

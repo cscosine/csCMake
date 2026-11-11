@@ -23,6 +23,8 @@ from tests.smoke.run_smoke import (
     find_variant,
     line_ending,
     prepare_workspace,
+    relocate_install,
+    relocated_prefixes,
     run_smoke,
     workflow_presets,
 )
@@ -193,3 +195,21 @@ def test_check_environment_script_output(tmp_path: Path) -> None:
     swapped = f"CSSMOKE_CONFIG=Debug\nPATH={bin_dir}/Debug;C:/ws/runtime/Debug;C:/Windows\n"
     with pytest.raises(SmokeError, match="expected"):
         check_environment_script_output(script, "Debug", swapped)
+
+
+def test_relocate_install_moves_the_folder_and_finds_absolute_paths(tmp_path: Path) -> None:
+    """Relative Config files move; one naming the folder it was installed in (any slash, any case on Windows) fails."""
+    config = tmp_path / "install" / "variant" / "pkg" / "lib" / "cmake" / "pkg" / "pkgConfig.cmake"
+    config.parent.mkdir(parents=True)
+    config.write_text('get_filename_component(_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)\n')
+
+    relocated = relocate_install(tmp_path)
+
+    assert not (tmp_path / "install").exists()
+    assert relocated_prefixes(relocated) == [relocated / "variant" / "pkg"]
+
+    relocated.rename(tmp_path / "install")
+    absolute = str(tmp_path / "install" / "variant" / "pkg").replace("/", "\\").upper()
+    config.write_text(f'set(_prefix "{absolute}")\n')
+    with pytest.raises(SmokeError, match="cannot be moved"):
+        relocate_install(tmp_path)

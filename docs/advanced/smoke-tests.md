@@ -104,7 +104,15 @@ flowchart TD
         lint["cscmake-lint the installed &lt;Package&gt;Config.cmake<br/>(consistent line endings)"]
         wf --> deps --> apps --> lint
     end
+    loop --> move["relocation: move install/ to install-relocated/<br/>no installed CMake file names install/"]
+    move --> moved["run the installed applications<br/>from install-relocated/"]
+    moved --> rebuild["build csSmokeTop and csSmokePlainConsumer again,<br/>new build folders, packages found in install-relocated/ only<br/>(CMAKE_PREFIX_PATH environment variable)"]
 ```
+
+The relocation checks that the installed packages can be moved (e.g. built on a CI machine and unpacked elsewhere):
+the Config files reach their files through paths relative to themselves, the installed executables find the shared
+libraries of their package through a relative install RPATH (`$ORIGIN`, `@loader_path`) or next to them (Windows),
+and a consumer finds the packages, and the ones they depend on (`find_dependency`), in the new folder.
 
 ```
 <workspace>/
@@ -113,6 +121,7 @@ flowchart TD
   csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
   build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)
   install/<variant>/<project>
+  install-relocated/                install/ moved by the relocation step (install/ then holds the rebuilt consumers)
 ```
 
 The install prefix of each project is `install/<variant>/<project folder>` and `CMAKE_PREFIX_PATH` contains
