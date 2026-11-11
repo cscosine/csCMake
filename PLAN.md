@@ -78,7 +78,7 @@ Design (behaviour or API changes):
   `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_*`,
   `cs_get_target_runtime_libraries` (check the run-scripts idea can use the same genex: yes, `file(GENERATE)`).
   `CSCMAKE_PROJECT_DEPENDENCIES` (component dependencies) stays, computed from the links directly.
-- [ ] (-> 6b) D2 `cs_print_*`: they print only when the debug switch is on, so a project calling `cs_print_target_properties`
+- [x] (6b-5) D2 `cs_print_*`: they print only when the debug switch is on, so a project calling `cs_print_target_properties`
   to troubleshoot sees nothing. A command the project calls explicitly should always print. With 6b / 6c.
 - [x] (6b-2) D3 `cs_target_link_libraries` replaces in-project aliases by the real target, then calls `target_link_libraries`
   (the result equals `target_link_libraries`, `test_target_link_libraries.py`): is it still needed? If the analysis
@@ -89,7 +89,7 @@ Design (behaviour or API changes):
 - [x] (done) D5 a custom configuration copies every per-configuration variable for 16 languages (65 cache entries per
   configuration, e.g. `CMAKE_ASM-ATT_FLAGS_PARANOID`), most of them empty: copy only the ones defined (or the enabled
   languages).
-- [ ] (-> 6b) D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
+- [x] (6b-4) D6 `cs_install_target(<target> <component> [DEFAULT])` parses `ARGC` by hand; `cs_find_package(<target> <mode>
   <find_package args>)` validates the mode after `find_package` ran and stores the arguments as one string: keyword
   style and early checks (with 6b).
 - [x] (done: `LANGUAGES` per rule, default CXX; user) D7 compile profiles apply their options to every language of the target (`-Wold-style-cast` on a C file warns):
@@ -170,12 +170,12 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - [x] (done) 6b-2 (D3): keep `cs_target_link_libraries`, and fail fast: links added after `cs_finalize_target` fail at the call.
 - [x] (done) 6b-3 (D4): `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|
   ExactVersion)`, default `SameMajorVersion`.
-- [ ] 6b-4 (D6): `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (keywords after the target, like the
+- [x] (done) 6b-4 (D6): `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (keywords after the target, like the
   other `cs_target_*` commands and `install(... COMPONENT)`; breaking, MIGRATION); `cs_find_package(<target>
   PUBLIC|PRIVATE ...)` kept (scope after the target, like `target_link_libraries`).
-- [ ] 6b-5 (D2): `cs_print_target(<target>)` and `cs_print_project()`, always printing, instead of
+- [x] (done) 6b-5 (D2): `cs_print_target(<target>)` and `cs_print_project()`, always printing, instead of
   `cs_print_target_properties` / `cs_print_state` (MIGRATION); the 6c conventions later.
-- [ ] 6b-6: reference grouped by tier (core, features, queries, troubleshooting); the troubleshooting page says when to
+- [x] (done) 6b-6: reference grouped by tier (core, features, queries, troubleshooting); the troubleshooting page says when to
   use which printer.
 
 **6b. Public API surface: core vs utilities.**
@@ -476,3 +476,11 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - 6b-3: `VERSION_COMPATIBILITY` (default `SameMajorVersion`, checked; `CSCMAKE_VERSION_COMPATIBILITY` set by every
   project, nested ones included) used by `write_basic_package_version_file`; tests: a 2.0.0 package against requests 1.0,
   2.0, 2.0.0, 2.5 (default, `AnyNewerVersion`, `ExactVersion`), an unknown value; MIGRATION, CHANGELOG.
+- 6b-4: `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (`cmake_parse_arguments`; the former form fails
+  with the signature and MIGRATION); every call site (modules, smoke projects, tests, docs, README) updated.
+- 6b-5: `cs_print_target(<target>)` (the csCMake view, then the CMake properties) and `cs_print_project()`
+  (configurations, search paths, targets, components and dependencies), always printed; `cs_initialize_project` /
+  `cs_finalize_project` print the project with the debug switch only, and compute nothing without it (S6 for the
+  printers); the six internal printer pieces removed. Tests.
+- 6b-6: `docs/reference/commands.rst` ("Commands by tier": core, features, queries, troubleshooting); the
+  troubleshooting page: "Inspecting a target or the project".

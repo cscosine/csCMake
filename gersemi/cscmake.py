@@ -62,8 +62,9 @@ command_definitions = {
         "multi_value_keywords": ["COMPONENTS", "OPTIONAL_COMPONENTS"],
     },
     "cs_install_target": {
-        "front_positional_arguments": ["target", "component"],
+        "front_positional_arguments": ["target"],
         "options": ["DEFAULT"],
+        "one_value_keywords": ["COMPONENT"],
     },
     "cs_finalize_target": {"front_positional_arguments": ["target"]},
     "cs_target_check_installed_headers": {

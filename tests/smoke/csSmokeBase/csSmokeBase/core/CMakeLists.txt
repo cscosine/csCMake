@@ -8,7 +8,7 @@ cs_target_sources(core PRIVATE_INSTALL Core.hpp)
 
 cs_target_link_libraries(core INTERFACE csSmokeBase::csSmokeBase)
 
-cs_install_target(core core)
+cs_install_target(core COMPONENT core)
 
 cs_finalize_target(core)
 

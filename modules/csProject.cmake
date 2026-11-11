@@ -137,7 +137,10 @@ macro(cs_initialize_project)
   _cs_process_configurations()
 
   # print information on the csCMake configuration
-  cs_print_state("initial state")
+  _cs_debug_enabled(_cs_init_debug)
+  if(_cs_init_debug)
+    _cs_print_project("cs_initialize_project")
+  endif()
 
   # join CMAKE_PREFIX_PATH CSCMAKE_<PREFIX|MODULE>_PATH_<HEAD|TAIL>: -D, or the environment variables of the same name
   # through the presets (unquoted: empty parts are dropped)
@@ -162,6 +165,7 @@ macro(cs_initialize_project)
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
   unset(_cs_init_cxx_standard)
+  unset(_cs_init_debug)
 endmacro()
 
 # Set the C++ standard of the project (in the scope of the caller, cs_initialize_project: a macro): required and without
@@ -234,14 +238,15 @@ function(cs_finalize_project)
   _cs_get_namespace(export_namespace)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${export_namespace} TRUE)
 
-  # debug: targets, components, state
-  _cs_print_project_targets()
-  _cs_print_components()
-  cs_print_state("final state")
-
   _cs_check_targets_finalized()
   _cs_finalize_runtime_dependencies()
   _cs_finalize_install(${export_namespace})
+
+  # debug: the project as finalized (targets, components and their dependencies)
+  _cs_debug_enabled(debug)
+  if(debug)
+    _cs_print_project("cs_finalize_project")
+  endif()
 endfunction()
 
 # Fail if cs_finalize_project was not called for namespace (deferred to the end of the CMakeLists.txt of

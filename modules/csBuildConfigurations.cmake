@@ -579,36 +579,6 @@ function(_cs_copy_build_configuration config_from_in config_to_in base_config_an
   )
 endfunction()
 
-# Print the per-configuration variables of every configuration (debug messages), each block tagged with add_message.
-function(_cs_print_all_configurations_variables add_message)
-  cs_get_build_configurations(config_var_list)
-  cs_debug_message("[_cs_print_all_configurations_variables] configs are ${config_var_list}")
-  foreach(config ${config_var_list})
-    cs_debug_message("[_cs_print_all_configurations_variables] CONFIG ${config} ${add_message}")
-    _cs_print_configuration_variables(${config} "  ")
-    cs_debug_message("[_cs_print_all_configurations_variables] -------")
-  endforeach()
-  cs_debug_message("[_cs_print_all_configurations_variables] CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION "
-                   "${CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}"
-  )
-  cs_debug_message("[_cs_print_all_configurations_variables] end --------")
-endfunction()
-
-# Print the per-configuration variables of one configuration (debug messages), each line prefixed with print_prefix.
-function(_cs_print_configuration_variables config_in print_prefix)
-  _cs_get_per_config_variables(config_var_list)
-  string(TOUPPER "${config_in}" config)
-
-  foreach(var ${config_var_list})
-    string(REPLACE "<CONFIG>" "${config}" var_out "${var}")
-    cs_debug_message("${print_prefix} ${var_out} = ${${var_out}}")
-  endforeach()
-
-  # extra, CS variables
-  cs_debug_message("${print_prefix} CSCMAKE_MSVC_RUNTIME_LIBRARY_${config} = ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config}}")
-  cs_debug_message("${print_prefix} CSCMAKE_${config}_POSTFIX = ${CSCMAKE_${config}_POSTFIX}")
-endfunction()
-
 #.rst:
 # Variables
 # ^^^^^^^^^

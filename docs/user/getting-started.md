@@ -126,12 +126,12 @@ cs_target_sources(
   PRIVATE core/Greeting.cpp
   PRIVATE_INSTALL core/Greeting.hpp)
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
+cs_install_target(core COMPONENT core DEFAULT)
 cs_finalize_target(core)
 
 cs_add_executable(myApp main.cpp)
 cs_target_link_libraries(myApp PRIVATE core)
-cs_install_target(myApp app)
+cs_install_target(myApp COMPONENT app)
 cs_finalize_target(myApp)
 ```
 

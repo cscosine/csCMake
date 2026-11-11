@@ -143,7 +143,7 @@ endfunction()
 # Install the default target in the cscmake_common component (a default component) and finalize it.
 function(_cs_target_create_default_finalize target_sub_name)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
-  cs_install_target(${target_name} cscmake_common DEFAULT)
+  cs_install_target(${target_name} COMPONENT cscmake_common DEFAULT)
 
   cs_finalize_target(${target_name})
 endfunction()

@@ -50,7 +50,7 @@ endfunction()
 #
 #   .. code-block:: cmake
 #
-#     cs_install_target(<target> <component> [DEFAULT])
+#     cs_install_target(<target> COMPONENT <component> [DEFAULT])
 #
 #   The target, its PDB file (Windows) and its headers queued by :command:`cs_target_sources` (``*_INSTALL``) are
 #   installed; the component is a ``find_package(<namespace> COMPONENTS ...)`` component, DEFAULT adds it to the
@@ -59,7 +59,7 @@ endfunction()
 #   ``<target>``
 #     A target of the project.
 #
-#   ``<component>``
+#   ``COMPONENT``
 #     The component of the package the target belongs to: what consumers ask for with ``find_package(<namespace>
 #     COMPONENTS <component>)``.
 #
@@ -71,7 +71,16 @@ endfunction()
 #   :Writes: :prop_tgt:`CSCMAKE_COMPONENT`, :prop_gbl:`CSCMAKE_<namespace>_COMPONENTS`,
 #     :prop_gbl:`CSCMAKE_<namespace>_DEFAULT_COMPONENTS`, :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`,
 #     :prop_gbl:`CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`
-function(cs_install_target target_name export_name)
+function(cs_install_target target_name)
+  cmake_parse_arguments(PARSE_ARGV 1 arg "DEFAULT" "COMPONENT" "")
+  if(arg_UNPARSED_ARGUMENTS OR NOT arg_COMPONENT)
+    message(
+      FATAL_ERROR
+      "[cs_install_target] ${target_name}: cs_install_target(<target> COMPONENT <component> [DEFAULT]), got "
+      "${ARGN} (see MIGRATION.md)"
+    )
+  endif()
+  set(export_name ${arg_COMPONENT})
   cs_debug_message("[cs_install_target] target ${target_name} export to ${export_name}")
 
   # set the CSCMAKE_COMPONENT property
@@ -83,17 +92,9 @@ function(cs_install_target target_name export_name)
   # add the EXPORT_NAME to the list of exports
   _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENTS ${export_name})
 
-  # add the target to default list
-  if("${ARGC}" EQUAL 2)
-    # nothing to do, do not
-  elseif("${ARGC}" EQUAL 3)
-    if("${ARGV2}" STREQUAL "DEFAULT")
-      _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS ${export_name})
-    else()
-      message(FATAL_ERROR "cs_install_target argument 3 should be DEFAULT or should be empty")
-    endif()
-  else()
-    message(FATAL_ERROR "cs_install_target expects 2 or 3 arguments")
+  # a component loaded when the consumer requests none
+  if(arg_DEFAULT)
+    _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_DEFAULT_COMPONENTS ${export_name})
   endif()
 
   # retrieve the source files that have to be installed
@@ -238,26 +239,6 @@ function(_cs_get_component_find_packages export_name output_variable_name)
   # empty when the property is not set
   get_property(list_values GLOBAL PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_FIND_PACKAGES)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
-endfunction()
-
-# Print the components of the project with their targets, :command:`find_package` arguments and dependencies (debug
-# messages).
-function(_cs_print_components)
-  _cs_get_components(exports)
-  foreach(export ${exports})
-    _cs_get_component_targets(${export} targets_values)
-    _cs_get_component_find_packages(${export} find_packages_values)
-    _cs_get_component_dependencies(${export} depends_values)
-    _cs_get_component_dependencies_sorted(${export} depends_values_sorted)
-    cs_debug_message(
-      "[_cs_print_components] export ${export} contains the following targets: ${targets_values}, has the "
-      "following find_packages: ${find_packages_values} and depends on those other exports: ${depends_values} "
-      "(sorted as ${depends_values_sorted})"
-    )
-  endforeach()
-
-  _cs_get_default_components(exports_default)
-  cs_debug_message("[_cs_print_components] default components: ${exports_default}")
 endfunction()
 
 #.rst:

@@ -13,7 +13,7 @@
 #   cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
 #   cs_add_library(core STATIC core.cpp)
 #   cs_finalize_target(core)
-#   cs_install_target(core core DEFAULT)
+#   cs_install_target(core COMPONENT core DEFAULT)
 #   cs_finalize_project()
 #
 # csCMake needs CMake 3.31; its functions and macros run with the 3.31 policies.

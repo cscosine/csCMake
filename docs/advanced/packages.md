@@ -5,7 +5,7 @@ components. For the use of the package, see [Installed packages](../user/install
 
 ## Recording the components: `cs_install_target`
 
-`cs_install_target(<target> <component> [DEFAULT])`:
+`cs_install_target(<target> COMPONENT <component> [DEFAULT])`:
 
 - installs the target in the export set `<namespace>_<component>-targets` (binaries to `bin`/`lib`, the PDB file with
   MSVC);

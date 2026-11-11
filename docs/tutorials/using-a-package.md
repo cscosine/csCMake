@@ -34,7 +34,7 @@ configurations everywhere.
   without finding it themselves.
 - The library links `csSmokeBase::core` (from the other package) and `csSmokeMidB::cscmake_base_include` (its own
   default target: `#include <csSmokeMidB/csSmokeMidB.hpp>`).
-- `cs_install_target(csSmokeMidB csSmokeMidB DEFAULT)`: one component, named like the package and loaded by default,
+- `cs_install_target(csSmokeMidB COMPONENT csSmokeMidB DEFAULT)`: one component, named like the package and loaded by default,
   so a consumer only writes `find_package(csSmokeMidB)`.
 
 ## `Sol` layout: `csSmokeMidA`

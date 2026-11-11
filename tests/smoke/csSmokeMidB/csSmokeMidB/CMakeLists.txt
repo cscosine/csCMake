@@ -9,7 +9,7 @@ cs_target_sources(csSmokeMidB PRIVATE csSmokeMidB.cpp PRIVATE_INSTALL csSmokeMid
 
 cs_target_link_libraries(csSmokeMidB PUBLIC csSmokeBase::core csSmokeMidB::cscmake_base_include)
 
-cs_install_target(csSmokeMidB csSmokeMidB DEFAULT)
+cs_install_target(csSmokeMidB COMPONENT csSmokeMidB DEFAULT)
 
 cs_finalize_target(csSmokeMidB)
 

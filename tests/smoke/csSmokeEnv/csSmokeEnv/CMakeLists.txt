@@ -7,7 +7,7 @@ cs_target_sources(csSmokeEnvApp PRIVATE main.cpp)
 
 cs_target_link_libraries(csSmokeEnvApp PRIVATE csSmokeBase::text)
 
-cs_install_target(csSmokeEnvApp csSmokeEnvApp DEFAULT)
+cs_install_target(csSmokeEnvApp COMPONENT csSmokeEnvApp DEFAULT)
 
 cs_finalize_target(csSmokeEnvApp)
 

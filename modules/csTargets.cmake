@@ -212,18 +212,6 @@ function(cs_get_project_targets output_variable_name)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-# Print the targets of the project (debug messages).
-function(_cs_print_project_targets)
-  set(targets "")
-  cs_get_project_targets(targets)
-  list(LENGTH targets count)
-  if(count GREATER 0)
-    cs_debug_message("_cs_print_project_targets ${targets}")
-  else()
-    cs_debug_message("_cs_print_project_targets empty")
-  endif()
-endfunction()
-
 #.rst:
 # Target properties
 # ^^^^^^^^^^^^^^^^^

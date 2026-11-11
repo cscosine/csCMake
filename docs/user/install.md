@@ -6,9 +6,9 @@ Installing a csCMake project produces a CMake package: its targets, headers and 
 ## Components
 
 ```cmake
-cs_install_target(core core DEFAULT)
-cs_install_target(text text)
-cs_install_target(myTool tools)
+cs_install_target(core COMPONENT core DEFAULT)
+cs_install_target(text COMPONENT text)
+cs_install_target(myTool COMPONENT tools)
 ```
 
 `cs_install_target` installs a target in a *component* of the package. A component is what a consumer

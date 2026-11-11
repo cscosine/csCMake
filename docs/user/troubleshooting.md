@@ -6,6 +6,25 @@ reports it, e.g. `[cs_finalize_project]`.
 To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_DEBUG=ON` (`<project>` is the
 `project()` name of `cs_initialize_project`); for an installed package being loaded, `-D<namespace>_DEBUG=ON`.
 
+## Inspecting a target or the project
+
+Two commands print what csCMake knows, whatever the debug switch; call them at the end of the `CMakeLists.txt` of the
+project, after `cs_finalize_project` (some values are resolved there), and remove them afterwards:
+
+- `cs_print_target(<target>)`: a target does not build, link, install or run as expected. It prints its type, its
+  component, the headers it installs, the packages it finds for its consumers, its compile profiles, its run-time
+  environment (`cs_target_runtime_environment`), the targets of the project it depends on, then every CMake property
+  set on it (`INTERFACE_INCLUDE_DIRECTORIES`, `INSTALL_RPATH`, `VS_DEBUGGER_ENVIRONMENT`, ...).
+- `cs_print_project()`: the configurations, the search paths or the components are not the expected ones. It prints the
+  configurations (postfix, C++ flags, MSVC runtime of each), the search paths, the install prefix, the targets, and
+  each component with its targets, the packages it finds and the components it depends on.
+
+```cmake
+cs_finalize_project()
+cs_print_target(myLib)
+cs_print_project()
+```
+
 ## Setting up
 
 `include could not find requested file: csCMake`

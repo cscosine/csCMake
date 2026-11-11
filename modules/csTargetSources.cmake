@@ -102,32 +102,6 @@ function(_cs_get_target_sources_to_install_absolute_path target_name output_vari
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-# Print the sources of a target installed with it (debug messages of the project).
-#
-# Reads:
-#
-# * target property CSCMAKE_SOURCES_TO_INSTALL
-# * target property CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE
-function(_cs_print_target_sources_to_install target_name)
-  set(values "")
-
-  _cs_get_target_sources_to_install("${target_name}" values)
-  list(LENGTH values count)
-  if(count GREATER 0)
-    cs_debug_message("_cs_print_target_sources_to_install ${target_name}: ${values}")
-  else()
-    cs_debug_message("_cs_print_target_sources_to_install ${target_name}: empty")
-  endif()
-
-  _cs_get_target_sources_to_install_absolute_path("${target_name}" values)
-  list(LENGTH values count)
-  if(count GREATER 0)
-    cs_debug_message("_cs_print_target_sources_to_install (absolute path) ${target_name}: ${values}")
-  else()
-    cs_debug_message("_cs_print_target_sources_to_install (absolute path) ${target_name}: empty")
-  endif()
-endfunction()
-
 #.rst:
 # Target properties
 # ^^^^^^^^^^^^^^^^^

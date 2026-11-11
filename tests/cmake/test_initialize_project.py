@@ -148,7 +148,7 @@ cs_finalize_project()
 SUBPROJECT_LIB = """
 cs_add_library(h INTERFACE)
 cs_target_sources(h INTERFACE_INSTALL H.hpp)
-cs_install_target(h h)
+cs_install_target(h COMPONENT h)
 cs_finalize_target(h)
 """
 

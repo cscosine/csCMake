@@ -30,6 +30,9 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   (`SameMajorVersion`: 1.4 for `find_package(<namespace> 1.2)`, not 2.0; it accepted any older request before):
   `VERSION_COMPATIBILITY` of `cs_initialize_project` chooses another one.
 
+- `cs_install_target(<target> COMPONENT <component> [DEFAULT])`: the component after the keyword `COMPONENT`, like the
+  other `cs_target_*` commands and `install(... COMPONENT)` (see MIGRATION.md).
+
 ### New
 
 - Compile profile rules take `LANGUAGES <language>...`: the source languages of their compile options and definitions,
@@ -43,8 +46,14 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 - `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion)`.
 
+- `cs_print_target(<target>)` and `cs_print_project()`: what csCMake knows about a target (component, headers,
+  packages, profiles, run-time environment, dependencies, CMake properties) or the project (configurations, search
+  paths, targets, components and their dependencies), always printed. The reference has a "Commands by tier" page,
+  the troubleshooting page says when to use which printer.
+
 ### Removed
 
+- `cs_print_target_properties` and `cs_print_state` (debug messages only): `cs_print_target` and `cs_print_project`.
 - 20 commands no project uses became internal (see MIGRATION.md): `cs_get_namespace`,
   `cs_get_default_build_configurations`, the component and per-target getters (`cs_get_components`,
   `cs_get_target_find_packages`, ...), and the printers other than `cs_print_target_properties` and `cs_print_state`.

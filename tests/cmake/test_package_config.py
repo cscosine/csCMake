@@ -15,7 +15,7 @@ PACKAGE_A = """
 project(A VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE A CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(a_core INTERFACE)
-cs_install_target(a_core core DEFAULT)
+cs_install_target(a_core COMPONENT core DEFAULT)
 cs_finalize_target(a_core)
 cs_finalize_project()
 """
@@ -26,14 +26,14 @@ project(B VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE B CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(b_x INTERFACE)
 cs_find_package(b_x PUBLIC A COMPONENTS core REQUIRED CONFIG)
-cs_install_target(b_x x)
+cs_install_target(b_x COMPONENT x)
 cs_finalize_target(b_x)
 cs_add_library(b_base INTERFACE)
-cs_install_target(b_base b_base)
+cs_install_target(b_base COMPONENT b_base)
 cs_finalize_target(b_base)
 cs_add_library(b_core INTERFACE)
 cs_target_link_libraries(b_core INTERFACE b_base)
-cs_install_target(b_core core)
+cs_install_target(b_core COMPONENT core)
 cs_finalize_target(b_core)
 cs_finalize_project()
 """
@@ -131,15 +131,15 @@ def test_cyclic_dependency_between_components(tmp_path: Path) -> None:
 project(C VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(tc INTERFACE)
-cs_install_target(tc a)
+cs_install_target(tc COMPONENT a)
 cs_finalize_target(tc)
 cs_add_library(tb INTERFACE)
 cs_target_link_libraries(tb INTERFACE tc)
-cs_install_target(tb b)
+cs_install_target(tb COMPONENT b)
 cs_finalize_target(tb)
 cs_add_library(ta INTERFACE)
 cs_target_link_libraries(ta INTERFACE tb)
-cs_install_target(ta a)
+cs_install_target(ta COMPONENT a)
 cs_finalize_target(ta)
 cs_finalize_project()
 """
@@ -180,7 +180,7 @@ def test_many_paths_between_components_are_checked_once(tmp_path: Path) -> None:
         for dependency in (index + 1, index + 2):
             if dependency <= count:
                 lines.append(f"cs_target_link_libraries(t{index} INTERFACE t{dependency})")
-        lines += [f"cs_install_target(t{index} c{index})", f"cs_finalize_target(t{index})"]
+        lines += [f"cs_install_target(t{index} COMPONENT c{index})", f"cs_finalize_target(t{index})"]
     lines.append("cs_finalize_project()")
 
     result = configure(tmp_path, "\n".join(lines) + "\n", timeout=60)
@@ -207,7 +207,7 @@ VERSIONED = """
 project(V VERSION 2.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE V CXX_STANDARD 17 DEFAULT_CONFIG Debug{compatibility})
 cs_add_library(v_core INTERFACE)
-cs_install_target(v_core core DEFAULT)
+cs_install_target(v_core COMPONENT core DEFAULT)
 cs_finalize_target(v_core)
 cs_finalize_project()
 """
@@ -246,3 +246,17 @@ def test_an_unknown_version_compatibility_is_rejected(tmp_path: Path) -> None:
     assert "VERSION_COMPATIBILITY is AnyNewerVersion, SameMajorVersion, SameMinorVersion or ExactVersion, got Any" in (
         " ".join(result.output.split())
     )
+
+
+@pytest.mark.parametrize("call", ["cs_install_target(lib core)", "cs_install_target(lib core DEFAULT)"])
+def test_the_former_install_target_signature_is_rejected(tmp_path: Path, call: str) -> None:
+    body = f"""
+project(C VERSION 1.0.0 LANGUAGES NONE)
+cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
+cs_add_library(lib INTERFACE)
+{call}
+"""
+    result = configure(tmp_path, body)
+
+    assert result.returncode != 0
+    assert "cs_install_target(<target> COMPONENT <component> [DEFAULT])" in " ".join(result.output.split())

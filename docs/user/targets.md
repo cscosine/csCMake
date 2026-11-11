@@ -82,7 +82,7 @@ finalized (a late link is then found by `cs_finalize_project`).
 
 ```cmake
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
+cs_install_target(core COMPONENT core DEFAULT)
 cs_finalize_target(core)
 ```
 
@@ -124,5 +124,5 @@ too: `PUBLIC` and `INTERFACE`, and `PRIVATE` on a static library. Clang on Linux
 
 Every csCMake project has the cache option `<project>_CSCMAKE_DEBUG` (`<project>` is the `project()` name of
 `cs_initialize_project`): `-DmyApp_CSCMAKE_DEBUG=ON` prints what csCMake does for it (its targets, components and
-configurations among them). `cs_print_target_properties(<target>)` prints every property set on a target, and
-`cs_print_state(<header>)` the search paths and configurations, as debug messages.
+configurations among them). To inspect one target or the project, see
+[Troubleshooting](troubleshooting.md#inspecting-a-target-or-the-project).

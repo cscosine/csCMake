@@ -50,7 +50,7 @@ a little differently. Three examples.
 cs_add_library(core STATIC)
 cs_target_sources(core PRIVATE core/Greeting.cpp PRIVATE_INSTALL core/Greeting.hpp)
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
+cs_install_target(core COMPONENT core DEFAULT)
 cs_finalize_target(core)
 
 # at the end of the top CMakeLists.txt: generates myAppConfig.cmake
@@ -219,6 +219,7 @@ advanced/smoke-tests
 :caption: Reference
 :maxdepth: 1
 
+reference/commands
 reference/csCMake
 reference/csProject
 reference/csBuildConfigurations

@@ -8,7 +8,7 @@ cs_target_sources(text PRIVATE Text.cpp PRIVATE_INSTALL Text.hpp)
 
 cs_target_link_libraries(text PUBLIC csSmokeBase::core)
 
-cs_install_target(text text)
+cs_install_target(text COMPONENT text)
 
 cs_finalize_target(text)
 

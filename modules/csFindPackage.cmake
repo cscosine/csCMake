@@ -55,18 +55,6 @@ function(_cs_get_target_find_packages target_name output_variable_name)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-# Print the PUBLIC :command:`find_package` arguments of a target (debug messages).
-function(_cs_print_target_find_packages target_name)
-  set(packages "")
-  _cs_get_target_find_packages("${target_name}" packages)
-  list(LENGTH packages count)
-  if(count GREATER 0)
-    cs_debug_message("_cs_print_target_find_packages ${target_name}: ${packages}")
-  else()
-    cs_debug_message("_cs_print_target_find_packages ${target_name} empty")
-  endif()
-endfunction()
-
 # Fail unless propagate_mode is PUBLIC or PRIVATE (cs_find_package, before find_package runs).
 function(_cs_check_find_package_mode target_name propagate_mode)
   if(NOT propagate_mode MATCHES "^(PUBLIC|PRIVATE)$")
