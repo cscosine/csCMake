@@ -54,6 +54,7 @@ To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_D
 `[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its links: missing for <targets>`
 : Every target of `cs_add_library` / `cs_add_executable` needs `cs_finalize_target`, tests and tools included.
 
+`[cs_target_link_libraries] <target>: links after cs_finalize_target(<target>)`,
 `[cs_finalize_project] links added after cs_finalize_target: <targets>`
 : Move `cs_finalize_target` after the last `cs_target_link_libraries` (or `target_link_libraries`) of these targets.
 

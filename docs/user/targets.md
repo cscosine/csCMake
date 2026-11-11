@@ -74,9 +74,9 @@ contains `$<CONFIG>`). Both are include folders of `<namespace>::cscmake_base_in
 cs_target_link_libraries(myTool PRIVATE core)
 ```
 
-`cs_target_link_libraries` works like `target_link_libraries`; an alias of a project target is replaced
-by the target itself. `target_link_libraries` works too: csCMake reads the links of the targets when they are
-finalized.
+`cs_target_link_libraries` is `target_link_libraries`, and fails at once for a link added after
+`cs_finalize_target`. `target_link_libraries` works too: csCMake reads the links of the targets when they are
+finalized (a late link is then found by `cs_finalize_project`).
 
 ## Finalizing: mandatory, after the links
 

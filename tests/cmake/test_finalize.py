@@ -51,6 +51,7 @@ cs_finalize_project()
 
 
 def test_links_added_after_finalize_target(tmp_path: Path) -> None:
+    """With target_link_libraries (cs_target_link_libraries fails at the call): found by cs_finalize_project."""
     body = (
         INIT
         + """
@@ -58,7 +59,7 @@ cs_add_library(a INTERFACE)
 cs_add_library(b INTERFACE)
 cs_finalize_target(a)
 cs_finalize_target(b)
-cs_target_link_libraries(b INTERFACE a)
+target_link_libraries(b INTERFACE a)
 cs_finalize_project()
 """
     )

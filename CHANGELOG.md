@@ -22,6 +22,10 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   name projects may use themselves).
 - `cs_find_package` checks its mode (`PUBLIC` / `PRIVATE`) before `find_package` runs.
 
+- `cs_target_link_libraries` passes its arguments to `target_link_libraries` as they are (aliases kept: CMake and
+  csCMake resolve them), and fails at the call for links added after `cs_finalize_target` (they were found only by
+  `cs_finalize_project`).
+
 ### New
 
 - Compile profile rules take `LANGUAGES <language>...`: the source languages of their compile options and definitions,

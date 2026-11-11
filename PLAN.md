@@ -69,7 +69,7 @@ Bugs, confirmed or to confirm with a configure test first:
 - [x] (fixed) B5 `cs_print_state` prints `CMAKE_CURRENT_LIST_DIR` as "csCMake path": it is the caller's folder.
 
 Design (behaviour or API changes):
-- [x] (done; B3 fixed with it; the Visual Studio check runs in CI) D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
+- [x] (done; B3 fixed with it; the Visual Studio check green in CI) D1 the runtime dependency analysis (~400 lines, fixed-point loop over the targets, deprecated properties
   `LINK_INTERFACE_LIBRARIES*`, file dependencies `LINK_DEPENDS` / `INTERFACE_LINK_DEPENDS` read as libraries) does
   what CMake does since 3.21 / 3.27 with `$<TARGET_RUNTIME_DLLS:tgt>` / `$<TARGET_RUNTIME_DLL_DIRS:tgt>` (minimum
   3.31: available), evaluated at generate time with the imported-configuration mapping: the debugger environment
@@ -80,7 +80,7 @@ Design (behaviour or API changes):
   `CSCMAKE_PROJECT_DEPENDENCIES` (component dependencies) stays, computed from the links directly.
 - [ ] (-> 6b) D2 `cs_print_*`: they print only when the debug switch is on, so a project calling `cs_print_target_properties`
   to troubleshoot sees nothing. A command the project calls explicitly should always print. With 6b / 6c.
-- [ ] (-> 6b) D3 `cs_target_link_libraries` replaces in-project aliases by the real target, then calls `target_link_libraries`
+- [x] (6b-2) D3 `cs_target_link_libraries` replaces in-project aliases by the real target, then calls `target_link_libraries`
   (the result equals `target_link_libraries`, `test_target_link_libraries.py`): is it still needed? If the analysis
   (D1, component dependencies) resolves aliases itself, it is `target_link_libraries` plus debug lines: keep as the
   documented entry point, or drop (9 consumer calls), to decide.
@@ -165,9 +165,9 @@ Cleanup:
 Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public commands are the last 6a step.
 
 **6b plan (agreed, user 2026-11-11):**
-- [x] (done, under review) 6b-1: C4 `CLANG_TIDY_EXE` -> `CSCMAKE_CLANG_TIDY_EXE`; `cs_find_package` checks `PUBLIC` / `PRIVATE` before
+- [x] (done) 6b-1: C4 `CLANG_TIDY_EXE` -> `CSCMAKE_CLANG_TIDY_EXE`; `cs_find_package` checks `PUBLIC` / `PRIVATE` before
   `find_package` runs.
-- [ ] 6b-2 (D3): keep `cs_target_link_libraries`, and fail fast: links added after `cs_finalize_target` fail at the call.
+- [x] (done) 6b-2 (D3): keep `cs_target_link_libraries`, and fail fast: links added after `cs_finalize_target` fail at the call.
 - [ ] 6b-3 (D4): `cs_initialize_project(... VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|
   ExactVersion)`, default `SameMajorVersion`.
 - [ ] 6b-4 (D6): `cs_install_target(<target> COMPONENT <component> [DEFAULT])` (keywords after the target, like the
@@ -379,7 +379,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a done (B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public), to sign off after CI. Then 6b (API: printers D2, D3, D4, D6, C4), 6c (debug: S6, C2, `cs_debug_message`). |
+| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. Then 6b (API: printers D2, D3, D4, D6, C4), 6c (debug: S6, C2, `cs_debug_message`). |
 
 ## CHANGELOG
 
@@ -461,3 +461,15 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   `SameMajorVersion`; D6 `cs_install_target(<target> COMPONENT <c> [DEFAULT])`, `cs_find_package` kept; D2 two
   printers; reference by tier.
 - 6b-1: `CSCMAKE_CLANG_TIDY_EXE` (MIGRATION); `cs_find_package` checks its mode before `find_package` (test).
+- 6b-2: `cs_target_link_libraries` = `target_link_libraries` (the alias rewriting dropped: the dependency walk of D1 and
+  CMake's export resolve aliases; host smoke: the 84 installed text files identical) + a fail-fast check for links
+  after `cs_finalize_target`; tests (the late check of `cs_finalize_project` stays, for plain `target_link_libraries`).
+  Assessment of the alias rewriting (user: "aliases were messing up, nested projects"): it served the old dependency
+  analysis, which compared names without resolving aliases; the walk of D1 resolves them (also in `$<LINK_ONLY:...>`),
+  CMake's export too. Checked with a nested project (outer with a static library linking the inner project's alias
+  privately, an alias used before its target exists, a shared library linking aliases of both projects; Ninja
+  Multi-Config, Debug + Release): old and new code install the 24 text files identically, a plain consumer links and
+  runs; permanent test `test_links_through_aliases_give_the_component_dependencies` (passes with both).
+
+### 2026-11-11 (Phase 6a sign-off)
+- CI green on `47cb846` (every variant; the Visual Studio debugger environment checked on the `.vcxproj`): 6a signed off.
