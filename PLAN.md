@@ -293,6 +293,13 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
     stability promise) once more projects use the API (csqt6, csopencvcpu, a tracker). A new single-commit repository
     stays possible at the 1.0 moment (old one archived), same cost then as now.
 - Before 1.0 (user 2026-11-11):
+  * run-time environment scripts (Windows). **Done 2026-11-11, CI to check (Windows smoke).** `cs-env.bat` +
+    `cs-env.ps1` in the top build folder (next to the `.sln`) for the whole build, nested projects included; per
+    configuration `cs-env/<Config>.bat|.ps1` (`file(GENERATE)`), chosen by the dispatchers (given, the only one, or
+    all identical; else error / prompt on double-click); `cs-env.local.*`; `-ps`; `CSCMAKE_RUNTIME_SCRIPTS`
+    (default ON on Windows only); same variable with two values: configure error. Tests: `test_runtime_scripts.py`
+    (text); Windows smoke runs both scripts for each configuration of csSmokeShared (CSSMOKE_CONFIG, PATH order) and
+    without a configuration (only one: works; several: error);
   * a "Compatibility" docs page: public = the "Commands by tier" page, documented variables and properties, preset
     names of `csv1`; semantic versioning;
   * the docs examples are the smoke projects (`literalinclude`: csSmokeStandalone minimal, csSmokeBase / MidA / Top
@@ -369,14 +376,13 @@ How executables find shared libraries, per platform, and what csCMake does today
   runtime libraries per configuration (after 6a D1: `$<TARGET_RUNTIME_DLLS>` on Windows; `RUNTIME_DEPENDENCY_SET` elsewhere). Qt: plugins (platform, image formats) need
   Qt's deploy script (`qt_generate_deploy_app_script`) or `windeployqt` / `macdeployqt`. Smoke: an app using
   csSmokeShared from another package, installed with its dependencies and run.
-- [ ] **Windows build folder outside Visual Studio** (ctest, a terminal, VS Code): the DLLs of other packages need
-  `PATH`. Options: tests get `ENVIRONMENT_MODIFICATION PATH=path_list_prepend:<folders>` (the folders csCMake computes
+- [ ] **Windows build folder outside Visual Studio** (ctest, VS Code; a terminal: `cs-env.bat` / `cs-env.ps1`, done
+  2026-11-11): the DLLs of other packages need `PATH`. Options: tests get `ENVIRONMENT_MODIFICATION PATH=path_list_prepend:<folders>` (the folders csCMake computes
   for the debugger; csCMake does not wrap `add_test`, so a helper or a step of `cs_finalize_project` over the tests of
   the project); the run scripts below; or copying `$<TARGET_RUNTIME_DLLS>` next to the executables (what
   `csSmokePlainConsumer` does, plain CMake).
-- [ ] **Run scripts**: at the end of `cs_finalize_project`, `file(GENERATE)` `<build>/run/<target>-$<CONFIG>.sh|.bat`
-  setting `PATH` from `$<TARGET_RUNTIME_DLL_DIRS:tgt>` (Windows; Linux / macOS run through the build RPATH) (maybe VS Code launch environments too):
-  also the interim answer for installed apps that use other packages' libraries, until the deployment command exists.
+- [x] **Run scripts**: one pair for the whole build instead of one per target, `cs-env.bat` / `cs-env.ps1` (done
+  2026-11-11, "Before 1.0").
 
 ### Compile profiles and clang-tidy
 Guiding constraint (user): configurability per kind of project and per part of a project: a core library is stricter
@@ -585,3 +591,15 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 - Tests: `tests/cmake/test_messages.py` (5). Host smoke: installed files and compile commands identical to 6c.
 - Coverage of `check_docs.py` line 148 (CI, `19f8103`): no entry outside the `CSCMAKE_*` naming is left in the
   repository (`_cscmake_debug_option` removed); a unit test documents a lowercase variable, used and unused.
+### 2026-11-11 (run-time environment scripts)
+- User: a single `.bat` and `.ps1` next to the `.sln` with the accumulated `PATH` of the shared libraries, the
+  debugger variables and manual tuning; double-click opens a terminal, or used from a terminal. Per configuration only
+  when needed (user: "if they differ, ask; if equal, good to go"): the DLL folders are generator expressions (known at
+  generate time), so one file per configuration is written and the dispatcher compares them when it runs.
+- `_cs_defer_runtime_scripts` (first `cs_initialize_project`: defers to the end of the top folder),
+  `_cs_write_runtime_scripts`, `_cs_runtime_scripts_environment`, `_cs_add_runtime_script_variables`
+  (`csTargetDependencies`); `templates/csTemplateEnv.bat.in|.ps1.in`; variable `CSCMAKE_RUNTIME_SCRIPTS`.
+- Docs: user guide (dependencies: "Running from a terminal on Windows"), internals, reference. Removed the stale
+  "debug option" from the nested projects list of the user guide.
+- Tests: `tests/cmake/test_runtime_scripts.py` (9), smoke unit test of the output check. Host smoke: installed files
+  and compile commands identical to 6c-5, no scripts on Linux.

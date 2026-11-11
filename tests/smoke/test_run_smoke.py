@@ -17,6 +17,7 @@ from tests.smoke.run_smoke import (
     SMOKE_DIR,
     SmokeError,
     check_debugger_environment,
+    check_environment_script_output,
     config_find_dependencies,
     debugger_environments,
     find_variant,
@@ -177,3 +178,18 @@ def test_check_debugger_environment(tmp_path: Path) -> None:
     no_dlls = "CSSMOKE_CONFIG={config}\n" + r"PATH=C:/ws/csSmokeShared/runtime/{config};%PATH%"
     with pytest.raises(SmokeError, match="expected PATH="):
         check_debugger_environment(_vs_workspace(tmp_path / "no_dlls", no_dlls), "variant")
+
+
+def test_check_environment_script_output(tmp_path: Path) -> None:
+    """The variable, then PATH: runtime/<config>, the DLL folder of the build folder, the PATH before."""
+    script = tmp_path / "cs-env.bat"
+    bin_dir = (tmp_path / "bin").as_posix()
+    good = f"CSSMOKE_CONFIG=Debug\r\nPATH=C:\\ws\\runtime\\Debug;{bin_dir}/Debug;C:\\Windows\r\n"
+    check_environment_script_output(script, "Debug", good)
+
+    with pytest.raises(SmokeError, match="CSSMOKE_CONFIG='Release'"):
+        check_environment_script_output(script, "Debug", good.replace("=Debug", "=Release", 1))
+
+    swapped = f"CSSMOKE_CONFIG=Debug\nPATH={bin_dir}/Debug;C:/ws/runtime/Debug;C:/Windows\n"
+    with pytest.raises(SmokeError, match="expected"):
+        check_environment_script_output(script, "Debug", swapped)

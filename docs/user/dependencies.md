@@ -53,7 +53,7 @@ add_subdirectory(../myLib myLib)      # a csCMake project too, finalized at the 
 add_subdirectory(app)                 # links myLib::core
 ```
 
-- Each project keeps its own namespace, targets, components, debug option and installed package.
+- Each project keeps its own namespace, targets, components and installed package.
 - The build configurations belong to the build: the first csCMake project defines them; a nested project lists some
   of them, defined the same way, or the configure fails (see [Build configurations](build-configurations.md#several-projects-in-one-build)).
 - A target linking a target of the other project makes its component `find_dependency` that package in the installed
@@ -71,5 +71,36 @@ at run time, and variables the program reads (e.g. Qt's plugin folder):
 ```cmake
 cs_target_runtime_environment(app PATH "${MYSDK_ROOT}/bin" SET "QT_PLUGIN_PATH=${QT_ROOT}/plugins")
 ```
+
+### Running from a terminal on Windows: `cs-env.bat`, `cs-env.ps1`
+
+Outside Visual Studio, the same environment comes from two scripts csCMake writes in the top build folder (next to the
+`.sln`), one pair for the whole build: `PATH` with the folders of every executable and shared library of the csCMake
+projects of the build, and their variables.
+
+| | |
+|---|---|
+| double-click `cs-env.bat` | a command prompt with the environment |
+| `call cs-env.bat [<config>]` | from a command prompt: the environment in that command prompt |
+| `cs-env.bat [<config>] -ps` | a PowerShell with the environment |
+| `.\cs-env.ps1 [<config>]` | from PowerShell: the environment in that PowerShell |
+
+```bat
+C:\ws\build\myApp> call cs-env.bat Debug
+csCMake run-time environment: Debug
+C:\ws\build\myApp> bin\Debug\app.exe
+```
+
+- `<config>`: not needed when the build has one configuration, or when every configuration gives the same environment;
+  otherwise the scripts list the configurations and ask for one (a double-click asks in the window). With
+  Visual Studio, a project with DLLs of its own needs it: they are in `bin/<config>`.
+- Your own additions: `cs-env.local.bat` / `cs-env.local.ps1` next to them, run last with the configuration as argument;
+  csCMake never writes them.
+- One value per variable for the whole build: two targets setting the same variable to different values fail the
+  configure.
+- PowerShell runs a local script with the execution policy `RemoteSigned` (or `Unrestricted`, `Bypass`): e.g.
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- Written on Windows only (Linux and macOS run the build folder through the RPATH); `-DCSCMAKE_RUNTIME_SCRIPTS=OFF`
+  turns them off, `ON` writes them on any platform.
 
 See [Runtime dependencies](../advanced/runtime-dependencies.md).

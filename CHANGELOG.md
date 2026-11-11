@@ -64,6 +64,13 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   paths, targets, components and their dependencies), always printed. The reference has a "Commands by tier" page,
   the troubleshooting page says when to use which printer.
 
+- Windows: `cs-env.bat` and `cs-env.ps1` in the top build folder (next to the `.sln`), one pair for the whole build:
+  `PATH` with the folders of the DLLs of every executable and shared library and the `cs_target_runtime_environment`
+  folders, and its variables, for a configuration (asked only when the configurations differ). Double-click: a
+  command prompt with the environment; `call cs-env.bat [<config>]`, `cs-env.bat [<config>] -ps` (a PowerShell),
+  `.\cs-env.ps1 [<config>]`; `cs-env.local.bat|.ps1` for additions of your own. `CSCMAKE_RUNTIME_SCRIPTS` `OFF`
+  turns them off, `ON` writes them on any platform.
+
 ### Removed
 
 - `cs_finalize_target` and `cs_finalize_project`: the project and its targets are finalized automatically (see

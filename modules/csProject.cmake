@@ -33,7 +33,8 @@ include(modules/csInternal)
 #   At the end of the same ``CMakeLists.txt`` (:command:`cmake_language(DEFER) <cmake_language>`), csCMake finalizes the
 #   project: the compile profiles of its targets, the targets each one depends on, the Visual Studio debugger
 #   environment, the install rules of its components and ``<namespace>Config.cmake``. Links added afterwards with
-#   :command:`cs_target_link_libraries`, and :command:`cs_target_runtime_environment` calls, fail.
+#   :command:`cs_target_link_libraries`, and :command:`cs_target_runtime_environment` calls, fail. At the end of the top
+#   folder of the build, the run-time environment scripts of the build (:variable:`CSCMAKE_RUNTIME_SCRIPTS`).
 #
 #   ``NAMESPACE``
 #     Prefix of the installed targets (<namespace>::<target>) and package name (``find_package(<namespace>)``).
@@ -150,6 +151,8 @@ macro(cs_initialize_project)
   # finalize the project at the end of this CMakeLists.txt (the namespace is fixed now: deferred call arguments are
   # evaluated when the call runs)
   cmake_language(EVAL CODE "cmake_language(DEFER CALL _cs_finalize_project [[${CSCMAKE_NAMESPACE}]])")
+  # the run-time environment scripts of the build, at the end of its top folder
+  _cs_defer_runtime_scripts(${CSCMAKE_NAMESPACE})
 
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)

@@ -7,6 +7,8 @@ csCMake resolves for each target of the project:
   directly or through other such targets. They give the dependencies between the components of the installed package;
 - its **Visual Studio debugger environment**: the folders of the DLLs it needs, from CMake itself.
 
+At the end of the top folder of the build, the run-time environment scripts gather them for the whole build (below).
+
 ## Project dependencies
 
 Starting from the target, csCMake visits the links of each target of the build it reaches: `LINK_LIBRARIES` and
@@ -43,7 +45,8 @@ own `INSTALL_RPATH` (also from `CMAKE_INSTALL_RPATH`), or with `CSCMAKE_INSTALL_
 The shared libraries of **other** packages are not found from the install folder (an absolute path to another
 package would break when the packages are moved, e.g. built on a CI machine and unpacked elsewhere): an installed
 executable using them runs with `LD_LIBRARY_PATH` / `DYLD_LIBRARY_PATH` / `PATH` set to their folders. On Windows,
-outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packages also need `PATH` in the build folder.
+outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packages also need `PATH` in the build folder:
+`cs-env.bat` / `cs-env.ps1` of the build folder set it (below).
 
 ## Uses
 
@@ -67,6 +70,19 @@ outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packag
   own, csCMake puts its folders in that line, before the project's (the default) or after them:
   `cs_target_runtime_environment(app DEBUGGER_PATH AFTER)`; `DEBUGGER_PATH OFF` leaves the debugger environment of the
   target as the project wrote it.
+- **Run-time environment scripts** (Windows, `CSCMAKE_RUNTIME_SCRIPTS`): at the end of the top folder of the build
+  (`cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR})`, registered by the first `cs_initialize_project`: every
+  csCMake project of the build is complete then), csCMake writes in the top build folder:
+  - `cs-env/<config>.bat` and `.ps1` (`file(GENERATE)`, CRLF), one per configuration of the build: `PATH` = the
+    `cs_target_runtime_environment` folders of every executable and shared / module library, then their
+    `$<TARGET_RUNTIME_DLL_DIRS>`, without duplicates and empty items (`$<REMOVE_DUPLICATES:$<FILTER:...>>`; a `,` of
+    a folder written as `$<COMMA>`), then the `PATH` before; then the variables, once each (the same variable with two
+    values fails), written as given (`'` doubled for PowerShell);
+  - `cs-env.bat` and `cs-env.ps1` (`templates/csTemplateEnv.*.in`, `configure_file`): they choose the configuration
+    (the one given; else the only one, or any when the files of all are identical, compared when the script runs:
+    `fc` / `Get-FileHash`; else an error, or a prompt on double-click), run its file, then `cs-env.local.*` when
+    present. Double-click: Explorer runs `cmd /c ""<script>" "` (`%cmdcmdline%`); then `cmd /k` keeps the window
+    open with the environment.
 - **Component dependencies**: the project dependencies of the targets of a component give the components it depends
   on, and the other csCMake packages of the build it needs (see [Installed packages internals](packages.md)).
 - A target linking a target of the other project makes its component `find_dependency` that package in the installed

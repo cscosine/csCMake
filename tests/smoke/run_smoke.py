@@ -253,6 +253,75 @@ def check_debugger_environment(workspace: Path, variant: str) -> None:
             raise SmokeError(f"{config.cmake}: {runtime} must come before {dlls} in {path!r}")
 
 
+_ENV_CONFIGS = re.compile(r'^set "_cs_env_configs=(.*)"\s*$', re.MULTILINE)
+_ENV_REPORT = re.compile(r"^(CSSMOKE_CONFIG|PATH)=(.*?)\s*$", re.MULTILINE)
+# run a run-time environment script, then print what it set; the arguments of the wrapper go to the script
+_ENV_WRAPPERS = {
+    "cs-env.bat": (
+        '@echo off\ncall "{script}" %*\nif errorlevel 1 exit /b 1\n'
+        "echo CSSMOKE_CONFIG=%CSSMOKE_CONFIG%\necho PATH=%PATH%\n"
+    ),
+    "cs-env.ps1": (
+        "$ErrorActionPreference = 'Stop'\n& '{script}' @args\n"
+        '"CSSMOKE_CONFIG=$env:CSSMOKE_CONFIG"\n"PATH=$env:PATH"\n'
+    ),
+}
+
+
+def run_environment_script(script: Path, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
+    """Run ``script`` (cs-env.bat or cs-env.ps1) with ``args`` through a wrapper that prints CSSMOKE_CONFIG and PATH
+    afterwards (a wrapper, not a command line: cs-env.bat takes a command line naming it for a double-click)."""
+    wrapper = script.parent / f"smoke-{script.name}"
+    wrapper.write_text(_ENV_WRAPPERS[script.name].format(script=script), encoding="utf-8")
+    if script.suffix == ".bat":
+        command = ["cmd", "/d", "/c", str(wrapper), *args]
+    else:
+        command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(wrapper), *args]
+    try:
+        return subprocess.run(command, capture_output=True, text=True, check=False)
+    finally:
+        wrapper.unlink()
+
+
+def check_environment_script_output(script: Path, config: str, output: str) -> None:
+    """The variable of csSmokeSharedApp for ``config``, then PATH: its runtime/<config> folder, then the folder of the
+    DLLs of the build (bin, bin/<config> with a multi-config generator), then the PATH before."""
+    values = dict(_ENV_REPORT.findall(output))
+    if values.get("CSSMOKE_CONFIG") != config:
+        raise SmokeError(f"{script.name} {config}: CSSMOKE_CONFIG={values.get('CSSMOKE_CONFIG')!r}, expected {config}")
+    entries = [entry.replace("\\", "/").lower().rstrip("/") for entry in values.get("PATH", "").split(";")]
+    runtime, bin_dir = f"/runtime/{config}".lower(), (script.parent / "bin").as_posix().lower()
+    if len(entries) < 3 or not entries[0].endswith(runtime) or not entries[1].startswith(bin_dir):
+        raise SmokeError(f"{script.name} {config}: PATH {entries[:3]}..., expected ...{runtime};{bin_dir}...;%PATH%")
+
+
+def check_environment_scripts(workspace: Path, variant: str) -> None:
+    """Windows: the run-time environment scripts of the build folder of csSmokeShared, cs-env.bat and cs-env.ps1, for
+    each configuration they list; without a configuration: the only one, or an error (the configurations give
+    different environments: CSSMOKE_CONFIG=$<CONFIG>)."""
+    scripts = sorted((workspace / "build").rglob("csSmokeShared/cs-env.bat"))
+    if not scripts:
+        raise SmokeError(f"csSmokeShared/cs-env.bat not found in {workspace / 'build'}")
+    match = _ENV_CONFIGS.search(scripts[0].read_text(encoding="utf-8"))
+    configs = match.group(1).split() if match else []
+    print(f"{scripts[0]}: configurations {configs}", flush=True)
+    for name in _ENV_WRAPPERS:
+        script = scripts[0].parent / name
+        for config in configs:
+            result = run_environment_script(script, [config])
+            if result.returncode != 0:
+                raise SmokeError(f"{name} {config}: exit code {result.returncode}\n{result.stdout}{result.stderr}")
+            check_environment_script_output(script, config, result.stdout)
+        result = run_environment_script(script, [])
+        print(f"{name} without configuration: exit code {result.returncode} {result.stderr.strip()}", flush=True)
+        if len(configs) == 1:
+            if result.returncode != 0:
+                raise SmokeError(f"{name}: exit code {result.returncode}\n{result.stdout}{result.stderr}")
+            check_environment_script_output(script, configs[0], result.stdout)
+        elif result.returncode == 0 or "give one" not in result.stderr:
+            raise SmokeError(f"{name} without configuration: expected an error, got {result.returncode}")
+
+
 def line_ending(path: Path) -> str:
     """Return the line ending of ``path`` ("unix" or "windows"); fail on mixed line endings."""
     data = path.read_bytes()
@@ -338,6 +407,9 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
         ):
             with group(f"{project.name}: Visual Studio debugger environment"):
                 check_debugger_environment(workspace, variant)
+        if project.name == "csSmokeShared" and os.name == "nt":
+            with group(f"{project.name}: run-time environment scripts"):
+                check_environment_scripts(workspace, variant)
         if lint:
             with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
