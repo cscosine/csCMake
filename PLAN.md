@@ -198,7 +198,7 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - Steps: inventory table (command, tier, used by csCMake / projects, keep / internal / rename), agree it, then rename
   with MIGRATION entries; reference split by tier (core pages first, a "Utilities" section).
 
-**6c. Debug mechanism.**
+**6c. Debug mechanism. Done 2026-11-11 (6c-1..6c-3; 6c-4 docs with them), review pending.**
 - Today: a cache option `<project>_CSCMAKE_DEBUG` (on/off for the whole configure), `cs_debug_message` prints
   `STATUS` lines, ~116 call sites with ad-hoc text and hand-made indentation (`"  "`), no structure; the generated
   Config has its own `<Ns>_DEBUG`. After 6a about a third of the call sites are gone (D1 the dependency analysis, S3 the component graph);
@@ -209,19 +209,46 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - CMake has the pieces for a mature design (3.17+): log levels (`message(VERBOSE|DEBUG|TRACE)`, `--log-level`,
   `CMAKE_MESSAGE_LOG_LEVEL`), `CMAKE_MESSAGE_INDENT` (a list: append on entry, automatically restored at function
   exit), `CMAKE_MESSAGE_CONTEXT` + `--log-context` (`[myProject.cs_finalize_target.mylib]` prefixes, filterable).
-- Proposal (to agree):
-  * levels: `VERBOSE` what csCMake does (one line per target / component / package), `DEBUG` why (resolved
-    dependencies, components, generated files), `TRACE` everything (properties, paths);
-  * nesting: each `cs_*` command pushes its name on the context and indents its sub-steps (dependency walk shown
-    as a tree);
-  * scoping: the switch is a normal variable read at each message, so it can be set around a call
-    (`set(<project>_CSCMAKE_DEBUG ON)` ... `unset(...)`) or per target (a `CSCMAKE_DEBUG` target property); maybe
-    `cs_debug(PUSH <level>)` / `cs_debug(POP)`;
-  * the same conventions in the generated Config (`find_package` diagnostics: which components, which dependencies);
-  * a review of every message: says what happens and to what, no internal variable names without context;
-  * tests: configure with the switch and check the structure of the output (levels, context, indent).
-- Open question: keep `<project>_CSCMAKE_DEBUG` as the on switch (forcing the level), or rely on `--log-level`
-  only (standard, but global to all projects of the build).
+- Inventory (2026-11-11, after 6d): 42 `cs_debug_message` call sites. 19 of them trace the component algorithms in
+  `csPackageConfig` (populate, cycles, sort: `---- analyze ...`); the others dump arguments (`[cs_target_sources]
+  target x: ${ARGN}`) or name internal functions (`[_cs_parse_additional_configurations] ...`). Errors: 41
+  `FATAL_ERROR`; 8 name an internal function (`[_cs_parse_additional_configurations]`, `[_cs_add_custom_build_configuration]`,
+  `[_cs_get_namespace]`); the finalization's ones say `[csCMake]`. The Config template has its own `<Ns>_DEBUG`
+  (4 messages).
+- Verified with CMake (2026-11-11): `cmake_language(GET_MESSAGE_LOG_LEVEL <var>)` gives the current level (cheap test
+  for S6); a normal `CMAKE_MESSAGE_LOG_LEVEL` set in a `block()` or folder raises the level there only, but
+  `--log-level` on the command line wins over it; `CMAKE_MESSAGE_INDENT` / `CMAKE_MESSAGE_CONTEXT` appended in a
+  function are restored when it returns; `--log-context` prints `[context]` prefixes.
+- Proposal:
+  * **Levels** (CMake's own): `VERBOSE` = what csCMake does, one line per thing (project initialized with its
+    configurations; each target created with its type, profiles, install RPATH; each package found; each component
+    installed; at the finalization each target's dependencies, each component's dependencies, the Config written);
+    `DEBUG` = the details (arguments, imported configuration mapping, copied configuration variables, debugger
+    environment, the project print of `cs_print_project`). The algorithm traces of `csPackageConfig` are dropped
+    (tested code; the result is printed at `VERBOSE`).
+  * **Switch**: CMake's: `--log-level=VERBOSE|DEBUG` for the build, `set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)` in a folder or
+    in a `block()` around a call for a part of it. `<project>_CSCMAKE_DEBUG` and `_cscmake_debug_option` removed.
+  * **Context and indent**: every public command appends `<namespace>` (when known) and its own name to
+    `CMAKE_MESSAGE_CONTEXT` (`--log-context` -> `[myLib.cs_add_library]`), and its sub-steps indent with
+    `CMAKE_MESSAGE_INDENT` (the finalization: one level per target / component). Only inside csCMake's functions: the
+    project's own messages are untouched.
+  * **S6**: work done only for messages (lists joined, the project print) under `_cs_log_level_at_least(<level> out)`
+    (`GET_MESSAGE_LOG_LEVEL`).
+  * **`cs_debug_message`**: removed (a project writes `message(DEBUG ...)`); internal helper `_cs_message(<level>
+    ...)` if one is useful. Public API: 19 commands.
+  * **The Config**: `<Ns>_DEBUG` removed; its messages at `VERBOSE` / `DEBUG` with context `<Ns>Config`
+    (`--log-level=VERBOSE` in the consumer shows which components and packages are loaded).
+  * **C2, errors**: one form `[<public command>] <subject>: <what is wrong>; <what to do>` (no internal names; the
+    finalization: `[csCMake] <namespace>: ...`); reviewed with every message.
+  * **Docs**: troubleshooting "Debugging csCMake" (levels, `block()`, `--log-context`), the printers for one target.
+  * **Tests**: default configure prints no csCMake line; `--log-level=VERBOSE` / `DEBUG` give the expected lines,
+    context and indent; a `block()` raises the level for one call only; the Config at `VERBOSE`.
+- Steps (each reviewed before its commit): 6c-1 levels, switch, context / indent, S6 helper, `cs_debug_message`
+  removed, tests; 6c-2 every message rewritten or dropped, module by module (C2 with it); 6c-3 the Config; 6c-4 docs.
+- Decisions (user, 2026-11-11): all four as proposed: CMake's switch only; `cs_debug_message` removed; the Config's
+  `<Ns>_DEBUG` removed; the `csPackageConfig` traces dropped.
+- (found) The Config gets no message context: `find_dependency` returns from the file when a package is missing, the
+  context would stay in the consumer.
 
 **6d. Automatic finalization (user 2026-11-11; after 6b, before 6c). Done 2026-11-11.**
 - Today: each target ends with `cs_finalize_target(<target>)` (compile profiles, `INSTALL_RPATH`, records its links),
@@ -410,7 +437,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. 6b signed off 2026-11-11 (CI green on `b5a8937`); 6d done (public API 20 commands); next 6c (debug: S6, C2, `cs_debug_message`). |
+| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. 6b signed off 2026-11-11 (CI green on `b5a8937`); 6d done; 6c done (review pending; public API 19 commands). |
 
 ## CHANGELOG
 
@@ -532,3 +559,16 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   apply, nested project finalized first, folder variables taken at creation); late links / runtime environment fail.
 - Host smoke: the 170 installed files and the compile commands of the 28 build trees identical to 6b.
 - 6b signed off: CI green on `b5a8937` (every variant).
+
+### 2026-11-11 (Phase 6c)
+- Decisions: CMake's log levels only; `cs_debug_message`, `<project>_CSCMAKE_DEBUG`, `_cscmake_debug_option`, the
+  Config's `<Ns>_DEBUG` removed; the 19 algorithm traces of `csPackageConfig` dropped.
+- `csDebug`: `_cs_log_level_at_least` (`GET_MESSAGE_LOG_LEVEL`, S6), `_cs_message_context` (namespace once + command);
+  `_cs_print_project(<level> <header>)`. `VERBOSE`: project, targets, packages, components installed, at the
+  finalization each target's dependencies, each component, the Config; `DEBUG`: arguments, sources, links, profiles,
+  configuration mapping and copies, installed files, install RPATH, debugger environment, the project at the end.
+- C2: the 8 errors naming internal functions now name `cs_initialize_project` (configuration syntax rewritten with
+  the form and an example) or `[csCMake]` (no project).
+- Config: `VERBOSE` `<Ns>: component <c>` / unknown component; `DEBUG` `<Ns>: find_dependency(...)`.
+- Tests: levels (none / VERBOSE / DEBUG), context and indent, a `block()`, the Config at each level; docs:
+  troubleshooting "Debugging csCMake", targets, install, lifecycle, packages, contributing.

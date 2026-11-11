@@ -44,7 +44,9 @@ docs/                               this documentation
   without csCMake use too. A wider setting is applied only if the project has not set it, is documented (`:Writes:`,
   user guide), can be turned off, and has a configure test showing that the project's own value wins.
 - Errors: `message(FATAL_ERROR "[<command>] <what is wrong>: <what to do>")`, naming the command the user called.
-- Debug output: `cs_debug_message`, shown with `<project>_CSCMAKE_DEBUG`.
+- Messages: `message(VERBOSE ...)` for what csCMake does (one line per thing), `message(DEBUG ...)` for the details;
+  `_cs_message_context(<command>)` at the start of a public command; work done only for a message under
+  `_cs_log_level_at_least(<level> out)`. Errors: `[<public command>] <subject>: <what is wrong>; <what to do>`.
 - Every module starts with `include_guard(GLOBAL)` and includes the modules it uses.
 - gersemi formats every CMake file (`.gersemirc`: 120 columns, indent 2; the `cs_*` signatures in
   `gersemi/cscmake.py`); `cscmake-lint` checks the rules: lowercase names (`CS101`-`CS103`), a comment block right above

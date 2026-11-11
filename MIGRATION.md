@@ -16,7 +16,7 @@ the sections below cover the older versions.
 | `cs_print_state(<header>)` (debug messages only) | `cs_print_project()` (always printed, plus targets and components) | rename, drop the header argument |
 | `cs_get_namespace` | internal | the namespace given to `cs_initialize_project`, or the variable `CSCMAKE_NAMESPACE` |
 | `cs_get_default_build_configurations` | internal | `cs_get_build_configurations` (all of them) |
-| `cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_find_packages`, `cs_get_component_dependencies`, `cs_get_component_dependencies_sorted`, `cs_get_target_component` | internal | `cs_print_project()`, or the debug messages of the finalization (`-D<project>_CSCMAKE_DEBUG=ON`); the installed `<namespace>Config.cmake` lists the components and their dependencies |
+| `cs_get_components`, `cs_get_default_components`, `cs_get_component_targets`, `cs_get_component_find_packages`, `cs_get_component_dependencies`, `cs_get_component_dependencies_sorted`, `cs_get_target_component` | internal | `cs_print_project()`, or `--log-level=VERBOSE`; the installed `<namespace>Config.cmake` lists the components and their dependencies |
 | `cs_get_target_find_packages`, `cs_get_target_sources_to_install`, `cs_get_target_sources_to_install_absolute_path`, `cs_get_target_project_dependencies`, `cs_get_target_compile_profiles` | internal | `cs_print_target(<target>)` prints the `CSCMAKE_*` target properties they read |
 | `cs_print_project_targets`, `cs_print_components`, `cs_print_target_find_packages`, `cs_print_target_sources_to_install`, `cs_print_all_configurations_variables`, `cs_print_configuration_variables` | internal | `cs_print_target`, `cs_print_project` |
 | a compile profile rule (`cs_add_compile_profile_rule`) applied to C sources too | applied to C++ sources only | `LANGUAGES C CXX` on the rules whose options are valid in C |
@@ -27,6 +27,10 @@ the sections below cover the older versions.
 | `INSTALL_RPATH` set on a target before `cs_finalize_target` kept | set by `cs_add_*`; a value the project sets afterwards replaces it | nothing to do: set it after `cs_add_*`, as before |
 | `cs_print_target` / `cs_print_project` print where they are called | called in a project not finalized yet, they print after the finalization | nothing to do |
 | a link added after `cs_finalize_target` (`target_link_libraries`): error at `cs_finalize_project` | links count until the end of the project; `cs_target_link_libraries` after it (from a parent project) fails | nothing to do |
+| cache option `<project>_CSCMAKE_DEBUG` (`-D<project>_CSCMAKE_DEBUG=ON`) | removed: CMake's log levels | `--log-level=VERBOSE` (what csCMake does) or `DEBUG` (details); for some calls only, `set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)` in a `block()` around them; remove the cache entry |
+| `cs_debug_message(<text>...)` | removed | `message(DEBUG ...)` |
+| `<namespace>_DEBUG` of an installed package (`-D<namespace>_DEBUG=ON`) | removed | `--log-level=VERBOSE` in the consumer |
+| error prefixes `[_cs_parse_additional_configurations]`, `[_cs_add_custom_build_configuration]`, `[_cs_get_namespace]` | `[cs_initialize_project]`, `[csCMake]` | scripts matching them |
 
 # Migrating from v0.1.0 to v0.2.0
 

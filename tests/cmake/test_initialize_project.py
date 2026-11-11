@@ -1,4 +1,4 @@
-"""cs_initialize_project: arguments, variables it sets (and does not leak), cache policy, debug messages."""
+"""cs_initialize_project: arguments, variables it sets (and does not leak), cache policy, messages."""
 
 from __future__ import annotations
 
@@ -126,12 +126,42 @@ cstest_report(runtime_output "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
     assert result.reports["runtime_output"] == out
 
 
-@pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
-def test_debug_messages_only_with_the_project_option(tmp_path: Path, debug: bool) -> None:
-    result = configure(tmp_path, INIT + LIB, args=["-Dcstest_CSCMAKE_DEBUG=ON"] if debug else [])
+@pytest.mark.parametrize(
+    ("level", "verbose", "debug"),
+    [(None, False, False), ("VERBOSE", True, False), ("DEBUG", True, True)],
+    ids=["default", "verbose", "debug"],
+)
+def test_messages_follow_the_log_level(tmp_path: Path, level: str | None, verbose: bool, debug: bool) -> None:
+    """VERBOSE: what csCMake does; DEBUG: the details. Nothing at the default level."""
+    result = configure(tmp_path, INIT + LIB, args=[f"--log-level={level}"] if level else [])
 
     assert result.returncode == 0, result.output
-    assert ("[cs_target_link_libraries]" in result.output) == debug
+    assert ("cstest: target lib (INTERFACE_LIBRARY)" in result.output) == verbose
+    assert ("cstest: lib links INTERFACE cstest::cscmake_base_include" in result.output) == debug
+
+
+def test_the_context_names_the_project_and_the_command(tmp_path: Path) -> None:
+    """--log-context: [<namespace>.<command>]; sub-steps indented."""
+    result = configure(tmp_path, INIT + LIB, args=["--log-level=DEBUG", "--log-context"])
+
+    assert result.returncode == 0, result.output
+    lines = result.output.splitlines()
+    assert "-- [cstest.cs_add_library] cstest: target lib (INTERFACE_LIBRARY)" in lines
+    assert "-- [cstest.cs_add_library]   default compile profiles of the folder: cscmake_default" in lines
+    assert any(line.startswith("-- [cstest.finalize] cstest: finalizing the project") for line in lines)
+
+
+def test_a_block_shows_the_messages_of_some_calls_only(tmp_path: Path) -> None:
+    body = (
+        INIT
+        + "cs_add_library(quiet INTERFACE)\n"
+        + "block()\n  set(CMAKE_MESSAGE_LOG_LEVEL VERBOSE)\n  cs_add_library(shown INTERFACE)\nendblock()\n"
+    )
+    result = configure(tmp_path, body)
+
+    assert result.returncode == 0, result.output
+    assert "cstest: target shown (INTERFACE_LIBRARY)" in result.output
+    assert "target quiet" not in result.output
 
 
 SUBPROJECT = """
@@ -149,11 +179,11 @@ cs_install_target(h COMPONENT h)
 def test_header_install_path_is_relative_to_the_project_folder(tmp_path: Path) -> None:
     """A csCMake project added with add_subdirectory installs its headers relative to its own folder."""
     files = {"sub/CMakeLists.txt": SUBPROJECT, "sub/lib/CMakeLists.txt": SUBPROJECT_LIB, "sub/lib/H.hpp": ""}
-    result = configure(tmp_path, "add_subdirectory(sub)\n", files, args=["-Dsub_CSCMAKE_DEBUG=ON"])
+    result = configure(tmp_path, "add_subdirectory(sub)\n", files, args=["--log-level=DEBUG"])
 
     assert result.returncode == 0, result.output
-    line = next(x for x in result.output.splitlines() if "[cs_install_target] install" in x and "H.hpp" in x)
-    assert line.rstrip().endswith("to include/lib/"), line
+    line = next(x for x in result.output.splitlines() if "H.hpp -> " in x)
+    assert line.rstrip().endswith("-> include/lib/"), line
 
 
 def test_prefix_and_module_path_head_and_tail(tmp_path: Path) -> None:

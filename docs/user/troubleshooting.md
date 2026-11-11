@@ -4,12 +4,92 @@ The errors csCMake reports, what they mean and what to do. Every csCMake message
 reports it, e.g. `[cs_initialize_project]`; `[csCMake]` when the project is finalized, at the end of the
 `CMakeLists.txt` of `cs_initialize_project`.
 
-To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_DEBUG=ON` (`<project>` is the
-`project()` name of `cs_initialize_project`); for an installed package being loaded, `-D<namespace>_DEBUG=ON`.
+To see what csCMake does, see [Debugging csCMake](#debugging-cscmake).
+
+## Debugging csCMake
+
+csCMake says what it does through CMake's own log levels; by default it prints nothing.
+
+- `VERBOSE`: what it does, one line per thing: the project, each target, package found and component, and at the end
+  of the project the dependencies of each target and component;
+- `DEBUG`: also the details: arguments, sources, links, compile profiles, installed files, install RPATH, run-time
+  environment, and the whole project at the end (as `cs_print_project`).
+
+### The whole build
+
+Add `--log-level` to the configure command:
+
+```bash
+cmake --preset <preset> --log-level=VERBOSE
+```
+
+For a project `myApp` with a library `core` and an executable `app`:
+
+```text
+-- myApp: project myApp 1.0.0, C++ 20, configurations Debug, Release
+-- myApp: target myApp_cscmake_base_include (INTERFACE_LIBRARY)
+-- myApp: myApp_cscmake_base_include installed in the component cscmake_common (default)
+-- myApp: target core (STATIC_LIBRARY)
+-- myApp: core installed in the component core (default)
+-- myApp: target app (EXECUTABLE)
+-- myApp: app installed in the component app
+-- myApp: finalizing the project (end of <folder>/CMakeLists.txt)
+--   core depends on myApp_cscmake_base_include
+--   app depends on core, myApp_cscmake_base_include
+--   component cscmake_common: targets myApp_cscmake_base_include
+--   component core: targets core; depends on cscmake_common
+--   component app: targets app; depends on cscmake_common, core
+--   myAppConfig.cmake installed in lib/cmake/myApp
+```
+
+`--log-level=DEBUG` adds the details. The level applies to everything CMake configures, other projects included.
+
+### Some calls only
+
+To see the details of one target and nothing else, put its calls in a `block()` that sets the level, in the
+`CMakeLists.txt` of the project, and configure as usual (without `--log-level`, which would win over it):
+
+```cmake
+cs_add_library(core STATIC)
+cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
+
+block()
+  set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)    # only until endblock()
+  cs_add_executable(app main.cpp)
+  cs_target_link_libraries(app PRIVATE core)
+endblock()
+```
+
+```text
+-- myApp: target app (EXECUTABLE)
+--   default compile profiles of the folder: cscmake_default
+--   install RPATH $ORIGIN/../lib
+-- myApp: app links PRIVATE core
+```
+
+`block()` ... `endblock()` (CMake 3.25) is a scope of its own, like the body of a function: a variable set inside it
+is restored at `endblock()`, so the level goes back to the default after the calls. The same `set()` at the top of a
+sub-folder's `CMakeLists.txt` shows the messages of that folder and the ones below it. Remove it when done.
+
+### Which command wrote a line
+
+`--log-context` starts each line with `[<namespace>.<command>]`:
+
+```text
+-- [myApp.cs_add_library] myApp: target core (STATIC_LIBRARY)
+-- [myApp.cs_install_target] myApp: core installed in the component core (default)
+-- [myApp.finalize]   app depends on core, myApp_cscmake_base_include
+```
+
+### An installed package
+
+The `<namespace>Config.cmake` of an installed package follows the level of the consumer: `--log-level=VERBOSE` in
+the project that calls `find_package(myApp)` prints `myApp: component <component>` for each component it loads,
+`DEBUG` also its `find_dependency(...)` calls.
 
 ## Inspecting a target or the project
 
-Two commands print what csCMake knows, whatever the debug switch. Called anywhere in the project, they print at the
+Two commands print what csCMake knows, whatever the log level. Called anywhere in the project, they print at the
 end of the `CMakeLists.txt` of `cs_initialize_project`, after the project is finalized (some values are resolved
 there); remove them afterwards:
 
@@ -62,7 +142,7 @@ cs_print_project()
 : A nested csCMake project lists a configuration the first project of the build does not have, or defines it
   differently. See [Build configurations](build-configurations.md#several-projects-in-one-build).
 
-`DEFAULT_CONFIG_MAPPED need to specify values as ...`, `CUSTOM_CONFIG need to specify values as ...`
+`DEFAULT_CONFIG_MAPPED <config> MAPPED_TO ...`, `CUSTOM_CONFIG <config> BASED_ON ...`, `CUSTOM_CONFIG <config>: ... expected`
 : The form is `DEFAULT_CONFIG_MAPPED <config> MAPPED_TO "<config>,<fallback>,"` and
   `CUSTOM_CONFIG <name> BASED_ON "<config>,<fallback>," POSTFIX "<postfix>"`.
 

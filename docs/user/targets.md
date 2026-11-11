@@ -115,9 +115,8 @@ Windows, `/openmp` and the `vcomp` library. The installed package finds OpenMP f
 too: `PUBLIC` and `INTERFACE`, and `PRIVATE` on a static library. Clang on Linux needs the OpenMP runtime of LLVM
 (`libomp-dev` on Ubuntu).
 
-## Debug messages
+## Messages
 
-Every csCMake project has the cache option `<project>_CSCMAKE_DEBUG` (`<project>` is the `project()` name of
-`cs_initialize_project`): `-DmyApp_CSCMAKE_DEBUG=ON` prints what csCMake does for it (its targets, components and
-configurations among them). To inspect one target or the project, see
+`cmake --log-level=VERBOSE` (or `DEBUG`) prints what csCMake does: its targets, components and configurations among
+them; see [Debugging csCMake](troubleshooting.md#debugging-cscmake). To inspect one target or the project, see
 [Troubleshooting](troubleshooting.md#inspecting-a-target-or-the-project).

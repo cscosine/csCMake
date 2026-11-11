@@ -31,7 +31,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | `modules/csPackageConfig.cmake` | Component dependencies (cycles, sorting), `<Ns>Config.cmake` generation from the template. |
 | `modules/csCheckInstalledHeaders.cmake` | `cs_target_check_installed_headers`: every installed header compiled on its own. |
 | `modules/csCompileProfiles.cmake` / `csCompileProfilesShipped.cmake` | Compile profiles: the mechanism / the `cscmake_*` profiles. |
-| `modules/csDebug.cmake` | `cs_debug_message`, `cs_print_target`, `cs_print_project`. |
+| `modules/csDebug.cmake` | log level helpers (`_cs_log_level_at_least`, `_cs_message_context`), `cs_print_target`, `cs_print_project`. |
 | `modules/csInternal.cmake` | Private helpers (lists, properties, paths); no reference page. |
 | `modules/integrations/csOpenMP.cmake` | `cs_target_use_openmp` (integrations with third-party tools and libraries). |
 | `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |

@@ -38,4 +38,4 @@ Troubleshooting: when something does not behave as expected
 * a target (its component, headers, packages, profiles, run-time environment, dependencies, CMake properties):
   :command:`cs_print_target`
 * the project (configurations, search paths, targets, components and their dependencies): :command:`cs_print_project`
-* the debug messages of csCMake (``-D<project>_CSCMAKE_DEBUG=ON``): :command:`cs_debug_message`
+* what csCMake does: ``cmake --log-level=VERBOSE`` (or ``DEBUG``), see :doc:`csDebug`

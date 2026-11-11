@@ -140,22 +140,18 @@ cs_install_target(ta COMPONENT a)
     assert "[csCMake] cyclic dependency between the components: a -> b -> a" in message
 
 
-@pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
-def test_the_debug_option_of_a_package_adds_no_cache_entry(tmp_path: Path, prefix: Path, debug: bool) -> None:
-    body = """
-find_package(B COMPONENTS core REQUIRED CONFIG)
-get_property(cached CACHE B_DEBUG PROPERTY TYPE SET)
-cstest_report(cached "${cached}")
-"""
-    args = [f"-DCMAKE_PREFIX_PATH={prefix.as_posix()}"]
-    if debug:
-        body = "set(B_DEBUG ON)\n" + body
+@pytest.mark.parametrize("level", [None, "VERBOSE", "DEBUG"])
+def test_the_package_reports_what_it_loads_at_the_verbose_level(
+    tmp_path: Path, prefix: Path, level: str | None
+) -> None:
+    """VERBOSE: the components loaded; DEBUG: also the packages they find. Nothing by default."""
+    args = [f"-DCMAKE_PREFIX_PATH={prefix.as_posix()}"] + ([f"--log-level={level}"] if level else [])
 
-    result = configure(tmp_path / "consumer", body, args=args)
+    result = configure(tmp_path / "consumer", "find_package(B COMPONENTS x REQUIRED CONFIG)\n", args=args)
 
     assert result.returncode == 0, result.output
-    assert result.reports["cached"] == "0"
-    assert ("[BConfig] entry point" in result.output) == debug
+    assert ("B: component x" in result.output) == (level is not None)
+    assert ("B: find_dependency(A COMPONENTS core REQUIRED CONFIG)" in result.output) == (level == "DEBUG")
 
 
 def test_many_paths_between_components_are_checked_once(tmp_path: Path) -> None:

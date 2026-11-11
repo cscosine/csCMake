@@ -41,7 +41,9 @@ include(modules/csDebug)
 #   :Reads: :variable:`CMAKE_CURRENT_SOURCE_DIR`
 #   :Writes: :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL`, :prop_tgt:`CSCMAKE_SOURCES_TO_INSTALL_ABSOLUTE`
 function(cs_target_sources target_name)
-  cs_debug_message("[cs_target_sources] target ${target_name}: ${ARGN}")
+  _cs_message_context(cs_target_sources)
+  list(JOIN ARGN " " sources)
+  message(DEBUG "${CSCMAKE_NAMESPACE}: ${target_name} sources ${sources}")
 
   # split arguments in groups according to keywords
   set(

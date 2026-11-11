@@ -8,6 +8,7 @@
 # own: its state is in the global properties below.
 
 include_guard(GLOBAL)
+include(modules/csDebug)
 include(modules/csInstall)
 
 include(CMakePackageConfigHelpers)
@@ -48,15 +49,9 @@ endfunction()
 # * global property CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES
 function(_cs_populate_component_dependencies export_name)
   _cs_get_component_targets(${export_name} targets_list)
-  cs_debug_message(
-    "[_cs_populate_component_dependencies] EXPORT ${export_name} has the following targets: ${targets_list}"
-  )
 
   foreach(target_name ${targets_list})
     _cs_get_target_project_dependencies(${target_name} target_deps)
-    cs_debug_message(
-      "[_cs_populate_component_dependencies] -- target ${target_name} depends on internal targets ${target_deps}"
-    )
 
     foreach(target_dep_name ${target_deps})
       _cs_get_target_component(${target_dep_name} export_dep_name)
@@ -69,24 +64,16 @@ function(_cs_populate_component_dependencies export_name)
         )
         continue()
       endif()
-      cs_debug_message(
-        "[_cs_populate_component_dependencies] ---- subtarget ${target_dep_name} is exported to ${export_dep_name}"
-      )
       if(NOT "${export_dep_name}" STREQUAL "${export_name}")
-        cs_debug_message("[_cs_populate_component_dependencies] ---- add ${export_dep_name}")
         _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES
                                                 ${export_dep_name}
         )
       else()
-        cs_debug_message("[_cs_populate_component_dependencies] ---- subtarget is in my same export set")
       endif()
     endforeach()
   endforeach()
 
   _cs_get_component_dependencies(${export_name} dependent_exports)
-  cs_debug_message(
-    "[_cs_populate_component_dependencies] final result, EXPORT ${export_name} depends on EXPORTS ${dependent_exports}"
-  )
 endfunction()
 
 # Depth-first visit of the components export_name depends on (visited_list: the current path); fail on a cycle. A
@@ -96,10 +83,6 @@ endfunction()
 #
 # * global property _CSCMAKE_<namespace>_ACYCLIC_COMPONENTS: the components checked
 function(_cs_check_component_cycles_recursive export_name visited_list)
-  cs_debug_message(
-    "[_cs_check_component_cycles_recursive] -- for export ${export_name} with visited list = ${visited_list}"
-  )
-
   if("${export_name}" IN_LIST visited_list)
     string(REPLACE ";" " -> " cycle "${visited_list};${export_name}")
     message(
@@ -117,10 +100,6 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
 
   _cs_get_component_dependencies(${export_name} next_elements_list)
   foreach(next_element ${next_elements_list})
-    cs_debug_message(
-      "[_cs_check_component_cycles_recursive] -- for export ${export_name} call recursive on ${next_element} "
-      "with visited list = ${visited_list}"
-    )
     _cs_check_component_cycles_recursive(${next_element} "${visited_list}")
   endforeach()
   set_property(GLOBAL APPEND PROPERTY _CSCMAKE_${CSCMAKE_NAMESPACE}_ACYCLIC_COMPONENTS ${export_name})
@@ -128,8 +107,6 @@ endfunction()
 
 # Fail if the dependencies between the components reachable from export_name contain a cycle.
 function(_cs_check_component_cycles export_name)
-  cs_debug_message("[_cs_check_component_cycles] -- for export ${export_name}")
-
   set(visited_list "")
   _cs_check_component_cycles_recursive(${export_name} "${visited_list}")
 endfunction()
@@ -141,15 +118,10 @@ endfunction()
 # * global property CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED
 function(_cs_sort_component_dependencies export_name)
   _cs_get_component_dependencies(${export_name} dependent_exports_unsorted)
-  cs_debug_message("[_cs_sort_component_dependencies] -- for export ${export_name} sort ${dependent_exports_unsorted}")
 
   # initialize the iterative list of target to analyze
   set(dependent_exports_list ${dependent_exports_unsorted})
   list(LENGTH dependent_exports_list dependent_exports_list_size)
-
-  cs_debug_message("[_cs_sort_component_dependencies] -- initial list has ${dependent_exports_list_size} elements: "
-                   "${dependent_exports_list}"
-  )
 
   set(dependent_exports_sorted "")
   # loop
@@ -161,9 +133,6 @@ function(_cs_sort_component_dependencies export_name)
 
     # get the dependencies of the current element
     _cs_get_component_dependencies(${current_element} current_element_dependent_exports)
-    cs_debug_message("[_cs_sort_component_dependencies] ---- analyze ${current_element}, it depends on: "
-                     "${current_element_dependent_exports}"
-    )
 
     # clean up and keep only the one not yet satisfied
     set(current_element_dependent_exports_clean "")
@@ -174,30 +143,14 @@ function(_cs_sort_component_dependencies export_name)
     endforeach()
 
     list(LENGTH current_element_dependent_exports_clean current_element_dependent_exports_clean_size)
-    cs_debug_message(
-      "[_cs_sort_component_dependencies] ---- analyze ${current_element}, cleaned up list of unsatisfied "
-      "dependency has ${current_element_dependent_exports_clean_size} elements: "
-      "${current_element_dependent_exports_clean}"
-    )
 
     # finally add the element itself if is a leaf, or recursive add its dependencies and itself later
     if(current_element_dependent_exports_clean_size EQUAL 0)
-      cs_debug_message(
-        "[_cs_sort_component_dependencies] ------ add ${current_element} to sorted list, is a leaf (no other "
-        "dependencies)"
-      )
       _cs_list_add_unique_value(dependent_exports_sorted ${current_element})
     else()
       foreach(temp_element ${current_element_dependent_exports_clean})
-        cs_debug_message(
-          "[_cs_sort_component_dependencies] ------ add ${temp_element} to the elements to be re-evaluated"
-        )
         _cs_list_add_unique_value(dependent_exports_list ${temp_element})
       endforeach()
-      cs_debug_message(
-        "[_cs_sort_component_dependencies] ------ add the original ${current_element} to the elements to be "
-        "re-evaluated"
-      )
       _cs_list_add_unique_value(dependent_exports_list ${current_element})
     endif()
 
@@ -205,11 +158,35 @@ function(_cs_sort_component_dependencies export_name)
     list(LENGTH dependent_exports_list dependent_exports_list_size)
   endwhile()
 
-  cs_debug_message("[_cs_sort_component_dependencies] -- sort result: ${dependent_exports_sorted}")
   set_property(
     GLOBAL
     PROPERTY CSCMAKE_${CSCMAKE_NAMESPACE}_COMPONENT_${export_name}_DEPENDENCIES_SORTED "${dependent_exports_sorted}"
   )
+endfunction()
+
+# Report each component of the project (VERBOSE): its targets, the components it depends on, the packages it finds.
+function(_cs_report_components)
+  _cs_log_level_at_least(VERBOSE shown)
+  if(NOT shown)
+    return()
+  endif()
+  _cs_get_components(components)
+  foreach(component IN LISTS components)
+    _cs_get_component_targets(${component} targets)
+    _cs_get_component_dependencies_sorted(${component} dependencies)
+    _cs_get_component_find_packages(${component} packages)
+    list(JOIN targets ", " targets)
+    list(JOIN dependencies ", " dependencies)
+    list(JOIN packages ", " packages)
+    set(line "component ${component}: targets ${targets}")
+    if(dependencies)
+      string(APPEND line "; depends on ${dependencies}")
+    endif()
+    if(packages)
+      string(APPEND line "; finds ${packages}")
+    endif()
+    message(VERBOSE "${line}")
+  endforeach()
 endfunction()
 
 # Install the components of the project in the namespace export_namespace: their <component>Targets.cmake, the
@@ -237,12 +214,6 @@ function(_cs_finalize_install export_namespace)
   # per each export, prepare a list of the export it depends
   foreach(export_name ${exports})
     _cs_populate_component_dependencies(${export_name})
-
-    # retrieve for debug purposes
-    _cs_get_component_dependencies(${export_name} dependent_exports)
-    cs_debug_message(
-      "[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (unsorted) ${dependent_exports}"
-    )
   endforeach()
 
   # fail if cyclic loops in exports are detected
@@ -254,10 +225,9 @@ function(_cs_finalize_install export_namespace)
   foreach(export_name ${exports})
     _cs_sort_component_dependencies(${export_name})
     _cs_get_component_dependencies_sorted(${export_name} ${export_name}_DEPENDENT_EXPORTS_SORTED)
-    cs_debug_message("[_cs_finalize_install] -- EXPORT ${export_name} depends on other exports (sorted) "
-                     "${${export_name}_DEPENDENT_EXPORTS_SORTED}"
-    )
   endforeach()
+  _cs_report_components()
+  message(VERBOSE "${export_namespace}Config.cmake installed in ${install_configdir}")
 
   # the components each component depends on: <namespace>_<component>_DEPENDENCIES in the Config
   set(injected_export_dependencies "")
@@ -275,7 +245,6 @@ function(_cs_finalize_install export_namespace)
 
   # the find_dependency() calls of each component (body of <namespace>_find_dependency_for_component in the Config)
   set(injected_find_packages_code "")
-  set(debug_message "${export_namespace_sanitized}_debug_message")
   foreach(export_name ${exports})
     _cs_get_component_find_packages(${export_name} find_packages_list)
     if(find_packages_list)
@@ -283,7 +252,7 @@ function(_cs_finalize_install export_namespace)
       foreach(find_args ${find_packages_list})
         string(
           APPEND injected_find_packages_code
-          "      ${debug_message}(\"[${export_namespace}Config] find_dependency(${find_args})\")\n"
+          "      message(DEBUG \"${export_namespace}: find_dependency(${find_args})\")\n"
           "      find_dependency(${find_args})\n"
         )
       endforeach()

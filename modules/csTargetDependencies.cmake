@@ -159,7 +159,10 @@ function(_cs_set_project_dependencies target_name)
       endif()
     endforeach()
   endwhile()
-  cs_debug_message("[csCMake] ${target_name} depends on the targets: ${dependencies}")
+  if(dependencies)
+    list(JOIN dependencies ", " text)
+    message(VERBOSE "${target_name} depends on ${text}")
+  endif()
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES "${dependencies}")
 endfunction()
 
@@ -210,6 +213,7 @@ function(_cs_set_vs_debugger_environment target_name)
 
   _cs_add_debugger_path("${environment}" ${mode} "${dirs}" environment)
   set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_ENVIRONMENT "${environment}")
+  message(DEBUG "${target_name}: Visual Studio debugger environment ${environment}")
 endfunction()
 
 # Set mode_out to the CSCMAKE_DEBUGGER_PATH of target_name (BEFORE when not set); fail on another value than BEFORE,

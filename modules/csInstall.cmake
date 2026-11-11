@@ -10,6 +10,7 @@
 # ^^^^^^^^
 
 include_guard(GLOBAL)
+include(modules/csDebug)
 include(modules/csFindPackage)
 include(modules/csInternal)
 include(modules/csBaseInclude)
@@ -80,8 +81,14 @@ function(cs_install_target target_name)
       "${ARGN} (see MIGRATION.md)"
     )
   endif()
+  _cs_message_context(cs_install_target)
   set(export_name ${arg_COMPONENT})
-  cs_debug_message("[cs_install_target] target ${target_name} export to ${export_name}")
+  if(arg_DEFAULT)
+    message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} installed in the component ${export_name} (default)")
+  else()
+    message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} installed in the component ${export_name}")
+  endif()
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
 
   # set the CSCMAKE_COMPONENT property
   set_target_properties(${target_name} PROPERTIES CSCMAKE_COMPONENT ${export_name})
@@ -111,7 +118,7 @@ function(cs_install_target target_name)
     set(dest_path ${install_folder_expression}/${destination_folder}/${file_dir})
 
     install(FILES ${source_path} DESTINATION ${dest_path})
-    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}")
+    message(DEBUG "${source_path} -> ${dest_path}")
   endforeach()
 
   # retrieve the source files that have to be installed from a absolute path
@@ -120,7 +127,7 @@ function(cs_install_target target_name)
     set(source_path ${file})
     set(dest_path ${install_folder_expression}/${destination_folder}/)
     install(FILES ${source_path} DESTINATION ${dest_path})
-    cs_debug_message("-- [cs_install_target] install ${source_path} to ${dest_path}")
+    message(DEBUG "${source_path} -> ${dest_path}")
   endforeach()
 
   # install effectively the target
@@ -182,7 +189,7 @@ function(_cs_set_install_rpath target_name)
   else()
     set(rpath "${origin}")
   endif()
-  cs_debug_message("[csCMake] ${target_name} INSTALL_RPATH ${rpath}")
+  message(DEBUG "install RPATH ${rpath}")
   set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${rpath}")
 endfunction()
 

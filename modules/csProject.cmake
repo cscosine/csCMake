@@ -66,26 +66,18 @@ include(modules/csInternal)
 #
 #   :Reads: :variable:`CSCMAKE_PREFIX_PATH_HEAD`, :variable:`CSCMAKE_PREFIX_PATH_TAIL`,
 #     :variable:`CSCMAKE_MODULE_PATH_HEAD`, :variable:`CSCMAKE_MODULE_PATH_TAIL`
-#   :Writes: :variable:`<project>_CSCMAKE_DEBUG`, :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_SOURCE_DIR`,
+#   :Writes: :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_SOURCE_DIR`,
 #     :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`,
 #     :variable:`CSCMAKE_VERSION_COMPATIBILITY`, :variable:`CMAKE_CXX_STANDARD`,
 #     :variable:`CMAKE_CXX_STANDARD_REQUIRED`, :variable:`CMAKE_CXX_EXTENSIONS`, :variable:`CMAKE_PREFIX_PATH`,
 #     :variable:`CMAKE_MODULE_PATH`, :variable:`CMAKE_RUNTIME_OUTPUT_DIRECTORY`,
 #     :variable:`CMAKE_LIBRARY_OUTPUT_DIRECTORY`, :variable:`CMAKE_ARCHIVE_OUTPUT_DIRECTORY`,
-#     :variable:`CMAKE_EXPORT_COMPILE_COMMANDS`, :variable:`_cscmake_debug_option`,
+#     :variable:`CMAKE_EXPORT_COMPILE_COMMANDS`,
 #     :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`, :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`,
 #     :prop_tgt:`VS_DEBUGGER_ENVIRONMENT`
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
   # temporaries are _cs_init_* and are unset at the end.
-
-  # debug messages of csCMake for this project: -D<project>_CSCMAKE_DEBUG=ON
-  option(${PROJECT_NAME}_CSCMAKE_DEBUG "csCMake: print the csCMake debug messages of ${PROJECT_NAME}" OFF)
-  set(_cscmake_debug_option ${PROJECT_NAME}_CSCMAKE_DEBUG)
-  cs_debug_message("cs_initialize_project ${ARGN}")
-  # the presets give CMAKE_C_COMPILER for the projects with C sources: read here, so that a C++-only project does not
-  # get the "Manually-specified variables were not used by the project" warning
-  cs_debug_message("cs_initialize_project C compiler (presets): ${CMAKE_C_COMPILER}")
 
   if(NOT PROJECT_VERSION)
     message(
@@ -141,12 +133,6 @@ macro(cs_initialize_project)
   # check validity of requested config (if single generator, or set the build types to the requested configs)
   _cs_process_configurations()
 
-  # print information on the csCMake configuration
-  _cs_debug_enabled(_cs_init_debug)
-  if(_cs_init_debug)
-    _cs_print_project("cs_initialize_project")
-  endif()
-
   # join CMAKE_PREFIX_PATH CSCMAKE_<PREFIX|MODULE>_PATH_<HEAD|TAIL>: -D, or the environment variables of the same name
   # through the presets (unquoted: empty parts are dropped)
   set(CMAKE_PREFIX_PATH ${CSCMAKE_PREFIX_PATH_HEAD} ${CMAKE_PREFIX_PATH} ${CSCMAKE_PREFIX_PATH_TAIL})
@@ -157,6 +143,8 @@ macro(cs_initialize_project)
 
   _cs_set_generator_variables()
 
+  _cs_report_initialized()
+
   _cs_add_default_targets()
 
   # finalize the project at the end of this CMakeLists.txt (the namespace is fixed now: deferred call arguments are
@@ -166,8 +154,26 @@ macro(cs_initialize_project)
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
   unset(_cs_init_cxx_standard)
-  unset(_cs_init_debug)
 endmacro()
+
+# Report the initialized project: VERBOSE one line, DEBUG its configurations.
+function(_cs_report_initialized)
+  _cs_message_context(cs_initialize_project)
+  cs_get_build_configurations(configs)
+  list(JOIN configs ", " configs)
+  message(
+    VERBOSE
+    "${CSCMAKE_NAMESPACE}: project ${PROJECT_NAME} ${PROJECT_VERSION}, C++ ${CMAKE_CXX_STANDARD}, configurations "
+    "${configs}"
+  )
+  # the presets give CMAKE_C_COMPILER for the projects with C sources: read here, so that a C++-only project does not
+  # get the "Manually-specified variables were not used by the project" warning
+  message(DEBUG "C compiler (presets): ${CMAKE_C_COMPILER}")
+  _cs_log_level_at_least(DEBUG debug)
+  if(debug)
+    _cs_print_project_configurations(DEBUG)
+  endif()
+endfunction()
 
 # Set the C++ standard of the project (in the scope of the caller, cs_initialize_project: a macro): required and without
 # extensions, unless the project chose otherwise.
@@ -195,7 +201,7 @@ macro(_cs_set_generator_variables)
   # Ninja and Ninja Multi-Config; CMake creates the cache entry empty, a value (-D, or the environment variable of the
   # same name) is the choice of the user
   if("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL "" AND CMAKE_GENERATOR MATCHES "^Ninja")
-    cs_debug_message("[csCMake] set CMAKE_EXPORT_COMPILE_COMMANDS ON")
+    message(DEBUG "${CSCMAKE_NAMESPACE}: CMAKE_EXPORT_COMPILE_COMMANDS ON (Ninja)")
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
   endif()
 endmacro()
@@ -207,7 +213,7 @@ endmacro()
 # * variable CSCMAKE_NAMESPACE
 function(_cs_get_namespace output_variable_name)
   if(NOT CSCMAKE_NAMESPACE)
-    message(FATAL_ERROR "[_cs_get_namespace] no namespace: call cs_initialize_project(NAMESPACE ...) first")
+    message(FATAL_ERROR "[csCMake] no project: call cs_initialize_project(NAMESPACE ...) before the csCMake commands")
   endif()
   set(${output_variable_name} ${CSCMAKE_NAMESPACE} PARENT_SCOPE)
 endfunction()
@@ -220,7 +226,10 @@ endfunction()
 #
 # * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>
 function(_cs_finalize_project namespace)
+  _cs_message_context(finalize)
   set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace} TRUE)
+  message(VERBOSE "${namespace}: finalizing the project (end of ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)")
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
 
   cs_get_project_targets(targets)
   foreach(target_name IN LISTS targets)
@@ -229,10 +238,11 @@ function(_cs_finalize_project namespace)
   _cs_finalize_runtime_dependencies()
   _cs_finalize_install(${namespace})
 
-  # debug: the project as finalized (targets, components and their dependencies)
-  _cs_debug_enabled(debug)
+  # the project as finalized (targets, components and their dependencies)
+  list(POP_BACK CMAKE_MESSAGE_INDENT)
+  _cs_log_level_at_least(DEBUG debug)
   if(debug)
-    _cs_print_project("finalized")
+    _cs_print_project(DEBUG "finalized")
   endif()
 endfunction()
 
@@ -296,11 +306,6 @@ endfunction()
 #   The compatibility of the installed package version (``VERSION_COMPATIBILITY`` of :command:`cs_initialize_project`,
 #   ``SameMajorVersion`` by default), read when the project is finalized, for ``<namespace>ConfigVersion.cmake``.
 #
-# .. variable:: <project>_CSCMAKE_DEBUG
-#
-#   Cache option: print the csCMake debug messages of the project ``<project>`` (``PROJECT_NAME`` at
-#   :command:`cs_initialize_project`). ``OFF`` by default.
-#
 # .. variable:: CSCMAKE_PREFIX_PATH_HEAD
 #
 #   Paths added before :variable:`CMAKE_PREFIX_PATH` by :command:`cs_initialize_project` (``-D``, or the environment
@@ -317,10 +322,6 @@ endfunction()
 # .. variable:: CSCMAKE_MODULE_PATH_TAIL
 #
 #   Paths added after :variable:`CMAKE_MODULE_PATH`.
-#
-# .. variable:: _cscmake_debug_option
-#
-#   Internal: the name of the debug option of the project (:variable:`<project>_CSCMAKE_DEBUG`).
 #
 # Global properties
 # ^^^^^^^^^^^^^^^^^

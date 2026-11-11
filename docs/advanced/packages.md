@@ -57,4 +57,4 @@ When loaded by `find_package(<namespace> [COMPONENTS ...])`, it:
 3. unsets its own work variables: everything it sets other than the public variables starts with
    `<namespace>_` / `_<namespace>_`.
 
-The namespace with `-` replaced by `_` names its debug switch (`<namespace>_DEBUG`, a plain variable) and its helper function and macro.
+The namespace with `-` replaced by `_` names its helper macro and its work variables.

@@ -30,7 +30,9 @@ include(modules/csDebug)
 #
 #   :Reads: :prop_tgt:`_CSCMAKE_FINALIZED`
 function(cs_target_link_libraries target_name)
-  cs_debug_message("[cs_target_link_libraries] ${target_name} ${ARGN}")
+  _cs_message_context(cs_target_link_libraries)
+  list(JOIN ARGN " " links)
+  message(DEBUG "${CSCMAKE_NAMESPACE}: ${target_name} links ${links}")
   set(checked "${target_name}")
   if(TARGET "${target_name}")
     get_target_property(aliased "${target_name}" ALIASED_TARGET)

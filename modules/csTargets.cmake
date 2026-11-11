@@ -43,6 +43,7 @@ include(modules/csInternal)
 #   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`
 #   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`, :prop_tgt:`INSTALL_RPATH`
 function(cs_add_library target_name)
+  _cs_message_context(cs_add_library)
   add_library("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
@@ -68,6 +69,7 @@ endfunction()
 #   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`
 #   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`, :prop_tgt:`INSTALL_RPATH`
 function(cs_add_executable target_name)
+  _cs_message_context(cs_add_executable)
   add_executable("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
@@ -119,8 +121,12 @@ function(_cs_add_target_to_project_targets target_name)
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_NAMESPACE ${CSCMAKE_NAMESPACE})
   _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS ${target_name})
 
+  get_target_property(type ${target_name} TYPE)
+  message(VERBOSE "${CSCMAKE_NAMESPACE}: target ${target_name} (${type})")
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
   # the default compile profiles of the folder first, then the ones of cs_target_use_compile_profiles
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_COMPILE_PROFILES ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
+  message(DEBUG "default compile profiles of the folder: ${CSCMAKE_DEFAULT_COMPILE_PROFILES}")
   _cs_set_install_rpath(${target_name})
 endfunction()
 

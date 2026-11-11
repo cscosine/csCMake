@@ -74,9 +74,8 @@ def test_print_project_prints_without_the_debug_switch(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("debug", [False, True])
-def test_the_lifecycle_prints_the_project_with_the_debug_switch_only(tmp_path: Path, debug: bool) -> None:
-    switch = "set(cstest_CSCMAKE_DEBUG ON)\n" if debug else ""
-    result = configure(tmp_path, switch + INIT + PROJECT, {"lib.h": ""})
+def test_the_finalization_prints_the_project_at_the_debug_level_only(tmp_path: Path, debug: bool) -> None:
+    result = configure(tmp_path, INIT + PROJECT, {"lib.h": ""}, args=["--log-level=DEBUG"] if debug else [])
 
     assert result.returncode == 0, result.output
     printed = [line for line in _lines(result.output) if line.startswith("[finalized] project cstest")]

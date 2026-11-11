@@ -2,57 +2,53 @@
 # csDebug
 # -------
 #
-# Debug messages and printers of csCMake: :command:`cs_debug_message` (shown with
-# :variable:`<project>_CSCMAKE_DEBUG`), and two commands to inspect what csCMake did, for when a target, a link or a
-# package does not behave as expected: :command:`cs_print_target` and :command:`cs_print_project`.
+# What csCMake says, and two commands to inspect what it did, for when a target, a link or a package does not behave as
+# expected: :command:`cs_print_target` and :command:`cs_print_project`.
+#
+# csCMake writes its messages with CMake's log levels: ``VERBOSE`` what it does, one line per thing (the project, each
+# target, package, component, the finalization); ``DEBUG`` the details (arguments, configuration mapping, run-time
+# environment, the whole project at the finalization). They are shown with ``cmake --log-level=VERBOSE`` (or
+# ``DEBUG``) for the whole build, or with :variable:`CMAKE_MESSAGE_LOG_LEVEL` set in a folder or in a ``block()``
+# around some calls (``--log-level`` wins over it). Each command adds the namespace of the project and its own name to
+# :variable:`CMAKE_MESSAGE_CONTEXT` (``--log-context`` prints ``[myLib.cs_add_library]``), and indents its sub-steps.
 #
 # Commands
 # ^^^^^^^^
 
 include_guard(GLOBAL)
 
-#.rst:
-# .. command:: cs_debug_message
-#
-#   Print a debug message of csCMake.
-#
-#   .. code-block:: cmake
-#
-#     cs_debug_message(<text>...)
-#
-#   The arguments are concatenated like message() does (also when they contain ";") and printed as a STATUS message when
-#   the debug messages of the current project are enabled.
-#
-#   ``<text>``
-#     The message, its arguments concatenated as :command:`message` does.
-#
-#   :Reads: :variable:`_cscmake_debug_option`, :variable:`<project>_CSCMAKE_DEBUG`
-function(cs_debug_message)
-  if(NOT _cscmake_debug_option OR NOT ${_cscmake_debug_option})
-    return()
-  endif()
-  # ARGV<n> one by one: ARGN would split the arguments containing ";"
-  set(text "")
-  set(index 0)
-  while(index LESS ARGC)
-    string(APPEND text "${ARGV${index}}")
-    math(EXPR index "${index} + 1")
-  endwhile()
-  message(STATUS "${text}")
-endfunction()
-
-# Set out to TRUE when the debug messages of the current project are on (<project>_CSCMAKE_DEBUG).
-#
-# Reads:
-#
-# * variable _cscmake_debug_option, <project>_CSCMAKE_DEBUG
-function(_cs_debug_enabled out)
-  if(_cscmake_debug_option AND ${_cscmake_debug_option})
+# Set out to TRUE when the messages of level (VERBOSE, DEBUG, ...) are shown in the current scope (--log-level, or
+# CMAKE_MESSAGE_LOG_LEVEL): the work done only for a message is skipped otherwise.
+function(_cs_log_level_at_least level out)
+  cmake_language(GET_MESSAGE_LOG_LEVEL current)
+  set(
+    levels
+    ERROR
+    WARNING
+    NOTICE
+    STATUS
+    VERBOSE
+    DEBUG
+    TRACE
+  )
+  list(FIND levels "${level}" wanted)
+  list(FIND levels "${current}" shown)
+  if(shown GREATER_EQUAL wanted)
     set(${out} TRUE PARENT_SCOPE)
   else()
     set(${out} FALSE PARENT_SCOPE)
   endif()
 endfunction()
+
+# Add the namespace of the project (once) and command to the message context of the calling function
+# (CMAKE_MESSAGE_CONTEXT, printed by --log-context; restored when the function returns). A macro: it sets the variable
+# of the caller, so only for functions (in a macro it would reach the scope of the project).
+macro(_cs_message_context command)
+  if(NOT "${CSCMAKE_NAMESPACE}" STREQUAL "" AND NOT "${CSCMAKE_NAMESPACE}" IN_LIST CMAKE_MESSAGE_CONTEXT)
+    list(APPEND CMAKE_MESSAGE_CONTEXT "${CSCMAKE_NAMESPACE}")
+  endif()
+  list(APPEND CMAKE_MESSAGE_CONTEXT ${command})
+endmacro()
 
 #.rst:
 # .. command:: cs_print_target
@@ -104,13 +100,13 @@ endfunction()
 #   C++ flags, MSVC runtime of each), the search paths and the install prefix, the targets of the project, the
 #   components (their targets, the packages they find, the components they depend on, resolved when the project is
 #   finalized). Called in a project not finalized yet, it prints after the finalization, as :command:`cs_print_target`.
-#   With :variable:`<project>_CSCMAKE_DEBUG`, :command:`cs_initialize_project` and the finalization print the same.
+#   With the ``DEBUG`` log level, the finalization prints the same.
 function(cs_print_project)
   _cs_print_after_finalize(deferred cs_print_project)
   if(deferred)
     return()
   endif()
-  _cs_print_project("cs_print_project")
+  _cs_print_project(STATUS "cs_print_project")
 endfunction()
 
 # Defer the call command(args) to the end of the CMakeLists.txt of the current project (after its finalization, deferred
@@ -203,45 +199,47 @@ function(_cs_print_target_properties target_name)
   endforeach()
 endfunction()
 
-# Print the csCMake view of the project (see cs_print_project), with header in the first line.
-function(_cs_print_project header)
+# Print the csCMake view of the project (see cs_print_project) at level (STATUS, DEBUG, ...), with header in the first
+# line.
+function(_cs_print_project level header)
   _cs_get_root_dir(cscmake_root)
   message(
-    STATUS
+    ${level}
     "[${header}] project ${CSCMAKE_NAMESPACE} (${PROJECT_NAME} ${PROJECT_VERSION}), csCMake ${cscmake_root}"
   )
-  _cs_print_project_configurations()
-  message(STATUS "  CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-  message(STATUS "  CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
-  message(STATUS "  CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+  _cs_print_project_configurations(${level})
+  message(${level} "  CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+  message(${level} "  CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+  message(${level} "  CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
   cs_get_project_targets(targets)
-  message(STATUS "  targets: ${targets}")
+  message(${level} "  targets: ${targets}")
   _cs_get_components(components)
   _cs_get_default_components(default_components)
-  message(STATUS "  components: ${components} (default: ${default_components})")
+  message(${level} "  components: ${components} (default: ${default_components})")
   foreach(component IN LISTS components)
     _cs_get_component_targets(${component} component_targets)
     _cs_get_component_find_packages(${component} packages)
     _cs_get_component_dependencies_sorted(${component} dependencies)
-    message(STATUS "    ${component}: targets ${component_targets}")
-    message(STATUS "      finds: ${packages}")
-    message(STATUS "      depends on: ${dependencies}")
+    message(${level} "    ${component}: targets ${component_targets}")
+    message(${level} "      finds: ${packages}")
+    message(${level} "      depends on: ${dependencies}")
   endforeach()
 endfunction()
 
-# Print the configurations of the build: the generator's, then for each its postfix, C++ flags and MSVC runtime.
-function(_cs_print_project_configurations)
+# Print at level the configurations of the build: the generator's, then for each its postfix, C++ flags and MSVC
+# runtime.
+function(_cs_print_project_configurations level)
   cs_get_build_configurations(configs)
   get_property(multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if(multi_config)
-    message(STATUS "  configurations: ${configs} (CMAKE_CONFIGURATION_TYPES: ${CMAKE_CONFIGURATION_TYPES})")
+    message(${level} "  configurations: ${configs} (CMAKE_CONFIGURATION_TYPES: ${CMAKE_CONFIGURATION_TYPES})")
   else()
-    message(STATUS "  configurations: ${configs} (CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE})")
+    message(${level} "  configurations: ${configs} (CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE})")
   endif()
   foreach(config IN LISTS configs)
     string(TOUPPER "${config}" config_ucase)
     message(
-      STATUS
+      ${level}
       "    ${config}: postfix '${CSCMAKE_${config_ucase}_POSTFIX}', C++ flags '${CMAKE_CXX_FLAGS_${config_ucase}}', "
       "MSVC runtime ${CSCMAKE_MSVC_RUNTIME_LIBRARY_${config_ucase}}"
     )

@@ -35,8 +35,6 @@ include(modules/csInternal)
 #
 #   :Writes: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 macro(cs_find_package target_name propagate_mode)
-  cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
-
   # the mode is checked before find_package runs
   _cs_check_find_package_mode("${target_name}" "${propagate_mode}")
   # this has to be a macro, because some find_package out variable needs to be visible to the caller
@@ -68,8 +66,13 @@ endfunction()
 #
 # * target property CSCMAKE_FIND_PACKAGES
 function(_cs_add_find_package_args_to_target target_name propagate_mode)
+  _cs_message_context(cs_find_package)
   list(JOIN ARGN " " joined_argn)
-  cs_debug_message("[_cs_add_find_package_args_to_target] target ${target_name} arguments ${joined_argn}")
+  if(propagate_mode STREQUAL "PUBLIC")
+    message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} finds ${joined_argn} (PUBLIC: its consumers find it too)")
+  else()
+    message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} finds ${joined_argn} (PRIVATE)")
+  endif()
 
   if(propagate_mode STREQUAL "PUBLIC")
     _cs_add_to_target_property_unique_value("${target_name}" CSCMAKE_FIND_PACKAGES "${joined_argn}")

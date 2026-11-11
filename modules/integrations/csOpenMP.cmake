@@ -7,6 +7,7 @@
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
+include(modules/csDebug)
 include(modules/csFindPackage)
 
 #.rst:
@@ -28,6 +29,7 @@ include(modules/csFindPackage)
 #   ``PUBLIC``, ``PRIVATE``, ``INTERFACE``
 #     The scope of the OpenMP options and library, as in :command:`target_link_libraries`.
 function(cs_target_use_openmp target_name visibility)
+  _cs_message_context(cs_target_use_openmp)
   if(NOT TARGET ${target_name})
     message(FATAL_ERROR "[cs_target_use_openmp] ${target_name} is not a target")
   endif()
@@ -37,7 +39,7 @@ function(cs_target_use_openmp target_name visibility)
 
   if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # ClangCL: the OpenMP runtime of MSVC
-    cs_debug_message("[cs_target_use_openmp] ${target_name}: /openmp and vcomp (ClangCL)")
+    message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} uses OpenMP: /openmp and vcomp (ClangCL)")
     target_compile_options(${target_name} ${visibility} /openmp)
     target_link_libraries(${target_name} ${visibility} vcomp)
     return()
@@ -49,7 +51,7 @@ function(cs_target_use_openmp target_name visibility)
   if(NOT visibility STREQUAL "PRIVATE" OR target_type MATCHES "^(STATIC|OBJECT)_LIBRARY$")
     set(propagate PUBLIC)
   endif()
-  cs_debug_message("[cs_target_use_openmp] ${target_name}: OpenMP::OpenMP_CXX ${visibility}, find_package ${propagate}")
+  message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} uses OpenMP: OpenMP::OpenMP_CXX ${visibility}")
   cs_find_package(${target_name} ${propagate} OpenMP REQUIRED)
   target_link_libraries(${target_name} ${visibility} OpenMP::OpenMP_CXX)
 endfunction()

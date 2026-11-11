@@ -29,25 +29,25 @@ Nothing is project-specific yet: a build tree can include csCMake once and hold 
 A macro, so that what it sets belongs to the scope of the project folder (and is inherited by its sub-folders). In
 order:
 
-1. the debug option `<project>_CSCMAKE_DEBUG` and `_cscmake_debug_option`;
-2. checks that `project()` has a `VERSION`;
-3. `CSCMAKE_SOURCE_DIR`: the project folder, base of the include paths and of the installed headers;
-4. normalizes the search paths and the install prefix;
-5. the output folders `<build>/bin` and `<build>/lib` (`/<CONFIG>` with multi-config generators), unless set;
-6. collects the CMake variables with a `<CONFIG>` part, once per build tree (`cmake --help-variable-list`): a custom
+1. checks that `project()` has a `VERSION`;
+2. `CSCMAKE_SOURCE_DIR`: the project folder, base of the include paths and of the installed headers;
+3. normalizes the search paths and the install prefix;
+4. the output folders `<build>/bin` and `<build>/lib` (`/<CONFIG>` with multi-config generators), unless set;
+5. collects the CMake variables with a `<CONFIG>` part, once per build tree (`cmake --help-variable-list`): a custom
    configuration copies the ones defined for its base (the flags of the languages enabled so far);
-7. parses the arguments: namespace (`CSCMAKE_NAMESPACE`), C++ standard, default compile profiles, and
+6. parses the arguments: namespace (`CSCMAKE_NAMESPACE`), C++ standard, default compile profiles, and
    the configurations, added to the build, or, in a nested project, checked against the build;
-8. sets in the project scope the variables computed by the functions called so far (see
+7. sets in the project scope the variables computed by the functions called so far (see
    [project scope](#project-scope)): imported configuration mapping, postfixes, MSVC runtime, output folders of the
    custom configurations;
-9. `CMAKE_CXX_STANDARD`; `CMAKE_CXX_STANDARD_REQUIRED` `ON` and `CMAKE_CXX_EXTENSIONS` `OFF` unless the project set them;
-10. the configurations of the build: `CMAKE_CONFIGURATION_TYPES` with a multi-config generator; with a single-config
-    one, fails if `CMAKE_BUILD_TYPE` is not one of them;
-11. adds `CSCMAKE_PREFIX_PATH_HEAD` / `_TAIL` and the module path ones around `CMAKE_PREFIX_PATH` /
+8. `CMAKE_CXX_STANDARD`; `CMAKE_CXX_STANDARD_REQUIRED` `ON` and `CMAKE_CXX_EXTENSIONS` `OFF` unless the project set them;
+9. the configurations of the build: `CMAKE_CONFIGURATION_TYPES` with a multi-config generator; with a single-config
+   one, fails if `CMAKE_BUILD_TYPE` is not one of them;
+10. adds `CSCMAKE_PREFIX_PATH_HEAD` / `_TAIL` and the module path ones around `CMAKE_PREFIX_PATH` /
     `CMAKE_MODULE_PATH`;
-12. `enable_testing()`; with Ninja, `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` unless set (`-D...=OFF`, or the environment
+11. `enable_testing()`; with Ninja, `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` unless set (`-D...=OFF`, or the environment
     variable of the same name);
+12. reports the project (`VERBOSE`: one line; `DEBUG`: its configurations);
 13. creates the default target `<namespace>::cscmake_base_include` (and its include folders, created on disk);
 14. defers the [finalization](#finalization) of the project to the end of the current `CMakeLists.txt`
     (`cmake_language(DEFER)`).
@@ -68,7 +68,7 @@ csCMake changes only what its own targets need, or what the project asks for (se
 | `enable_testing()` | the project folder | the tests of the project run with ctest |
 
 The installed `<namespace>Config.cmake` defines, in the consumer, only names prefixed by the namespace, and unsets its
-temporaries; its debug switch `<namespace>_DEBUG` is read as a plain variable (no cache entry).
+temporaries; its messages use the consumer's log level (`VERBOSE`, `DEBUG`).
 
 ### Project scope
 
@@ -102,7 +102,7 @@ project folder (nested projects: each at the end of its own `CMakeLists.txt`, be
 4. Installs the components: the export of each one, the dependencies between them (cycles fail, then sorted), the
    generated `<namespace>Config.cmake` and `<namespace>ConfigVersion.cmake` (see
    [Installed packages internals](packages.md)).
-5. Prints the project (debug messages).
+5. Prints the project (`DEBUG` log level).
 
 Deferred calls run in the order they were deferred: `cs_print_target` / `cs_print_project` called in the project defer
 themselves after the finalization, so they print the targets as built.
