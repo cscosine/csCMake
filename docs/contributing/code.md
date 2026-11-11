@@ -62,8 +62,8 @@ docs/                               this documentation
 3. Its signature in `gersemi/cscmake.py`.
 4. Tests: a configure test in `tests/cmake/` for its behaviour and its errors; a smoke project when it changes what a
    build or an installed package does.
-5. The user guide and tutorials that show it; `MIGRATION.md` when it replaces or renames something (tables and
-   actions, no history in the other docs).
+5. The user guide and tutorials that show it; `CHANGELOG.md` (a breaking change: with what to change in a project;
+   no history in the other docs).
 
 ## Checks
 

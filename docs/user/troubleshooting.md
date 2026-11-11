@@ -126,7 +126,7 @@ cs_print_project()
 : `project()` has no `VERSION`: it is the version of the installed package (`<namespace>ConfigVersion.cmake`).
 
 `[cs_initialize_project] NAMESPACE <namespace> is required`, `CXX_STANDARD <standard> is required`, `unparsed arguments`
-: See the arguments of `cs_initialize_project`; `MIGRATION.md` maps the arguments of older versions.
+: See the arguments of `cs_initialize_project`.
 
 `[cs_add_library / cs_add_executable] <target>: call cs_initialize_project(NAMESPACE ...) before adding targets`
 : A target is created before `cs_initialize_project`, or in a folder outside the project.

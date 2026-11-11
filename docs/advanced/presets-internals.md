@@ -45,7 +45,7 @@ substitutions of the variant (`@{host}`, `@{osVersion}`, `@{compiler}`, `@{gener
 | `cs-{single,multi}-config-generator-config.json.template` | `<variant>-<config>.json`: the build, install, test and workflow presets of a configuration (and, single-config, its configure preset) |
 | `cs-{single,multi}-config-generator-ALL.json.template` | `<variant>-ALL.json`: includes the files of the variant (multi-config: also the workflows over several configurations) |
 | `cs-presets-all.json.template` | `cs-presets-all.json`: includes every `-ALL` file |
-| (no template) | `variants.json`: the variants as data (id, every field and its short form, the generator type, the build configurations), for tools that follow the registry without importing csCMake (csorchestrator); not a preset file, nothing includes it |
+| (no template) | `variants.json`: the variants as data (id, every field and its short form, the generator type, the build configurations), for tools that follow the registry without importing csCMake (e.g. a CI generator); not a preset file, nothing includes it |
 | `csCMakeProjectSetup.json.template` | `csCMakeProjectSetup.json` |
 | `layout.json.template` | `layout/<layout>.json`, one per entry of the `LAYOUTS` table of `generate.py` |
 

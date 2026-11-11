@@ -43,7 +43,6 @@ PACKAGE_CONTENT = [
     ".gersemirc",
     "gersemi",
     "README.md",
-    "MIGRATION.md",
     "CHANGELOG.md",
     "LICENSE",
 ]

@@ -216,13 +216,13 @@ of a section page). Write them so that they also read well on GitHub:
   ```
   ````
 
-Pages describe the current behaviour only: history goes in the `PLAN.md` changelog and in the commit messages,
-`MIGRATION.md` maps old to new.
+Pages describe the current behaviour only: history goes in the commit messages, and `CHANGELOG.md` says what changed
+for the projects (with what to change in a project for a breaking change).
 
 ## Checklist: a new or changed public command
 
 1. The `#.rst:` block of the command: summary, signature, details, arguments, `:Reads:` / `:Writes:`.
 2. The variables and properties it introduces: an entry in the module that sets them.
 3. `gersemi/cscmake.py`: its signature.
-4. The guides that show it, `README.md` if it appears there, `MIGRATION.md` if it replaces something.
+4. The guides that show it, `README.md` if it appears there, `CHANGELOG.md`.
 5. `sphinx-build -W -n docs docs/_build/html`, and look at the page.

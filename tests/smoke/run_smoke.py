@@ -3,7 +3,7 @@
 
 Lays out a workspace the way csCMake consumers do (the presets expect ``${sourceParentDir}/csCMake``):
 
-    <workspace>/csCMake            copy of csCMake.cmake, modules/, presets/, templates/
+    <workspace>/csCMake            the content of the release package (PACKAGE_CONTENT of cscmake-release)
     <workspace>/<project>          every project of PROJECTS (see tests/smoke/README.md)
     <workspace>/build, install     created by the presets
 
@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from xml.etree import ElementTree
 
+from cscmake.devtools.release import PACKAGE_CONTENT
 from cscmake.presets.registry import (
     BuildConfig,
     ContextOsArchitectureCompilerGenerator,
@@ -46,7 +47,6 @@ from cscmake.presets.registry import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SMOKE_DIR = Path(__file__).resolve().parent
-CSCMAKE_CONTENT = ("csCMake.cmake", "modules", "presets", "templates")
 
 
 @dataclass(frozen=True)
@@ -196,8 +196,9 @@ def prepare_workspace(workspace: Path) -> None:
 
 
 def copy_cscmake(target_dir: Path) -> None:
-    """Copy the csCMake files used by the projects (CSCMAKE_CONTENT) into ``target_dir``."""
-    for item in CSCMAKE_CONTENT:
+    """Copy into ``target_dir`` what the release package contains (``PACKAGE_CONTENT``): the projects build against
+    the files of a release, laid out as in the package."""
+    for item in PACKAGE_CONTENT:
         source = REPO_ROOT / item
         target = target_dir / item
         if source.is_dir():

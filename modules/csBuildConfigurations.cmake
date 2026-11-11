@@ -356,7 +356,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
     message(
       FATAL_ERROR
       "[cs_initialize_project] unparsed arguments ${arg_UNPARSED_ARGUMENTS}: the arguments are "
-      "NAMESPACE <namespace> CXX_STANDARD <standard> and the configurations (see MIGRATION.md)"
+      "NAMESPACE <namespace> CXX_STANDARD <standard> and the configurations (see the reference of the command)"
     )
   endif()
 

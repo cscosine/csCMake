@@ -4,10 +4,11 @@ What a project can rely on from one csCMake release to the next, and what may ch
 
 ## Versions
 
-csCMake follows semantic versioning. A breaking change of the public API (below) raises the minor version while the
-major version is 0 (0.4 → 0.5), the major version afterwards. Every breaking change has a section in `MIGRATION.md`:
-what to change in a project, as a table from the old form to the new one. The changes of each release are in
-`CHANGELOG.md`.
+csCMake follows semantic versioning. A breaking change of the public API (below) raises the major version (1.x →
+2.0). The changes of each release are in `CHANGELOG.md`, a breaking change with what to change in a project.
+
+The release candidates of a version (`1.0.0-rc1`, `1.0.0-rc2`, ...) propose its API: it may still change from one
+candidate to the next, until the version itself is released.
 
 A project chooses its version by the copy of csCMake in its workspace: a release package, or a git clone on a release
 tag (see [Getting started](getting-started.md#where-cscmake-lives)).
@@ -28,7 +29,7 @@ A new command, argument, variable, preset or component is not a breaking change.
 
 ## Not part of the API
 
-May change in any release, without a `MIGRATION.md` entry:
+May change in any release:
 
 - the internal commands, `_cs_*`, and the internal variables and properties, `_CSCMAKE_*` and the ones marked
   *Internal* in the reference;

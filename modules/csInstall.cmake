@@ -78,7 +78,7 @@ function(cs_install_target target_name)
     message(
       FATAL_ERROR
       "[cs_install_target] ${target_name}: cs_install_target(<target> COMPONENT <component> [DEFAULT]), got "
-      "${ARGN} (see MIGRATION.md)"
+      "${ARGN}"
     )
   endif()
   _cs_message_context(cs_install_target)

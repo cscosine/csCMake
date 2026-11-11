@@ -1,15 +1,16 @@
 # Releasing
 
-A release is a tag `v<major>.<minor>.<patch>` on `main`. The `release` workflow tests the tag and publishes the GitHub
-Release with the csCMake package and its documentation. Versions follow semantic versioning: a breaking change of the
-API (a command, variable, property, preset or behaviour a project relies on) raises the minor version while the major
-is 0, the major version afterwards.
+A release is a tag `v<major>.<minor>.<patch>` on `main` (`v<major>.<minor>.<patch>-rc<n>` for a release candidate,
+published as a pre-release). The `release` workflow tests the tag and publishes the GitHub Release with the csCMake
+package and its documentation. Versions follow semantic versioning: a breaking change of the API (a command, variable,
+property, preset or behaviour a project relies on, see [Compatibility](../user/compatibility.md)) raises the major
+version.
 
 ## What a release contains
 
 | Asset | Content |
 |---|---|
-| `csCMake-<version>.tar.gz`, `csCMake-<version>.zip` | a `csCMake/` folder with what projects use: `csCMake.cmake`, `modules/`, `templates/`, the presets (`presets/csCMakeProjectSetup.json`, `common/`, `csv1/`, `layout/`), `.gersemirc` and `gersemi/` (the formatter configuration and the `cs_*` signatures), `README.md`, `MIGRATION.md`, `CHANGELOG.md`, `LICENSE` |
+| `csCMake-<version>.tar.gz`, `csCMake-<version>.zip` | a `csCMake/` folder with what projects use: `csCMake.cmake`, `modules/`, `templates/`, the presets (`presets/csCMakeProjectSetup.json`, `common/`, `csv1/`, `layout/`), `.gersemirc` and `gersemi/` (the formatter configuration and the `cs_*` signatures), `README.md`, `CHANGELOG.md`, `LICENSE` |
 | `csCMake-docs-<version>.zip` | the documentation of the version (HTML), in a `csCMake-docs-<version>/` folder |
 | `SHA256SUMS` | the checksums of the three archives |
 
@@ -21,9 +22,9 @@ are not in the package: they are needed only to develop csCMake. The list is `PA
 
 1. On `dev`, prepare the release:
    - the version in `pyproject.toml`;
-   - a section `## v<version> (<date>)` in `CHANGELOG.md`: what changed for the projects using csCMake (breaking
-     changes, new features, fixes);
-   - for a breaking change, `MIGRATION.md`: the old and the new names and behaviours, and the actions.
+   - a section `## v<version> (<date>)` in `CHANGELOG.md` (the release candidates of a version share its section):
+     what changed for the projects using csCMake (new features, fixes; a breaking change with what to change in a
+     project);
 2. Check the release locally:
 
    ```bash

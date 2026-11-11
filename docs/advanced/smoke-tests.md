@@ -117,7 +117,7 @@ and a consumer finds the packages, and the ones they depend on (`find_dependency
 
 ```
 <workspace>/
-  csCMake/                          csCMake.cmake, modules/, presets/, templates/ (copied from the checkout)
+  csCMake/                          the content of the release package (copied from the checkout)
   csSmokeBase/ ... csSmokeEnv/      the projects (copied from tests/smoke/)
   csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
   build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)
