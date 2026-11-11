@@ -1,7 +1,7 @@
 # Installed packages internals
 
-How `cs_install_target` and `cs_finalize_project` turn the targets of a project into an installed package with
-components. For the use of the package, see [Installed packages](../user/install.md).
+How `cs_install_target` and the finalization of the project turn the targets of a project into an installed package
+with components. For the use of the package, see [Installed packages](../user/install.md).
 
 ## Recording the components: `cs_install_target`
 
@@ -20,7 +20,7 @@ components. For the use of the package, see [Installed packages](../user/install
   `CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`, and the `PUBLIC` `cs_find_package` arguments of
   the target in `CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`.
 
-## Finalizing: `cs_finalize_project`
+## Finalizing: the end of the project
 
 After the [runtime dependencies](runtime-dependencies.md) (which give the project dependencies of every target):
 

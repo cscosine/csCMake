@@ -18,8 +18,6 @@ add_subdirectory(inner)
 cs_add_library(o_core INTERFACE)
 cs_target_link_libraries(o_core INTERFACE inner::i_core)
 cs_install_target(o_core COMPONENT core DEFAULT)
-cs_finalize_target(o_core)
-cs_finalize_project()
 """
 INNER = """
 project(inner VERSION 2.0.0 LANGUAGES NONE)
@@ -27,8 +25,6 @@ cs_initialize_project(NAMESPACE inner CXX_STANDARD 17 DEFAULT_CONFIG Debug{extra
 cs_add_library(i_core INTERFACE)
 cs_add_library(inner::i_core ALIAS i_core)
 cs_install_target(i_core COMPONENT core DEFAULT)
-cs_finalize_target(i_core)
-cs_finalize_project()
 """
 
 
@@ -78,14 +74,11 @@ cs_initialize_project(NAMESPACE outer CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(o_late STATIC late.cpp)
 cs_target_link_libraries(o_late PUBLIC outer::o_base)
 cs_install_target(o_late COMPONENT late)
-cs_finalize_target(o_late)
 add_subdirectory(inner)
 cs_add_library(o_base STATIC base.cpp)
 cs_add_library(outer::o_base ALIAS o_base)
 cs_target_link_libraries(o_base PRIVATE inner::i_static)
 cs_install_target(o_base COMPONENT base DEFAULT)
-cs_finalize_target(o_base)
-cs_finalize_project()
 """
 ALIASES_INNER = """
 project(inner VERSION 2.0.0 LANGUAGES CXX)
@@ -93,14 +86,12 @@ cs_initialize_project(NAMESPACE inner CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(i_static STATIC s.cpp)
 cs_add_library(inner::i_static ALIAS i_static)
 cs_install_target(i_static COMPONENT stat DEFAULT)
-cs_finalize_target(i_static)
-cs_finalize_project()
 """
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 def test_links_through_aliases_give_the_component_dependencies(tmp_path: Path) -> None:
-    """The aliases are resolved by the dependency walk of cs_finalize_project and by CMake's export: late depends on
+    """The aliases are resolved by the dependency walk of the finalization and by CMake's export: late depends on
     base, base finds inner's component stat, the private link is exported as $<LINK_ONLY:inner::i_static>."""
     prefix = tmp_path / "install"
     files = {

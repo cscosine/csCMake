@@ -12,7 +12,7 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
   installed in Release only, a custom configuration mapped to Debug, private links of static libraries: their DLLs
   were missing). Set on executables and shared / module libraries.
 - The targets a target depends on (`CSCMAKE_PROJECT_DEPENDENCIES`, the dependencies between components) are resolved
-  once by `cs_finalize_project`, following `$<LINK_ONLY:...>` links too.
+  once when the project is finalized, following `$<LINK_ONLY:...>` links too.
 - A `VS_DEBUGGER_ENVIRONMENT` set by the project is kept: csCMake adds its lines after the project's, and merges its
   folders into the project's `PATH` line (`DEBUGGER_PATH` of `cs_target_runtime_environment`).
 - A custom configuration creates cache entries only for the per-configuration variables defined for its base (e.g. 6
@@ -23,8 +23,14 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 - `cs_find_package` checks its mode (`PUBLIC` / `PRIVATE`) before `find_package` runs.
 
 - `cs_target_link_libraries` passes its arguments to `target_link_libraries` as they are (aliases kept: CMake and
-  csCMake resolve them), and fails at the call for links added after `cs_finalize_target` (they were found only by
-  `cs_finalize_project`).
+  csCMake resolve them), and fails at the call for links added after the project is finalized (e.g. from a parent
+  project).
+
+- The project is finalized automatically at the end of the `CMakeLists.txt` of `cs_initialize_project`
+  (`cmake_language(DEFER)`): compile profiles, dependencies, install rules and `<namespace>Config.cmake`. A target
+  takes the folder values of `CSCMAKE_DEFAULT_COMPILE_PROFILES` (into `CSCMAKE_COMPILE_PROFILES`) and
+  `CSCMAKE_INSTALL_RPATH` (its install RPATH) when `cs_add_library` / `cs_add_executable` creates it.
+  `cs_print_target` / `cs_print_project` called in the project print after the finalization.
 
 - The installed `<namespace>ConfigVersion.cmake` accepts the requests of the same major version
   (`SameMajorVersion`: 1.4 for `find_package(<namespace> 1.2)`, not 2.0; it accepted any older request before):
@@ -53,11 +59,13 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 
 ### Removed
 
+- `cs_finalize_target` and `cs_finalize_project`: the project and its targets are finalized automatically (see
+  MIGRATION.md: delete the calls).
 - `cs_print_target_properties` and `cs_print_state` (debug messages only): `cs_print_target` and `cs_print_project`.
 - 20 commands no project uses became internal (see MIGRATION.md): `cs_get_namespace`,
   `cs_get_default_build_configurations`, the component and per-target getters (`cs_get_components`,
   `cs_get_target_find_packages`, ...), and the printers other than `cs_print_target_properties` and `cs_print_state`.
-  The public API: 22 commands.
+  The public API: 20 commands.
 - `cs_get_target_runtime_libraries` and the target properties `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`,
   `CSCMAKE_DIRECT_RUNTIME_LIBRARIES_<CONFIG>`, `CSCMAKE_LINKED_PROJECT_TARGETS`, `CSCMAKE_LINKED_NON_TARGETS`: use
   `$<TARGET_RUNTIME_DLLS>` / `$<TARGET_RUNTIME_DLL_DIRS>` (see MIGRATION.md).

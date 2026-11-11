@@ -23,8 +23,6 @@ cs_add_compile_profile_rule(PROFILE both LANGUAGES C CXX COMPILE_OPTIONS -DCSTES
 cs_add_compile_profile_rule(PROFILE default_language COMPILE_DEFINITIONS CSTEST_CXX_ONLY)
 cs_add_library(lib STATIC lib.c lib.cpp)
 cs_target_use_compile_profiles(lib both default_language cscmake_warnings)
-cs_finalize_target(lib)
-cs_finalize_project()
 """
 
 

@@ -21,8 +21,6 @@ cs_add_library(lib {type} lib.cpp)
 cs_target_use_openmp(lib {scope})
 get_target_property(packages lib CSCMAKE_FIND_PACKAGES)
 cstest_report(packages "${{packages}}")
-cs_finalize_target(lib)
-cs_finalize_project()
 """
 
 

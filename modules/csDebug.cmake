@@ -66,14 +66,18 @@ endfunction()
 #
 #   Always printed (``STATUS`` messages), wherever it is called: the csCMake view (type, component, headers to
 #   install, the packages it finds for its consumers, compile profiles, run-time environment, the targets of the
-#   project it depends on, resolved by :command:`cs_finalize_project`), then every CMake property set on it (each
-#   ``<CONFIG>`` property for every configuration of the build, ``<LANG>`` as CXX). Call it after the target is
-#   complete, e.g. at the end of the CMakeLists.txt of the project (after :command:`cs_finalize_project` for the
-#   dependencies).
+#   project it depends on, resolved when the project is finalized), then every CMake property set on it (each
+#   ``<CONFIG>`` property for every configuration of the build, ``<LANG>`` as CXX). Called in a project not finalized
+#   yet, it prints at the end of the ``CMakeLists.txt`` of :command:`cs_initialize_project`, after the finalization:
+#   the target as built, wherever the call is.
 #
 #   ``<target>``
 #     A target (an alias of one is accepted).
 function(cs_print_target target_name)
+  _cs_print_after_finalize(deferred cs_print_target "${target_name}")
+  if(deferred)
+    return()
+  endif()
   if(NOT TARGET "${target_name}")
     message(STATUS "[cs_print_target] ${target_name} is not a target")
     return()
@@ -98,11 +102,39 @@ endfunction()
 #
 #   Always printed (``STATUS`` messages): the namespace and version, the folder of csCMake, the configurations (postfix,
 #   C++ flags, MSVC runtime of each), the search paths and the install prefix, the targets of the project, the
-#   components (their targets, the packages they find, the components they depend on, resolved by
-#   :command:`cs_finalize_project`). With :variable:`<project>_CSCMAKE_DEBUG`, :command:`cs_initialize_project` and
-#   :command:`cs_finalize_project` print the same.
+#   components (their targets, the packages they find, the components they depend on, resolved when the project is
+#   finalized). Called in a project not finalized yet, it prints after the finalization, as :command:`cs_print_target`.
+#   With :variable:`<project>_CSCMAKE_DEBUG`, :command:`cs_initialize_project` and the finalization print the same.
 function(cs_print_project)
+  _cs_print_after_finalize(deferred cs_print_project)
+  if(deferred)
+    return()
+  endif()
   _cs_print_project("cs_print_project")
+endfunction()
+
+# Defer the call command(args) to the end of the CMakeLists.txt of the current project (after its finalization, deferred
+# earlier by cs_initialize_project) when the project is not finalized yet; deferred_out is TRUE then.
+#
+# Reads:
+#
+# * variable CSCMAKE_NAMESPACE, CSCMAKE_SOURCE_DIR
+# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>
+function(_cs_print_after_finalize deferred_out command)
+  set(${deferred_out} FALSE PARENT_SCOPE)
+  if("${CSCMAKE_NAMESPACE}" STREQUAL "")
+    return()
+  endif()
+  get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${CSCMAKE_NAMESPACE})
+  if(finalized)
+    return()
+  endif()
+  set(arguments "")
+  foreach(argument IN LISTS ARGN)
+    string(APPEND arguments " [==[${argument}]==]")
+  endforeach()
+  cmake_language(EVAL CODE "cmake_language(DEFER DIRECTORY [==[${CSCMAKE_SOURCE_DIR}]==] CALL ${command}${arguments})")
+  set(${deferred_out} TRUE PARENT_SCOPE)
 endfunction()
 
 # Print the csCMake view of target_name (see cs_print_target).
@@ -119,7 +151,7 @@ function(_cs_print_target_cscmake_view target_name)
     "compile profiles (own)|CSCMAKE_COMPILE_PROFILES"
     "run-time PATH folders|CSCMAKE_RUNTIME_DIRS"
     "run-time variables|CSCMAKE_RUNTIME_ENVIRONMENT"
-    "depends on (cs_finalize_project)|CSCMAKE_PROJECT_DEPENDENCIES"
+    "depends on|CSCMAKE_PROJECT_DEPENDENCIES"
   )
     string(REPLACE "|" ";" entry "${entry}")
     list(GET entry 0 label)
@@ -193,7 +225,7 @@ function(_cs_print_project header)
     _cs_get_component_dependencies_sorted(${component} dependencies)
     message(STATUS "    ${component}: targets ${component_targets}")
     message(STATUS "      finds: ${packages}")
-    message(STATUS "      depends on (cs_finalize_project): ${dependencies}")
+    message(STATUS "      depends on: ${dependencies}")
   endforeach()
 endfunction()
 

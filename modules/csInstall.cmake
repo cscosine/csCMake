@@ -182,7 +182,7 @@ function(_cs_set_install_rpath target_name)
   else()
     set(rpath "${origin}")
   endif()
-  cs_debug_message("[cs_finalize_target] ${target_name} INSTALL_RPATH ${rpath}")
+  cs_debug_message("[csCMake] ${target_name} INSTALL_RPATH ${rpath}")
   set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${rpath}")
 endfunction()
 

@@ -39,7 +39,7 @@ docs/                               this documentation
   `CSCMAKE_*`, internal ones `_CSCMAKE_*`. Per-namespace global properties (`CSCMAKE_<namespace>_...`) keep several
   csCMake projects of one build apart.
 - **No hidden side effects**: csCMake changes only what its own targets need, or what the user asks for. Prefer a
-  target property of the csCMake targets (set by `cs_finalize_target`, like the install RPATH) to a directory or
+  target property of the csCMake targets (set by `cs_add_library`, like the install RPATH) to a directory or
   project variable, and that to a global or cache setting; never put build behaviour in the presets, which projects
   without csCMake use too. A wider setting is applied only if the project has not set it, is documented (`:Writes:`,
   user guide), can be turned off, and has a configure test showing that the project's own value wins.

@@ -10,6 +10,4 @@ cs_target_link_libraries(text PUBLIC csSmokeBase::core)
 
 cs_install_target(text COMPONENT text)
 
-cs_finalize_target(text)
-
 add_subdirectory(tests)

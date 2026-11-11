@@ -2,10 +2,10 @@
 # csPackageConfig
 # ---------------
 #
-# The installed package: the dependencies between its components (from the links of their
-# targets, checked for cycles, sorted) and the generated ``<namespace>Config.cmake``
-# (``find_package(<namespace> [COMPONENTS ...])``), written by :command:`cs_finalize_project`. No commands of its own:
-# its state is in the global properties below.
+# The installed package: the dependencies between its components (from the links of their targets, checked for cycles,
+# sorted) and the generated ``<namespace>Config.cmake`` (``find_package(<namespace> [COMPONENTS ...])``), written when
+# the project is finalized (end of the ``CMakeLists.txt`` of :command:`cs_initialize_project`). No commands of its
+# own: its state is in the global properties below.
 
 include_guard(GLOBAL)
 include(modules/csInstall)
@@ -23,8 +23,8 @@ function(_cs_get_component_dependencies export_name output_variable_name)
   set(${output_variable_name} "${list_values}" PARENT_SCOPE)
 endfunction()
 
-# Return the components a component depends on, each one after the ones it depends on (computed by
-# :command:`cs_finalize_project`).
+# Return the components a component depends on, each one after the ones it depends on (computed when the project is
+# finalized).
 #
 # Reads:
 #
@@ -104,7 +104,7 @@ function(_cs_check_component_cycles_recursive export_name visited_list)
     string(REPLACE ";" " -> " cycle "${visited_list};${export_name}")
     message(
       FATAL_ERROR
-      "[cs_finalize_project] cyclic dependency between the components: ${cycle}: a component cannot "
+      "[csCMake] cyclic dependency between the components: ${cycle}: a component cannot "
       "depend on itself through other components; move the targets so that the dependencies go one way"
     )
   endif()

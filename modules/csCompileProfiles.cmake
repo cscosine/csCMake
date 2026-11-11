@@ -4,10 +4,11 @@
 #
 # Compile profiles: named sets of rules. A rule applies compile options, compile definitions, link options, clang-tidy
 # and other profiles (``PROFILES``) under conditions on the build configuration, the compiler, its command-line style
-# and the platform. Profiles are applied by :command:`cs_finalize_target`: the default profiles of the project
-# (``DEFAULT_COMPILE_PROFILES`` of :command:`cs_initialize_project`) and the ones given to
-# :command:`cs_target_use_compile_profiles`. Compile options and definitions are ``PRIVATE``: consumers never get them.
-# The link options of static and object libraries are ``INTERFACE`` too: link requirements, e.g. the sanitizer runtime.
+# and the platform. Profiles are applied when the project is finalized (end of the ``CMakeLists.txt`` of
+# :command:`cs_initialize_project`): the default profiles of the folder of the target
+# (:variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`) and the ones given to :command:`cs_target_use_compile_profiles`.
+# Compile options and definitions are ``PRIVATE``: consumers never get them. The link options of static and object
+# libraries are ``INTERFACE`` too: link requirements, e.g. the sanitizer runtime.
 #
 # The profiles shipped with csCMake (``cscmake_*``): :doc:`csCompileProfilesShipped`.
 #
@@ -115,7 +116,7 @@ endfunction()
 #
 #     cs_target_use_compile_profiles(<target> <profile>...)
 #
-#   Applied by :command:`cs_finalize_target`.
+#   Applied when the project is finalized, so a rule added later in the project still applies.
 #
 #   ``<target>``
 #     A target of the project (an alias of one is accepted).
@@ -132,23 +133,18 @@ function(cs_target_use_compile_profiles target_name)
   set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
 endfunction()
 
-# Return the compile profiles of a target: the default profiles of the project, then its own ones.
+# Return the compile profiles of a target: the default profiles of its folder, then its own ones, each once.
 #
 # Reads:
 #
-# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES
 # * target property CSCMAKE_COMPILE_PROFILES
 function(_cs_get_target_compile_profiles target_name profiles_out)
-  set(profiles ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
-  get_target_property(own ${target_name} CSCMAKE_COMPILE_PROFILES)
-  if(own)
-    list(APPEND profiles ${own})
-  endif()
+  get_property(profiles TARGET ${target_name} PROPERTY CSCMAKE_COMPILE_PROFILES)
   list(REMOVE_DUPLICATES profiles)
   set(${profiles_out} "${profiles}" PARENT_SCOPE)
 endfunction()
 
-# Apply the compile profiles of target_name (called by cs_finalize_target); INTERFACE libraries are skipped (nothing to
+# Apply the compile profiles of target_name (called by _cs_finalize_target); INTERFACE libraries are skipped (nothing to
 # compile).
 function(_cs_apply_compile_profiles target_name)
   get_target_property(type ${target_name} TYPE)
@@ -185,7 +181,7 @@ function(
   if(NOT defined)
     message(
       FATAL_ERROR
-      "[cs_finalize_target] compile profile ${profile} of ${target_name} is not defined "
+      "[csCMake] compile profile ${profile} of ${target_name} is not defined "
       "(cs_add_compile_profile_rule)"
     )
   endif()
@@ -360,7 +356,7 @@ function(_cs_apply_clang_tidy target_name)
   if(NOT CSCMAKE_CLANG_TIDY_EXE OR NOT EXISTS "${CSCMAKE_CLANG_TIDY_EXE}")
     message(
       FATAL_ERROR
-      "[cs_finalize_target] clang-tidy is required: the compile profiles of ${target_name} run it in "
+      "[csCMake] clang-tidy is required: the compile profiles of ${target_name} run it in "
       "this build (install it, or set CSCMAKE_CLANG_TIDY_EXE)"
     )
   endif()
@@ -416,7 +412,9 @@ endfunction()
 #
 # .. prop_tgt:: CSCMAKE_COMPILE_PROFILES
 #
-#   The compile profiles of the target, in addition to the default ones (:command:`cs_target_use_compile_profiles`).
+#   The compile profiles of the target: the default ones of its folder (:variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`,
+#   set by :command:`cs_add_library` / :command:`cs_add_executable`), then the ones of
+#   :command:`cs_target_use_compile_profiles`.
 #
 # .. prop_tgt:: _CSCMAKE_CLANG_TIDY_CONDITIONS
 #

@@ -1,7 +1,7 @@
 # Runtime dependencies
 
-When the project is finalized (`cs_finalize_project`), every target exists, and csCMake resolves for each target of
-the project:
+When the project is finalized (end of the `CMakeLists.txt` of `cs_initialize_project`), every target exists, and
+csCMake resolves for each target of the project:
 
 - its **project dependencies** (`CSCMAKE_PROJECT_DEPENDENCIES`): the targets of the build (not imported) it links,
   directly or through other such targets. They give the dependencies between the components of the installed package;
@@ -31,7 +31,7 @@ Where an executable finds its shared libraries:
 | | Linux, macOS | Windows |
 |---|---|---|
 | build folder | the absolute folders of every linked library (build RPATH written by CMake) | its own folder: the DLLs of the project are written to the same `<build>/bin[/<config>]`; the DLLs of other packages through `PATH` (the Visual Studio debugger gets it, see below) |
-| install folder | the `lib/` of its package (install RPATH set by `cs_finalize_target`, below) | its own folder: the DLLs of the package are installed in `bin/` |
+| install folder | the `lib/` of its package (install RPATH set by `cs_add_library` / `cs_add_executable`, below) | its own folder: the DLLs of the package are installed in `bin/` |
 
 The install RPATH (`INSTALL_RPATH` target property) is relative to the binary, so the install folder can be moved:
 `$ORIGIN/<bin to lib>` (`$ORIGIN/../lib` with the default folders) for an executable, `$ORIGIN` for a shared or module
@@ -61,8 +61,8 @@ outside the Visual Studio debugger (ctest, a terminal), the DLLs of other packag
     SET "QT_PLUGIN_PATH=${QT_ROOT}/plugins")
   ```
 
-  The `PATH` folders come first, before the DLL folders; each variable is a line of its own. Call it before
-  `cs_finalize_project`, as many times as needed.
+  The `PATH` folders come first, before the DLL folders; each variable is a line of its own. Call it in the project of
+  the target, as many times as needed.
 - **A `VS_DEBUGGER_ENVIRONMENT` written by the project** is kept: its lines come first. When it has a `PATH` line of its
   own, csCMake puts its folders in that line, before the project's (the default) or after them:
   `cs_target_runtime_environment(app DEBUGGER_PATH AFTER)`; `DEBUGGER_PATH OFF` leaves the debugger environment of the

@@ -38,5 +38,3 @@ cs_initialize_project(
 )
 
 add_subdirectory(csSmokeBase)
-
-cs_finalize_project()

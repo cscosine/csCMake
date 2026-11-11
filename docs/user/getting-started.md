@@ -107,15 +107,13 @@ cs_initialize_project(
   DEFAULT_CONFIG Debug Release)
 
 add_subdirectory(myApp)
-
-# mandatory, at the end of this file
-cs_finalize_project()
 ```
 
 `cs_initialize_project` sets up the project: the namespace of its installed targets and package
 (`myApp::core`, `find_package(myApp)`), the C++ standard, the build configurations. It must follow `project()` with a
-`VERSION`: it is the version of the installed package. `cs_finalize_project` finishes it: it checks the
-targets, resolves their runtime dependencies and generates the installed package. Forgetting it fails the configure.
+`VERSION`: it is the version of the installed package. At the end of this file, csCMake finalizes the project:
+it applies the compile profiles of the targets, resolves their runtime dependencies and generates the installed
+package.
 
 ### `myApp/CMakeLists.txt`
 
@@ -127,12 +125,10 @@ cs_target_sources(
   PRIVATE_INSTALL core/Greeting.hpp)
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
 cs_install_target(core COMPONENT core DEFAULT)
-cs_finalize_target(core)
 
 cs_add_executable(myApp main.cpp)
 cs_target_link_libraries(myApp PRIVATE core)
 cs_install_target(myApp COMPONENT app)
-cs_finalize_target(myApp)
 ```
 
 - `cs_add_library` / `cs_add_executable` work like `add_library` / `add_executable`, and register the target in the
@@ -142,7 +138,6 @@ cs_finalize_target(myApp)
   to the project folder, `#include <myApp/core/Greeting.hpp>`, in the build tree and once installed.
 - `cs_install_target` installs the target in a *component* of the package (`core`, `app`); `DEFAULT`
   makes the component part of `find_package(myApp)` without `COMPONENTS`.
-- `cs_finalize_target` is mandatory for every target, after its links.
 
 [Targets and sources](targets.md) explains each command.
 
@@ -180,8 +175,8 @@ the folders.
 
 ## Next
 
-- [Targets and sources](targets.md): libraries, executables, sources and installed headers, links, the mandatory
-  finalize calls.
+- [Targets and sources](targets.md): libraries, executables, sources and installed headers, links, when the
+  project is finalized.
 - [Dependencies](dependencies.md): other packages, and other csCMake projects.
 - [Installed packages](install.md): components and the generated `<namespace>Config.cmake`.
 - [Build configurations](build-configurations.md), [Compile profiles](compile-profiles.md), [Presets](presets.md).

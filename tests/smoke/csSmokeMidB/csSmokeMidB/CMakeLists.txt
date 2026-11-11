@@ -11,6 +11,4 @@ cs_target_link_libraries(csSmokeMidB PUBLIC csSmokeBase::core csSmokeMidB::cscma
 
 cs_install_target(csSmokeMidB COMPONENT csSmokeMidB DEFAULT)
 
-cs_finalize_target(csSmokeMidB)
-
 add_subdirectory(tests)

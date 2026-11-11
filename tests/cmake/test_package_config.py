@@ -16,8 +16,6 @@ project(A VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE A CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(a_core INTERFACE)
 cs_install_target(a_core COMPONENT core DEFAULT)
-cs_finalize_target(a_core)
-cs_finalize_project()
 """
 # package B: component x needs package A (find_dependency), component core depends on component b_base of B.
 # A also has a component named core.
@@ -27,15 +25,11 @@ cs_initialize_project(NAMESPACE B CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(b_x INTERFACE)
 cs_find_package(b_x PUBLIC A COMPONENTS core REQUIRED CONFIG)
 cs_install_target(b_x COMPONENT x)
-cs_finalize_target(b_x)
 cs_add_library(b_base INTERFACE)
 cs_install_target(b_base COMPONENT b_base)
-cs_finalize_target(b_base)
 cs_add_library(b_core INTERFACE)
 cs_target_link_libraries(b_core INTERFACE b_base)
 cs_install_target(b_core COMPONENT core)
-cs_finalize_target(b_core)
-cs_finalize_project()
 """
 
 
@@ -132,22 +126,18 @@ project(C VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE C CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_library(tc INTERFACE)
 cs_install_target(tc COMPONENT a)
-cs_finalize_target(tc)
 cs_add_library(tb INTERFACE)
 cs_target_link_libraries(tb INTERFACE tc)
 cs_install_target(tb COMPONENT b)
-cs_finalize_target(tb)
 cs_add_library(ta INTERFACE)
 cs_target_link_libraries(ta INTERFACE tb)
 cs_install_target(ta COMPONENT a)
-cs_finalize_target(ta)
-cs_finalize_project()
 """
     result = configure(tmp_path, body)
 
     assert result.returncode != 0
     message = " ".join(result.output.split())  # CMake wraps the message over several lines
-    assert "[cs_finalize_project] cyclic dependency between the components: a -> b -> a" in message
+    assert "[csCMake] cyclic dependency between the components: a -> b -> a" in message
 
 
 @pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
@@ -180,8 +170,7 @@ def test_many_paths_between_components_are_checked_once(tmp_path: Path) -> None:
         for dependency in (index + 1, index + 2):
             if dependency <= count:
                 lines.append(f"cs_target_link_libraries(t{index} INTERFACE t{dependency})")
-        lines += [f"cs_install_target(t{index} COMPONENT c{index})", f"cs_finalize_target(t{index})"]
-    lines.append("cs_finalize_project()")
+        lines.append(f"cs_install_target(t{index} COMPONENT c{index})")
 
     result = configure(tmp_path, "\n".join(lines) + "\n", timeout=60)
 
@@ -208,8 +197,6 @@ project(V VERSION 2.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE V CXX_STANDARD 17 DEFAULT_CONFIG Debug{compatibility})
 cs_add_library(v_core INTERFACE)
 cs_install_target(v_core COMPONENT core DEFAULT)
-cs_finalize_target(v_core)
-cs_finalize_project()
 """
 
 

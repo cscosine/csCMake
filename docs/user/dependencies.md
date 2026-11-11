@@ -49,9 +49,8 @@ application that uses it:
 ```cmake
 # myApp/CMakeLists.txt
 cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
-add_subdirectory(../myLib myLib)      # a csCMake project too: cs_initialize_project ... cs_finalize_project
+add_subdirectory(../myLib myLib)      # a csCMake project too, finalized at the end of its CMakeLists.txt
 add_subdirectory(app)                 # links myLib::core
-cs_finalize_project()
 ```
 
 - Each project keeps its own namespace, targets, components, debug option and installed package.

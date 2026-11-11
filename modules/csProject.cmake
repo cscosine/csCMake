@@ -2,9 +2,8 @@
 # csProject
 # ---------
 #
-# The project: :command:`cs_initialize_project` after :command:`project`, then
-# :command:`cs_finalize_project` at the end of the same ``CMakeLists.txt``; the namespace; the variables
-# set in the scope of the project.
+# The project: :command:`cs_initialize_project` after :command:`project`; the namespace; the variables set in the scope
+# of the project. The project is finalized at the end of the same ``CMakeLists.txt``.
 #
 # Commands
 # ^^^^^^^^
@@ -28,9 +27,13 @@ include(modules/csInternal)
 #       [INSTALL_RPATH ON|OFF]
 #       [VERSION_COMPATIBILITY AnyNewerVersion|SameMajorVersion|SameMinorVersion|ExactVersion])
 #
-#   Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project; cs_finalize_project() is then
-#   required at the end of the same CMakeLists.txt (checked). A macro: the variables it sets belong to the project scope
-#   (inherited by the subfolders).
+#   Mandatory, after project(<name> VERSION <x.y.z> ...), in the folder of the project. A macro: the variables it sets
+#   belong to the project scope (inherited by the subfolders).
+#
+#   At the end of the same ``CMakeLists.txt`` (:command:`cmake_language(DEFER) <cmake_language>`), csCMake finalizes the
+#   project: the compile profiles of its targets, the targets each one depends on, the Visual Studio debugger
+#   environment, the install rules of its components and ``<namespace>Config.cmake``. Links added afterwards with
+#   :command:`cs_target_link_libraries`, and :command:`cs_target_runtime_environment` calls, fail.
 #
 #   ``NAMESPACE``
 #     Prefix of the installed targets (<namespace>::<target>) and package name (``find_package(<namespace>)``).
@@ -52,8 +55,8 @@ include(modules/csInternal)
 #     Compile profiles of every target (default cscmake_default, NONE for none).
 #
 #   ``INSTALL_RPATH``
-#     ``OFF``: no install RPATH set by :command:`cs_finalize_target` (:variable:`CSCMAKE_INSTALL_RPATH`). Default
-#     ``ON``.
+#     ``OFF``: no install RPATH set by :command:`cs_add_library` / :command:`cs_add_executable`
+#     (:variable:`CSCMAKE_INSTALL_RPATH`). Default ``ON``.
 #
 #   ``VERSION_COMPATIBILITY``
 #     Which versions of the installed package a consumer's ``find_package(<namespace> <version>)`` accepts (the
@@ -69,7 +72,9 @@ include(modules/csInternal)
 #     :variable:`CMAKE_CXX_STANDARD_REQUIRED`, :variable:`CMAKE_CXX_EXTENSIONS`, :variable:`CMAKE_PREFIX_PATH`,
 #     :variable:`CMAKE_MODULE_PATH`, :variable:`CMAKE_RUNTIME_OUTPUT_DIRECTORY`,
 #     :variable:`CMAKE_LIBRARY_OUTPUT_DIRECTORY`, :variable:`CMAKE_ARCHIVE_OUTPUT_DIRECTORY`,
-#     :variable:`CMAKE_EXPORT_COMPILE_COMMANDS`, :variable:`_cscmake_debug_option`
+#     :variable:`CMAKE_EXPORT_COMPILE_COMMANDS`, :variable:`_cscmake_debug_option`,
+#     :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`, :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`,
+#     :prop_tgt:`VS_DEBUGGER_ENVIRONMENT`
 macro(cs_initialize_project)
   # a macro: the variables it sets (CMAKE_CXX_STANDARD, CSCMAKE_NAMESPACE, ...) belong to the project scope. Its own
   # temporaries are _cs_init_* and are unset at the end.
@@ -154,13 +159,9 @@ macro(cs_initialize_project)
 
   _cs_add_default_targets()
 
-  # check at the end of this CMakeLists.txt that cs_finalize_project was called (the values are fixed now: deferred call
-  # arguments are evaluated when the call runs)
-  cmake_language(
-    EVAL CODE
-      "cmake_language(DEFER CALL _cs_check_project_finalized [[${CSCMAKE_NAMESPACE}]] "
-      "[[${CMAKE_CURRENT_SOURCE_DIR}]])"
-  )
+  # finalize the project at the end of this CMakeLists.txt (the namespace is fixed now: deferred call arguments are
+  # evaluated when the call runs)
+  cmake_language(EVAL CODE "cmake_language(DEFER CALL _cs_finalize_project [[${CSCMAKE_NAMESPACE}]])")
 
   unset(_cs_init_multi_config)
   unset(_cs_init_config_subfolder)
@@ -211,58 +212,27 @@ function(_cs_get_namespace output_variable_name)
   set(${output_variable_name} ${CSCMAKE_NAMESPACE} PARENT_SCOPE)
 endfunction()
 
-#.rst:
-# .. command:: cs_finalize_project
+# Finalize the project of namespace (deferred by cs_initialize_project to the end of its CMakeLists.txt, in the scope of
+# that folder): finalize its targets, resolve their dependencies (the targets each one depends on, the Visual Studio
+# debugger environment), install its components and generate <namespace>Config.cmake.
 #
-#   Finalize the project: check its targets, resolve their dependencies (the targets each one depends on, the Visual
-#   Studio debugger environment), install its components and generate <namespace>Config.cmake.
+# Writes:
 #
-#   .. code-block:: cmake
-#
-#     cs_finalize_project()
-#
-#   Mandatory, at the end of the CMakeLists.txt of :command:`cs_initialize_project` (checked). Fails for the targets not
-#   finalized with :command:`cs_finalize_target` and for the ones whose links changed after it.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_RUNTIME_DIRS`, :prop_tgt:`CSCMAKE_RUNTIME_ENVIRONMENT`, :prop_tgt:`CSCMAKE_DEBUGGER_PATH`
-#   :Writes: :prop_gbl:`_CSCMAKE_PROJECT_FINALIZED_<namespace>`, :prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`,
-#     :prop_tgt:`VS_DEBUGGER_ENVIRONMENT`
-function(cs_finalize_project)
-  if(ARGN)
-    message(
-      FATAL_ERROR
-      "[cs_finalize_project] takes no arguments (got ${ARGN}): the namespace is given to "
-      "cs_initialize_project(NAMESPACE ...), see MIGRATION.md"
-    )
-  endif()
-  _cs_get_namespace(export_namespace)
-  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${export_namespace} TRUE)
+# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>
+function(_cs_finalize_project namespace)
+  set_property(GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace} TRUE)
 
-  _cs_check_targets_finalized()
+  cs_get_project_targets(targets)
+  foreach(target_name IN LISTS targets)
+    _cs_finalize_target(${target_name})
+  endforeach()
   _cs_finalize_runtime_dependencies()
-  _cs_finalize_install(${export_namespace})
+  _cs_finalize_install(${namespace})
 
   # debug: the project as finalized (targets, components and their dependencies)
   _cs_debug_enabled(debug)
   if(debug)
-    _cs_print_project("cs_finalize_project")
-  endif()
-endfunction()
-
-# Fail if cs_finalize_project was not called for namespace (deferred to the end of the CMakeLists.txt of
-# cs_initialize_project).
-#
-# Reads:
-#
-# * global property _CSCMAKE_PROJECT_FINALIZED_<namespace>
-function(_cs_check_project_finalized namespace source_dir)
-  get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${namespace})
-  if(NOT finalized)
-    message(
-      FATAL_ERROR
-      "[cs_initialize_project] cs_finalize_project() is required at the end of "
-      "${source_dir}/CMakeLists.txt (namespace ${namespace})"
-    )
+    _cs_print_project("finalized")
   endif()
 endfunction()
 
@@ -310,18 +280,21 @@ endfunction()
 # .. variable:: CSCMAKE_DEFAULT_COMPILE_PROFILES
 #
 #   The compile profiles of every target of the folder (``DEFAULT_COMPILE_PROFILES`` of
-#   :command:`cs_initialize_project`). A directory variable: a subfolder can set its own.
+#   :command:`cs_initialize_project`): the first values of :prop_tgt:`CSCMAKE_COMPILE_PROFILES` of each target, taken
+#   when :command:`cs_add_library` / :command:`cs_add_executable` creates it. A directory variable: a subfolder can set
+#   its own, before its targets.
 #
 # .. variable:: CSCMAKE_INSTALL_RPATH
 #
-#   ``OFF``: :command:`cs_finalize_target` sets no install RPATH on the targets of the folder. Unset or ``ON``: the
-#   executables and shared libraries find, once installed, the shared libraries of their package (Linux, macOS).
-#   ``INSTALL_RPATH`` of :command:`cs_initialize_project`, or a directory variable: a subfolder can set its own.
+#   ``OFF``: :command:`cs_add_library` / :command:`cs_add_executable` set no install RPATH on the targets of the folder.
+#   Unset or ``ON``: the executables and shared libraries find, once installed, the shared libraries of their package
+#   (Linux, macOS). ``INSTALL_RPATH`` of :command:`cs_initialize_project`, or a directory variable: a subfolder can set
+#   its own, before its targets.
 #
 # .. variable:: CSCMAKE_VERSION_COMPATIBILITY
 #
 #   The compatibility of the installed package version (``VERSION_COMPATIBILITY`` of :command:`cs_initialize_project`,
-#   ``SameMajorVersion`` by default), read by :command:`cs_finalize_project` for ``<namespace>ConfigVersion.cmake``.
+#   ``SameMajorVersion`` by default), read when the project is finalized, for ``<namespace>ConfigVersion.cmake``.
 #
 # .. variable:: <project>_CSCMAKE_DEBUG
 #
@@ -354,7 +327,8 @@ endfunction()
 #
 # .. prop_gbl:: _CSCMAKE_PROJECT_FINALIZED_<namespace>
 #
-#   Internal: ``TRUE`` once :command:`cs_finalize_project` ran for the namespace.
+#   Internal: ``TRUE`` once the project of the namespace is finalized (end of the ``CMakeLists.txt`` of
+#   :command:`cs_initialize_project`).
 #
 # .. prop_gbl:: _CSCMAKE_PROJECT_SCOPE_VARIABLES
 #

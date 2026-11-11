@@ -223,6 +223,28 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
 - Open question: keep `<project>_CSCMAKE_DEBUG` as the on switch (forcing the level), or rely on `--log-level`
   only (standard, but global to all projects of the build).
 
+**6d. Automatic finalization (user 2026-11-11; after 6b, before 6c). Done 2026-11-11.**
+- Today: each target ends with `cs_finalize_target(<target>)` (compile profiles, `INSTALL_RPATH`, records its links),
+  the project with `cs_finalize_project()` (checks, run-time dependencies, install rules and Config). Forgetting one is
+  an error. `cs_initialize_project` already defers a check to the end of its CMakeLists.txt (`cmake_language(DEFER)`).
+- Proposal: `cs_initialize_project` defers the finalization itself to the end of the CMakeLists.txt that called it:
+  every target of the project, then the project. Core tier = initialize, add, sources, links, find_package, install.
+- Needs care:
+  * finalization reads directory variables in the target's folder (`CSCMAKE_DEFAULT_COMPILE_PROFILES`,
+    `CSCMAKE_INSTALL_RPATH`, `CMAKE_INSTALL_BINDIR` / `LIBDIR`); a deferred call sees the root folder's values. Fix:
+    `cs_add_library` / `cs_add_executable` copy them into target properties at creation (as CMake does with
+    `CMAKE_<X>` -> `<X>`); finalization reads the properties only;
+  * the fail-fast of `cs_target_link_libraries` stays (late links can now come only from a parent project or other
+    deferred code);
+  * targets not made by `cs_add_*` (the check target of `cs_target_check_installed_headers`) registered the same way;
+  * nested projects: each defers to the end of its own CMakeLists.txt, inner finalized before the outer continues;
+  * what a project writes after `cs_finalize_project` today: checked, nothing (csImgTracker, csSkiTracker end there);
+  * (found) the printers: called in a project not finalized yet, they defer themselves after the finalization.
+- The two commands are removed (MIGRATION: delete the lines); no deprecation step.
+- Tests: smoke projects without the calls install byte-identical files; a subfolder with its own
+  `CSCMAKE_DEFAULT_COMPILE_PROFILES`; late links fail; calls in the wrong order give actionable errors.
+- Before 6c: it removes the `[cs_finalize_target]` / `[cs_finalize_project]` messages 6c would review.
+
 ## Then: 1.0
 
 - Before 1.0: Phase 6 done; the projects still on the v0.1.0 presets migrated: csopencvcpu and csopencvcuda (the
@@ -243,6 +265,15 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
     changes -> `CHANGELOG.md`, open items -> `TODO.md`; MIGRATION "from 0.x to 1.0". Tag 1.0.0 (API
     stability promise) once more projects use the API (csqt6, csopencvcpu, a tracker). A new single-commit repository
     stays possible at the 1.0 moment (old one archived), same cost then as now.
+- Before 1.0 (user 2026-11-11):
+  * a "Compatibility" docs page: public = the "Commands by tier" page, documented variables and properties, preset
+    names of `csv1`; semantic versioning;
+  * the docs examples are the smoke projects (`literalinclude`: csSmokeStandalone minimal, csSmokeBase / MidA / Top
+    multi-library and consumed packages);
+  * the smoke moves the install folder before the consumers build (relocatable packages: relative Config paths,
+    `$ORIGIN` RPATH);
+  * scope sentence in README and docs; why CMake 3.31 (preset schema 10, `$<TARGET_RUNTIME_DLL_DIRS>` 3.27,
+    `cmake_language(DEFER)`); which docs version Pages shows.
 - Tracking after 1.0 (decided, user 2026-11-10): open items in one `TODO.md` (sections per area: API, debug, presets,
   docs, smoke, other projects; one checkbox line per item); no GitHub issues for now.
 
@@ -379,7 +410,7 @@ than an application, a sample or a standalone tool; tests and samples inside a p
 | Phase | Status | Notes |
 |-------|--------|-------|
 | 0-5 | done | Signed off 2026-11-09 / 2026-11-10; released up to v0.4.0 (details: `PLAN.md` at `v0.4.0`). |
-| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. Then 6b (API: printers D2, D3, D4, D6, C4), 6c (debug: S6, C2, `cs_debug_message`). |
+| 6 | in progress | 6a signed off 2026-11-11 (CI green on every variant, incl. the Visual Studio debugger check): B1-B6, D1, D5, D7, S1-S5, C1, C3, C5; D8 decided; 20 unused commands internal: 22 public. 6b signed off 2026-11-11 (CI green on `b5a8937`); 6d done (public API 20 commands); next 6c (debug: S6, C2, `cs_debug_message`). |
 
 ## CHANGELOG
 
@@ -484,3 +515,20 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   printers); the six internal printer pieces removed. Tests.
 - 6b-6: `docs/reference/commands.rst` ("Commands by tier": core, features, queries, troubleshooting); the
   troubleshooting page: "Inspecting a target or the project".
+
+### 2026-11-11 (6d and 1.0 items)
+- New 6d (automatic finalization, before 6c; the finalize commands removed, no deprecation step); the 1.0 list gains
+  a compatibility page, docs examples from the smoke projects, a relocation smoke step, the scope and CMake 3.31
+  notes. The preset / setup pair stays (project and per-variant settings, e.g. the OpenCV forks).
+
+### 2026-11-11 (Phase 6d)
+- `cs_initialize_project` defers `_cs_finalize_project` to the end of its CMakeLists.txt: `_cs_finalize_target` (compile
+  profiles, `_CSCMAKE_FINALIZED`) for every target, run-time dependencies, install, Config, debug print.
+  `cs_finalize_target` / `cs_finalize_project`, the "not finalized" / "links changed" checks and the deferred check
+  removed. `cs_add_*` copy `CSCMAKE_DEFAULT_COMPILE_PROFILES` into `CSCMAKE_COMPILE_PROFILES` and set the install
+  RPATH at creation. `cs_target_link_libraries` / `cs_target_runtime_environment` fail after the finalization; the
+  printers defer themselves after it. Error prefixes of the finalization: `[csCMake]`.
+- Tests: `after_finalize()` helper (a deferred block); `test_finalize.py` rewritten (profiles defined late still
+  apply, nested project finalized first, folder variables taken at creation); late links / runtime environment fail.
+- Host smoke: the 170 installed files and the compile commands of the 28 build trees identical to 6b.
+- 6b signed off: CI green on `b5a8937` (every variant).

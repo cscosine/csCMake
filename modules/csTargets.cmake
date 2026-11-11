@@ -2,9 +2,9 @@
 # csTargets
 # ---------
 #
-# The targets of the project: :command:`cs_add_library` / :command:`cs_add_executable` register
-# them, :command:`cs_finalize_target` finalizes them (compile profiles, install RPATH, runtime
-# dependencies), :command:`cs_finalize_project` checks that every one was finalized.
+# The targets of the project: :command:`cs_add_library` / :command:`cs_add_executable` register them; at the end of
+# the ``CMakeLists.txt`` of :command:`cs_initialize_project`, csCMake finalizes them (compile profiles) with the
+# project.
 #
 # Commands
 # ^^^^^^^^
@@ -22,9 +22,16 @@ include(modules/csInternal)
 #
 #     cs_add_library(<target> <add_library arguments>...)
 #
-#   The library gets the output name postfix of each configuration and the MSVC runtime library of the project, and is
-#   registered in the project (:command:`cs_finalize_target` is then mandatory for it). An ALIAS is created as with
-#   :command:`add_library` and not registered.
+#   The library gets the output name postfix of each configuration, the MSVC runtime library of the project, its compile
+#   profiles (:prop_tgt:`CSCMAKE_COMPILE_PROFILES`, from :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`) and its install
+#   RPATH, and is registered in the project: finalized with it at the end of the ``CMakeLists.txt`` of
+#   :command:`cs_initialize_project`. An ALIAS is created as with :command:`add_library` and not registered.
+#
+#   Install RPATH (Linux, macOS): an executable or a shared or module library finds, once installed, the shared
+#   libraries installed in the ``lib/`` of its package, wherever the install folder is moved. Not set when
+#   :variable:`CMAKE_INSTALL_RPATH` gives the target an :prop_tgt:`INSTALL_RPATH`, or when
+#   :variable:`CSCMAKE_INSTALL_RPATH` is ``OFF``; an :prop_tgt:`INSTALL_RPATH` the project sets on the target
+#   afterwards replaces it.
 #
 #   ``<target>``
 #     The name of the library.
@@ -32,6 +39,9 @@ include(modules/csInternal)
 #   ``<add_library arguments>``
 #     The other arguments of :command:`add_library`: the type (``STATIC``, ``SHARED``, ``INTERFACE``, ``OBJECT``, ...),
 #     the sources, or ``ALIAS <target>``.
+#
+#   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`
+#   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`, :prop_tgt:`INSTALL_RPATH`
 function(cs_add_library target_name)
   add_library("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
@@ -46,30 +56,36 @@ endfunction()
 #
 #     cs_add_executable(<target> <add_executable arguments>...)
 #
-#   As :command:`cs_add_library`: output name postfixes, MSVC runtime library, registered in the project
-#   (:command:`cs_finalize_target` is mandatory).
+#   As :command:`cs_add_library`: output name postfixes, MSVC runtime library, compile profiles, install RPATH,
+#   registered in the project.
 #
 #   ``<target>``
 #     The name of the executable.
 #
 #   ``<add_executable arguments>``
 #     The other arguments of :command:`add_executable`: the sources, or ``ALIAS <target>``.
+#
+#   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :variable:`CSCMAKE_INSTALL_RPATH`
+#   :Writes: :prop_tgt:`CSCMAKE_COMPILE_PROFILES`, :prop_tgt:`INSTALL_RPATH`
 function(cs_add_executable target_name)
   add_executable("${target_name}" ${ARGN})
   _cs_add_target_to_project_targets(${target_name})
 endfunction()
 
 # Register target_name in the project (unless it is an ALIAS): output name postfix of each configuration, MSVC runtime
-# library, namespace. Fails if cs_initialize_project was not called.
+# library, namespace; the values of the folder variables of the target (compile profiles, install RPATH) are taken now,
+# as CMake does with CMAKE_<X> -> <X>, so that the finalization at the end of the project reads target properties only.
+# Fails if cs_initialize_project was not called.
 #
 # Reads:
 #
 # * variable CSCMAKE_<CONFIG>_POSTFIX
 # * variable CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION
+# * variable CSCMAKE_DEFAULT_COMPILE_PROFILES
 #
 # Writes:
 #
-# * target property <CONFIG>_POSTFIX, MSVC_RUNTIME_LIBRARY
+# * target property <CONFIG>_POSTFIX, MSVC_RUNTIME_LIBRARY, CSCMAKE_COMPILE_PROFILES
 # * target property CSCMAKE_NAMESPACE: the namespace of the project of the target
 # * global property CSCMAKE_<namespace>_PROJECT_TARGETS: the targets of the project
 function(_cs_add_target_to_project_targets target_name)
@@ -102,95 +118,21 @@ function(_cs_add_target_to_project_targets target_name)
   # the csCMake project of the target (its namespace): used for the links between projects of the same build
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_NAMESPACE ${CSCMAKE_NAMESPACE})
   _cs_add_to_global_property_unique_value(CSCMAKE_${CSCMAKE_NAMESPACE}_PROJECT_TARGETS ${target_name})
+
+  # the default compile profiles of the folder first, then the ones of cs_target_use_compile_profiles
+  set_property(TARGET ${target_name} PROPERTY CSCMAKE_COMPILE_PROFILES ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
+  _cs_set_install_rpath(${target_name})
 endfunction()
 
-#.rst:
-# .. command:: cs_finalize_target
+# Finalize target_name with its project (_cs_finalize_project): apply its compile profiles; links added afterwards
+# with cs_target_link_libraries fail.
 #
-#   Finalize a target: apply its compile profiles, set its install RPATH, record its links.
+# Writes:
 #
-#   .. code-block:: cmake
-#
-#     cs_finalize_target(<target>)
-#
-#   Mandatory for every target of :command:`cs_add_library` / :command:`cs_add_executable`, after its links:
-#   :command:`cs_finalize_project` fails for a target not finalized, or whose links changed afterwards.
-#
-#   Install RPATH (Linux, macOS): an executable or a shared or module library finds, once installed, the shared
-#   libraries installed in the ``lib/`` of its package, wherever the install folder is moved. Not set when the target
-#   already has an :prop_tgt:`INSTALL_RPATH` (also from :variable:`CMAKE_INSTALL_RPATH`), or when
-#   :variable:`CSCMAKE_INSTALL_RPATH` is ``OFF``.
-#
-#   ``<target>``
-#     A target of :command:`cs_add_library` or :command:`cs_add_executable` (an alias of one is accepted).
-#
-#   :Reads: :variable:`CSCMAKE_INSTALL_RPATH`
-#   :Writes: :prop_tgt:`_CSCMAKE_FINALIZED_LINKS`, :prop_tgt:`INSTALL_RPATH`
-function(cs_finalize_target target_name)
-  get_target_property(aliased ${target_name} ALIASED_TARGET)
-  if(aliased)
-    set(target_name ${aliased})
-  endif()
-  get_property(finalized TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS SET)
-  if(NOT finalized)
-    _cs_apply_compile_profiles(${target_name})
-    _cs_set_install_rpath(${target_name})
-  endif()
-  _cs_target_links(${target_name} links)
-  set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS "${links}")
-endfunction()
-
-# Return in links_out the links of target_name (LINK_LIBRARIES and INTERFACE_LINK_LIBRARIES) as a single string.
-function(_cs_target_links target_name links_out)
-  set(links "")
-  foreach(property LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
-    get_target_property(values ${target_name} ${property})
-    if(NOT values)
-      set(values "")
-    endif()
-    string(APPEND links "${property}=${values} ")
-  endforeach()
-  set(${links_out} "${links}" PARENT_SCOPE)
-endfunction()
-
-# Fail if a target of the project was not finalized with cs_finalize_target, or if its links changed after it.
-#
-# Reads:
-#
-# * global property CSCMAKE_<namespace>_PROJECT_TARGETS
-# * target property _CSCMAKE_FINALIZED_LINKS
-function(_cs_check_targets_finalized)
-  cs_get_project_targets(targets)
-  set(not_finalized "")
-  set(changed "")
-  foreach(target_name ${targets})
-    get_property(finalized TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED_LINKS SET)
-    if(NOT finalized)
-      list(APPEND not_finalized ${target_name})
-    else()
-      get_target_property(recorded ${target_name} _CSCMAKE_FINALIZED_LINKS)
-      _cs_target_links(${target_name} current)
-      if(NOT "${recorded}" STREQUAL "${current}")
-        list(APPEND changed ${target_name})
-      endif()
-    endif()
-  endforeach()
-  if(not_finalized)
-    list(JOIN not_finalized ", " not_finalized)
-    message(
-      FATAL_ERROR
-      "[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its "
-      "links: missing for ${not_finalized}"
-    )
-  endif()
-  if(changed)
-    list(JOIN changed ", " changed)
-    message(
-      FATAL_ERROR
-      "[cs_finalize_project] links added after cs_finalize_target: ${changed} (call "
-      "cs_finalize_target after cs_target_link_libraries)"
-    )
-  endif()
+# * target property _CSCMAKE_FINALIZED
+function(_cs_finalize_target target_name)
+  _cs_apply_compile_profiles(${target_name})
+  set_property(TARGET ${target_name} PROPERTY _CSCMAKE_FINALIZED TRUE)
 endfunction()
 
 #.rst:
@@ -220,9 +162,10 @@ endfunction()
 #
 #   The namespace of the project of the target.
 #
-# .. prop_tgt:: _CSCMAKE_FINALIZED_LINKS
+# .. prop_tgt:: _CSCMAKE_FINALIZED
 #
-#   Internal: the links of the target when :command:`cs_finalize_target` ran.
+#   Internal: set when the project of the target is finalized (end of the ``CMakeLists.txt`` of
+#   :command:`cs_initialize_project`).
 #
 # Global properties
 # ^^^^^^^^^^^^^^^^^

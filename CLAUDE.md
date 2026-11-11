@@ -73,7 +73,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - Comments are not reflowed: wrap them by hand at 120 columns; an empty `#` line between paragraphs and before bullet
   lists (`* item`).
 - **No hidden side effects.** csCMake changes only what its own targets need, or what the user asks for. In order of
-  preference: a target property of the csCMake targets (e.g. set by `cs_finalize_target`), a directory / project
+  preference: a target property of the csCMake targets (e.g. set by `cs_add_library`), a directory / project
   variable, a global or cache setting. The presets are also used by projects without csCMake (third-party forks,
   OpenCV): they carry the toolchain, generator, folders and search paths only, never build behaviour (an
   `INSTALL_RPATH` in the host presets would have silently replaced OpenCV's own default). Anything wider: only if not

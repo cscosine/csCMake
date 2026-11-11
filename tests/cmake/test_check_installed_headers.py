@@ -22,11 +22,9 @@ cs_add_library(lib INTERFACE)
 cs_target_sources(lib INTERFACE_INSTALL {headers})
 cs_target_link_libraries(lib INTERFACE cstest::cscmake_base_include)
 cs_install_target(lib COMPONENT core DEFAULT)
-cs_finalize_target(lib)
 cs_target_check_installed_headers(lib)
 get_target_property(sources lib_installed_headers SOURCES)
 cstest_report(sources "${{sources}}")
-cs_finalize_project()
 """
 
 

@@ -9,8 +9,8 @@ Core: what every project writes
 
 The lifecycle and the targets; a project needs these and nothing else.
 
-* :command:`cs_initialize_project`, :command:`cs_finalize_project`
-* :command:`cs_add_library`, :command:`cs_add_executable`, :command:`cs_finalize_target`
+* :command:`cs_initialize_project` (the project is finalized at the end of the same ``CMakeLists.txt``)
+* :command:`cs_add_library`, :command:`cs_add_executable`
 * :command:`cs_target_sources`, :command:`cs_target_link_libraries`, :command:`cs_find_package`
 * :command:`cs_install_target`
 

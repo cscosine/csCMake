@@ -372,7 +372,8 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   endif()
   set(${required_cxx_standard} ${arg_CXX_STANDARD} PARENT_SCOPE)
 
-  # compile profiles of every target of the project (cs_finalize_target): cscmake_default unless given, NONE for none
+  # compile profiles of every target of the project (cs_add_library / cs_add_executable): cscmake_default unless given,
+  # NONE for none
   set(default_profiles cscmake_default)
   if(DEFINED arg_DEFAULT_COMPILE_PROFILES)
     set(default_profiles ${arg_DEFAULT_COMPILE_PROFILES})
@@ -382,7 +383,7 @@ function(_cs_parse_additional_configurations required_cxx_standard)
   endif()
   set(CSCMAKE_DEFAULT_COMPILE_PROFILES "${default_profiles}" PARENT_SCOPE)
 
-  # install RPATH of the targets (cs_finalize_target): on unless OFF
+  # install RPATH of the targets (cs_add_library / cs_add_executable): on unless OFF
   # the compatibility of the installed package version (<namespace>ConfigVersion.cmake), set in every project
   _cs_version_compatibility("${arg_VERSION_COMPATIBILITY}" compatibility)
   set(CSCMAKE_VERSION_COMPATIBILITY ${compatibility} PARENT_SCOPE)

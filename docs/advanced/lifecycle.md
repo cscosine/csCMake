@@ -6,12 +6,10 @@ this page says what happens.
 ```mermaid
 flowchart TD
     inc["include(csCMake)<br/>modules, cache defaults, shipped compile profiles"] --> init
-    init["cs_initialize_project<br/>namespace, configurations, folders, standard,<br/>default target, deferred check"] --> targets
-    targets["cs_add_library / cs_add_executable<br/>register the target"] --> fin_t
-    fin_t["cs_finalize_target<br/>compile profiles, links walked and recorded"] --> targets
-    fin_t --> fin_p
-    fin_p["cs_finalize_project<br/>checks, runtime dependencies,<br/>components, Config"] --> deferred
-    deferred["end of the CMakeLists.txt<br/>deferred check: was cs_finalize_project called?"]
+    init["cs_initialize_project<br/>namespace, configurations, folders, standard,<br/>default target, deferred finalization"] --> targets
+    targets["cs_add_library / cs_add_executable<br/>register the target: postfixes, runtime,<br/>default compile profiles, install RPATH"] --> targets
+    targets --> fin
+    fin["end of the CMakeLists.txt (deferred)<br/>compile profiles, dependencies,<br/>components, Config"]
 ```
 
 ## `include(csCMake)`
@@ -51,7 +49,7 @@ order:
 12. `enable_testing()`; with Ninja, `CMAKE_EXPORT_COMPILE_COMMANDS` `ON` unless set (`-D...=OFF`, or the environment
     variable of the same name);
 13. creates the default target `<namespace>::cscmake_base_include` (and its include folders, created on disk);
-14. defers a call to the end of the current `CMakeLists.txt` that fails if `cs_finalize_project` was not called
+14. defers the [finalization](#finalization) of the project to the end of the current `CMakeLists.txt`
     (`cmake_language(DEFER)`).
 
 ### What reaches beyond the csCMake targets
@@ -84,29 +82,27 @@ the results land where `project()` variables do.
 
 `cs_add_library` / `cs_add_executable` call `add_library` / `add_executable`, then register the target (aliases
 excepted): `CSCMAKE_<namespace>_PROJECT_TARGETS`, the namespace on the target
-(`CSCMAKE_NAMESPACE`), `<CONFIG>_POSTFIX` for each configuration and `MSVC_RUNTIME_LIBRARY`. Creating a
-target before `cs_initialize_project` fails (the postfixes do not exist yet).
+(`CSCMAKE_NAMESPACE`), `<CONFIG>_POSTFIX` for each configuration and `MSVC_RUNTIME_LIBRARY`. They also take the values
+of the folder variables the finalization needs, as CMake does with its own `CMAKE_<X>` variables:
+`CSCMAKE_COMPILE_PROFILES` starts with `CSCMAKE_DEFAULT_COMPILE_PROFILES`, and the install RPATH is set from
+`CSCMAKE_INSTALL_RPATH` and the install folders (a value the project sets on the target afterwards replaces it). The
+finalization runs in the project folder and reads target properties only, so what a sub-folder sets still counts.
+Creating a target before `cs_initialize_project` fails (the postfixes do not exist yet).
 
-## `cs_finalize_target`
+## Finalization
 
-1. Applies the compile profiles of the target (once: a second call does not apply them again).
-2. Walks the links of the target, transitively (see [Runtime dependencies](runtime-dependencies.md)), recording the
-   project targets and the names that are not targets yet, and the shared libraries of imported targets.
-3. Records the links of the target (`_CSCMAKE_FINALIZED_LINKS`).
+At the end of the `CMakeLists.txt` of `cs_initialize_project`, the call deferred at step 14 runs, in the scope of the
+project folder (nested projects: each at the end of its own `CMakeLists.txt`, before the outer project goes on):
 
-Links must be complete at this point: the profiles are applied and the links walked once.
-
-## `cs_finalize_project`
-
-1. Marks the namespace finalized (`_CSCMAKE_PROJECT_FINALIZED_<namespace>`), for the deferred check.
-2. Prints the targets, components and state (debug messages).
-3. Checks every target of the project: finalized, and with the links recorded then (a link added later fails).
-4. Resolves the runtime dependencies of every target, and from them the Visual Studio debugger environment.
-5. Installs the components: the export of each one, the dependencies between them (cycles fail, then sorted), the
+1. Marks the namespace finalized (`_CSCMAKE_PROJECT_FINALIZED_<namespace>`): `cs_target_link_libraries` and
+   `cs_target_runtime_environment` fail afterwards.
+2. Applies the compile profiles of every target of the project, and marks it finalized (`_CSCMAKE_FINALIZED`).
+3. Resolves the targets of the build each target depends on, and the Visual Studio debugger environment (see
+   [Runtime dependencies](runtime-dependencies.md)).
+4. Installs the components: the export of each one, the dependencies between them (cycles fail, then sorted), the
    generated `<namespace>Config.cmake` and `<namespace>ConfigVersion.cmake` (see
    [Installed packages internals](packages.md)).
+5. Prints the project (debug messages).
 
-## The deferred check
-
-At the end of the `CMakeLists.txt` of `cs_initialize_project`, the call deferred at step 14 runs: if
-`cs_finalize_project` was not called for the namespace, the configure fails, naming the file to fix.
+Deferred calls run in the order they were deferred: `cs_print_target` / `cs_print_project` called in the project defer
+themselves after the finalization, so they print the targets as built.

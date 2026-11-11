@@ -1,15 +1,17 @@
 # Troubleshooting
 
 The errors csCMake reports, what they mean and what to do. Every csCMake message starts with the command that
-reports it, e.g. `[cs_finalize_project]`.
+reports it, e.g. `[cs_initialize_project]`; `[csCMake]` when the project is finalized, at the end of the
+`CMakeLists.txt` of `cs_initialize_project`.
 
 To see what csCMake does for a project, configure it with `-D<project>_CSCMAKE_DEBUG=ON` (`<project>` is the
 `project()` name of `cs_initialize_project`); for an installed package being loaded, `-D<namespace>_DEBUG=ON`.
 
 ## Inspecting a target or the project
 
-Two commands print what csCMake knows, whatever the debug switch; call them at the end of the `CMakeLists.txt` of the
-project, after `cs_finalize_project` (some values are resolved there), and remove them afterwards:
+Two commands print what csCMake knows, whatever the debug switch. Called anywhere in the project, they print at the
+end of the `CMakeLists.txt` of `cs_initialize_project`, after the project is finalized (some values are resolved
+there); remove them afterwards:
 
 - `cs_print_target(<target>)`: a target does not build, link, install or run as expected. It prints its type, its
   component, the headers it installs, the packages it finds for its consumers, its compile profiles, its run-time
@@ -20,7 +22,6 @@ project, after `cs_finalize_project` (some values are resolved there), and remov
   each component with its targets, the packages it finds and the components it depends on.
 
 ```cmake
-cs_finalize_project()
 cs_print_target(myLib)
 cs_print_project()
 ```
@@ -67,30 +68,22 @@ cs_print_project()
 
 ## Finalizing
 
-`[cs_initialize_project] cs_finalize_project() is required at the end of <folder>/CMakeLists.txt`
-: Add `cs_finalize_project()` at the end of the `CMakeLists.txt` that calls `cs_initialize_project`.
+`[cs_target_link_libraries] <target>: its project is already finalized`,
+`[cs_target_runtime_environment] <target>: its project is already finalized`
+: The call comes after the end of the `CMakeLists.txt` of the project of the target, e.g. from a parent project: make
+  it in the project of the target.
 
-`[cs_finalize_project] cs_finalize_target(<target>) is required for every target, after its links: missing for <targets>`
-: Every target of `cs_add_library` / `cs_add_executable` needs `cs_finalize_target`, tests and tools included.
-
-`[cs_target_link_libraries] <target>: links after cs_finalize_target(<target>)`,
-`[cs_finalize_project] links added after cs_finalize_target: <targets>`
-: Move `cs_finalize_target` after the last `cs_target_link_libraries` (or `target_link_libraries`) of these targets.
-
-`[cs_finalize_project] takes no arguments`
-: The namespace is given to `cs_initialize_project(NAMESPACE ...)` only.
-
-`[_cs_check_component_cycles_recursive] detected cyclic dependency: <components>`
+`[csCMake] cyclic dependency between the components: <components>`
 : The targets of these components link each other in a cycle: move the targets so that the components depend on each
   other in one direction.
 
 ## Compile profiles
 
-`[cs_finalize_target] compile profile <profile> of <target> is not defined`
-: The profile has no rule: check its name, and that its `cs_add_compile_profile_rule` calls run before the target is
-  finalized.
+`[csCMake] compile profile <profile> of <target> is not defined`
+: The profile has no rule: check its name, and that its `cs_add_compile_profile_rule` calls are in the project (or
+  before it).
 
-`[cs_finalize_target] clang-tidy is required: the compile profiles of <target> run it in this build`
+`[csCMake] clang-tidy is required: the compile profiles of <target> run it in this build`
 : Install clang-tidy, or give its path with `-DCSCMAKE_CLANG_TIDY_EXE=<path>`; or restrict the `CLANG_TIDY` rule to the
   compilers and platforms where it is available.
 

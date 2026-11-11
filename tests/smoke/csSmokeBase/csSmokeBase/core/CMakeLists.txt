@@ -10,7 +10,5 @@ cs_target_link_libraries(core INTERFACE csSmokeBase::csSmokeBase)
 
 cs_install_target(core COMPONENT core)
 
-cs_finalize_target(core)
-
 # compile each installed header standalone, with the strict options
 cs_target_check_installed_headers(core COMPILE_PROFILES cscmake_strict_warnings)

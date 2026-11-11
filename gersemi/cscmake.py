@@ -21,7 +21,6 @@ command_definitions = {
         ],
         "multi_value_keywords": ["DEFAULT_CONFIG", "DEFAULT_COMPILE_PROFILES"],
     },
-    "cs_finalize_project": {},
     "cs_add_library": {
         "front_positional_arguments": ["name"],
         "options": [
@@ -66,7 +65,6 @@ command_definitions = {
         "options": ["DEFAULT"],
         "one_value_keywords": ["COMPONENT"],
     },
-    "cs_finalize_target": {"front_positional_arguments": ["target"]},
     "cs_target_check_installed_headers": {
         "front_positional_arguments": ["target"],
         "multi_value_keywords": ["COMPILE_PROFILES"],

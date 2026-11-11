@@ -18,11 +18,9 @@ cs_initialize_project(
   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
   CUSTOM_CONFIG Paranoid BASED_ON "Debug,Release," POSTFIX "dp")
 """
-FINALIZE = "cs_finalize_project()\n"
 LIB = """
 cs_add_library(lib INTERFACE)
 cs_target_link_libraries(lib INTERFACE cstest::cscmake_base_include)
-cs_finalize_target(lib)
 """
 
 
@@ -43,7 +41,7 @@ def test_project_without_version_is_rejected(tmp_path: Path) -> None:
 def test_a_single_config_build_type_must_be_a_configuration_of_the_project(
     tmp_path: Path, build_type: str, message: str
 ) -> None:
-    result = configure(tmp_path, INIT + FINALIZE, args=[f"-DCMAKE_BUILD_TYPE={build_type}"])
+    result = configure(tmp_path, INIT, args=[f"-DCMAKE_BUILD_TYPE={build_type}"])
 
     assert result.returncode != 0
     assert message in " ".join(result.output.split())
@@ -60,7 +58,7 @@ def test_no_temporary_variable_leaks_into_the_project_scope(tmp_path: Path) -> N
         "temp_var_list",
     ]
     report = "".join(f'if(DEFINED {n})\n  cstest_report(leaked "{n}")\nendif()\n' for n in names)
-    result = configure(tmp_path, INIT + report + "cstest_report(namespace ${CSCMAKE_NAMESPACE})\n" + FINALIZE)
+    result = configure(tmp_path, INIT + report + "cstest_report(namespace ${CSCMAKE_NAMESPACE})\n")
 
     assert result.returncode == 0, result.output
     assert "leaked" not in result.reports
@@ -77,7 +75,6 @@ cstest_report(paranoid_postfix "${postfix}")
 cstest_report(map_variable "${CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO}")
 cstest_report(map_cache "$CACHE{CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO}")
 cstest_report(runtime_cache "$CACHE{CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
-cs_finalize_project()
 """
     )
     result = configure(tmp_path, body)
@@ -102,7 +99,6 @@ cstest_report(cxx_debug "${CMAKE_CXX_FLAGS_DEBUG}")
 cstest_report(cxx "$CACHE{CMAKE_CXX_FLAGS_PARANOID}")
 get_property(fortran CACHE CMAKE_Fortran_FLAGS_PARANOID PROPERTY TYPE SET)
 cstest_report(fortran "${fortran}")
-cs_finalize_project()
 """
     )
     result = configure(tmp_path, body)
@@ -120,7 +116,6 @@ def test_defaults_can_be_overridden_from_the_command_line(tmp_path: Path) -> Non
 get_target_property(postfix lib DEBUG_POSTFIX)
 cstest_report(debug_postfix "${postfix}")
 cstest_report(runtime_output "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-cs_finalize_project()
 """
     )
     out = (tmp_path / "custom-bin").as_posix()
@@ -133,7 +128,7 @@ cs_finalize_project()
 
 @pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
 def test_debug_messages_only_with_the_project_option(tmp_path: Path, debug: bool) -> None:
-    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-Dcstest_CSCMAKE_DEBUG=ON"] if debug else [])
+    result = configure(tmp_path, INIT + LIB, args=["-Dcstest_CSCMAKE_DEBUG=ON"] if debug else [])
 
     assert result.returncode == 0, result.output
     assert ("[cs_target_link_libraries]" in result.output) == debug
@@ -143,13 +138,11 @@ SUBPROJECT = """
 project(sub VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE sub CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 add_subdirectory(lib)
-cs_finalize_project()
 """
 SUBPROJECT_LIB = """
 cs_add_library(h INTERFACE)
 cs_target_sources(h INTERFACE_INSTALL H.hpp)
 cs_install_target(h COMPONENT h)
-cs_finalize_target(h)
 """
 
 
@@ -169,7 +162,6 @@ def test_prefix_and_module_path_head_and_tail(tmp_path: Path) -> None:
         + """
 cstest_report(prefix "${CMAKE_PREFIX_PATH}")
 cstest_report(module "${CMAKE_MODULE_PATH}")
-cs_finalize_project()
 """
     )
     args = [
@@ -194,7 +186,6 @@ def test_static_msvc_runtime_from_the_command_line(tmp_path: Path) -> None:
         + """
 get_target_property(runtime lib MSVC_RUNTIME_LIBRARY)
 cstest_report(runtime "${runtime}")
-cs_finalize_project()
 """
     )
     result = configure(tmp_path, body, args=["-DCSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG=MultiThreadedDebug"])
@@ -208,7 +199,7 @@ cs_finalize_project()
 
 def test_the_c_compiler_of_the_presets_is_not_reported_unused(tmp_path: Path) -> None:
     """The presets give CMAKE_C_COMPILER, a project without C sources does not use it: no unused-cli warning."""
-    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-DCMAKE_C_COMPILER=cc"])
+    result = configure(tmp_path, INIT + LIB, args=["-DCMAKE_C_COMPILER=cc"])
 
     assert result.returncode == 0, result.output
     assert "Manually-specified variables were not used" not in result.output
@@ -223,7 +214,7 @@ cstest_report(compile_commands "${CMAKE_EXPORT_COMPILE_COMMANDS}")
 
 
 def test_language_and_compile_commands_defaults(tmp_path: Path) -> None:
-    result = configure(tmp_path, INIT + REPORT_LANGUAGE + FINALIZE)
+    result = configure(tmp_path, INIT + REPORT_LANGUAGE)
 
     assert result.returncode == 0, result.output
     assert result.reports == {"standard": "17", "required": "ON", "extensions": "OFF", "compile_commands": "ON"}
@@ -233,9 +224,7 @@ def test_the_choices_of_the_project_win(tmp_path: Path) -> None:
     """Set by the project before cs_initialize_project (or on the command line): kept."""
     before = "set(CMAKE_CXX_STANDARD_REQUIRED OFF)\nset(CMAKE_CXX_EXTENSIONS ON)\n"
 
-    result = configure(
-        tmp_path, before + INIT + REPORT_LANGUAGE + FINALIZE, args=["-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF"]
-    )
+    result = configure(tmp_path, before + INIT + REPORT_LANGUAGE, args=["-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF"])
 
     assert result.returncode == 0, result.output
     assert result.reports == {"standard": "17", "required": "OFF", "extensions": "ON", "compile_commands": "OFF"}

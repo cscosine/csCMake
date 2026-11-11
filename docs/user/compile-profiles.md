@@ -31,7 +31,7 @@ one target different options per language: they apply the C++ ones to every file
 
 ## Which targets get which profiles
 
-`cs_finalize_target` applies to each target:
+When the project is finalized, csCMake applies to each target:
 
 1. the default profiles of the project: `DEFAULT_COMPILE_PROFILES` of `cs_initialize_project` (`cscmake_default` when
    not given, `NONE` for none);

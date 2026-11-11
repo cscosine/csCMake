@@ -120,7 +120,7 @@ function(_cs_target_base_project_include_dir)
     endforeach()
   endif()
 
-  _cs_target_create_default_finalize(cscmake_base_include)
+  _cs_target_create_default_install(cscmake_base_include)
 endfunction()
 
 # Create the empty default target <project>_<target_sub_name> of type target_type (unique in the build tree), exported
@@ -140,10 +140,8 @@ function(_cs_target_create_default target_sub_name target_type target_name_out)
   set(${target_name_out} ${target_name} PARENT_SCOPE)
 endfunction()
 
-# Install the default target in the cscmake_common component (a default component) and finalize it.
-function(_cs_target_create_default_finalize target_sub_name)
+# Install the default target in the cscmake_common component (a default component).
+function(_cs_target_create_default_install target_sub_name)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
   cs_install_target(${target_name} COMPONENT cscmake_common DEFAULT)
-
-  cs_finalize_target(${target_name})
 endfunction()

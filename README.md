@@ -65,10 +65,10 @@ cs_add_library(core STATIC)
 cs_target_sources(core PRIVATE core/Greeting.cpp PRIVATE_INSTALL core/Greeting.hpp)
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
 cs_install_target(core COMPONENT core DEFAULT)
-cs_finalize_target(core)
-
-cs_finalize_project()
 ```
+
+At the end of this file, csCMake finalizes the project: compile profiles, dependencies between the components,
+install rules and `myAppConfig.cmake`.
 
 Configure, build, install and test, here with GCC and Ninja Multi-Config on Ubuntu 24.04 (`cmake --list-presets` lists
 the presets of your machine):
@@ -99,7 +99,7 @@ The package is installed in `workspace/install/<variant>/myApp/`, where other pr
 - **Presets**: Linux (Ubuntu 22.04 to 26.04, x64 and arm64, GCC and Clang), Windows (MSVC and clang-cl, Visual Studio
   and Ninja), macOS (Apple Clang, Ninja and Xcode); workspace layouts for side-by-side, standalone and CI setups.
   [Presets](docs/user/presets.md)
-- **Checks**: every target and the project must be finalized, installed headers can be compiled on their own, and
+- **Checks**: links added after the project is finalized fail, installed headers can be compiled on their own, and
   runtime dependencies are resolved per configuration (Visual Studio debugger `PATH`).
 
 ## Requirements

@@ -83,7 +83,7 @@ name the consumers use once the package is installed.
 :language: cmake
 ```
 
-A test executable is a target of the project like any other: it is finalized too. It is not installed: no
+A test executable is a target of the project like any other: it is finalized with it. It is not installed: no
 `cs_install_target`. The test presets run it with `ctest`.
 
 ## What gets installed

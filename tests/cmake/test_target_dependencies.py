@@ -1,4 +1,4 @@
-"""Dependencies of the targets, resolved by cs_finalize_project (csTargetDependencies.cmake)."""
+"""Dependencies of the targets, resolved when the project is finalized (csTargetDependencies.cmake)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.cmake.cmake_project import configure
+from tests.cmake.cmake_project import after_finalize, configure
 
 pytestmark = pytest.mark.requires("cmake", "ninja")
 
@@ -16,25 +16,23 @@ INIT = "cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG De
 APP = """
 cs_add_library(app INTERFACE)
 cs_target_link_libraries(app INTERFACE cstest::mid ext m)
-cs_finalize_target(app)
 """
 DEPENDENCIES = """
 add_library(ext SHARED IMPORTED)
 set_target_properties(ext PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/libext.so)
 cs_add_library(base INTERFACE)
-cs_finalize_target(base)
 cs_add_library(mid STATIC mid.cpp)
 cs_add_library(cstest::mid ALIAS mid)
 cs_target_link_libraries(mid PRIVATE base)
-cs_finalize_target(mid)
 """
-REPORT = """
-cs_finalize_project()
+REPORT = after_finalize(
+    """
 _cs_get_target_project_dependencies(app deps)
 cstest_report(app "${deps}")
 _cs_get_target_project_dependencies(base deps)
 cstest_report(base "${deps}")
 """
+)
 
 
 @pytest.mark.parametrize("app_first", [False, True], ids=["deps-first", "app-first"])
@@ -42,7 +40,7 @@ def test_project_dependencies_are_the_targets_of_the_build_linked_directly_or_no
     tmp_path: Path, app_first: bool
 ) -> None:
     """Aliases resolved, $<LINK_ONLY:...> followed, imported targets and plain names left out; also when app is
-    finalized before the targets it links exist."""
+    created before the targets it links exist."""
     body = "enable_language(CXX)\n" + INIT + (APP + DEPENDENCIES if app_first else DEPENDENCIES + APP) + REPORT
 
     result = configure(tmp_path, body, {"libext.so": "", "mid.cpp": "int mid() { return 0; }\n"})
@@ -61,15 +59,16 @@ def test_visual_studio_debugger_path(tmp_path: Path) -> None:
         + INIT
         + """
 cs_add_executable(app main.cpp)
-cs_finalize_target(app)
 cs_add_library(alone INTERFACE)
-cs_finalize_target(alone)
-cs_finalize_project()
+"""
+        + after_finalize(
+            """
 get_target_property(value app VS_DEBUGGER_ENVIRONMENT)
 cstest_report(app "${value}")
 get_target_property(value alone VS_DEBUGGER_ENVIRONMENT)
 cstest_report(alone "${value}")
 """
+        )
     )
     result = configure(tmp_path, body, {"main.cpp": "int main() { return 0; }\n"})
 
@@ -82,18 +81,19 @@ cstest_report(alone "${value}")
 ENVIRONMENT = """enable_language(CXX)
 cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 cs_add_executable(app main.cpp)
-{before_finalize}
-cs_finalize_target(app)
-cs_finalize_project()
+{calls}
+""" + after_finalize(
+    """
 get_target_property(value app VS_DEBUGGER_ENVIRONMENT)
 # one line per report: the newlines as <NL>
 string(REPLACE "\n" "<NL>" value "${{value}}")
 cstest_report(app "${{value}}")
 """
+)
 
 
-def _environment(tmp_path: Path, before_finalize: str) -> str:
-    body = ENVIRONMENT.format(before_finalize=before_finalize)
+def _environment(tmp_path: Path, calls: str) -> str:
+    body = ENVIRONMENT.format(calls=calls)
     result = configure(tmp_path, body, {"main.cpp": "int main() { return 0; }\n"})
     assert result.returncode == 0, result.output
     return result.reports["app"]
@@ -145,8 +145,8 @@ def test_off_without_an_environment_of_the_project_sets_nothing(tmp_path: Path) 
 
 
 def test_a_wrong_property_value_is_rejected(tmp_path: Path) -> None:
-    """The property set directly (not through cs_target_runtime_environment) is checked by cs_finalize_project."""
-    body = ENVIRONMENT.format(before_finalize="set_property(TARGET app PROPERTY CSCMAKE_DEBUGGER_PATH FIRST)")
+    """The property set directly (not through cs_target_runtime_environment) is checked at the finalization."""
+    body = ENVIRONMENT.format(calls="set_property(TARGET app PROPERTY CSCMAKE_DEBUGGER_PATH FIRST)")
     result = configure(tmp_path, body, {"main.cpp": "int main() { return 0; }\n"})
 
     assert result.returncode != 0
@@ -185,16 +185,16 @@ def test_off_adds_no_variables_either(tmp_path: Path) -> None:
     ],
 )
 def test_wrong_arguments_are_rejected(tmp_path: Path, call: str, message: str) -> None:
-    body = ENVIRONMENT.format(before_finalize=call)
+    body = ENVIRONMENT.format(calls=call)
     result = configure(tmp_path, body, {"main.cpp": "int main() { return 0; }\n"})
 
     assert result.returncode != 0
     assert message in " ".join(result.output.split())
 
 
-def test_a_call_after_finalize_project_is_rejected(tmp_path: Path) -> None:
-    body = ENVIRONMENT.format(before_finalize="") + "cs_target_runtime_environment(app PATH /late)\n"
+def test_a_call_after_the_finalization_is_rejected(tmp_path: Path) -> None:
+    body = ENVIRONMENT.format(calls="") + after_finalize("cs_target_runtime_environment(app PATH /late)\n")
     result = configure(tmp_path, body, {"main.cpp": "int main() { return 0; }\n"})
 
     assert result.returncode != 0
-    assert "app: call it before cs_finalize_project" in " ".join(result.output.split())
+    assert "app: its project is already finalized" in " ".join(result.output.split())

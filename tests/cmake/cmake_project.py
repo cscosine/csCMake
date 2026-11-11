@@ -40,6 +40,12 @@ class Configured:
         return value.split(";") if value else []
 
 
+def after_finalize(code: str) -> str:
+    """CMake ``code`` run after csCMake finalized the project: deferred to the end of the CMakeLists.txt, after the
+    finalization (deferred before it, by ``cs_initialize_project``); evaluated once, then, in the folder's scope."""
+    return f"cmake_language(DEFER CALL cmake_language EVAL CODE [==[\n{code}]==])\n"
+
+
 def configure(
     project_dir: Path,
     body: str,

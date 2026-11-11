@@ -16,7 +16,7 @@ asks for with `find_package(<namespace> COMPONENTS <component>...)`; it holds on
 component to the ones loaded when the consumer gives no `COMPONENTS`.
 
 csCMake works out the dependencies between components from the links of their targets: if `text` links `core`,
-loading `text` loads `core` first. A cycle between components fails `cs_finalize_project`.
+loading `text` loads `core` first. A cycle between components fails the configure, when the project is finalized.
 
 Every package also has the component `cscmake_common`, a default component holding the default target
 `<namespace>::cscmake_base_include`.
@@ -41,14 +41,14 @@ configuration can be installed in the same prefix.
 ### Shared libraries
 
 Installed executables and shared libraries find the shared libraries of their own package, wherever the install folder
-is moved: nothing to write. On Linux and macOS, `cs_finalize_target` gives them a relative install RPATH (on Windows,
-the DLLs are installed in `bin/`, next to the executables). To turn it off:
+is moved: nothing to write. On Linux and macOS, `cs_add_library` / `cs_add_executable` give them a relative install
+RPATH (on Windows, the DLLs are installed in `bin/`, next to the executables). To turn it off:
 
 | For | Write |
 |---|---|
 | the whole project | `cs_initialize_project(... INSTALL_RPATH OFF)` |
-| the targets of a folder | `set(CSCMAKE_INSTALL_RPATH OFF)` in that folder, before their `cs_finalize_target` |
-| one target, with your own value | `set_target_properties(<target> PROPERTIES INSTALL_RPATH ...)` before `cs_finalize_target` |
+| the targets of a folder | `set(CSCMAKE_INSTALL_RPATH OFF)` in that folder, before their `cs_add_*` |
+| one target, with your own value | `set_target_properties(<target> PROPERTIES INSTALL_RPATH ...)` after its `cs_add_*` |
 
 A project setting `CMAKE_INSTALL_RPATH` keeps its value too. The shared libraries of **other** packages are not found
 from the install folder: see [Runtime dependencies](../advanced/runtime-dependencies.md#running-the-executables).
@@ -81,5 +81,5 @@ The generated `<namespace>Config.cmake`:
 
 ## Inside the project
 
-With the debug messages on (`-D<project>_CSCMAKE_DEBUG=ON`), `cs_finalize_project` prints the components, their
-targets, the packages they need and the components they depend on.
+With the debug messages on (`-D<project>_CSCMAKE_DEBUG=ON`), the finalization of the project prints the components,
+their targets, the packages they need and the components they depend on.

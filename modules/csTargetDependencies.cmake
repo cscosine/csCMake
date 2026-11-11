@@ -2,7 +2,7 @@
 # csTargetDependencies
 # --------------------
 #
-# Dependencies of the targets, resolved by :command:`cs_finalize_project`: the targets of the project each target
+# Dependencies of the targets, resolved when the project is finalized: the targets of the project each target
 # depends on (for the dependencies between the components), and the run-time environment of the targets (the Visual
 # Studio debugger environment: the folders of the DLLs a target needs, and what the project adds with
 # :command:`cs_target_runtime_environment`).
@@ -18,7 +18,7 @@ include(modules/csInternal)
 # .. command:: cs_target_runtime_environment
 #
 #   Add to the run-time environment of a target what CMake cannot know. Usually not needed:
-#   :command:`cs_finalize_project` already gives each executable and shared library the folders of the DLLs of
+#   the finalization of the project already gives each executable and shared library the folders of the DLLs of
 #   everything it links (imported or not, per configuration), and on Linux and macOS the build tree runs through the
 #   RPATH.
 #
@@ -36,8 +36,9 @@ include(modules/csInternal)
 #   * variables the program reads, e.g. the plugin folders of Qt: ``SET QT_PLUGIN_PATH=${QT_ROOT}/plugins``.
 #
 #   The environment goes to the Visual Studio debugger (:prop_tgt:`VS_DEBUGGER_ENVIRONMENT`): the ``PATH`` folders
-#   first, then the folders of the DLLs, then ``%PATH%``; the variables on their own lines. Call it before
-#   :command:`cs_finalize_project`, as many times as needed (each call adds to the previous ones). Generator
+#   first, then the folders of the DLLs, then ``%PATH%``; the variables on their own lines. Call it in the project of
+#   the target (before its finalization, at the end of the ``CMakeLists.txt`` of :command:`cs_initialize_project`), as
+#   many times as needed (each call adds to the previous ones). Generator
 #   expressions are allowed, e.g. a folder per configuration:
 #
 #   .. code-block:: cmake
@@ -84,7 +85,11 @@ function(cs_target_runtime_environment target_name)
   endif()
   get_property(finalized GLOBAL PROPERTY _CSCMAKE_PROJECT_FINALIZED_${CSCMAKE_NAMESPACE})
   if(finalized)
-    message(FATAL_ERROR "[cs_target_runtime_environment] ${target_name}: call it before cs_finalize_project")
+    message(
+      FATAL_ERROR
+      "[cs_target_runtime_environment] ${target_name}: its project is already finalized (end of the CMakeLists.txt "
+      "of its cs_initialize_project)"
+    )
   endif()
 
   if(DEFINED arg_DEBUGGER_PATH)
@@ -154,7 +159,7 @@ function(_cs_set_project_dependencies target_name)
       endif()
     endforeach()
   endwhile()
-  cs_debug_message("[cs_finalize_project] ${target_name} depends on the targets: ${dependencies}")
+  cs_debug_message("[csCMake] ${target_name} depends on the targets: ${dependencies}")
   set_property(TARGET ${target_name} PROPERTY CSCMAKE_PROJECT_DEPENDENCIES "${dependencies}")
 endfunction()
 
@@ -220,10 +225,7 @@ function(_cs_debugger_path_mode target_name mode_out)
     set(mode BEFORE)
   endif()
   if(NOT mode MATCHES "^(BEFORE|AFTER|OFF)$")
-    message(
-      FATAL_ERROR
-      "[cs_finalize_project] ${target_name}: CSCMAKE_DEBUGGER_PATH is BEFORE, AFTER or OFF, got ${mode}"
-    )
+    message(FATAL_ERROR "[csCMake] ${target_name}: CSCMAKE_DEBUGGER_PATH is BEFORE, AFTER or OFF, got ${mode}")
   endif()
   set(${mode_out} ${mode} PARENT_SCOPE)
 endfunction()
@@ -267,8 +269,8 @@ function(_cs_finalize_runtime_dependencies)
   endforeach()
 endfunction()
 
-# Return the targets of the project (or of nested csCMake projects) a target depends on, resolved by
-# :command:`cs_finalize_project`.
+# Return the targets of the project (or of nested csCMake projects) a target depends on, resolved when the project is
+# finalized.
 #
 # Reads:
 #

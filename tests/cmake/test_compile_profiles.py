@@ -1,4 +1,4 @@
-"""Compile profiles: rules with conditions, applied by cs_finalize_target (csCompileProfiles.cmake)."""
+"""Compile profiles: rules with conditions, applied when the project is finalized (csCompileProfiles.cmake)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.cmake.cmake_project import configure
+from tests.cmake.cmake_project import after_finalize, configure
 
 # the targets compile: a C++ compiler on PATH (not set up on Windows for these tests; covered by the smoke tests)
 pytestmark = [
@@ -30,14 +30,14 @@ def _body(rules: str, use: str = "", defaults: str = "") -> str:
 cs_add_library(lib STATIC lib.cpp)
 """
         + use
-        + """
-cs_finalize_target(lib)
+        + after_finalize(
+            """
 foreach(property COMPILE_OPTIONS COMPILE_DEFINITIONS LINK_OPTIONS INTERFACE_LINK_OPTIONS CXX_CLANG_TIDY)
   get_target_property(value lib ${property})
   cstest_report(${property} "${value}")
 endforeach()
-cs_finalize_project()
 """
+        )
     )
 
 
@@ -100,19 +100,20 @@ cs_add_compile_profile_rule(PROFILE loose COMPILE_OPTIONS -Wloose)
         + rules
         + """
 cs_add_library(lib STATIC lib.cpp)
-cs_finalize_target(lib)
 add_subdirectory(tests)
+"""
+        + after_finalize(
+            """
 get_target_property(value lib COMPILE_OPTIONS)
 cstest_report(LIB "${value}")
 get_target_property(value test_lib COMPILE_OPTIONS)
 cstest_report(TEST "${value}")
-cs_finalize_project()
 """
+        )
     )
     tests = """
 set(CSCMAKE_DEFAULT_COMPILE_PROFILES loose)
 cs_add_library(test_lib STATIC ../lib.cpp)
-cs_finalize_target(test_lib)
 """
     result = configure(tmp_path, body, {**FILES, "tests/CMakeLists.txt": tests})
 
