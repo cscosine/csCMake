@@ -39,12 +39,14 @@ docs/                               this documentation
   `CSCMAKE_*`, internal ones `_CSCMAKE_*`. Per-namespace global properties (`CSCMAKE_<namespace>_...`) keep several
   csCMake projects of one build apart.
 - **No hidden side effects**: csCMake changes only what its own targets need, or what the user asks for. Prefer a
-  target property of the csCMake targets (set by `cs_finalize_target`, like the install RPATH) to a directory or
+  target property of the csCMake targets (set by `cs_add_library`, like the install RPATH) to a directory or
   project variable, and that to a global or cache setting; never put build behaviour in the presets, which projects
   without csCMake use too. A wider setting is applied only if the project has not set it, is documented (`:Writes:`,
   user guide), can be turned off, and has a configure test showing that the project's own value wins.
 - Errors: `message(FATAL_ERROR "[<command>] <what is wrong>: <what to do>")`, naming the command the user called.
-- Debug output: `cs_debug_message`, shown with `<project>_CSCMAKE_DEBUG`.
+- Messages: `message(VERBOSE ...)` for what csCMake does (one line per thing), `message(DEBUG ...)` for the details;
+  `_cs_message_context(<command>)` at the start of a public command; work done only for a message under
+  `_cs_log_level_at_least(<level> out)`. Errors: `[<public command>] <subject>: <what is wrong>; <what to do>`.
 - Every module starts with `include_guard(GLOBAL)` and includes the modules it uses.
 - gersemi formats every CMake file (`.gersemirc`: 120 columns, indent 2; the `cs_*` signatures in
   `gersemi/cscmake.py`); `cscmake-lint` checks the rules: lowercase names (`CS101`-`CS103`), a comment block right above
@@ -60,8 +62,8 @@ docs/                               this documentation
 3. Its signature in `gersemi/cscmake.py`.
 4. Tests: a configure test in `tests/cmake/` for its behaviour and its errors; a smoke project when it changes what a
    build or an installed package does.
-5. The user guide and tutorials that show it; `MIGRATION.md` when it replaces or renames something (tables and
-   actions, no history in the other docs).
+5. The user guide and tutorials that show it; `CHANGELOG.md` (a breaking change: with what to change in a project;
+   no history in the other docs).
 
 ## Checks
 

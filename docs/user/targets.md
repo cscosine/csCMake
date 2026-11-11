@@ -1,7 +1,7 @@
 # Targets and sources
 
 The targets of a csCMake project are created, given sources and linked with `cs_*` commands that work like the CMake
-ones, plus one rule: every target is finalized after its links.
+ones. csCMake finalizes them with the project, at the end of the `CMakeLists.txt` of `cs_initialize_project`.
 
 ## Libraries and executables
 
@@ -17,7 +17,10 @@ cs_add_executable(myTool main.cpp)
 - its output name gets the postfix of each build configuration (`libcored.a` in Debug, `libcore.a` in Release, ...: see
   [Build configurations](build-configurations.md));
 - with MSVC it uses the runtime library of the project;
-- `cs_finalize_target` becomes mandatory for it.
+- its compile profiles start with the default ones of its folder (`CSCMAKE_DEFAULT_COMPILE_PROFILES`), and on Linux
+  and macOS it gets an install RPATH ([Installed packages](install.md)), from the values of the folder variables
+  when the target is created, as CMake does with its own `CMAKE_<X>` variables;
+- it is finalized with the project.
 
 An `ALIAS` is not registered: it is only another name.
 
@@ -74,27 +77,19 @@ contains `$<CONFIG>`). Both are include folders of `<namespace>::cscmake_base_in
 cs_target_link_libraries(myTool PRIVATE core)
 ```
 
-`cs_target_link_libraries` works like `target_link_libraries`; an alias of a project target is replaced
-by the target itself. `target_link_libraries` works too: csCMake reads the links of the targets when they are
-finalized.
+`cs_target_link_libraries` is `target_link_libraries`, and fails at once for a link added after the project of the
+target is finalized (e.g. from a parent project). `target_link_libraries` works too: csCMake reads the links of the
+targets when the project is finalized.
 
-## Finalizing: mandatory, after the links
+## Finalizing: at the end of the project
 
-```cmake
-cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
-cs_finalize_target(core)
-```
-
-`cs_finalize_target` is required for every target of `cs_add_library` / `cs_add_executable`, after its
-links. It applies the [compile profiles](compile-profiles.md) of the target and records the libraries it links, from
-which `cs_finalize_project` computes its runtime dependencies. `cs_finalize_project` fails when:
-
-- a target was not finalized: `cs_finalize_target(<target>) is required for every target, after its links: missing
-  for ...`;
-- a link was added after `cs_finalize_target`: `links added after cs_finalize_target: ...`.
-
-Test executables, tools and examples are targets too: finalize them as well.
+At the end of the `CMakeLists.txt` of `cs_initialize_project` (a call CMake defers there, `cmake_language(DEFER)`),
+csCMake finalizes the project and every target of `cs_add_library` / `cs_add_executable`, wherever they are in the
+project's folders: it applies the [compile profiles](compile-profiles.md) of each target, computes from their links
+the dependencies between the components and the runtime dependencies, and writes the install rules and
+`<namespace>Config.cmake`. Every link, profile and component of the targets counts, wherever it is set in the project.
+A nested csCMake project (`add_subdirectory`) is finalized at the end of its own `CMakeLists.txt`, before the outer
+project goes on.
 
 ## Checking the installed headers
 
@@ -103,10 +98,11 @@ cs_target_check_installed_headers(core COMPILE_PROFILES cscmake_strict_warnings)
 ```
 
 `cs_target_check_installed_headers` compiles each header queued for installation (`*_INSTALL`) on its
-own: for each header it generates a `.cpp` file that only includes it, and builds it as a static library
-`<target>_<header>` (e.g. `core_Greeting`) linking the target. A header that does not include what it uses fails the
-build. The libraries use the default compile profiles of the project plus the `COMPILE_PROFILES` given (e.g. strict
-warnings only for this check).
+own: for each header it generates a `.cpp` file that only includes it (named after the path of the header, so
+`a/util.h` and `b/util.h` are both checked), and builds them in one static library `<target>_installed_headers` (e.g.
+`core_installed_headers`) linking the target. A header that does not include what it uses fails the build. The
+library uses the default compile profiles of the project plus the `COMPILE_PROFILES` given (e.g. strict warnings only
+for this check).
 
 ## OpenMP
 
@@ -114,12 +110,13 @@ warnings only for this check).
 cs_target_use_openmp(core PUBLIC)
 ```
 
-`cs_target_use_openmp` enables OpenMP: `find_package(OpenMP)` (propagated to the installed package) and
-`OpenMP::OpenMP_CXX`; with clang-cl on Windows, `/openmp` and the `vcomp` library.
+`cs_target_use_openmp` enables OpenMP: `find_package(OpenMP REQUIRED)` and `OpenMP::OpenMP_CXX`; with clang-cl on
+Windows, `/openmp` and the `vcomp` library. The installed package finds OpenMP for its consumers when they link it
+too: `PUBLIC` and `INTERFACE`, and `PRIVATE` on a static library. Clang on Linux needs the OpenMP runtime of LLVM
+(`libomp-dev` on Ubuntu).
 
-## Debug messages
+## Messages
 
-Every csCMake project has the cache option `<project>_CSCMAKE_DEBUG` (`<project>` is the `project()` name of
-`cs_initialize_project`): `-DmyApp_CSCMAKE_DEBUG=ON` prints what csCMake does for it. The `cs_print_*` commands
-print the state of a target or of the project (`cs_print_project_targets`,
-`cs_print_target_properties`, `cs_print_components`, ...) as debug messages.
+`cmake --log-level=VERBOSE` (or `DEBUG`) prints what csCMake does: its targets, components and configurations among
+them; see [Debugging csCMake](troubleshooting.md#debugging-cscmake). To inspect one target or the project, see
+[Troubleshooting](troubleshooting.md#inspecting-a-target-or-the-project).

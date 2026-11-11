@@ -25,19 +25,20 @@ would name the consumer's configuration even when the package does not have it.
 **For a project:** one install folder per platform and compiler, every configuration in it; a configuration of the
 consumer that the package does not have is mapped like for any imported target.
 
-## An explicit lifecycle
+## One call, then automatic finalization
 
-`cs_initialize_project` at the start, `cs_finalize_target` after the links of each target, `cs_finalize_project` at
-the end: mandatory, and checked at configure time (a missing call, links added after `cs_finalize_target`). They are
-where csCMake applies the compile profiles, analyses the runtime dependencies and generates the package, at a moment
-where everything the target or the project needs is known.
+`cs_initialize_project` at the start; csCMake finalizes the project at the end of the same `CMakeLists.txt`
+(`cmake_language(DEFER)`): there it applies the compile profiles, resolves the dependencies and generates the package,
+at a moment where everything the targets and the project need is known. The values of folder variables are taken when
+each target is created, as CMake does with its own `CMAKE_<X>` variables, so the finalization sees what each folder
+set. A link added after the finalization (from a parent project) fails at the call.
 
-**For a project:** a forgotten step fails early with a message naming it, instead of an incomplete package.
+**For a project:** nothing to remember at the end of a file or after the links of a target; nothing to forget.
 
 ## No hidden side effects
 
 csCMake changes only what its own targets need, or what the project asks for. A setting goes, by preference, on the
-targets of `cs_add_library` / `cs_add_executable` (a target property set by `cs_finalize_target`), then in the project
+targets of `cs_add_library` / `cs_add_executable` (a target property they set), then in the project
 folder, and only when unavoidable in the whole build; a wider setting is applied only if the project has not set it,
 is documented, and can be turned off. The settings that reach beyond the csCMake targets, and why, are listed in
 [the lifecycle](lifecycle.md#what-reaches-beyond-the-cscmake-targets).
@@ -59,7 +60,8 @@ builds, tests and installs.
 ## Compile profiles instead of option targets
 
 Warnings, sanitizers, standard library hardening and clang-tidy are named *profiles*: rules with conditions on the
-configuration, the compiler, its command-line style and the platform, applied per target by `cs_finalize_target`.
+configuration, the compiler, its command-line style and the platform, applied per target when the project is
+finalized.
 Their compile options are `PRIVATE`: a library's warnings never reach its consumers.
 
 **For a project:** one line for strict warnings on every compiler; a core library stricter than a sample, a test
@@ -67,9 +69,9 @@ folder looser than the library.
 
 ## Relative install RPATH, per target
 
-On Linux and macOS, `cs_finalize_target` gives the executables and shared libraries of the project an install RPATH
-relative to the binary (`$ORIGIN/../lib`, `@loader_path`), so an installed package runs wherever it is moved: built on
-a CI machine, unpacked on another. Absolute paths to other packages (`CMAKE_INSTALL_RPATH_USE_LINK_PATH`) are not
+On Linux and macOS, `cs_add_library` / `cs_add_executable` give the executables and shared libraries of the project an
+install RPATH relative to the binary (`$ORIGIN/../lib`, `@loader_path`), so an installed package runs wherever it is
+moved: built on a CI machine, unpacked on another. Absolute paths to other packages (`CMAKE_INSTALL_RPATH_USE_LINK_PATH`) are not
 used: they would point to the machine that built them.
 
 **For a project:** installed applications find the shared libraries of their own package; the ones of other packages

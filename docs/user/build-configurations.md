@@ -29,8 +29,8 @@ cs_initialize_project(
   links the RelWithDebInfo build of a dependency, or its Release build when there is none
   (`CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO`).
 - **`CUSTOM_CONFIG <name> BASED_ON "<config>,<fallback>,..." POSTFIX "<postfix>"`**: a new configuration, a copy of
-  the first one listed (its compiler and linker flags, its MSVC runtime), which must be a `DEFAULT_CONFIG` of the
-  project, with its own postfix (`""` for none). The
+  the first one listed (its compiler and linker flags, of the languages enabled before `cs_initialize_project`; its
+  MSVC runtime), which must be a `DEFAULT_CONFIG` of the project, with its own postfix (`""` for none). The
   list also maps the imported targets: a Paranoid build links the Debug build of a dependency, or its Release build.
   `BASED_ON Debug` alone is enough when no fallback is needed.
 
@@ -56,8 +56,8 @@ Xcode, Ninja Multi-Config) in a sub-folder per configuration, `<build>/bin/<CONF
 
 - Multi-config generators: csCMake sets `CMAKE_CONFIGURATION_TYPES` to the configurations of the project; the build
   preset (or `cmake --build --config <config>`) chooses one.
-- Single-config generators (Ninja, Makefiles): the configure preset sets `CMAKE_BUILD_TYPE`; a configuration the project
-  does not list fails the configure (`request to build with config ... which is not supported by this project`).
+- Single-config generators (Ninja, Makefiles): the configure preset sets `CMAKE_BUILD_TYPE`; an empty one, or a
+  configuration the project does not list, fails the configure.
 
 The csCMake presets have a build, install, test and workflow preset for Debug, Release, RelWithDebInfo and Paranoid:
 use the ones of the configurations of the project.

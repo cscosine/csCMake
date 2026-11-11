@@ -13,16 +13,17 @@ install folder):
 
 | Project | Role | What it covers |
 |---|---|---|
+| `myApp` | the example of the docs | the project of [Getting started](../user/getting-started.md) and of `README.md` (the page includes its files; `tests/smoke/test_readme_example.py` checks the README copy): a static library, an application, a ctest; Debug and Release only |
 | `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with `cscmake_strict_warnings`; compile profile `csSmokeBase_checks` (default of the project): every standard library check in Debug and Paranoid (`cscmake_hardening_debug`), the cheap ones in Release and RelWithDebInfo (`cscmake_hardening_fast`), UBSan in Paranoid, clang-tidy (`.clang-tidy`) in Paranoid with Clang on Linux |
 | `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default target `csSmokeMidA::cscmake_base_include` linked |
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); preset layout `sibling-short` (Base, MidA, Top: `sibling`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
 | `csSmokeEnv` | application located by the environment | preset layout `env`: workspace and csCMake from `CSCMAKE_WORKSPACE_ROOT` / `CSCMAKE_ROOT` (set by `run_smoke.py`), also in the includes of its presets (`$penv{CSCMAKE_ROOT}/presets/...`); finds `csSmokeBase` there |
 | `csSmokeStandalone` | self-contained application | preset layout `standalone-short`: its own workspace `csSmokeStandalone/workspace/` with a copy of csCMake, build and install folders |
-| `csSmokeShared` | shared libraries | two SHARED libraries (`sharedText` uses `sharedCore`, components `text` and `core`) and an application; Windows: `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`; the **installed** application runs from the install folder (install RPATH of `cs_finalize_target` on Linux and macOS, DLLs in `bin/` on Windows) |
+| `csSmokeShared` | shared libraries | two SHARED libraries (`sharedText` uses `sharedCore`, components `text` and `core`) and an application; Windows: `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`; the **installed** application runs from the install folder (install RPATH of `cs_add_library` / `cs_add_executable` on Linux and macOS, DLLs in `bin/` on Windows); Visual Studio: the debugger `PATH` of the application in its `.vcxproj` (its `CSCMAKE_RUNTIME_DIRS` folder, then the DLL folder, every configuration) |
 | `csSmokePlainConsumer` | consumer without csCMake | plain CMake (no `include(csCMake)`): `find_package(csSmokeShared COMPONENTS text)` and `csSmokeShared::sharedText`; on Windows copies `$<TARGET_RUNTIME_DLLS>` next to its executable; its ctest runs it from the build folder; Debug and Release only (the configurations plain CMake knows) |
 
-All csCMake projects use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
+All csCMake projects but `myApp` use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
 `RelWithDebInfo,Release`) and the custom Paranoid (based on `Debug,Release`), with postfixes `d`, none, `rd`, `dp`.
 
 ### Package dependencies
@@ -40,8 +41,8 @@ flowchart BT
 
 ### Inside `csSmokeBase`
 
-The top project `csSmokeBaseSol` calls `cs_initialize_project(NAMESPACE csSmokeBase ...)` and `cs_finalize_project()`; every
-folder below it is its own `project()`. Each library is installed in its own component (export) of the
+The top project `csSmokeBaseSol` calls `cs_initialize_project(NAMESPACE csSmokeBase ...)`; every folder below it is
+its own `project()`. Each library is installed in its own component (export) of the
 `csSmokeBase` namespace.
 
 ```mermaid
@@ -53,7 +54,7 @@ flowchart BT
             core["csSmokeBase::core<br/>INTERFACE, Core.hpp"]
             text["csSmokeBase::text<br/>STATIC, Text.hpp/.cpp"]
             textTest["textTest<br/>(ctest)"]
-            shc["core_Core<br/>(cs_target_check_installed_headers)"]
+            shc["core_installed_headers<br/>(cs_target_check_installed_headers)"]
         end
     end
     root --> common
@@ -104,15 +105,24 @@ flowchart TD
         lint["cscmake-lint the installed &lt;Package&gt;Config.cmake<br/>(consistent line endings)"]
         wf --> deps --> apps --> lint
     end
+    loop --> move["relocation: move install/ to install-relocated/<br/>no installed CMake file names install/"]
+    move --> moved["run the installed applications<br/>from install-relocated/"]
+    moved --> rebuild["build csSmokeTop and csSmokePlainConsumer again,<br/>new build folders, packages found in install-relocated/ only<br/>(CMAKE_PREFIX_PATH environment variable)"]
 ```
+
+The relocation checks that the installed packages can be moved (e.g. built on a CI machine and unpacked elsewhere):
+the Config files reach their files through paths relative to themselves, the installed executables find the shared
+libraries of their package through a relative install RPATH (`$ORIGIN`, `@loader_path`) or next to them (Windows),
+and a consumer finds the packages, and the ones they depend on (`find_dependency`), in the new folder.
 
 ```
 <workspace>/
-  csCMake/                          csCMake.cmake, modules/, presets/, templates/ (copied from the checkout)
+  csCMake/                          the content of the release package (copied from the checkout)
   csSmokeBase/ ... csSmokeEnv/      the projects (copied from tests/smoke/)
   csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
   build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)
   install/<variant>/<project>
+  install-relocated/                install/ moved by the relocation step (install/ then holds the rebuilt consumers)
 ```
 
 The install prefix of each project is `install/<variant>/<project folder>` and `CMAKE_PREFIX_PATH` contains
@@ -143,5 +153,5 @@ project folder must be named like the package**.
 3. Format and lint its CMake files (`gersemi -i`, `cscmake-lint`), describe it on this page (and in a tutorial when
    it shows something new).
 
-Not covered yet (shared libraries and the DLL dependency analysis, cyclic components, strict configuration,
-OpenMP, ...): see "Phase 2 — not covered by the smoke projects" in `PLAN.md`.
+Not covered: `cs_target_use_openmp` (it needs OpenMP on every runner); the runtime dependency analysis and the
+cyclic components are covered by configure tests (`tests/cmake/`).

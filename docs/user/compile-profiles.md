@@ -14,6 +14,7 @@ cs_add_compile_profile_rule(
   COMPILERS GNU Clang               # CMAKE_CXX_COMPILER_ID
   FRONTENDS GNU                     # command-line style: GNU, or MSVC (cl, clang-cl)
   PLATFORMS Linux                   # CMAKE_SYSTEM_NAME
+  LANGUAGES C CXX                   # source languages of the compile options and definitions (default: CXX)
   COMPILE_OPTIONS -fno-inline
   COMPILE_DEFINITIONS MY_CHECKS=1
   LINK_OPTIONS ...
@@ -23,9 +24,14 @@ cs_add_compile_profile_rule(
 Every condition is optional: a rule without conditions always applies. The conditions of a rule also apply to the
 profiles it includes with `PROFILES`. A profile can have any number of rules, e.g. one per compiler.
 
+The compile options and definitions of a rule go to the C++ sources of the target; `LANGUAGES C CXX` also to its C
+sources, for options valid in C (a C++-only option such as `-Wold-style-cast` makes the C compiler warn). The shipped
+profiles do that: their C-compatible options apply to C sources too. Visual Studio and Xcode cannot give the files of
+one target different options per language: they apply the C++ ones to every file of a target with C++ sources.
+
 ## Which targets get which profiles
 
-`cs_finalize_target` applies to each target:
+When the project is finalized, csCMake applies to each target:
 
 1. the default profiles of the project: `DEFAULT_COMPILE_PROFILES` of `cs_initialize_project` (`cscmake_default` when
    not given, `NONE` for none);
@@ -48,7 +54,7 @@ samples) can set its own before creating its targets.
 
 A rule with `CLANG_TIDY` (or the profile `cscmake_clang_tidy`) runs clang-tidy on the sources of the target while
 compiling them, with the checks of the `.clang-tidy` file of the project. Where such a rule matches the build, the
-configure fails without clang-tidy (install it, or set `CLANG_TIDY_EXE`). The Visual Studio and Xcode generators do
+configure fails without clang-tidy (install it, or set `CSCMAKE_CLANG_TIDY_EXE`). The Visual Studio and Xcode generators do
 not run it: csCMake prints a warning.
 
 ## Profiles shipped with csCMake

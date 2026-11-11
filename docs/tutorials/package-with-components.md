@@ -57,8 +57,8 @@ name the consumers use once the package is installed.
 
 - `PRIVATE_INSTALL Core.hpp`: the header is installed with the component, at
   `include/[<CONFIG>/]csSmokeBase/core/Core.hpp`, and included as `#include <csSmokeBase/core/Core.hpp>`.
-- `cs_target_check_installed_headers` builds a small library `core_Core` from a file that only includes `Core.hpp`,
-  with the strict warnings: the header must compile on its own.
+- `cs_target_check_installed_headers` builds a small library `core_installed_headers` from a file that only
+  includes `Core.hpp`, with the strict warnings: the header must compile on its own.
 
 ## A static component using another one
 
@@ -83,7 +83,7 @@ name the consumers use once the package is installed.
 :language: cmake
 ```
 
-A test executable is a target of the project like any other: it is finalized too. It is not installed: no
+A test executable is a target of the project like any other: it is finalized with it. It is not installed: no
 `cs_install_target`. The test presets run it with `ctest`.
 
 ## What gets installed

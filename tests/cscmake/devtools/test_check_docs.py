@@ -87,6 +87,23 @@ def test_problems(tmp_path: Path, change: tuple[str, str], problem: str) -> None
         assert problems == []
 
 
+@pytest.mark.parametrize(
+    ("code", "problems"), [("set(_cs_switch ON)", 0), ("set(other ON)", 1)], ids=["used", "unused"]
+)
+def test_an_entry_outside_the_cscmake_naming_is_matched_as_written(tmp_path: Path, code: str, problems: int) -> None:
+    """A documented name that is not CSCMAKE_* (e.g. a lowercase variable): used when the code has it as written."""
+    module = (
+        HEADER
+        + DOCUMENTED.replace("set(CSCMAKE_SETTING ON)", f"set(CSCMAKE_SETTING ON)\n  {code}")
+        + ("#\n# .. variable:: _cs_switch\n#\n#   A switch.\n")
+    )
+
+    found = check(_repo(tmp_path, module))
+
+    unused = [p for p in found if p.endswith("'.. variable:: _cs_switch' is not used by the code")]
+    assert len(unused) == problems, found
+
+
 def test_a_command_block_not_above_its_function(tmp_path: Path) -> None:
     module = HEADER + DOCUMENTED.replace("function(cs_thing target_name)", "set(x 1)\nfunction(cs_thing target_name)")
 

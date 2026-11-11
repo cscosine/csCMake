@@ -3,7 +3,7 @@
 # -------
 #
 # The entry point of csCMake: a project includes it after :command:`project`, then calls
-# :command:`cs_initialize_project` and, at the end of the same ``CMakeLists.txt``, :command:`cs_finalize_project`.
+# :command:`cs_initialize_project`; csCMake finalizes the project at the end of the same ``CMakeLists.txt``.
 #
 # .. code-block:: cmake
 #
@@ -12,9 +12,7 @@
 #   include(csCMake)
 #   cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
 #   cs_add_library(core STATIC core.cpp)
-#   cs_finalize_target(core)
-#   cs_install_target(core core DEFAULT)
-#   cs_finalize_project()
+#   cs_install_target(core COMPONENT core DEFAULT)
 #
 # csCMake needs CMake 3.31; its functions and macros run with the 3.31 policies.
 #
@@ -60,11 +58,11 @@ include(modules/integrations/csOpenMP)
 function(_cs_set_root_dir path)
   get_property(val GLOBAL PROPERTY CSCMAKE_ROOT_DIR)
   if(val)
-    if(NOT val STREQUAL ${path})
+    if(NOT val STREQUAL "${path}")
       message(
         FATAL_ERROR
-        "[_cs_set_root_dir] csCMake has been included multiple times with different base paths. Check your "
-        "configuration."
+        "[csCMake] csCMake is included from two folders, ${val} and ${path}: one csCMake per build (check "
+        "CMAKE_MODULE_PATH and the presets of the projects)"
       )
     endif()
   endif()

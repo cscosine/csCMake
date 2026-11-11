@@ -1,6 +1,6 @@
 # shared libraries smoke test: two shared libraries (one using the other) and an application, installed; the installed
-# application must run from the install folder (install RPATH of cs_finalize_target on Linux and macOS, DLLs next to it
-# on Windows).
+# application must run from the install folder (install RPATH of cs_add_library / cs_add_executable on Linux and
+# macOS, DLLs next to it on Windows).
 #
 # See tests/smoke/README.md.
 cmake_minimum_required(VERSION 3.31)
@@ -20,5 +20,3 @@ cs_initialize_project(
 )
 
 add_subdirectory(csSmokeShared)
-
-cs_finalize_project()

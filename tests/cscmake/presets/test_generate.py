@@ -216,7 +216,7 @@ def test_common_setup_preset_passes_the_path_variables_from_the_environment() ->
 
 
 def test_variants_manifest_lists_every_variant_of_the_registry() -> None:
-    """presets/csv1/variants.json: the data contract for tools following the registry (csorchestrator)."""
+    """presets/csv1/variants.json: the data contract for tools following the registry (e.g. a CI generator)."""
     manifest = json.loads((OUTPUT_DIR / VARIANTS_JSON).read_text(encoding="utf-8"))
     ids = [v["id"] for v in manifest["variants"]]
 

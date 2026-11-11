@@ -17,9 +17,7 @@ cs_initialize_project(NAMESPACE pkg CXX_STANDARD 17 DEFAULT_CONFIG {configs})
 cs_add_library(lib INTERFACE)
 cs_target_sources(lib PRIVATE_INSTALL pkg/lib.hpp)
 cs_target_link_libraries(lib INTERFACE pkg::cscmake_base_include)
-cs_install_target(lib lib DEFAULT)
-cs_finalize_target(lib)
-cs_finalize_project()
+cs_install_target(lib COMPONENT lib DEFAULT)
 """
 HEADER = {"pkg/lib.hpp": "#pragma once\ninline int lib() { return 42; }\n"}
 CONSUMER = """

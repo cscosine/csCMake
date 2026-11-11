@@ -4,10 +4,11 @@
 #
 # Compile profiles: named sets of rules. A rule applies compile options, compile definitions, link options, clang-tidy
 # and other profiles (``PROFILES``) under conditions on the build configuration, the compiler, its command-line style
-# and the platform. Profiles are applied by :command:`cs_finalize_target`: the default profiles of the project
-# (``DEFAULT_COMPILE_PROFILES`` of :command:`cs_initialize_project`) and the ones given to
-# :command:`cs_target_use_compile_profiles`. Compile options and definitions are ``PRIVATE``: consumers never get them.
-# The link options of static and object libraries are ``INTERFACE`` too: link requirements, e.g. the sanitizer runtime.
+# and the platform. Profiles are applied when the project is finalized (end of the ``CMakeLists.txt`` of
+# :command:`cs_initialize_project`): the default profiles of the folder of the target
+# (:variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`) and the ones given to :command:`cs_target_use_compile_profiles`.
+# Compile options and definitions are ``PRIVATE``: consumers never get them. The link options of static and object
+# libraries are ``INTERFACE`` too: link requirements, e.g. the sanitizer runtime.
 #
 # The profiles shipped with csCMake (``cscmake_*``): :doc:`csCompileProfilesShipped`.
 #
@@ -30,6 +31,7 @@ include(modules/csInternal)
 #       [COMPILERS <CMAKE_CXX_COMPILER_ID>...]
 #       [FRONTENDS GNU|MSVC...]
 #       [PLATFORMS <CMAKE_SYSTEM_NAME>...]
+#       [LANGUAGES <language>...]
 #       [COMPILE_OPTIONS <option>...]
 #       [COMPILE_DEFINITIONS <definition>...]
 #       [LINK_OPTIONS <option>...]
@@ -45,6 +47,13 @@ include(modules/csInternal)
 #
 #   ``CONFIGS``, ``COMPILERS``, ``FRONTENDS``, ``PLATFORMS``
 #     Conditions (FRONTENDS: command-line style, GNU or MSVC).
+#
+#   ``LANGUAGES``
+#     The source languages the compile options and definitions of the rule apply to (``$<COMPILE_LANGUAGE:...>``):
+#     ``CXX`` when not given, e.g. ``LANGUAGES C CXX`` for options valid in C too. The compiler conditions are on the
+#     C++ compiler (the C compiler of a preset is of the same family). Visual Studio and Xcode cannot give the files of
+#     one target different options per language (CMake applies the ``CXX`` ones to every file of a target with C++
+#     sources).
 #
 #   ``COMPILE_OPTIONS``, ``COMPILE_DEFINITIONS``
 #     Private to the targets.
@@ -69,6 +78,7 @@ function(cs_add_compile_profile_rule)
     COMPILERS
     FRONTENDS
     PLATFORMS
+    LANGUAGES
     COMPILE_OPTIONS
     COMPILE_DEFINITIONS
     LINK_OPTIONS
@@ -78,8 +88,8 @@ function(cs_add_compile_profile_rule)
   if(arg_UNPARSED_ARGUMENTS OR NOT arg_PROFILE)
     message(
       FATAL_ERROR
-      "[cs_add_compile_profile_rule] PROFILE <name> is required, unparsed arguments: "
-      "${arg_UNPARSED_ARGUMENTS}"
+      "[cs_add_compile_profile_rule] PROFILE <name> is required, and the other arguments are keywords with "
+      "their values (CONFIGS, COMPILERS, ..., see the reference); unparsed: ${arg_UNPARSED_ARGUMENTS}"
     )
   endif()
 
@@ -95,6 +105,45 @@ function(cs_add_compile_profile_rule)
   endforeach()
   set_property(GLOBAL APPEND PROPERTY CSCMAKE_COMPILE_PROFILE_${arg_PROFILE}_RULES ${rule})
   _cs_add_to_global_property_unique_value(CSCMAKE_COMPILE_PROFILES ${arg_PROFILE})
+
+  _cs_log_level_at_least(DEBUG debug)
+  if(debug)
+    _cs_message_context(cs_add_compile_profile_rule)
+    _cs_describe_compile_profile_rule(${rule} description)
+    message(DEBUG "compile profile ${arg_PROFILE}: rule ${rule}: ${description}")
+  endif()
+endfunction()
+
+# Return in description_out the fields of rule given to cs_add_compile_profile_rule, as "<FIELD> <values>; ...".
+#
+# Reads:
+#
+# * global property _CSCMAKE_COMPILE_PROFILE_RULE_<rule>_<field>
+function(_cs_describe_compile_profile_rule rule description_out)
+  set(parts "")
+  foreach(
+    field
+    COMPILE_OPTIONS
+    COMPILE_DEFINITIONS
+    LINK_OPTIONS
+    PROFILES
+    CLANG_TIDY
+    CONFIGS
+    COMPILERS
+    FRONTENDS
+    PLATFORMS
+    LANGUAGES
+  )
+    get_property(values GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_${field})
+    if(field STREQUAL "CLANG_TIDY" AND values)
+      list(APPEND parts "CLANG_TIDY")
+    elseif(NOT field STREQUAL "CLANG_TIDY" AND NOT "${values}" STREQUAL "")
+      list(JOIN values " " values)
+      list(APPEND parts "${field} ${values}")
+    endif()
+  endforeach()
+  list(JOIN parts "; " description)
+  set(${description_out} "${description}" PARENT_SCOPE)
 endfunction()
 
 #.rst:
@@ -106,7 +155,7 @@ endfunction()
 #
 #     cs_target_use_compile_profiles(<target> <profile>...)
 #
-#   Applied by :command:`cs_finalize_target`.
+#   Applied when the project is finalized, so a rule added later in the project still applies.
 #
 #   ``<target>``
 #     A target of the project (an alias of one is accepted).
@@ -121,43 +170,33 @@ function(cs_target_use_compile_profiles target_name)
     set(target_name ${aliased})
   endif()
   set_property(TARGET ${target_name} APPEND PROPERTY CSCMAKE_COMPILE_PROFILES ${ARGN})
+  _cs_message_context(cs_target_use_compile_profiles)
+  list(JOIN ARGN ", " profiles)
+  message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} uses the compile profiles ${profiles}")
 endfunction()
 
-#.rst:
-# .. command:: cs_get_target_compile_profiles
+# Return the compile profiles of a target: the default profiles of its folder, then its own ones, each once.
 #
-#   Return the compile profiles of a target: the default profiles of the project, then its own ones.
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_compile_profiles(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`, :prop_tgt:`CSCMAKE_COMPILE_PROFILES`
-function(cs_get_target_compile_profiles target_name profiles_out)
-  set(profiles ${CSCMAKE_DEFAULT_COMPILE_PROFILES})
-  get_target_property(own ${target_name} CSCMAKE_COMPILE_PROFILES)
-  if(own)
-    list(APPEND profiles ${own})
-  endif()
+# * target property CSCMAKE_COMPILE_PROFILES
+function(_cs_get_target_compile_profiles target_name profiles_out)
+  get_property(profiles TARGET ${target_name} PROPERTY CSCMAKE_COMPILE_PROFILES)
   list(REMOVE_DUPLICATES profiles)
   set(${profiles_out} "${profiles}" PARENT_SCOPE)
 endfunction()
 
-# Apply the compile profiles of target_name (called by cs_finalize_target); INTERFACE libraries are skipped (nothing to
+# Apply the compile profiles of target_name (called by _cs_finalize_target); INTERFACE libraries are skipped (nothing to
 # compile).
 function(_cs_apply_compile_profiles target_name)
   get_target_property(type ${target_name} TYPE)
   if(type STREQUAL "INTERFACE_LIBRARY")
     return()
   endif()
-  cs_get_target_compile_profiles(${target_name} profiles)
-  cs_debug_message("[_cs_apply_compile_profiles] ${target_name}: ${profiles}")
+  _cs_get_target_compile_profiles(${target_name} profiles)
+  list(JOIN profiles ", " text)
+  message(DEBUG "${target_name}: compile profiles ${text}")
+  list(APPEND CMAKE_MESSAGE_INDENT "  ")
   foreach(profile ${profiles})
     _cs_apply_compile_profile(${target_name} ${profile} "" TRUE "")
   endforeach()
@@ -186,8 +225,8 @@ function(
   if(NOT defined)
     message(
       FATAL_ERROR
-      "[cs_finalize_target] compile profile ${profile} of ${target_name} is not defined "
-      "(cs_add_compile_profile_rule)"
+      "[csCMake] compile profile ${profile} of ${target_name} is not defined: check the name, or define it "
+      "with cs_add_compile_profile_rule(PROFILE ${profile} ...) in the project"
     )
   endif()
   get_property(rules GLOBAL PROPERTY CSCMAKE_COMPILE_PROFILE_${profile}_RULES)
@@ -200,6 +239,7 @@ function(
     get_property(rule_configs GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_CONFIGS)
     _cs_intersect_configs("${allowed_configs}" "${rule_configs}" rule_configs rule_static_match)
 
+    _cs_report_compile_profile_rule(${profile} ${rule} ${rule_static_match})
     _cs_apply_compile_profile_rule_options(${target_name} ${rule} "${rule_condition}")
     get_property(clang_tidy GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_CLANG_TIDY)
     if(clang_tidy AND rule_static_match)
@@ -208,23 +248,49 @@ function(
     endif()
 
     get_property(nested GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_PROFILES)
+    list(APPEND CMAKE_MESSAGE_INDENT "  ")
     foreach(nested_profile ${nested})
       _cs_apply_compile_profile(${target_name} ${nested_profile} "${rule_condition}" ${rule_static_match}
                                 "${rule_configs}"
       )
     endforeach()
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
   endforeach()
 endfunction()
 
-# Add the compile options, definitions and link options of rule to target_name under condition; the link options of a
-# static or object library are also INTERFACE (link requirements, e.g. the sanitizer runtime).
+# Report (DEBUG) a rule of profile applied to a target: its fields, and whether its compiler, frontend and platform
+# match this build (static_match; a rule that does not match adds options under a condition that is never true).
+function(_cs_report_compile_profile_rule profile rule static_match)
+  _cs_log_level_at_least(DEBUG debug)
+  if(NOT debug)
+    return()
+  endif()
+  _cs_describe_compile_profile_rule(${rule} description)
+  if(static_match)
+    message(DEBUG "${profile} rule ${rule}: ${description}")
+  else()
+    message(DEBUG "${profile} rule ${rule} (not for this compiler or platform): ${description}")
+  endif()
+endfunction()
+
+# Add the compile options, definitions and link options of rule to target_name under condition; the compile options and
+# definitions only for the sources of the LANGUAGES of the rule (CXX when not given); the link options of a static or
+# object library are also INTERFACE (link requirements, e.g. the sanitizer runtime).
 function(_cs_apply_compile_profile_rule_options target_name rule condition)
+  get_property(languages GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_LANGUAGES)
+  if(NOT languages)
+    set(languages CXX)
+  endif()
+  list(JOIN languages "," languages)
+  _cs_genex_and("${condition}" "$<COMPILE_LANGUAGE:${languages}>" compile_condition)
   foreach(field COMPILE_OPTIONS COMPILE_DEFINITIONS LINK_OPTIONS)
     get_property(values GLOBAL PROPERTY _CSCMAKE_COMPILE_PROFILE_RULE_${rule}_${field})
     if(NOT values)
       continue()
     endif()
-    if(condition)
+    if(NOT field STREQUAL "LINK_OPTIONS")
+      set(values "$<${compile_condition}:${values}>")
+    elseif(condition)
       set(values "$<${condition}:${values}>")
     endif()
     if(field STREQUAL "COMPILE_OPTIONS")
@@ -329,7 +395,7 @@ endfunction()
 # Reads:
 #
 # * target property _CSCMAKE_CLANG_TIDY_CONDITIONS
-# * cache variable CLANG_TIDY_EXE: the clang-tidy executable (find_program)
+# * cache variable CSCMAKE_CLANG_TIDY_EXE: the clang-tidy executable (find_program)
 #
 # Writes:
 #
@@ -348,16 +414,16 @@ function(_cs_apply_clang_tidy target_name)
     endif()
     return()
   endif()
-  find_program(CLANG_TIDY_EXE NAMES clang-tidy)
-  if(NOT CLANG_TIDY_EXE OR NOT EXISTS "${CLANG_TIDY_EXE}")
+  find_program(CSCMAKE_CLANG_TIDY_EXE NAMES clang-tidy)
+  if(NOT CSCMAKE_CLANG_TIDY_EXE OR NOT EXISTS "${CSCMAKE_CLANG_TIDY_EXE}")
     message(
       FATAL_ERROR
-      "[cs_finalize_target] clang-tidy is required: the compile profiles of ${target_name} run it in "
-      "this build (install it, or set CLANG_TIDY_EXE)"
+      "[csCMake] clang-tidy is required: the compile profiles of ${target_name} run it in "
+      "this build (install it, or set CSCMAKE_CLANG_TIDY_EXE)"
     )
   endif()
   list(JOIN terms "," joined)
-  set_property(TARGET ${target_name} PROPERTY CXX_CLANG_TIDY "$<$<OR:${joined}>:${CLANG_TIDY_EXE}>")
+  set_property(TARGET ${target_name} PROPERTY CXX_CLANG_TIDY "$<$<OR:${joined}>:${CSCMAKE_CLANG_TIDY_EXE}>")
 endfunction()
 
 # Return in out the conjunction of the two generator expression conditions ("" = always).
@@ -399,7 +465,7 @@ endfunction()
 # Variables
 # ^^^^^^^^^
 #
-# .. variable:: CLANG_TIDY_EXE
+# .. variable:: CSCMAKE_CLANG_TIDY_EXE
 #
 #   Cache variable: the clang-tidy executable (``find_program``), when a compile profile runs clang-tidy.
 #
@@ -408,7 +474,9 @@ endfunction()
 #
 # .. prop_tgt:: CSCMAKE_COMPILE_PROFILES
 #
-#   The compile profiles of the target, in addition to the default ones (:command:`cs_target_use_compile_profiles`).
+#   The compile profiles of the target: the default ones of its folder (:variable:`CSCMAKE_DEFAULT_COMPILE_PROFILES`,
+#   set by :command:`cs_add_library` / :command:`cs_add_executable`), then the ones of
+#   :command:`cs_target_use_compile_profiles`.
 #
 # .. prop_tgt:: _CSCMAKE_CLANG_TIDY_CONDITIONS
 #

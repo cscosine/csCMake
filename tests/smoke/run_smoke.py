@@ -3,7 +3,7 @@
 
 Lays out a workspace the way csCMake consumers do (the presets expect ``${sourceParentDir}/csCMake``):
 
-    <workspace>/csCMake            copy of csCMake.cmake, modules/, presets/, templates/
+    <workspace>/csCMake            the content of the release package (PACKAGE_CONTENT of cscmake-release)
     <workspace>/<project>          every project of PROJECTS (see tests/smoke/README.md)
     <workspace>/build, install     created by the presets
 
@@ -11,6 +11,8 @@ then, for the variant and in the order of PROJECTS (each project finds the previ
 folder), runs the csv1 workflow presets (configure, build, install, ctest) for every build configuration,
 runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
 ``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cscmake-lint.
+Then it moves the install folder (relocation): the installed applications run from there, and two consumers are built
+again against it.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -30,10 +32,13 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from xml.etree import ElementTree
 
+from cscmake.devtools.release import PACKAGE_CONTENT
 from cscmake.presets.registry import (
     BuildConfig,
     ContextOsArchitectureCompilerGenerator,
+    Generator,
     GeneratorType,
     create_context_os_architecture_compiler_generator_string,
     get_supported_build_configs_for_generator_type,
@@ -42,7 +47,6 @@ from cscmake.presets.registry import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SMOKE_DIR = Path(__file__).resolve().parent
-CSCMAKE_CONTENT = ("csCMake.cmake", "modules", "presets", "templates")
 
 
 @dataclass(frozen=True)
@@ -76,10 +80,18 @@ class Project:
     # a consumer without csCMake: plain CMake, Debug and Release only (the configurations CMake knows), no installed
     # package to check
     plain: bool = False
+    debug_release: bool = False  # its configurations are Debug and Release only (always for a plain project)
+
+    @property
+    def configs(self) -> tuple[Config, ...]:
+        """The configurations the project builds."""
+        return CONFIGS[:2] if self.plain or self.debug_release else CONFIGS
 
 
 # build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
 PROJECTS = (
+    # the example of the getting started page (docs/user/getting-started.md) and of README.md
+    Project("myApp", apps=(App("myApp", ("Hello from myApp",)),), debug_release=True),
     Project("csSmokeBase"),
     Project("csSmokeMidA", find_dependencies=("csSmokeBase",)),
     Project("csSmokeMidB", find_dependencies=("csSmokeBase",)),
@@ -102,6 +114,14 @@ PROJECTS = (
     Project("csSmokePlainConsumer", plain=True),
 )
 
+VISUAL_STUDIO = (Generator.MSVC_17_2022, Generator.MSVC_18_2026)
+
+# relocation: the install folder is moved after every project is built; the installed applications run from there, and
+# these consumers are built again against it (a csCMake one: find_dependency chain csSmokeTop -> csSmokeMidA ->
+# csSmokeBase; a plain CMake one: the DLLs of csSmokeShared copied from there on Windows)
+RELOCATED_INSTALL = "install-relocated"
+RELOCATION_CONSUMERS = ("csSmokeTop", "csSmokePlainConsumer")
+
 # default targets created by cs_initialize_project, installed in the cscmake_common component
 DEFAULT_TARGETS = ("cscmake_base_include",)
 _ADD_LIBRARY = re.compile(r"^add_library\(\s*([^\s)]+)", re.MULTILINE)
@@ -120,14 +140,15 @@ def find_variant(variant: str) -> ContextOsArchitectureCompilerGenerator:
     raise SmokeError(f"unknown variant {variant!r} (not in the csCMake preset registry)")
 
 
-def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, plain: bool = False) -> list[str]:
-    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release for a plain project)."""
+def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, debug_release: bool = False) -> list[str]:
+    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release only with
+    ``debug_release``)."""
     variant = create_context_os_architecture_compiler_generator_string(ctx)
     generator_type = ctx.context_compiler_generator.build_generator.generator_type
-    configs = CONFIGS[:2] if plain else CONFIGS
+    configs = CONFIGS[:2] if debug_release else CONFIGS
     if generator_type == GeneratorType.MULTI_CONFIG:
         # a single build tree, all the configurations in one workflow
-        all_configs = BuildConfig.DEBUG_RELEASE if plain else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
+        all_configs = BuildConfig.DEBUG_RELEASE if debug_release else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
         assert all_configs in get_supported_build_configs_for_generator_type(generator_type)
         return [f"workflow-{variant}-{all_configs.value}"]
     return [f"workflow-{variant}-{config.preset}" for config in configs]
@@ -165,7 +186,7 @@ def run(cmd: Sequence[str | Path], cwd: Path, env: dict[str, str] | None = None)
 def prepare_workspace(workspace: Path) -> None:
     """(Re)create the workspace: csCMake and the smoke projects as siblings, no build/install leftovers."""
     workspace.mkdir(parents=True, exist_ok=True)
-    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install"):
+    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install", RELOCATED_INSTALL):
         shutil.rmtree(workspace / name, ignore_errors=True)
     copy_cscmake(workspace / "csCMake")
     for project in PROJECTS:
@@ -175,8 +196,9 @@ def prepare_workspace(workspace: Path) -> None:
 
 
 def copy_cscmake(target_dir: Path) -> None:
-    """Copy the csCMake files used by the projects (CSCMAKE_CONTENT) into ``target_dir``."""
-    for item in CSCMAKE_CONTENT:
+    """Copy into ``target_dir`` what the release package contains (``PACKAGE_CONTENT``): the projects build against
+    the files of a release, laid out as in the package."""
+    for item in PACKAGE_CONTENT:
         source = REPO_ROOT / item
         target = target_dir / item
         if source.is_dir():
@@ -192,13 +214,14 @@ def install_dir(workspace: Path, variant: str, project: Project) -> Path:
     return project_workspace / "install" / variant / project.name
 
 
-def check_installed_apps(workspace: Path, variant: str, project: Project) -> None:
-    """Run the installed applications of ``project`` in every configuration and check their output."""
-    bin_dir = install_dir(workspace, variant, project) / "bin"
+def check_installed_apps(project_install_dir: Path, project: Project) -> None:
+    """Run the installed applications of ``project`` (installed in ``project_install_dir``) in every configuration and
+    check their output."""
+    bin_dir = project_install_dir / "bin"
     suffix = ".exe" if os.name == "nt" else ""
     for app_spec in project.apps:
         expected = list(app_spec.output)
-        for config in CONFIGS:
+        for config in project.configs:
             app = bin_dir / f"{app_spec.name}{config.postfix}{suffix}"
             if not app.is_file():
                 raise SmokeError(f"{config.cmake}: installed application not found: {app}")
@@ -209,6 +232,157 @@ def check_installed_apps(workspace: Path, variant: str, project: Project) -> Non
                 raise SmokeError(
                     f"{config.cmake}: {app} printed {lines} (exit code {result.returncode}), expected {expected}"
                 )
+
+
+def relocate_install(workspace: Path) -> Path:
+    """Move ``<workspace>/install`` to ``<workspace>/install-relocated`` and return it; fail if an installed CMake file
+    names the folder it was installed in (an absolute path: the package could not be moved)."""
+    source, target = workspace / "install", workspace / RELOCATED_INSTALL
+    shutil.rmtree(target, ignore_errors=True)
+    shutil.move(source, target)
+    old = source.as_posix().lower()
+    for path in sorted(target.rglob("*.cmake")):
+        if old in path.read_text(encoding="utf-8", errors="replace").replace("\\", "/").lower():
+            raise SmokeError(f"{path} names the folder the package was installed in, {source}: it cannot be moved")
+    print(f"moved {source} to {target}: no installed CMake file names {source}", flush=True)
+    return target
+
+
+def relocated_prefixes(relocated: Path) -> list[Path]:
+    """The install prefix of every package in the relocated install folder (``<prefix>/lib/cmake/<Package>``)."""
+    return sorted({config.parents[3] for config in relocated.rglob("lib/cmake/*/*Config.cmake")})
+
+
+def rebuild_against_relocated_install(
+    ctx: ContextOsArchitectureCompilerGenerator, workspace: Path, relocated: Path
+) -> None:
+    """Build RELOCATION_CONSUMERS again from new build folders, finding the packages they use in the relocated install
+    folder only (the ``CMAKE_PREFIX_PATH`` environment variable: searched by find_package, csCMake or not)."""
+    prefixes = relocated_prefixes(relocated)
+    env = {**cmake_environment(workspace), "CMAKE_PREFIX_PATH": os.pathsep.join(p.as_posix() for p in prefixes)}
+    print(f"CMAKE_PREFIX_PATH (environment): {env['CMAKE_PREFIX_PATH']}", flush=True)
+    for name in RELOCATION_CONSUMERS:
+        project = next(p for p in PROJECTS if p.name == name)
+        # build/<variant>/<project>[/<config>]: the build folders of every configuration
+        for build_dir in [
+            d for d in (workspace / "build").rglob(name) if d.is_dir() and any(d.rglob("CMakeCache.txt"))
+        ]:
+            shutil.rmtree(build_dir)
+        for workflow in workflow_presets(ctx, project.plain or project.debug_release):
+            run(["cmake", "--workflow", workflow], cwd=workspace / name, env=env)
+
+
+_DEBUGGER_CONFIG = re.compile(r"==\s*'([^|']+)\|")
+
+
+def debugger_environments(vcxproj: Path) -> dict[str, str]:
+    """Return the ``LocalDebuggerEnvironment`` of each configuration of a Visual Studio project file."""
+    environments: dict[str, str] = {}
+    for group_element in ElementTree.parse(vcxproj).getroot().iter():
+        for child in group_element:
+            if not child.tag.endswith("LocalDebuggerEnvironment"):
+                continue
+            condition = child.get("Condition") or group_element.get("Condition") or ""
+            if match := _DEBUGGER_CONFIG.search(condition):
+                environments[match.group(1)] = child.text or ""
+    return environments
+
+
+def check_debugger_environment(workspace: Path, variant: str) -> None:
+    """Visual Studio: the debugger environment of csSmokeSharedApp (cs_target_runtime_environment), for each
+    configuration: the line CSSMOKE_CONFIG=<config>, then a PATH line with its runtime/<config> folder first, then the
+    folder of the DLLs it links (bin/<config> of the build), then %PATH%."""
+    projects = sorted((workspace / "build").rglob("csSmokeSharedApp.vcxproj"))
+    if not projects:
+        raise SmokeError(f"csSmokeSharedApp.vcxproj not found in {workspace / 'build'}")
+    environments = debugger_environments(projects[0])
+    print(f"{projects[0].name}: LocalDebuggerEnvironment {environments}", flush=True)
+    for config in CONFIGS:
+        lines = [line.strip() for line in environments.get(config.cmake, "").splitlines() if line.strip()]
+        variable = f"CSSMOKE_CONFIG={config.cmake}"
+        if len(lines) != 2 or lines[0] != variable:
+            raise SmokeError(f"{config.cmake}: debugger environment {lines}, expected {variable} then a PATH line")
+        path = lines[1].replace("\\", "/").lower()
+        runtime, dlls = f"/runtime/{config.cmake}".lower(), f"/bin/{config.cmake}".lower()
+        if not (path.startswith("path=") and runtime in path and dlls in path and path.endswith(";%path%")):
+            raise SmokeError(f"{config.cmake}: debugger {path!r}, expected PATH=...{runtime};...{dlls};%PATH%")
+        if path.index(runtime) > path.index(dlls):
+            raise SmokeError(f"{config.cmake}: {runtime} must come before {dlls} in {path!r}")
+
+
+_ENV_CONFIGS = re.compile(r'^set "_cs_env_configs=(.*)"\s*$', re.MULTILINE)
+_ENV_REPORT = re.compile(r"^(CSSMOKE_CONFIG|PATH)=(.*?)\s*$", re.MULTILINE)
+# run a run-time environment script, then print what it set; the arguments of the wrapper go to the script
+_ENV_WRAPPERS = {
+    "cs-env.bat": (
+        '@echo off\ncall "{script}" %*\nif errorlevel 1 exit /b 1\n'
+        "echo CSSMOKE_CONFIG=%CSSMOKE_CONFIG%\necho PATH=%PATH%\n"
+    ),
+    "cs-env.ps1": (
+        "$ErrorActionPreference = 'Stop'\n& '{script}' @args\n"
+        '"CSSMOKE_CONFIG=$env:CSSMOKE_CONFIG"\n"PATH=$env:PATH"\n'
+    ),
+}
+
+
+def run_environment_script(script: Path, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
+    """Run ``script`` (cs-env.bat or cs-env.ps1) with ``args`` through a wrapper that prints CSSMOKE_CONFIG and PATH
+    afterwards (a wrapper, not a command line: cs-env.bat takes a command line naming it for a double-click)."""
+    wrapper = script.parent / f"smoke-{script.name}"
+    wrapper.write_text(_ENV_WRAPPERS[script.name].format(script=script), encoding="utf-8")
+    if script.suffix == ".bat":
+        command = ["cmd", "/d", "/c", str(wrapper), *args]
+    else:
+        command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(wrapper), *args]
+    try:
+        return subprocess.run(command, capture_output=True, text=True, check=False)
+    finally:
+        wrapper.unlink()
+
+
+def check_environment_script_output(script: Path, config: str, output: str) -> None:
+    """The variable of csSmokeSharedApp for ``config``, then PATH: its runtime/<config> folder, then the folder of the
+    DLLs of the build (bin, bin/<config> with a multi-config generator), then the PATH before."""
+    values = dict(_ENV_REPORT.findall(output))
+    if values.get("CSSMOKE_CONFIG") != config:
+        raise SmokeError(f"{script.name} {config}: CSSMOKE_CONFIG={values.get('CSSMOKE_CONFIG')!r}, expected {config}")
+    entries = [entry.replace("\\", "/").lower().rstrip("/") for entry in values.get("PATH", "").split(";")]
+    runtime, bin_dir = f"/runtime/{config}".lower(), (script.parent / "bin").as_posix().lower()
+    if len(entries) < 3 or not entries[0].endswith(runtime) or not entries[1].startswith(bin_dir):
+        raise SmokeError(f"{script.name} {config}: PATH {entries[:3]}..., expected ...{runtime};{bin_dir}...;%PATH%")
+
+
+def check_environment_scripts(workspace: Path, variant: str) -> None:
+    """Windows: the run-time environment scripts of every build folder of csSmokeShared (one with a multi-config
+    generator, ``<project>/<config>`` each with a single-config one)."""
+    scripts = sorted(path for path in (workspace / "build").rglob("cs-env.bat") if "csSmokeShared" in path.parts)
+    if not scripts:
+        raise SmokeError(f"no cs-env.bat in the build folders of csSmokeShared in {workspace / 'build'}")
+    for script in scripts:
+        check_environment_scripts_of(script.parent)
+
+
+def check_environment_scripts_of(build_dir: Path) -> None:
+    """cs-env.bat and cs-env.ps1 of ``build_dir``, for each configuration they list; without a configuration: the only
+    one, or an error (the configurations give different environments: CSSMOKE_CONFIG=$<CONFIG>)."""
+    match = _ENV_CONFIGS.search((build_dir / "cs-env.bat").read_text(encoding="utf-8"))
+    configs = match.group(1).split() if match else []
+    print(f"{build_dir}: configurations {configs}", flush=True)
+    for name in _ENV_WRAPPERS:
+        script = build_dir / name
+        for config in configs:
+            result = run_environment_script(script, [config])
+            if result.returncode != 0:
+                raise SmokeError(f"{name} {config}: exit code {result.returncode}\n{result.stdout}{result.stderr}")
+            check_environment_script_output(script, config, result.stdout)
+        result = run_environment_script(script, [])
+        print(f"{name} without configuration: exit code {result.returncode} {result.stderr.strip()}", flush=True)
+        if len(configs) == 1:
+            if result.returncode != 0:
+                raise SmokeError(f"{name}: exit code {result.returncode}\n{result.stdout}{result.stderr}")
+            check_environment_script_output(script, configs[0], result.stdout)
+        elif result.returncode == 0 or "give one" not in result.stderr:
+            raise SmokeError(f"{name} without configuration: expected an error, got {result.returncode}")
 
 
 def line_ending(path: Path) -> str:
@@ -279,7 +453,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     with group(f"prepare workspace {workspace}"):
         prepare_workspace(workspace)
     for project in PROJECTS:
-        for workflow in workflow_presets(ctx, project.plain):
+        for workflow in workflow_presets(ctx, project.plain or project.debug_release):
             with group(f"{project.name}: cmake --workflow {workflow}"):
                 run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
         if project.plain:
@@ -289,10 +463,39 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
             check_installed_default_targets(workspace, variant, project)
         if project.apps:
             with group(f"{project.name}: run the installed applications"):
-                check_installed_apps(workspace, variant, project)
+                check_installed_apps(install_dir(workspace, variant, project), project)
+        if (
+            project.name == "csSmokeShared"
+            and ctx.context_compiler_generator.build_generator.generator in VISUAL_STUDIO
+        ):
+            with group(f"{project.name}: Visual Studio debugger environment"):
+                check_debugger_environment(workspace, variant)
+        if project.name == "csSmokeShared" and os.name == "nt":
+            with group(f"{project.name}: run-time environment scripts"):
+                check_environment_scripts(workspace, variant)
         if lint:
             with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
+    check_relocation(ctx, variant, workspace)
+
+
+def check_relocation(ctx: ContextOsArchitectureCompilerGenerator, variant: str, workspace: Path) -> None:
+    """The installed packages can be moved: no installed CMake file names the install folder, the installed
+    applications run from the new folder (install RPATH relative to the binary; DLLs in bin/), and consumers build
+    against it (relative paths in the Config files)."""
+    with group(f"relocation: move {workspace / 'install'}"):
+        relocated = relocate_install(workspace)
+    with group("relocation: run the installed applications from the moved folder"):
+        for project in PROJECTS:
+            if project.apps and not project.standalone:
+                moved = relocated / install_dir(workspace, variant, project).relative_to(workspace / "install")
+                check_installed_apps(moved, project)
+    with group(f"relocation: build {', '.join(RELOCATION_CONSUMERS)} against the moved folder"):
+        rebuild_against_relocated_install(ctx, workspace, relocated)
+    with group("relocation: run the applications of the consumers built against the moved folder"):
+        for project in PROJECTS:
+            if project.name in RELOCATION_CONSUMERS and project.apps:
+                check_installed_apps(install_dir(workspace, variant, project), project)
 
 
 def main(argv: list[str] | None = None) -> int:

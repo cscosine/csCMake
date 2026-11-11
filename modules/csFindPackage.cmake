@@ -35,82 +35,74 @@ include(modules/csInternal)
 #
 #   :Writes: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
 macro(cs_find_package target_name propagate_mode)
-  cs_debug_message("[cs_find_package] target ${target_name} find ${ARGN} with mode ${propagate_mode}")
-
+  # the mode is checked before find_package runs
+  _cs_check_find_package_mode("${target_name}" "${propagate_mode}")
   # this has to be a macro, because some find_package out variable needs to be visible to the caller
   find_package(${ARGN})
   _cs_add_find_package_args_to_target("${target_name}" "${propagate_mode}" "${ARGN}")
 endmacro()
 
-#.rst:
-# .. command:: cs_get_target_find_packages
+# Return the PUBLIC :command:`find_package` arguments of a target (:command:`cs_find_package`).
 #
-#   Return the PUBLIC :command:`find_package` arguments of a target (:command:`cs_find_package`).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_get_target_find_packages(<target> <out-var>)
-#
-#   ``<target>``
-#     A target of the project.
-#
-#   ``<out-var>``
-#     The variable to set, in the scope of the caller.
-#
-#   :Reads: :prop_tgt:`CSCMAKE_FIND_PACKAGES`
-function(cs_get_target_find_packages target_name output_variable_name)
-  get_target_property(list_values ${target_name} CSCMAKE_FIND_PACKAGES)
-  if(list_values)
-    # if exists
-    set(${output_variable_name} ${list_values} PARENT_SCOPE)
-  else()
-    # otherwise set to empty list
-    set(${output_variable_name} "" PARENT_SCOPE)
+# * target property CSCMAKE_FIND_PACKAGES
+function(_cs_get_target_find_packages target_name output_variable_name)
+  # empty when the property is not set
+  get_property(list_values TARGET ${target_name} PROPERTY CSCMAKE_FIND_PACKAGES)
+  set(${output_variable_name} "${list_values}" PARENT_SCOPE)
+endfunction()
+
+# Fail unless propagate_mode is PUBLIC or PRIVATE (cs_find_package, before find_package runs).
+function(_cs_check_find_package_mode target_name propagate_mode)
+  if(NOT propagate_mode MATCHES "^(PUBLIC|PRIVATE)$")
+    message(FATAL_ERROR "[cs_find_package] ${target_name}: the mode is PUBLIC or PRIVATE, got ${propagate_mode}")
   endif()
 endfunction()
 
-#.rst:
-# .. command:: cs_print_target_find_packages
+# Report (VERBOSE) the find_package of target_name (cs_find_package, called after find_package in the scope of the
+# caller): the arguments, the mode, and the result: version and folder when found.
 #
-#   Print the PUBLIC :command:`find_package` arguments of a target (debug messages).
+# Reads:
 #
-#   .. code-block:: cmake
-#
-#     cs_print_target_find_packages(<target>)
-#
-#   ``<target>``
-#     A target of the project.
-function(cs_print_target_find_packages target_name)
-  set(packages "")
-  cs_get_target_find_packages("${target_name}" packages)
-  list(LENGTH packages count)
-  if(count GREATER 0)
-    cs_debug_message("cs_print_target_find_packages ${target_name}: ${packages}")
-  else()
-    cs_debug_message("cs_print_target_find_packages ${target_name} empty")
+# * variable <package>_FOUND, <package>_VERSION, <package>_DIR (set by find_package)
+function(_cs_report_found_package target_name propagate_mode package)
+  _cs_log_level_at_least(VERBOSE shown)
+  if(NOT shown)
+    return()
   endif()
+  list(JOIN ARGN " " arguments)
+  if(propagate_mode STREQUAL "PUBLIC")
+    set(text "${CSCMAKE_NAMESPACE}: ${target_name} finds ${package} ${arguments} (PUBLIC: its consumers too)")
+  else()
+    set(text "${CSCMAKE_NAMESPACE}: ${target_name} finds ${package} ${arguments} (PRIVATE)")
+  endif()
+  if(${package}_FOUND)
+    string(APPEND text ": found")
+    if(NOT "${${package}_VERSION}" STREQUAL "")
+      string(APPEND text " ${${package}_VERSION}")
+    endif()
+    if(${package}_DIR)
+      string(APPEND text " in ${${package}_DIR}")
+    endif()
+  else()
+    string(APPEND text ": not found")
+  endif()
+  message(VERBOSE "${text}")
 endfunction()
 
-# Record the find_package arguments ARGN of target_name when propagate_mode is PUBLIC; fail if it is neither PUBLIC nor
-# PRIVATE.
+# Record the find_package arguments ARGN of target_name when propagate_mode is PUBLIC.
 #
 # Writes:
 #
 # * target property CSCMAKE_FIND_PACKAGES
 function(_cs_add_find_package_args_to_target target_name propagate_mode)
+  _cs_message_context(cs_find_package)
   list(JOIN ARGN " " joined_argn)
-  cs_debug_message("[_cs_add_find_package_args_to_target] target ${target_name} arguments ${joined_argn}")
+  _cs_report_found_package(${target_name} ${propagate_mode} ${ARGN})
 
   if(propagate_mode STREQUAL "PUBLIC")
     _cs_add_to_target_property_unique_value("${target_name}" CSCMAKE_FIND_PACKAGES "${joined_argn}")
-  elseif(propagate_mode STREQUAL "PRIVATE")
-    # nothin to do
-  else()
-    message(
-      FATAL_ERROR
-      "cs_find_package PROPAGATE_MODE should be PUBLIC or PRIVATE, other values are not supported (called with "
-      "PROPAGATE_MODE=${propagate_mode})"
-    )
   endif()
 endfunction()
 

@@ -14,7 +14,7 @@ which both use `csSmokeBase`.
   the package never see (an application linked into nothing, a test framework).
 - **A diamond**: `csSmokeBase` is reached twice, through the `find_dependency` calls of `csSmokeMidA` (component `text`)
   and of `csSmokeMidB` (component `core`). The generated Configs load each component once.
-- **An installed application**: `cs_install_target(csSmokeTop csSmokeTop DEFAULT)` installs the executable in `bin/`,
+- **An installed application**: `cs_install_target(csSmokeTop COMPONENT csSmokeTop DEFAULT)` installs the executable in `bin/`,
   with the postfix of the configuration (`csSmokeTopd` in Debug).
 - **Its output, tested**: `add_test` runs it and checks what it prints.
 

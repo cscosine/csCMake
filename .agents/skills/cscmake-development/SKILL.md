@@ -19,9 +19,9 @@ compile-option defaults, and CMake presets. It has two parts:
 | Path | Role |
 |------|------|
 | `csCMake.cmake` | Entry point: `include(csCMake)` from a consumer `CMakeLists.txt`; CMake version and policies, includes the modules. |
-| `modules/csProject.cmake` | `cs_initialize_project`, `cs_finalize_project`, `cs_get_namespace`; the variables set in the project scope. |
+| `modules/csProject.cmake` | `cs_initialize_project` (defers `_cs_finalize_project` to the end of its `CMakeLists.txt`); the variables set in the project scope. |
 | `modules/csBuildConfigurations.cmake` | Build configurations: default, mapped, custom; postfixes, MSVC runtime per configuration. |
-| `modules/csTargets.cmake` | `cs_add_library`, `cs_add_executable`, `cs_finalize_target`, `cs_get_project_targets`. |
+| `modules/csTargets.cmake` | `cs_add_library`, `cs_add_executable`, `_cs_finalize_target`, `cs_get_project_targets`. |
 | `modules/csTargetSources.cmake` | `cs_target_sources`: sources and the headers to install. |
 | `modules/csTargetLinkLibraries.cmake` | `cs_target_link_libraries`. |
 | `modules/csFindPackage.cmake` | `cs_find_package`: PUBLIC/PRIVATE propagation to the installed package. |
@@ -31,7 +31,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | `modules/csPackageConfig.cmake` | Component dependencies (cycles, sorting), `<Ns>Config.cmake` generation from the template. |
 | `modules/csCheckInstalledHeaders.cmake` | `cs_target_check_installed_headers`: every installed header compiled on its own. |
 | `modules/csCompileProfiles.cmake` / `csCompileProfilesShipped.cmake` | Compile profiles: the mechanism / the `cscmake_*` profiles. |
-| `modules/csDebug.cmake` | `cs_debug_message`, `cs_print_state`, `cs_print_target_properties`. |
+| `modules/csDebug.cmake` | log level helpers (`_cs_log_level_at_least`, `_cs_message_context`), `cs_print_target`, `cs_print_project`. |
 | `modules/csInternal.cmake` | Private helpers (lists, properties, paths); no reference page. |
 | `modules/integrations/csOpenMP.cmake` | `cs_target_use_openmp` (integrations with third-party tools and libraries). |
 | `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |

@@ -5,7 +5,7 @@ that configure, build, test and install it.
 
 ## Requirements
 
-- **CMake 3.31** or newer (checked when csCMake is included).
+- **CMake 3.31** or newer (checked when csCMake is included; the csv1 presets use preset schema 10).
 - A C++ toolchain:
   - Linux: GCC or Clang;
   - Windows: MSVC or MSVC + LLVM (clang-cl), with the Visual Studio generators, or Ninja / Ninja Multi-Config from a
@@ -55,7 +55,8 @@ Get csCMake in the workspace in one of two ways:
 
 ## The files of a project
 
-A minimal project, `myApp/`, with one library and one executable:
+A minimal project, `myApp/`, with one library and one executable (the files below are the ones of
+`tests/smoke/myApp`, built on every platform by the csCMake CI):
 
 ```text
 myApp/
@@ -73,11 +74,8 @@ myApp/
 
 It includes every preset of csCMake: one per supported platform, compiler and generator.
 
-```json
-{
-    "version": 10,
-    "include": ["${sourceParentDir}/csCMake/presets/csv1/cs-presets-all.json"]
-}
+```{literalinclude} ../../tests/smoke/myApp/CMakePresets.json
+:language: json
 ```
 
 ### `csCMakeProjectSetup.json`
@@ -85,54 +83,26 @@ It includes every preset of csCMake: one per supported platform, compiler and ge
 It chooses the layout: here the workspace is the parent folder of the project, csCMake one of its folders. The csCMake
 presets include it by this name, from the folder of `CMakePresets.json`.
 
-```json
-{
-    "version": 10,
-    "include": ["${sourceParentDir}/csCMake/presets/layout/sibling.json"]
-}
+```{literalinclude} ../../tests/smoke/myApp/csCMakeProjectSetup.json
+:language: json
 ```
 
 ### `CMakeLists.txt`
 
-```cmake
-cmake_minimum_required(VERSION 3.31)
-project(myApp VERSION 1.0.0 LANGUAGES CXX)
-
-# found through CMAKE_MODULE_PATH, set by the presets
-include(csCMake)
-
-cs_initialize_project(
-  NAMESPACE myApp
-  CXX_STANDARD 20
-  DEFAULT_CONFIG Debug Release)
-
-add_subdirectory(myApp)
-
-# mandatory, at the end of this file
-cs_finalize_project()
+```{literalinclude} ../../tests/smoke/myApp/CMakeLists.txt
+:language: cmake
 ```
 
 `cs_initialize_project` sets up the project: the namespace of its installed targets and package
 (`myApp::core`, `find_package(myApp)`), the C++ standard, the build configurations. It must follow `project()` with a
-`VERSION`: it is the version of the installed package. `cs_finalize_project` finishes it: it checks the
-targets, resolves their runtime dependencies and generates the installed package. Forgetting it fails the configure.
+`VERSION`: it is the version of the installed package. At the end of this file, csCMake finalizes the project:
+it applies the compile profiles of the targets, resolves their runtime dependencies and generates the installed
+package.
 
 ### `myApp/CMakeLists.txt`
 
-```cmake
-cs_add_library(core STATIC)
-cs_target_sources(
-  core
-  PRIVATE core/Greeting.cpp
-  PRIVATE_INSTALL core/Greeting.hpp)
-cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
-cs_finalize_target(core)
-
-cs_add_executable(myApp main.cpp)
-cs_target_link_libraries(myApp PRIVATE core)
-cs_install_target(myApp app)
-cs_finalize_target(myApp)
+```{literalinclude} ../../tests/smoke/myApp/myApp/CMakeLists.txt
+:language: cmake
 ```
 
 - `cs_add_library` / `cs_add_executable` work like `add_library` / `add_executable`, and register the target in the
@@ -142,7 +112,14 @@ cs_finalize_target(myApp)
   to the project folder, `#include <myApp/core/Greeting.hpp>`, in the build tree and once installed.
 - `cs_install_target` installs the target in a *component* of the package (`core`, `app`); `DEFAULT`
   makes the component part of `find_package(myApp)` without `COMPONENTS`.
-- `cs_finalize_target` is mandatory for every target, after its links.
+- `add_test` is CMake's own: `cs_initialize_project` enables the tests, the test presets run them.
+
+The sources: `core/Greeting.hpp` declares `myapp::greeting()`, `core/Greeting.cpp` returns `"Hello from myApp"`,
+`main.cpp` prints it:
+
+```{literalinclude} ../../tests/smoke/myApp/myApp/main.cpp
+:language: cpp
+```
 
 [Targets and sources](targets.md) explains each command.
 
@@ -180,8 +157,8 @@ the folders.
 
 ## Next
 
-- [Targets and sources](targets.md): libraries, executables, sources and installed headers, links, the mandatory
-  finalize calls.
+- [Targets and sources](targets.md): libraries, executables, sources and installed headers, links, when the
+  project is finalized.
 - [Dependencies](dependencies.md): other packages, and other csCMake projects.
 - [Installed packages](install.md): components and the generated `<namespace>Config.cmake`.
 - [Build configurations](build-configurations.md), [Compile profiles](compile-profiles.md), [Presets](presets.md).

@@ -23,5 +23,3 @@ cs_initialize_project(
 )
 
 add_subdirectory(csSmokeMidB)
-
-cs_finalize_project()

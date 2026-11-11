@@ -4,9 +4,7 @@ cs_target_sources(csSmokeStandaloneApp PRIVATE main.cpp)
 
 cs_target_link_libraries(csSmokeStandaloneApp PRIVATE csSmokeStandalone::cscmake_base_include)
 
-cs_install_target(csSmokeStandaloneApp csSmokeStandaloneApp DEFAULT)
-
-cs_finalize_target(csSmokeStandaloneApp)
+cs_install_target(csSmokeStandaloneApp COMPONENT csSmokeStandaloneApp DEFAULT)
 
 add_test(NAME csSmokeStandaloneOutput COMMAND csSmokeStandaloneApp)
 set_tests_properties(csSmokeStandaloneOutput PROPERTIES PASS_REGULAR_EXPRESSION "standalone")

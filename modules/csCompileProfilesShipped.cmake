@@ -3,7 +3,9 @@
 # ------------------------
 #
 # The compile profiles shipped with csCMake, defined with :command:`cs_add_compile_profile_rule` when csCMake is
-# included (:doc:`csCompileProfiles`).
+# included (:doc:`csCompileProfiles`). Their options apply to C++ sources, and to C sources where they are valid in C
+# (warnings, warnings as errors, sanitizers, ``/MP``); the C++-only ones (``-Wold-style-cast``, ``/permissive-``,
+# the standard library hardening, ...) not.
 #
 # ``cscmake_default``
 #   MSVC: ``/MP`` (parallel compilation), ``/Zc:__cplusplus``. The default of :command:`cs_initialize_project`.
@@ -40,12 +42,13 @@ include(modules/csCompileProfiles)
 # The compile profiles shipped with csCMake (README: "Compile profiles").
 function(_cs_add_cscmake_compile_profiles)
   # every target of a project, unless DEFAULT_COMPILE_PROFILES says otherwise
-  cs_add_compile_profile_rule(PROFILE cscmake_default COMPILERS MSVC COMPILE_OPTIONS /MP /Zc:__cplusplus)
+  cs_add_compile_profile_rule(PROFILE cscmake_default COMPILERS MSVC LANGUAGES C CXX COMPILE_OPTIONS /MP)
+  cs_add_compile_profile_rule(PROFILE cscmake_default COMPILERS MSVC COMPILE_OPTIONS /Zc:__cplusplus)
 
   # high warning level, the same essential checks on every compiler
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
-    FRONTENDS GNU
+    FRONTENDS GNU LANGUAGES C CXX
     COMPILE_OPTIONS
       -Wall
       -Wextra
@@ -53,26 +56,27 @@ function(_cs_add_cscmake_compile_profiles)
       -Wconversion
       -Wsign-conversion
       -Wshadow
-      -Wnon-virtual-dtor
-      -Woverloaded-virtual
-      -Wold-style-cast
       -Wfloat-equal
       -Winit-self
       -Wuninitialized
       -Wunused
-      -Wreorder
       -Wimplicit-fallthrough
       -Wcast-align
       -Wformat=2
       -Wnull-dereference
       -Wdouble-promotion
-      -Wzero-as-null-pointer-constant
   )
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
-    COMPILERS GNU
-    COMPILE_OPTIONS -Wstrict-null-sentinel -Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wmisleading-indentation
+    FRONTENDS GNU
+    COMPILE_OPTIONS -Wnon-virtual-dtor -Woverloaded-virtual -Wold-style-cast -Wreorder -Wzero-as-null-pointer-constant
   )
+  cs_add_compile_profile_rule(
+    PROFILE cscmake_warnings
+    COMPILERS GNU LANGUAGES C CXX
+    COMPILE_OPTIONS -Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wmisleading-indentation
+  )
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings COMPILERS GNU COMPILE_OPTIONS -Wstrict-null-sentinel)
   # Clang: C++98 compatibility warnings, noise in a project at C++11 or later (on with -Weverything, and with -Wall on
   # clang-cl, where it means -Weverything)
   cs_add_compile_profile_rule(
@@ -89,7 +93,8 @@ function(_cs_add_cscmake_compile_profiles)
     COMPILE_OPTIONS -Wno-c++20-extensions
   )
   # MSVC and clang-cl (MSVC command line)
-  cs_add_compile_profile_rule(PROFILE cscmake_warnings FRONTENDS MSVC COMPILE_OPTIONS /W4 /permissive-)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings FRONTENDS MSVC LANGUAGES C CXX COMPILE_OPTIONS /W4)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings FRONTENDS MSVC COMPILE_OPTIONS /permissive-)
   # MSVC: warnings off by default even at /W4, the counterparts of the GCC/Clang ones above
   cs_add_compile_profile_rule(
     PROFILE cscmake_warnings
@@ -119,8 +124,8 @@ function(_cs_add_cscmake_compile_profiles)
       /w14640
   )
 
-  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS GNU COMPILE_OPTIONS -Werror)
-  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS MSVC COMPILE_OPTIONS /WX)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS GNU LANGUAGES C CXX COMPILE_OPTIONS -Werror)
+  cs_add_compile_profile_rule(PROFILE cscmake_warnings_as_errors FRONTENDS MSVC LANGUAGES C CXX COMPILE_OPTIONS /WX)
 
   cs_add_compile_profile_rule(PROFILE cscmake_strict_warnings PROFILES cscmake_warnings cscmake_warnings_as_errors)
 
@@ -128,18 +133,22 @@ function(_cs_add_cscmake_compile_profiles)
   cs_add_compile_profile_rule(
     PROFILE cscmake_sanitize_undefined
     FRONTENDS GNU
-    PLATFORMS Linux Darwin
+    PLATFORMS Linux Darwin LANGUAGES C CXX
     COMPILE_OPTIONS -fsanitize=undefined
     LINK_OPTIONS -fsanitize=undefined
   )
   cs_add_compile_profile_rule(
     PROFILE cscmake_sanitize_address
     FRONTENDS GNU
-    PLATFORMS Linux Darwin
+    PLATFORMS Linux Darwin LANGUAGES C CXX
     COMPILE_OPTIONS -fsanitize=address -fno-omit-frame-pointer
     LINK_OPTIONS -fsanitize=address
   )
-  cs_add_compile_profile_rule(PROFILE cscmake_sanitize_address COMPILERS MSVC COMPILE_OPTIONS /fsanitize=address)
+  cs_add_compile_profile_rule(
+    PROFILE cscmake_sanitize_address
+    COMPILERS MSVC LANGUAGES C CXX
+    COMPILE_OPTIONS /fsanitize=address
+  )
 
   # checks of the standard library, libstdc++ and libc++ (each one ignores the other definition): the cheap ones (usable
   # in release builds) and all of them (libc++ debug mode, expensive: for test configurations); MSVC STL: the Debug

@@ -24,5 +24,3 @@ cs_initialize_project(
 )
 
 add_subdirectory(csSmokeTop)
-
-cs_finalize_project()

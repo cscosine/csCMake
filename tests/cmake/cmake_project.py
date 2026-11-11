@@ -40,12 +40,23 @@ class Configured:
         return value.split(";") if value else []
 
 
+def after_finalize(code: str) -> str:
+    """CMake ``code`` run after csCMake finalized the project: deferred to the end of the CMakeLists.txt, after the
+    finalization (deferred before it, by ``cs_initialize_project``); evaluated once, then, in the folder's scope."""
+    return f"cmake_language(DEFER CALL cmake_language EVAL CODE [==[\n{code}]==])\n"
+
+
 def configure(
-    project_dir: Path, body: str, files: dict[str, str] | None = None, args: list[str] | None = None
+    project_dir: Path,
+    body: str,
+    files: dict[str, str] | None = None,
+    args: list[str] | None = None,
+    timeout: float | None = None,
 ) -> Configured:
     """Write ``HEADER + body`` as ``project_dir/CMakeLists.txt`` (plus ``files``), configure it with Ninja/Debug.
 
-    ``args`` are extra ``cmake`` arguments (e.g. ``-D<var>=<value>``)."""
+    ``args`` are extra ``cmake`` arguments (e.g. ``-D<var>=<value>``); ``timeout`` (seconds) fails a configure that
+    takes longer (``subprocess.TimeoutExpired``)."""
     project_dir.mkdir(parents=True, exist_ok=True)
     (project_dir / "CMakeLists.txt").write_text(HEADER + body, encoding="utf-8")
     for name, content in (files or {}).items():
@@ -68,6 +79,7 @@ def configure(
         capture_output=True,
         text=True,
         check=False,
+        timeout=timeout,
     )
     return Configured(result.returncode, result.stdout + result.stderr)
 

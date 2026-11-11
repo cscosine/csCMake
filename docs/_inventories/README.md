@@ -3,6 +3,10 @@
 `cmake-<version>.inv` is an unmodified copy of `https://cmake.org/cmake/help/v<version>/objects.inv`, the Sphinx
 inventory of the CMake documentation: the list of CMake's commands, variables, properties, ... and of their pages.
 
+It is CMake documentation data, under CMake's licence (BSD-3-Clause, Kitware): its notice is `CMake-Copyright.txt`,
+an unmodified copy of `Copyright.txt` of the CMake sources of that version. It is used to build the csCMake
+documentation and is not shipped in it nor in the csCMake package.
+
 The csCMake documentation uses it through Sphinx intersphinx (`intersphinx_mapping` in `docs/conf.py`): a reference such
 as `` :command:`target_sources` `` or `` :variable:`CMAKE_PREFIX_PATH` `` in a `#.rst:` block of a CMake module becomes a
 link to the CMake documentation, and `sphinx-build -n` fails on a CMake name that does not exist. The build reads this
@@ -20,6 +24,7 @@ When the minimum CMake version of csCMake changes:
    inventory of that version, checks it, writes `cmake-<version>.inv` and removes the other versions;
 3. build the documentation (`sphinx-build -W -n docs docs/_build/html`): a CMake name that no longer exists in that
    version fails the build;
-4. commit the new inventory with the version change.
+4. replace `CMake-Copyright.txt` with `https://raw.githubusercontent.com/Kitware/CMake/v<version>.0/Copyright.txt`;
+5. commit the new inventory and notice with the version change.
 
 The inventory of a released CMake version does not change: there is nothing to update otherwise.

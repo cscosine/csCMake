@@ -19,5 +19,3 @@ cs_initialize_project(
 )
 
 add_subdirectory(csSmokeEnv)
-
-cs_finalize_project()

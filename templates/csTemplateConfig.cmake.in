@@ -7,17 +7,8 @@
 #   @export_namespace@_<component>_DEPENDENCIES
 # * every other variable is _@export_namespace_sanitized@_* or @export_namespace_sanitized@_* and is unset at the end
 
-# debug messages of this package: -D@export_namespace_sanitized@_DEBUG=ON (a plain variable, read only: no cache entry
-# in the consumer)
-
-# Print msg as a STATUS message when @export_namespace_sanitized@_DEBUG is ON.
-function(@export_namespace_sanitized@_debug_message msg)
-  if(@export_namespace_sanitized@_DEBUG)
-    message(STATUS "${msg}")
-  endif()
-endfunction()
-
-@export_namespace_sanitized@_debug_message("[@export_namespace@Config] entry point")
+# messages: VERBOSE the components loaded, DEBUG the packages they find (cmake --log-level=VERBOSE|DEBUG); no message
+# context: find_dependency() returns from this file when a package is missing, the context would stay in the consumer
 
 set(@export_namespace@_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 get_filename_component(@export_namespace@_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}/@config_dir_to_prefix@" ABSOLUTE)
@@ -48,9 +39,7 @@ set(_@export_namespace_sanitized@_dependencies_found "")
 
 foreach(@export_namespace_sanitized@_component IN LISTS _@export_namespace_sanitized@_components)
   if(NOT @export_namespace_sanitized@_component IN_LIST @export_namespace@_COMPONENTS_LIST)
-    @export_namespace_sanitized@_debug_message(
-      "[@export_namespace@Config] unknown component ${@export_namespace_sanitized@_component}"
-    )
+    message(VERBOSE "@export_namespace@: unknown component ${@export_namespace_sanitized@_component}")
     set(@export_namespace@_${@export_namespace_sanitized@_component}_FOUND FALSE)
     if(@export_namespace@_FIND_REQUIRED_${@export_namespace_sanitized@_component})
       set(@export_namespace@_FOUND FALSE)
@@ -74,9 +63,7 @@ foreach(@export_namespace_sanitized@_component IN LISTS _@export_namespace_sanit
       @export_namespace_sanitized@_component
   )
     @export_namespace_sanitized@_find_dependency_for_component(${@export_namespace_sanitized@_load})
-    @export_namespace_sanitized@_debug_message(
-      "[@export_namespace@Config] including ${@export_namespace_sanitized@_load}Targets.cmake"
-    )
+    message(VERBOSE "@export_namespace@: component ${@export_namespace_sanitized@_load}")
     include("${@export_namespace@_CMAKE_DIR}/targets/${@export_namespace_sanitized@_load}Targets.cmake")
   endforeach()
   set(@export_namespace@_${@export_namespace_sanitized@_component}_FOUND TRUE)
@@ -86,5 +73,3 @@ unset(_@export_namespace_sanitized@_components)
 unset(@export_namespace_sanitized@_component)
 unset(@export_namespace_sanitized@_load)
 unset(_@export_namespace_sanitized@_dependencies_found)
-
-@export_namespace_sanitized@_debug_message("[@export_namespace@Config] exit point")

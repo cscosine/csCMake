@@ -1,4 +1,4 @@
-"""cs_initialize_project: arguments, variables it sets (and does not leak), cache policy, debug messages."""
+"""cs_initialize_project: arguments, variables it sets (and does not leak), cache policy, messages."""
 
 from __future__ import annotations
 
@@ -18,11 +18,9 @@ cs_initialize_project(
   DEFAULT_CONFIG_MAPPED RelWithDebInfo MAPPED_TO "RelWithDebInfo,Release,"
   CUSTOM_CONFIG Paranoid BASED_ON "Debug,Release," POSTFIX "dp")
 """
-FINALIZE = "cs_finalize_project()\n"
 LIB = """
 cs_add_library(lib INTERFACE)
 cs_target_link_libraries(lib INTERFACE cstest::cscmake_base_include)
-cs_finalize_target(lib)
 """
 
 
@@ -31,6 +29,23 @@ def test_project_without_version_is_rejected(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "project(noversion VERSION <x.y.z> ...) is required" in result.output
+
+
+@pytest.mark.parametrize(
+    ("build_type", "message"),
+    [
+        ("", "CMAKE_BUILD_TYPE is empty: a single-config generator builds one configuration of the project"),
+        ("MinSizeRel", "CMAKE_BUILD_TYPE MinSizeRel is not a configuration of the project"),
+    ],
+)
+def test_a_single_config_build_type_must_be_a_configuration_of_the_project(
+    tmp_path: Path, build_type: str, message: str
+) -> None:
+    result = configure(tmp_path, INIT, args=[f"-DCMAKE_BUILD_TYPE={build_type}"])
+
+    assert result.returncode != 0
+    assert message in " ".join(result.output.split())
+    assert "(Debug, Release, RelWithDebInfo, Paranoid)" in " ".join(result.output.split())
 
 
 def test_no_temporary_variable_leaks_into_the_project_scope(tmp_path: Path) -> None:
@@ -43,7 +58,7 @@ def test_no_temporary_variable_leaks_into_the_project_scope(tmp_path: Path) -> N
         "temp_var_list",
     ]
     report = "".join(f'if(DEFINED {n})\n  cstest_report(leaked "{n}")\nendif()\n' for n in names)
-    result = configure(tmp_path, INIT + report + "cstest_report(namespace ${CSCMAKE_NAMESPACE})\n" + FINALIZE)
+    result = configure(tmp_path, INIT + report + "cstest_report(namespace ${CSCMAKE_NAMESPACE})\n")
 
     assert result.returncode == 0, result.output
     assert "leaked" not in result.reports
@@ -60,7 +75,6 @@ cstest_report(paranoid_postfix "${postfix}")
 cstest_report(map_variable "${CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO}")
 cstest_report(map_cache "$CACHE{CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO}")
 cstest_report(runtime_cache "$CACHE{CSCMAKE_MSVC_RUNTIME_LIBRARY_GENERATOR_EXPRESSION}")
-cs_finalize_project()
 """
     )
     result = configure(tmp_path, body)
@@ -73,6 +87,27 @@ cs_finalize_project()
     assert result.reports["runtime_cache"] == ""
 
 
+def test_a_custom_configuration_copies_the_variables_defined_for_its_base(tmp_path: Path) -> None:
+    """Paranoid is based on Debug: the C++ flags of Debug are copied (C++ is enabled), not the ones of the languages
+    that are not (no empty cache entries for them)."""
+    body = (
+        "enable_language(CXX)\n"
+        + INIT
+        + LIB
+        + """
+cstest_report(cxx_debug "${CMAKE_CXX_FLAGS_DEBUG}")
+cstest_report(cxx "$CACHE{CMAKE_CXX_FLAGS_PARANOID}")
+get_property(fortran CACHE CMAKE_Fortran_FLAGS_PARANOID PROPERTY TYPE SET)
+cstest_report(fortran "${fortran}")
+"""
+    )
+    result = configure(tmp_path, body)
+
+    assert result.returncode == 0, result.output
+    assert result.reports["cxx"] == result.reports["cxx_debug"]
+    assert result.reports["fortran"] == "0"
+
+
 def test_defaults_can_be_overridden_from_the_command_line(tmp_path: Path) -> None:
     body = (
         INIT
@@ -81,7 +116,6 @@ def test_defaults_can_be_overridden_from_the_command_line(tmp_path: Path) -> Non
 get_target_property(postfix lib DEBUG_POSTFIX)
 cstest_report(debug_postfix "${postfix}")
 cstest_report(runtime_output "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-cs_finalize_project()
 """
     )
     out = (tmp_path / "custom-bin").as_posix()
@@ -92,55 +126,64 @@ cs_finalize_project()
     assert result.reports["runtime_output"] == out
 
 
-@pytest.mark.parametrize("debug", [False, True], ids=["default", "debug-on"])
-def test_debug_messages_only_with_the_project_option(tmp_path: Path, debug: bool) -> None:
-    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-Dcstest_CSCMAKE_DEBUG=ON"] if debug else [])
+@pytest.mark.parametrize(
+    ("level", "verbose", "debug"),
+    [(None, False, False), ("VERBOSE", True, False), ("DEBUG", True, True)],
+    ids=["default", "verbose", "debug"],
+)
+def test_messages_follow_the_log_level(tmp_path: Path, level: str | None, verbose: bool, debug: bool) -> None:
+    """VERBOSE: what csCMake does; DEBUG: the details. Nothing at the default level."""
+    result = configure(tmp_path, INIT + LIB, args=[f"--log-level={level}"] if level else [])
 
     assert result.returncode == 0, result.output
-    assert ("[cs_target_link_libraries]" in result.output) == debug
+    assert ("cstest: target lib (INTERFACE_LIBRARY)" in result.output) == verbose
+    assert ("cstest: lib links INTERFACE cstest::cscmake_base_include" in result.output) == debug
 
 
-def test_missing_imported_file_is_a_warning(tmp_path: Path) -> None:
+def test_the_context_names_the_project_and_the_command(tmp_path: Path) -> None:
+    """--log-context: [<namespace>.<command>]; sub-steps indented."""
+    result = configure(tmp_path, INIT + LIB, args=["--log-level=DEBUG", "--log-context"])
+
+    assert result.returncode == 0, result.output
+    lines = result.output.splitlines()
+    assert "-- [cstest.cs_add_library] cstest: target lib (INTERFACE_LIBRARY)" in lines
+    assert "-- [cstest.cs_add_library]   default compile profiles of the folder: cscmake_default" in lines
+    assert any(line.startswith("-- [cstest.finalize] cstest: finalizing the project") for line in lines)
+
+
+def test_a_block_shows_the_messages_of_some_calls_only(tmp_path: Path) -> None:
     body = (
         INIT
-        + """
-add_library(ext SHARED IMPORTED)
-set_target_properties(ext PROPERTIES IMPORTED_LOCATION_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/missing.so)
-cs_add_library(lib INTERFACE)
-cs_target_link_libraries(lib INTERFACE ext)
-cs_finalize_target(lib)
-cs_finalize_project()
-"""
+        + "cs_add_library(quiet INTERFACE)\n"
+        + "block()\n  set(CMAKE_MESSAGE_LOG_LEVEL VERBOSE)\n  cs_add_library(shown INTERFACE)\nendblock()\n"
     )
     result = configure(tmp_path, body)
 
     assert result.returncode == 0, result.output
-    assert "CMake Warning" in result.output
-    assert "missing.so does not exist" in " ".join(result.output.split())  # CMake wraps warnings
+    assert "cstest: target shown (INTERFACE_LIBRARY)" in result.output
+    assert "target quiet" not in result.output
 
 
 SUBPROJECT = """
 project(sub VERSION 1.0.0 LANGUAGES NONE)
 cs_initialize_project(NAMESPACE sub CXX_STANDARD 17 DEFAULT_CONFIG Debug)
 add_subdirectory(lib)
-cs_finalize_project()
 """
 SUBPROJECT_LIB = """
 cs_add_library(h INTERFACE)
 cs_target_sources(h INTERFACE_INSTALL H.hpp)
-cs_install_target(h h)
-cs_finalize_target(h)
+cs_install_target(h COMPONENT h)
 """
 
 
 def test_header_install_path_is_relative_to_the_project_folder(tmp_path: Path) -> None:
     """A csCMake project added with add_subdirectory installs its headers relative to its own folder."""
     files = {"sub/CMakeLists.txt": SUBPROJECT, "sub/lib/CMakeLists.txt": SUBPROJECT_LIB, "sub/lib/H.hpp": ""}
-    result = configure(tmp_path, "add_subdirectory(sub)\n", files, args=["-Dsub_CSCMAKE_DEBUG=ON"])
+    result = configure(tmp_path, "add_subdirectory(sub)\n", files, args=["--log-level=DEBUG"])
 
     assert result.returncode == 0, result.output
-    line = next(x for x in result.output.splitlines() if "[cs_install_target] install" in x and "H.hpp" in x)
-    assert line.rstrip().endswith("to include/lib/"), line
+    line = next(x for x in result.output.splitlines() if "H.hpp -> " in x)
+    assert line.rstrip().endswith("-> include/lib/"), line
 
 
 def test_prefix_and_module_path_head_and_tail(tmp_path: Path) -> None:
@@ -149,7 +192,6 @@ def test_prefix_and_module_path_head_and_tail(tmp_path: Path) -> None:
         + """
 cstest_report(prefix "${CMAKE_PREFIX_PATH}")
 cstest_report(module "${CMAKE_MODULE_PATH}")
-cs_finalize_project()
 """
     )
     args = [
@@ -174,7 +216,6 @@ def test_static_msvc_runtime_from_the_command_line(tmp_path: Path) -> None:
         + """
 get_target_property(runtime lib MSVC_RUNTIME_LIBRARY)
 cstest_report(runtime "${runtime}")
-cs_finalize_project()
 """
     )
     result = configure(tmp_path, body, args=["-DCSCMAKE_MSVC_RUNTIME_LIBRARY_DEBUG=MultiThreadedDebug"])
@@ -188,7 +229,7 @@ cs_finalize_project()
 
 def test_the_c_compiler_of_the_presets_is_not_reported_unused(tmp_path: Path) -> None:
     """The presets give CMAKE_C_COMPILER, a project without C sources does not use it: no unused-cli warning."""
-    result = configure(tmp_path, INIT + LIB + FINALIZE, args=["-DCMAKE_C_COMPILER=cc"])
+    result = configure(tmp_path, INIT + LIB, args=["-DCMAKE_C_COMPILER=cc"])
 
     assert result.returncode == 0, result.output
     assert "Manually-specified variables were not used" not in result.output
@@ -203,7 +244,7 @@ cstest_report(compile_commands "${CMAKE_EXPORT_COMPILE_COMMANDS}")
 
 
 def test_language_and_compile_commands_defaults(tmp_path: Path) -> None:
-    result = configure(tmp_path, INIT + REPORT_LANGUAGE + FINALIZE)
+    result = configure(tmp_path, INIT + REPORT_LANGUAGE)
 
     assert result.returncode == 0, result.output
     assert result.reports == {"standard": "17", "required": "ON", "extensions": "OFF", "compile_commands": "ON"}
@@ -213,9 +254,14 @@ def test_the_choices_of_the_project_win(tmp_path: Path) -> None:
     """Set by the project before cs_initialize_project (or on the command line): kept."""
     before = "set(CMAKE_CXX_STANDARD_REQUIRED OFF)\nset(CMAKE_CXX_EXTENSIONS ON)\n"
 
-    result = configure(
-        tmp_path, before + INIT + REPORT_LANGUAGE + FINALIZE, args=["-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF"]
-    )
+    result = configure(tmp_path, before + INIT + REPORT_LANGUAGE, args=["-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF"])
 
     assert result.returncode == 0, result.output
     assert result.reports == {"standard": "17", "required": "OFF", "extensions": "ON", "compile_commands": "OFF"}
+
+
+def test_a_target_before_initialize_is_rejected(tmp_path: Path) -> None:
+    result = configure(tmp_path, "cs_add_library(lib INTERFACE)\n")
+
+    assert result.returncode != 0
+    assert "lib: call cs_initialize_project(NAMESPACE ...) before adding targets" in " ".join(result.output.split())

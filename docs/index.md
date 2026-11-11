@@ -50,11 +50,8 @@ a little differently. Three examples.
 cs_add_library(core STATIC)
 cs_target_sources(core PRIVATE core/Greeting.cpp PRIVATE_INSTALL core/Greeting.hpp)
 cs_target_link_libraries(core PUBLIC myApp::cscmake_base_include)
-cs_install_target(core core DEFAULT)
-cs_finalize_target(core)
-
-# at the end of the top CMakeLists.txt: generates myAppConfig.cmake
-cs_finalize_project()
+cs_install_target(core COMPONENT core DEFAULT)
+# at the end of the CMakeLists.txt of cs_initialize_project, csCMake generates myAppConfig.cmake
 ~~~
 
 A consumer writes `find_package(myApp COMPONENTS core)` and links `myApp::core`. The generated
@@ -163,8 +160,8 @@ project, and kept in sync by hand.
   checks on every compiler, by configuration, per project or per target.
 - **Runtime dependencies**: the shared libraries each target needs, per configuration; found by the Visual Studio
   debugger, and by the installed executables of a package (relative install RPATH).
-- **Checks at configure time**: every target and the project finalized, the links of a target complete, installed
-  headers that compile on their own.
+- **Checks at configure time**: no link added after the project is finalized, installed headers that compile on
+  their own.
 - **Workspaces**: projects side by side, a self-contained application with its own workspace, or the workspace given
   by the environment (CI).
 
@@ -176,6 +173,10 @@ platforms, compilers and configurations, and are installed and found with `find_
 It is not a package manager: it consumes what `find_package` finds (your packages, or the ones of vcpkg, Conan, a
 system install). A single executable that is never installed or consumed is fine with plain CMake. csCMake needs
 CMake 3.31 or newer.
+
+This site describes the latest release of csCMake; the documentation of each release is
+`csCMake-docs-<version>.zip` in its GitHub Release. What a project can rely on between releases:
+[Compatibility](user/compatibility.md).
 
 ```{toctree}
 :hidden:
@@ -191,6 +192,7 @@ user/compile-profiles
 user/presets
 user/formatting
 user/troubleshooting
+user/compatibility
 ```
 
 ```{toctree}
@@ -219,6 +221,7 @@ advanced/smoke-tests
 :caption: Reference
 :maxdepth: 1
 
+reference/commands
 reference/csCMake
 reference/csProject
 reference/csBuildConfigurations
@@ -245,4 +248,5 @@ reference/csOpenMP
 contributing/code
 contributing/documentation
 contributing/releasing
+licences
 ```

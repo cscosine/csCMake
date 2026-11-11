@@ -10,7 +10,7 @@ checks what Sphinx cannot see:
   ``.. variable::`` / ``.. prop_tgt::`` / ``.. prop_gbl::`` entry, and every entry is used by the code. In names built
   at configure time, each ``${...}`` part is a placeholder, matched by the ``<...>`` placeholders of the entries
   (``CSCMAKE_${config}_POSTFIX`` matches ``CSCMAKE_<CONFIG>_POSTFIX``). An entry outside this naming
-  (``CLANG_TIDY_EXE``) must appear as written in the code;
+  (e.g. a lowercase variable) must appear as written in the code;
 - every module with a reference header (a ``#.rst:`` block before its code) has its page
   ``docs/reference/<module>.rst``.
 
@@ -144,7 +144,7 @@ def check(root: Path = REPO_ROOT) -> list[str]:
     for pattern, module, kind, name, line in patterns:
         if _NAME.fullmatch(_PLACEHOLDER.sub(PLACEHOLDER, name)):
             is_used = any(pattern.match(used_name) for _, used_name, _ in used)
-        else:  # a name outside the csCMake naming (CLANG_TIDY_EXE, _cscmake_debug_option): used as written
+        else:  # a name outside the csCMake naming (e.g. a lowercase variable): used as written
             is_used = re.search(rf"\b{re.escape(name)}\b", code) is not None
         if not is_used:
             problems.append(f"{where(module, line)}: '.. {kind}:: {name}' is not used by the code")

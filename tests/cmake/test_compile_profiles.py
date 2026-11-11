@@ -1,4 +1,4 @@
-"""Compile profiles: rules with conditions, applied by cs_finalize_target (csCompileProfiles.cmake)."""
+"""Compile profiles: rules with conditions, applied when the project is finalized (csCompileProfiles.cmake)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.cmake.cmake_project import configure
+from tests.cmake.cmake_project import after_finalize, configure
 
 # the targets compile: a C++ compiler on PATH (not set up on Windows for these tests; covered by the smoke tests)
 pytestmark = [
@@ -30,14 +30,14 @@ def _body(rules: str, use: str = "", defaults: str = "") -> str:
 cs_add_library(lib STATIC lib.cpp)
 """
         + use
-        + """
-cs_finalize_target(lib)
+        + after_finalize(
+            """
 foreach(property COMPILE_OPTIONS COMPILE_DEFINITIONS LINK_OPTIONS INTERFACE_LINK_OPTIONS CXX_CLANG_TIDY)
   get_target_property(value lib ${property})
   cstest_report(${property} "${value}")
 endforeach()
-cs_finalize_project()
 """
+        )
     )
 
 
@@ -51,8 +51,10 @@ cs_add_compile_profile_rule(PROFILE p PLATFORMS Linux COMPILE_DEFINITIONS X=1)
     )
 
     assert result.returncode == 0, result.output
-    assert result.reports["COMPILE_OPTIONS"] == "$<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU,Clang>>:-Wa;-Wb>"
-    assert result.reports["COMPILE_DEFINITIONS"] == "$<$<PLATFORM_ID:Linux>:X=1>"
+    assert result.reports["COMPILE_OPTIONS"] == (
+        "$<$<AND:$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:GNU,Clang>>,$<COMPILE_LANGUAGE:CXX>>:-Wa;-Wb>"
+    )
+    assert result.reports["COMPILE_DEFINITIONS"] == "$<$<AND:$<PLATFORM_ID:Linux>,$<COMPILE_LANGUAGE:CXX>>:X=1>"
 
 
 def test_nested_profiles_combine_the_conditions(tmp_path: Path) -> None:
@@ -65,12 +67,21 @@ cs_add_compile_profile_rule(PROFILE outer CONFIGS Release PROFILES inner)
     )
 
     assert result.returncode == 0, result.output
-    assert result.reports["COMPILE_OPTIONS"] == "$<$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>:-Winner>"
+    assert result.reports["COMPILE_OPTIONS"] == (
+        "$<$<AND:$<AND:$<CONFIG:Release>,$<CXX_COMPILER_ID:GNU>>,$<COMPILE_LANGUAGE:CXX>>:-Winner>"
+    )
 
 
 @pytest.mark.parametrize(
     ("defaults", "expected"),
-    [("", "$<$<CXX_COMPILER_ID:MSVC>:/MP;/Zc:__cplusplus>"), (" DEFAULT_COMPILE_PROFILES NONE", "value-NOTFOUND")],
+    [
+        (
+            "",
+            "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<COMPILE_LANGUAGE:C,CXX>>:/MP>;"
+            "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<COMPILE_LANGUAGE:CXX>>:/Zc:__cplusplus>",
+        ),
+        (" DEFAULT_COMPILE_PROFILES NONE", "value-NOTFOUND"),
+    ],
 )
 def test_default_profiles(tmp_path: Path, defaults: str, expected: str) -> None:
     result = configure(tmp_path, _body("", defaults=defaults), FILES)
@@ -89,25 +100,26 @@ cs_add_compile_profile_rule(PROFILE loose COMPILE_OPTIONS -Wloose)
         + rules
         + """
 cs_add_library(lib STATIC lib.cpp)
-cs_finalize_target(lib)
 add_subdirectory(tests)
+"""
+        + after_finalize(
+            """
 get_target_property(value lib COMPILE_OPTIONS)
 cstest_report(LIB "${value}")
 get_target_property(value test_lib COMPILE_OPTIONS)
 cstest_report(TEST "${value}")
-cs_finalize_project()
 """
+        )
     )
     tests = """
 set(CSCMAKE_DEFAULT_COMPILE_PROFILES loose)
 cs_add_library(test_lib STATIC ../lib.cpp)
-cs_finalize_target(test_lib)
 """
     result = configure(tmp_path, body, {**FILES, "tests/CMakeLists.txt": tests})
 
     assert result.returncode == 0, result.output
-    assert result.reports["LIB"] == "-Wstrict"
-    assert result.reports["TEST"] == "-Wloose"
+    assert result.reports["LIB"] == "$<$<COMPILE_LANGUAGE:CXX>:-Wstrict>"
+    assert result.reports["TEST"] == "$<$<COMPILE_LANGUAGE:CXX>:-Wloose>"
 
 
 def test_link_options_of_a_static_library_are_also_interface(tmp_path: Path) -> None:
@@ -131,7 +143,7 @@ def test_hardening_levels(tmp_path: Path, profile: str, mode: str) -> None:
 
     assert result.returncode == 0, result.output
     assert result.reports["COMPILE_DEFINITIONS"] == (
-        "$<$<OR:$<CXX_COMPILER_FRONTEND_VARIANT:GNU>>:_GLIBCXX_ASSERTIONS;"
+        "$<$<AND:$<OR:$<CXX_COMPILER_FRONTEND_VARIANT:GNU>>,$<COMPILE_LANGUAGE:CXX>>:_GLIBCXX_ASSERTIONS;"
         f"_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_{mode}>"
     )
 
@@ -145,12 +157,12 @@ def test_warnings_turn_off_the_compatibility_warnings_on_clang(tmp_path: Path) -
 
     assert result.returncode == 0, result.output
     assert (
-        "$<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-c++98-compat;-Wno-c++98-compat-pedantic>"
-        in result.reports["COMPILE_OPTIONS"]
+        "$<$<AND:$<CXX_COMPILER_ID:Clang,AppleClang>,$<COMPILE_LANGUAGE:CXX>>:-Wno-c++98-compat;"
+        "-Wno-c++98-compat-pedantic>" in result.reports["COMPILE_OPTIONS"]
     )
     assert (
-        "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<OR:$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>:-Wno-c++20-extensions>"
-        in result.reports["COMPILE_OPTIONS"]
+        "$<$<AND:$<AND:$<CXX_COMPILER_ID:Clang>,$<OR:$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>>,"
+        "$<COMPILE_LANGUAGE:CXX>>:-Wno-c++20-extensions>" in result.reports["COMPILE_OPTIONS"]
     )
 
 
@@ -171,7 +183,7 @@ def test_clang_tidy_is_mandatory_where_the_rule_matches(tmp_path: Path, configs:
         tmp_path,
         _body(rules, "cs_target_use_compile_profiles(lib tidy)\n"),
         FILES,
-        args=["-DCLANG_TIDY_EXE=/nonexistent/clang-tidy"],
+        args=["-DCSCMAKE_CLANG_TIDY_EXE=/nonexistent/clang-tidy"],
     )
 
     if required:

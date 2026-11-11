@@ -1,95 +1,30 @@
 # Changelog
 
-The changes of each csCMake release. Releases and their assets (the csCMake package, the documentation): GitHub
-Releases of this repository. How a release is made: [Releasing](docs/contributing/releasing.md).
+The changes of each csCMake release that matter to the projects using it. Releases and their assets (the csCMake
+package, the documentation): GitHub Releases of this repository. How a release is made:
+[Releasing](docs/contributing/releasing.md). What a project can rely on between releases:
+[Compatibility](docs/user/compatibility.md).
 
-## v0.4.0 (2026-11-10)
+## v1.0.0 (release candidates)
 
-The documentation site and the supported variants as data. No change of the `cs_*` commands or of the presets.
+The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
+candidate to the next, listed here with what to change in a project.
 
-### New
-
-- `presets/csv1/variants.json`: the supported variants as data (id, fields, short forms, generator type, build
-  configurations), generated with the presets, for tools that follow them.
-
-### Documentation
-
-- A new theme (Furo, light and dark), a landing page with what csCMake solves (examples with and without csCMake),
-  and a "Design decisions" page.
-
-## v0.3.0 (2026-11-10)
-
-Fixes for projects consumed in configurations they were not built in, install RPATH, and gersemi as formatter. No
-change of the `cs_*` commands. Action for projects formatting with csCMake's `.cmake-format.json`: switch to gersemi
-(see Formatting your CMake files).
-
-### Changed
-
-- Formatting: gersemi, with the `cs_*` signatures in the extension `gersemi/cscmake.py` and the configuration
-  `.gersemirc` (both in the release package, instead of `.cmake-format.json`); see Formatting your CMake files.
-- The CMake modules are in `modules/` (`modules/integrations/` for third-party integrations, e.g. OpenMP), reorganised
-  by subject: the reference pages are renamed (`csProject`, `csTargets`, `csBaseInclude`, `csPackageConfig`,
-  `csCheckInstalledHeaders`, `csCompileProfilesShipped`, `csDebug`). The commands are unchanged: projects include
-  `csCMake` only.
-- `CMAKE_CXX_STANDARD_REQUIRED`, `CMAKE_CXX_EXTENSIONS` and `CMAKE_EXPORT_COMPILE_COMMANDS` set by a project are kept.
-- The installed `<namespace>Config.cmake` reads `<namespace>_DEBUG` as a plain variable: no cache entry in the
-  consumers.
-
-### New
-
-- Install RPATH: installed executables and shared libraries find the shared libraries of their package (Linux, macOS);
-  `INSTALL_RPATH OFF` of `cs_initialize_project` or `CSCMAKE_INSTALL_RPATH` turns it off.
-
-### Fixed
-
-- A consumer configuration that a package was not built in (e.g. `MinSizeRel` with Visual Studio and Xcode) no longer
-  fails with a non-existent include folder: the include folders of a package follow the configuration CMake selects
-  for it (`CMAKE_MAP_IMPORTED_CONFIG_<CONFIG>`), like its libraries.
-- C++-only projects: no "not used" warning for the `CMAKE_C_COMPILER` of the presets.
-
-## v0.2.0 (2026-11-10)
-
-A consistent API, compile profiles, macOS, and documentation. This release breaks compatibility with v0.1.0, with no
-deprecated aliases: [MIGRATION.md](MIGRATION.md) lists every rename and the actions to take.
-
-### Breaking
-
-- Commands, variables and properties renamed to `cs_<name>` / `CSCMAKE_*`; introspection commands renamed; internal
-  commands become `_cs_*`.
-- `cs_initialize_project(NAMESPACE <namespace> ...)` and `cs_finalize_project()`: the namespace is the package name and
-  the prefix of the installed targets. The base include target is `<namespace>::cscmake_base_include`.
-- Compile options are compile profiles: the strict and default option targets, `STRICT_COMPILATION_ON_CONFIG`,
-  `cs_exec_clang_tidy` and `cs_compileEachInstalledInclude` are replaced by `cs_add_compile_profile_rule`,
-  `cs_target_use_compile_profiles` and `cs_target_check_installed_headers`.
-- Project setup presets: the project's `csCMakeProjectSetup.json` includes a layout, `presets/layout/<layout>.json`.
-- Mandatory calls, checked at configure time: `cs_finalize_target` for every target, after its links;
-  `cs_finalize_project` at the end of the top `CMakeLists.txt`.
-- CMake 3.31 or newer; `project()` needs a `VERSION`.
-- Configure in a fresh build folder and install into an empty prefix.
-
-### New
-
-- Compile profiles: `cscmake_default`, `cscmake_warnings`, `cscmake_warnings_as_errors`, `cscmake_strict_warnings`,
-  sanitizers (`cscmake_sanitize_undefined`, `cscmake_sanitize_address`), standard library hardening
-  (`cscmake_hardening_fast`, `cscmake_hardening_debug`) and `cscmake_clang_tidy`; rules by configuration, compiler,
-  command-line style and platform; default profiles per project or per folder.
-- macOS presets (Apple Silicon, Apple Clang, Ninja, Ninja Multi-Config and Xcode).
-- Workspace layouts (`presets/layout/`): `sibling`, `standalone` and the new `env`, each also with short build paths.
-- Installed package configuration: per-component `<namespace>_<component>_FOUND`; an unknown component makes
-  `find_package` fail cleanly (`REQUIRED`, `OPTIONAL_COMPONENTS` and `QUIET` work).
-- Overridable cache variables: postfixes per configuration, MSVC runtime library per configuration, output folders.
-- Visual Studio debugger `PATH` per configuration from the runtime libraries of the target.
-- Documentation site: user guide, tutorials, advanced pages and the reference of every command, variable and property.
-- Release package: `csCMake-<version>.tar.gz` / `.zip`, the documentation zip and `SHA256SUMS` on every release.
-
-### Fixed
-
-- `cs_target_sources` resolves relative paths from the current source folder.
-- Headers keep their path relative to the folder of `cs_initialize_project` when the project is added with
-  `add_subdirectory`.
-- Debug messages are printed only with `<project>_CSCMAKE_DEBUG`.
-
-## v0.1.0 (2026-07-07)
-
-First tagged version: the `cs_*` commands, installed packages with components, and the generated presets for Linux and
-Windows.
+- **Projects**: `cs_initialize_project` after `project(<name> VERSION ...)`: namespace, C++ standard, build
+  configurations (Debug, Release, RelWithDebInfo, mapped and custom ones with their postfixes); the project is
+  finalized at the end of the same `CMakeLists.txt`.
+- **Targets**: `cs_add_library`, `cs_add_executable`, `cs_target_sources` (sources installed with the target),
+  `cs_target_link_libraries`, `cs_find_package` (`PUBLIC`: found again by the consumers of the package).
+- **Installed packages with components**: `cs_install_target(<target> COMPONENT <component> [DEFAULT])`; the generated
+  `<namespace>Config.cmake` loads the requested components, the ones they depend on and their packages;
+  `VERSION_COMPATIBILITY`; relocatable (relative paths, relative install RPATH).
+- **Compile profiles**: warnings, sanitizers, standard library hardening, clang-tidy, by configuration, compiler,
+  platform and language, per project or per target (`cs_add_compile_profile_rule`, `cs_target_use_compile_profiles`).
+- **Run-time environment**: the DLLs of each target per configuration, in the Visual Studio debugger and, on Windows,
+  in `cs-env.bat` / `cs-env.ps1` for the whole build; `cs_target_runtime_environment` for what CMake cannot know.
+- **Checks and troubleshooting**: `cs_target_check_installed_headers`; `cs_print_target`, `cs_print_project`; the
+  messages of CMake's log levels (`--log-level=VERBOSE|DEBUG`, `--log-context`).
+- **Presets** (`csv1`): Linux (Ubuntu 22.04 to 26.04, x64 and arm64, GCC and Clang), Windows (MSVC and clang-cl, Visual
+  Studio and Ninja), macOS (Apple Clang, Ninja and Xcode); configure, build, test and workflow presets; workspace
+  layouts `sibling`, `standalone`, `env`.
+- **Formatting**: the gersemi configuration and the signatures of the `cs_*` commands for the projects.

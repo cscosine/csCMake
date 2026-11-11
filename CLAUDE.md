@@ -2,7 +2,7 @@
 
 Guidance for coding agents working in this repository. Detailed repo map and recipes:
 [.agents/skills/cscmake-development/SKILL.md](.agents/skills/cscmake-development/SKILL.md).
-Roadmap, open issues and session log: [PLAN.md](PLAN.md) — read it first.
+Open work, by area: [TODO.md](TODO.md); what changed for the projects: [CHANGELOG.md](CHANGELOG.md).
 
 ## What this repo is
 
@@ -73,23 +73,24 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - Comments are not reflowed: wrap them by hand at 120 columns; an empty `#` line between paragraphs and before bullet
   lists (`* item`).
 - **No hidden side effects.** csCMake changes only what its own targets need, or what the user asks for. In order of
-  preference: a target property of the csCMake targets (e.g. set by `cs_finalize_target`), a directory / project
+  preference: a target property of the csCMake targets (e.g. set by `cs_add_library`), a directory / project
   variable, a global or cache setting. The presets are also used by projects without csCMake (third-party forks,
   OpenCV): they carry the toolchain, generator, folders and search paths only, never build behaviour (an
   `INSTALL_RPATH` in the host presets would have silently replaced OpenCV's own default). Anything wider: only if not
   already set by the project, documented (`:Writes:`, user guide), with a way to turn it off, and a configure test
   showing that a project's own value wins.
 - Docs, code comments, README and test docstrings describe the current behaviour only (no "was", "no longer",
-  "not FORCE", "(was X)"). History goes in the PLAN.md CHANGELOG and commit messages; `MIGRATION.md` maps old → new as
-  tables and actions.
+  "not FORCE", "(was X)"). History goes in the commit messages; `CHANGELOG.md` says what changed for the projects (a
+  breaking change: with what to change in a project).
 - The `no-unstaged-changes` pre-commit hook fails if anything is unstaged: stage before running hooks.
 - Hooks need the dev venv active (`generate-csv1-presets` and `import-linter` run tools installed in it).
 
-## Process (from PLAN.md governance)
+## Process
 
-- One commit (at least) per phase; never squash phases. Do not push.
-- Stop after each phase for human review; update `PLAN_STATE` and the CHANGELOG in PLAN.md.
-- Commit only when the user asks.
+- One commit (at least) per step; never squash steps.
+- Stop after each step for human review; update `TODO.md` (remove what is done, add what is found) and
+  `CHANGELOG.md` (what changes for the projects).
+- Commit and push only when the user asks.
 - **Never stage changes** (`git add`, `git rm`, `git mv`, `git reset` that alters the index): leave every
   change unstaged/untracked so the user can review it in the working tree. The user stages.
 - Because of that, do not verify with `pre-commit run` (it stashes unstaged changes and checks the index;

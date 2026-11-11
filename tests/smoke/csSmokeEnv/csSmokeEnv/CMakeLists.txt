@@ -7,9 +7,7 @@ cs_target_sources(csSmokeEnvApp PRIVATE main.cpp)
 
 cs_target_link_libraries(csSmokeEnvApp PRIVATE csSmokeBase::text)
 
-cs_install_target(csSmokeEnvApp csSmokeEnvApp DEFAULT)
-
-cs_finalize_target(csSmokeEnvApp)
+cs_install_target(csSmokeEnvApp COMPONENT csSmokeEnvApp DEFAULT)
 
 add_test(NAME csSmokeEnvOutput COMMAND csSmokeEnvApp)
 set_tests_properties(csSmokeEnvOutput PROPERTIES PASS_REGULAR_EXPRESSION "env\\(text\\(base-core\\)\\)")

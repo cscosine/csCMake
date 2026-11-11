@@ -173,7 +173,7 @@ of the file), grouped under `Variables`, `Target properties` and `Global propert
 | environment variable | — | `` :envvar:`X` `` |
 
 - Names with parts that vary are written with placeholders, as CMake does: `CSCMAKE_<namespace>_COMPONENTS`,
-  `CSCMAKE_RUNTIME_LIBRARIES_<CONFIG>`.
+  `CSCMAKE_MSVC_RUNTIME_LIBRARY_<CONFIG>`.
 - Internal entries (a leading `_`, or state no project should read) start their description with "Internal:".
 - References to CMake's own commands, variables and properties (`` :command:`target_sources` ``,
   `` :variable:`CMAKE_PREFIX_PATH` ``, `` :prop_tgt:`EXPORT_NAME` ``) link to the CMake documentation of the minimum
@@ -216,13 +216,13 @@ of a section page). Write them so that they also read well on GitHub:
   ```
   ````
 
-Pages describe the current behaviour only: history goes in the `PLAN.md` changelog and in the commit messages,
-`MIGRATION.md` maps old to new.
+Pages describe the current behaviour only: history goes in the commit messages, and `CHANGELOG.md` says what changed
+for the projects (with what to change in a project for a breaking change).
 
 ## Checklist: a new or changed public command
 
 1. The `#.rst:` block of the command: summary, signature, details, arguments, `:Reads:` / `:Writes:`.
 2. The variables and properties it introduces: an entry in the module that sets them.
 3. `gersemi/cscmake.py`: its signature.
-4. The guides that show it, `README.md` if it appears there, `MIGRATION.md` if it replaces something.
+4. The guides that show it, `README.md` if it appears there, `CHANGELOG.md`.
 5. `sphinx-build -W -n docs docs/_build/html`, and look at the page.

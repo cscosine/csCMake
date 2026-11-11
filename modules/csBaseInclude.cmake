@@ -72,12 +72,12 @@ endfunction()
 # the package does not have, and not mapped, gets no folder (not a missing one). Absolute ($<INSTALL_PREFIX>): CMake
 # prefixes a relative entry with the install prefix even when it evaluates to nothing.
 function(_cs_installed_include_dirs output_variable)
-  cs_get_build_configurations(configs_list)
-  list(LENGTH configs_list count)
-  if(count EQUAL 1)
+  _cs_headers_per_configuration(per_configuration)
+  if(NOT per_configuration)
     set(${output_variable} "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>" PARENT_SCOPE)
     return()
   endif()
+  cs_get_build_configurations(configs_list)
   set(dirs "")
   foreach(config ${configs_list})
     list(
@@ -120,7 +120,7 @@ function(_cs_target_base_project_include_dir)
     endforeach()
   endif()
 
-  _cs_target_create_default_finalize(cscmake_base_include)
+  _cs_target_create_default_install(cscmake_base_include)
 endfunction()
 
 # Create the empty default target <project>_<target_sub_name> of type target_type (unique in the build tree), exported
@@ -131,7 +131,7 @@ endfunction()
 # * target property EXPORT_NAME
 function(_cs_target_create_default target_sub_name target_type target_name_out)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
-  cs_get_namespace(namespace)
+  _cs_get_namespace(namespace)
   cs_add_library(${target_name} ${target_type})
   set_target_properties(${target_name} PROPERTIES EXPORT_NAME ${target_sub_name})
   cs_add_library(${namespace}::${target_sub_name} ALIAS ${target_name})
@@ -140,10 +140,8 @@ function(_cs_target_create_default target_sub_name target_type target_name_out)
   set(${target_name_out} ${target_name} PARENT_SCOPE)
 endfunction()
 
-# Install the default target in the cscmake_common component (a default component) and finalize it.
-function(_cs_target_create_default_finalize target_sub_name)
+# Install the default target in the cscmake_common component (a default component).
+function(_cs_target_create_default_install target_sub_name)
   set(target_name ${PROJECT_NAME}_${target_sub_name})
-  cs_install_target(${target_name} cscmake_common DEFAULT)
-
-  cs_finalize_target(${target_name})
+  cs_install_target(${target_name} COMPONENT cscmake_common DEFAULT)
 endfunction()

@@ -49,12 +49,11 @@ application that uses it:
 ```cmake
 # myApp/CMakeLists.txt
 cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
-add_subdirectory(../myLib myLib)      # a csCMake project too: cs_initialize_project ... cs_finalize_project
+add_subdirectory(../myLib myLib)      # a csCMake project too, finalized at the end of its CMakeLists.txt
 add_subdirectory(app)                 # links myLib::core
-cs_finalize_project()
 ```
 
-- Each project keeps its own namespace, targets, components, debug option and installed package.
+- Each project keeps its own namespace, targets, components and installed package.
 - The build configurations belong to the build: the first csCMake project defines them; a nested project lists some
   of them, defined the same way, or the configure fails (see [Build configurations](build-configurations.md#several-projects-in-one-build)).
 - A target linking a target of the other project makes its component `find_dependency` that package in the installed
@@ -62,8 +61,46 @@ cs_finalize_project()
 
 ## Runtime dependencies
 
-When the project is finalized, csCMake walks the links of every target and collects the shared libraries it needs at
-run time, per configuration, also through other targets
-(`cs_get_target_runtime_libraries`). With the Visual Studio generators, each target gets a debugger
-environment whose `PATH` contains the folders of those libraries, so running or debugging it from Visual Studio finds
-its DLLs.
+When the project is finalized, each executable and shared library gets a Visual Studio debugger environment whose
+`PATH` contains the folders of the DLLs it needs, per configuration (CMake's `$<TARGET_RUNTIME_DLL_DIRS>`), so running
+or debugging it from Visual Studio finds them. Nothing to write for that.
+
+What CMake cannot know, a project adds with `cs_target_runtime_environment`: folders of plugins or of libraries loaded
+at run time, and variables the program reads (e.g. Qt's plugin folder):
+
+```cmake
+cs_target_runtime_environment(app PATH "${MYSDK_ROOT}/bin" SET "QT_PLUGIN_PATH=${QT_ROOT}/plugins")
+```
+
+### Running from a terminal on Windows: `cs-env.bat`, `cs-env.ps1`
+
+Outside Visual Studio, the same environment comes from two scripts csCMake writes in the top build folder (next to the
+`.sln`), one pair for the whole build: `PATH` with the folders of every executable and shared library of the csCMake
+projects of the build, and their variables.
+
+| | |
+|---|---|
+| double-click `cs-env.bat` | a command prompt with the environment |
+| `call cs-env.bat [<config>]` | from a command prompt: the environment in that command prompt |
+| `cs-env.bat [<config>] -ps` | a PowerShell with the environment |
+| `.\cs-env.ps1 [<config>]` | from PowerShell: the environment in that PowerShell |
+
+```bat
+C:\ws\build\myApp> call cs-env.bat Debug
+csCMake run-time environment: Debug
+C:\ws\build\myApp> bin\Debug\app.exe
+```
+
+- `<config>`: not needed when the build has one configuration, or when every configuration gives the same environment;
+  otherwise the scripts list the configurations and ask for one (a double-click asks in the window). With
+  Visual Studio, a project with DLLs of its own needs it: they are in `bin/<config>`.
+- Your own additions: `cs-env.local.bat` / `cs-env.local.ps1` next to them, run last with the configuration as argument;
+  csCMake never writes them.
+- One value per variable for the whole build: two targets setting the same variable to different values fail the
+  configure.
+- PowerShell runs a local script with the execution policy `RemoteSigned` (or `Unrestricted`, `Bypass`): e.g.
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- Written on Windows only (Linux and macOS run the build folder through the RPATH); `-DCSCMAKE_RUNTIME_SCRIPTS=OFF`
+  turns them off, `ON` writes them on any platform.
+
+See [Runtime dependencies](../advanced/runtime-dependencies.md).

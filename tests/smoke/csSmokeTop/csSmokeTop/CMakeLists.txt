@@ -11,9 +11,7 @@ cs_target_sources(csSmokeTop PRIVATE main.cpp)
 
 cs_target_link_libraries(csSmokeTop PRIVATE csSmokeMidA::csSmokeMidA csSmokeMidB::csSmokeMidB)
 
-cs_install_target(csSmokeTop csSmokeTop DEFAULT)
-
-cs_finalize_target(csSmokeTop)
+cs_install_target(csSmokeTop COMPONENT csSmokeTop DEFAULT)
 
 add_test(NAME csSmokeTopOutput COMMAND csSmokeTop)
 set_tests_properties(

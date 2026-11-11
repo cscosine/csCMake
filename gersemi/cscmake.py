@@ -17,11 +17,10 @@ command_definitions = {
             "BASED_ON",
             "POSTFIX",
             "INSTALL_RPATH",
+            "VERSION_COMPATIBILITY",
         ],
         "multi_value_keywords": ["DEFAULT_CONFIG", "DEFAULT_COMPILE_PROFILES"],
     },
-    "cs_finalize_project": {},
-    "cs_get_namespace": {"front_positional_arguments": ["out-var"]},
     "cs_add_library": {
         "front_positional_arguments": ["name"],
         "options": [
@@ -62,10 +61,10 @@ command_definitions = {
         "multi_value_keywords": ["COMPONENTS", "OPTIONAL_COMPONENTS"],
     },
     "cs_install_target": {
-        "front_positional_arguments": ["target", "component"],
+        "front_positional_arguments": ["target"],
         "options": ["DEFAULT"],
+        "one_value_keywords": ["COMPONENT"],
     },
-    "cs_finalize_target": {"front_positional_arguments": ["target"]},
     "cs_target_check_installed_headers": {
         "front_positional_arguments": ["target"],
         "multi_value_keywords": ["COMPILE_PROFILES"],
@@ -86,4 +85,9 @@ command_definitions = {
         ],
     },
     "cs_target_use_compile_profiles": {"front_positional_arguments": ["target"]},
+    "cs_target_runtime_environment": {
+        "front_positional_arguments": ["target"],
+        "one_value_keywords": ["DEBUGGER_PATH"],
+        "multi_value_keywords": ["PATH", "SET"],
+    },
 }

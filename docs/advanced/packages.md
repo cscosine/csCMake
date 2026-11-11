@@ -1,11 +1,11 @@
 # Installed packages internals
 
-How `cs_install_target` and `cs_finalize_project` turn the targets of a project into an installed package with
-components. For the use of the package, see [Installed packages](../user/install.md).
+How `cs_install_target` and the finalization of the project turn the targets of a project into an installed package
+with components. For the use of the package, see [Installed packages](../user/install.md).
 
 ## Recording the components: `cs_install_target`
 
-`cs_install_target(<target> <component> [DEFAULT])`:
+`cs_install_target(<target> COMPONENT <component> [DEFAULT])`:
 
 - installs the target in the export set `<namespace>_<component>-targets` (binaries to `bin`/`lib`, the PDB file with
   MSVC);
@@ -20,7 +20,7 @@ components. For the use of the package, see [Installed packages](../user/install
   `CSCMAKE_<namespace>_COMPONENT_<component>_TARGETS`, and the `PUBLIC` `cs_find_package` arguments of
   the target in `CSCMAKE_<namespace>_COMPONENT_<component>_FIND_PACKAGES`.
 
-## Finalizing: `cs_finalize_project`
+## Finalizing: the end of the project
 
 After the [runtime dependencies](runtime-dependencies.md) (which give the project dependencies of every target):
 
@@ -35,8 +35,8 @@ After the [runtime dependencies](runtime-dependencies.md) (which give the projec
 4. sorts the dependencies of each component, each after the ones it depends on
    (`CSCMAKE_<namespace>_COMPONENT_<component>_DEPENDENCIES_SORTED`);
 5. generates `<namespace>Config.cmake` from `templates/csTemplateConfig.cmake.in` (`configure_file(@ONLY)`) and
-   `<namespace>ConfigVersion.cmake` (`write_basic_package_version_file`, `AnyNewerVersion`), and installs both in
-   `lib/cmake/<namespace>/`.
+   `<namespace>ConfigVersion.cmake` (`write_basic_package_version_file`, `CSCMAKE_VERSION_COMPATIBILITY`), and
+   installs both in `lib/cmake/<namespace>/`.
 
 ## The generated `<namespace>Config.cmake`
 
@@ -57,4 +57,4 @@ When loaded by `find_package(<namespace> [COMPONENTS ...])`, it:
 3. unsets its own work variables: everything it sets other than the public variables starts with
    `<namespace>_` / `_<namespace>_`.
 
-The namespace with `-` replaced by `_` names its debug switch (`<namespace>_DEBUG`, a plain variable) and its helper function and macro.
+The namespace with `-` replaced by `_` names its helper macro and its work variables.
