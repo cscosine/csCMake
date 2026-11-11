@@ -100,6 +100,13 @@ Releases of this repository. How a release is made: [Releasing](docs/contributin
 - `cs_add_library` / `cs_add_executable` before `cs_initialize_project`: a clear message.
 - `cs_print_state` prints the folder of csCMake.
 
+### Documentation
+
+- A "Compatibility" page: what a project can rely on between releases (the public API, semantic versioning,
+  `MIGRATION.md`) and what may change in any release.
+- The getting-started example is a smoke project (`tests/smoke/myApp`), built on every platform by the CI; the page
+  shows its files, the README quick start is a checked copy.
+
 ## v0.4.0 (2026-11-10)
 
 The documentation site and the supported variants as data. No change of the `cs_*` commands or of the presets.

@@ -301,15 +301,16 @@ Status (2026-11-11): every 6a finding done or moved (6b, 6c); the unused public 
     (text); Windows smoke runs both scripts for each configuration of csSmokeShared (CSSMOKE_CONFIG, PATH order) and
     without a configuration (only one: works; several: error);
   * a "Compatibility" docs page: public = the "Commands by tier" page, documented variables and properties, preset
-    names of `csv1`; semantic versioning;
-  * the docs examples are the smoke projects (`literalinclude`: csSmokeStandalone minimal, csSmokeBase / MidA / Top
-    multi-library and consumed packages);
+    names of `csv1`; semantic versioning. **Done 2026-11-11** (`docs/user/compatibility.md`);
+  * the docs examples are the smoke projects. **Done 2026-11-11.** The tutorials already include them; the
+    getting-started example is the smoke project `tests/smoke/myApp` (Debug and Release, a ctest), included by the
+    page; README.md keeps a copy, checked by `tests/smoke/test_readme_example.py`;
   * the smoke moves the install folder (relocatable packages: relative Config paths, `$ORIGIN` RPATH). **Done
     2026-11-11, CI to check (every variant).** After every project: `install/` moved to `install-relocated/`, no
     installed `.cmake` file may name `install/`, the installed applications run from there, csSmokeTop and
     csSmokePlainConsumer built again from new build folders with the packages found there only;
   * scope sentence in README and docs; the CMake 3.31 line of getting-started gets "(the csv1 presets use preset
-    schema 10)" (no page of its own, user 2026-11-11); which docs version Pages shows.
+    schema 10)" (no page of its own, user 2026-11-11); which docs version Pages shows. **Done 2026-11-11.**
 - Tracking after 1.0 (decided, user 2026-11-10): open items in one `TODO.md` (sections per area: API, debug, presets,
   docs, smoke, other projects; one checkbox line per item); no GitHub issues for now.
 
@@ -612,3 +613,14 @@ than an application, a sample or a standalone tool; tests and samples inside a p
   the rebuilt consumers find csSmokeShared, csSmokeMidA, csSmokeMidB, csSmokeBase in `install-relocated/`; first try
   found nothing to delete (build folders are per configuration, `<project>/<config>`), fixed. Docs: smoke-tests.
 - User: "why CMake 3.31" needs no page: a parenthesis on the getting-started line (docs batch).
+### 2026-11-11 (docs batch)
+- Committed the relocation step as `f933b4d`.
+- `docs/user/compatibility.md`: versions (semantic versioning, MIGRATION.md), the public API (commands, documented
+  variables and properties except *Internal*, default target, installed package, preset names and layouts, formatter
+  configuration), what is not (internal names, generated build files, message texts, the Python tools), CMake 3.31
+  and the platforms.
+- Smoke project `myApp` = the getting-started example (+ a ctest), Debug and Release only (`Project.debug_release`,
+  `workflow_presets(debug_release=...)`); getting-started includes its files; README quick start is its copy
+  (`test_readme_example.py`). Host smoke: OK.
+- README: scope sentence; docs version on Pages (latest release; each release has its docs zip), also in the docs
+  index; CMake 3.31 because of preset schema 10 (README, getting-started).

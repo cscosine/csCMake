@@ -38,7 +38,7 @@ def test_workflow_presets_exist_in_generated_presets() -> None:
     defined = set(re.findall(r'"name": "(workflow-[^"]+)"', "".join(p.read_text() for p in presets_dir.glob("*.json"))))
     for ctx in get_supported_context_os_architecture_list():
         assert set(workflow_presets(ctx)) <= defined
-        assert set(workflow_presets(ctx, plain=True)) <= defined
+        assert set(workflow_presets(ctx, debug_release=True)) <= defined
 
 
 def test_multi_config_runs_one_workflow_single_config_one_per_config() -> None:
@@ -46,9 +46,9 @@ def test_multi_config_runs_one_workflow_single_config_one_per_config() -> None:
     assert workflow_presets(find_variant(SINGLE)) == [f"workflow-{SINGLE}-{c.preset}" for c in CONFIGS]
 
 
-def test_a_plain_project_builds_debug_and_release() -> None:
-    assert workflow_presets(find_variant(MULTI), plain=True) == [f"workflow-{MULTI}-debug-release"]
-    assert workflow_presets(find_variant(SINGLE), plain=True) == [
+def test_a_debug_release_project_builds_debug_and_release() -> None:
+    assert workflow_presets(find_variant(MULTI), debug_release=True) == [f"workflow-{MULTI}-debug-release"]
+    assert workflow_presets(find_variant(SINGLE), debug_release=True) == [
         f"workflow-{SINGLE}-debug",
         f"workflow-{SINGLE}-release",
     ]

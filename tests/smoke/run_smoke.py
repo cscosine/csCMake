@@ -80,10 +80,18 @@ class Project:
     # a consumer without csCMake: plain CMake, Debug and Release only (the configurations CMake knows), no installed
     # package to check
     plain: bool = False
+    debug_release: bool = False  # its configurations are Debug and Release only (always for a plain project)
+
+    @property
+    def configs(self) -> tuple[Config, ...]:
+        """The configurations the project builds."""
+        return CONFIGS[:2] if self.plain or self.debug_release else CONFIGS
 
 
 # build order: every project finds the ones before it in the install folder (tests/smoke/README.md)
 PROJECTS = (
+    # the example of the getting started page (docs/user/getting-started.md) and of README.md
+    Project("myApp", apps=(App("myApp", ("Hello from myApp",)),), debug_release=True),
     Project("csSmokeBase"),
     Project("csSmokeMidA", find_dependencies=("csSmokeBase",)),
     Project("csSmokeMidB", find_dependencies=("csSmokeBase",)),
@@ -132,14 +140,15 @@ def find_variant(variant: str) -> ContextOsArchitectureCompilerGenerator:
     raise SmokeError(f"unknown variant {variant!r} (not in the csCMake preset registry)")
 
 
-def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, plain: bool = False) -> list[str]:
-    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release for a plain project)."""
+def workflow_presets(ctx: ContextOsArchitectureCompilerGenerator, debug_release: bool = False) -> list[str]:
+    """Return the workflow presets that build every configuration of ``ctx`` (Debug and Release only with
+    ``debug_release``)."""
     variant = create_context_os_architecture_compiler_generator_string(ctx)
     generator_type = ctx.context_compiler_generator.build_generator.generator_type
-    configs = CONFIGS[:2] if plain else CONFIGS
+    configs = CONFIGS[:2] if debug_release else CONFIGS
     if generator_type == GeneratorType.MULTI_CONFIG:
         # a single build tree, all the configurations in one workflow
-        all_configs = BuildConfig.DEBUG_RELEASE if plain else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
+        all_configs = BuildConfig.DEBUG_RELEASE if debug_release else BuildConfig.DEBUG_RELEASE_RELWITHDEBINFO_PARANOID
         assert all_configs in get_supported_build_configs_for_generator_type(generator_type)
         return [f"workflow-{variant}-{all_configs.value}"]
     return [f"workflow-{variant}-{config.preset}" for config in configs]
@@ -211,7 +220,7 @@ def check_installed_apps(project_install_dir: Path, project: Project) -> None:
     suffix = ".exe" if os.name == "nt" else ""
     for app_spec in project.apps:
         expected = list(app_spec.output)
-        for config in CONFIGS:
+        for config in project.configs:
             app = bin_dir / f"{app_spec.name}{config.postfix}{suffix}"
             if not app.is_file():
                 raise SmokeError(f"{config.cmake}: installed application not found: {app}")
@@ -258,7 +267,7 @@ def rebuild_against_relocated_install(
             d for d in (workspace / "build").rglob(name) if d.is_dir() and any(d.rglob("CMakeCache.txt"))
         ]:
             shutil.rmtree(build_dir)
-        for workflow in workflow_presets(ctx, project.plain):
+        for workflow in workflow_presets(ctx, project.plain or project.debug_release):
             run(["cmake", "--workflow", workflow], cwd=workspace / name, env=env)
 
 
@@ -437,7 +446,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
     with group(f"prepare workspace {workspace}"):
         prepare_workspace(workspace)
     for project in PROJECTS:
-        for workflow in workflow_presets(ctx, project.plain):
+        for workflow in workflow_presets(ctx, project.plain or project.debug_release):
             with group(f"{project.name}: cmake --workflow {workflow}"):
                 run(["cmake", "--workflow", workflow], cwd=workspace / project.name, env=cmake_environment(workspace))
         if project.plain:

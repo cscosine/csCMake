@@ -174,6 +174,10 @@ It is not a package manager: it consumes what `find_package` finds (your package
 system install). A single executable that is never installed or consumed is fine with plain CMake. csCMake needs
 CMake 3.31 or newer.
 
+This site describes the latest release of csCMake; the documentation of each release is
+`csCMake-docs-<version>.zip` in its GitHub Release. What a project can rely on between releases:
+[Compatibility](user/compatibility.md).
+
 ```{toctree}
 :hidden:
 :caption: User guide
@@ -188,6 +192,7 @@ user/compile-profiles
 user/presets
 user/formatting
 user/troubleshooting
+user/compatibility
 ```
 
 ```{toctree}

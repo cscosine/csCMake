@@ -13,6 +13,7 @@ install folder):
 
 | Project | Role | What it covers |
 |---|---|---|
+| `myApp` | the example of the docs | the project of [Getting started](../user/getting-started.md) and of `README.md` (the page includes its files; `tests/smoke/test_readme_example.py` checks the README copy): a static library, an application, a ctest; Debug and Release only |
 | `csSmokeBase` | base package | `<Package>Sol` top project with the package in a subproject named like the package (namespace ≠ top project name); components in their own `project()`; header-only (INTERFACE) component; static component depending on another component of the same package; ctest unit test; `cs_target_check_installed_headers` with `cscmake_strict_warnings`; compile profile `csSmokeBase_checks` (default of the project): every standard library check in Debug and Paranoid (`cscmake_hardening_debug`), the cheap ones in Release and RelWithDebInfo (`cscmake_hardening_fast`), UBSan in Paranoid, clang-tidy (`.clang-tidy`) in Paranoid with Clang on Linux |
 | `csSmokeMidA` | package depending on the base | `Sol` layout; depends on `csSmokeBase` (`COMPONENTS text`) with `cs_find_package(... PUBLIC ...)`: propagated as `find_dependency` in its installed Config; default target `csSmokeMidA::cscmake_base_include` linked |
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); preset layout `sibling-short` (Base, MidA, Top: `sibling`) |
@@ -22,7 +23,7 @@ install folder):
 | `csSmokeShared` | shared libraries | two SHARED libraries (`sharedText` uses `sharedCore`, components `text` and `core`) and an application; Windows: `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`; the **installed** application runs from the install folder (install RPATH of `cs_add_library` / `cs_add_executable` on Linux and macOS, DLLs in `bin/` on Windows); Visual Studio: the debugger `PATH` of the application in its `.vcxproj` (its `CSCMAKE_RUNTIME_DIRS` folder, then the DLL folder, every configuration) |
 | `csSmokePlainConsumer` | consumer without csCMake | plain CMake (no `include(csCMake)`): `find_package(csSmokeShared COMPONENTS text)` and `csSmokeShared::sharedText`; on Windows copies `$<TARGET_RUNTIME_DLLS>` next to its executable; its ctest runs it from the build folder; Debug and Release only (the configurations plain CMake knows) |
 
-All csCMake projects use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
+All csCMake projects but `myApp` use the four build configurations of the csv1 presets: Debug, Release, RelWithDebInfo (mapped to
 `RelWithDebInfo,Release`) and the custom Paranoid (based on `Debug,Release`), with postfixes `d`, none, `rd`, `dp`.
 
 ### Package dependencies
