@@ -37,6 +37,7 @@ PACKAGE_CONTENT = [
     "modules",
     "templates",
     "presets/csCMakeProjectSetup.json",
+    "presets/csCMakeProjectSetup-common.json",
     "presets/common",
     "presets/csv1",
     "presets/layout",

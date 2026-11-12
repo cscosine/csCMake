@@ -5,7 +5,6 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
 
 ## 1.0
 
-- [ ] Release `v1.0.0-rc1` once CI is green on every variant.
 - [ ] Validate the API on real projects: they use the rc1 release package (unpacked in the workspace, the sibling
   layout); a change of the API they need is a new release candidate.
 - [ ] Delete the tags `v0.1.0` to `v0.4.0` (local and GitHub) and their GitHub Releases, once nothing uses them.

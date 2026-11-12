@@ -13,6 +13,7 @@
             "displayName": "Configure macos macos15 arm64 generic appleclang-default ninjamulticonfig",
             "description": "Configure preset for macos macos15 arm64 generic appleclang-default ninjamulticonfig",
             "inherits": [
+                "cscmake-project-setup-macos",
                 "cscmake-project-setup",
                 "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-ninjamulticonfig",
                 "cs-host-macos",

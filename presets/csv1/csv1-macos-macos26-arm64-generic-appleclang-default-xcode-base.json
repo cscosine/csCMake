@@ -13,6 +13,7 @@
             "displayName": "Configure macos macos26 arm64 generic appleclang-default xcode",
             "description": "Configure preset for macos macos26 arm64 generic appleclang-default xcode",
             "inherits": [
+                "cscmake-project-setup-macos",
                 "cscmake-project-setup",
                 "cscmake-project-setup-macos-macos26-arm64-generic-appleclang-default-xcode",
                 "cs-host-macos",

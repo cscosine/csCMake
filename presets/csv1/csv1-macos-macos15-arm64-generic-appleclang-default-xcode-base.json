@@ -13,6 +13,7 @@
             "displayName": "Configure macos macos15 arm64 generic appleclang-default xcode",
             "description": "Configure preset for macos macos15 arm64 generic appleclang-default xcode",
             "inherits": [
+                "cscmake-project-setup-macos",
                 "cscmake-project-setup",
                 "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-xcode",
                 "cs-host-macos",

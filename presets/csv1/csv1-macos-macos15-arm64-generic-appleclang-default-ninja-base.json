@@ -17,6 +17,7 @@
             "displayName": "Configure macos macos15 arm64 generic appleclang-default ninja Base",
             "description": "Configure preset for macos macos15 arm64 generic appleclang-default ninja Base",
             "inherits": [
+                "cscmake-project-setup-macos",
                 "cscmake-project-setup",
                 "cscmake-project-setup-macos-macos15-arm64-generic-appleclang-default-ninja",
                 "cs-host-macos",

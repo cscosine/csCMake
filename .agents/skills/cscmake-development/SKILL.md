@@ -55,7 +55,7 @@ compile-option defaults, and CMake presets. It has two parts:
   docs rule in `CLAUDE.md`.
 - **Python:** strict mypy, ruff line-length 120, double quotes, docstrings on public functions.
 - **Commit style:** short imperative summary, e.g. `add presets for arm64`.
-- **Presets:** checked-in `presets/csv1/*.json` and `presets/csCMakeProjectSetup.json` and `presets/layout/*.json`
+- **Presets:** checked-in `presets/csv1/*.json` and `presets/csCMakeProjectSetup*.json` and `presets/layout/*.json`
   are generated (templates in `presets/template/`). Never edit by hand.
   Regenerate with `cscmake-generate-presets`.
 

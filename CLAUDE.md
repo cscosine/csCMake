@@ -35,7 +35,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 
 ## Rules
 
-- `presets/csv1/*.json`, `presets/csCMakeProjectSetup.json` and `presets/layout/*.json` are generated — never edit by
+- `presets/csv1/*.json`, `presets/csCMakeProjectSetup*.json` and `presets/layout/*.json` are generated — never edit by
   hand (the layouts are the `LAYOUTS` table of `src/cscmake/presets/generate.py`). Change the templates or the registry, then
   regenerate and commit the output together. The `generate-csv1-presets` pre-commit hook enforces this.
 - Registry enum values and short forms end up in preset names/ids used by downstream projects:

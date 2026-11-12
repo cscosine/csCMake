@@ -13,6 +13,7 @@
             "displayName": "Configure windows v10 x64 generic msvc-msvc_2022_17 ninjamulticonfig",
             "description": "Configure preset for windows v10 x64 generic msvc-msvc_2022_17 ninjamulticonfig",
             "inherits": [
+                "cscmake-project-setup-windows",
                 "cscmake-project-setup",
                 "cscmake-project-setup-windows-v10-x64-generic-msvc-msvc_2022_17-ninjamulticonfig",
                 "cs-host-windows",

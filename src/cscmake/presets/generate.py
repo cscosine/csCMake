@@ -2,9 +2,12 @@
 
 Outputs:
 - ``presets/csv1/``: the per-variant presets and ``cs-presets-all.json``;
-- ``presets/csCMakeProjectSetup.json``: ``cscmake-common-project-setup`` (build and install folders, search paths from
-  the environment values of a layout) and one ``cscmake-project-setup-<variant>`` preset per variant (inherited by the
-  ``-base`` presets of the matrix);
+- ``presets/csCMakeProjectSetup-common.json``: ``cscmake-common-project-setup`` (build and install folders, search
+  paths from the environment values of a layout) and one ``cscmake-project-setup-<variant>`` preset per variant
+  (inherited by the ``-base`` presets of the matrix);
+- ``presets/csCMakeProjectSetup.json``: includes ``csCMakeProjectSetup-common.json`` and defines one empty
+  ``cscmake-project-setup-<os>`` preset per operating system (inherited by the ``-base`` presets of the matrix,
+  before ``cscmake-project-setup``); a project setting values per OS includes the common file and defines them;
 - ``presets/layout/<layout>.json``: ``cscmake-project-setup`` for each layout (where csCMake and the workspace are, long
   or short build folder names), included by the ``csCMakeProjectSetup.json`` of a project.
 
@@ -29,6 +32,7 @@ from typing import Any
 from cscmake.presets.registry import (
     CS_SCHEMA_VERSION,
     CS_SCHEMA_VERSION_SHORT,
+    OS,
     Architecture,
     ContextOsArchitectureCompilerGenerator,
     GeneratorType,
@@ -60,6 +64,7 @@ VARIANTS_JSON = "variants.json"
 SETUP_OUTPUT_DIR = REPO_ROOT / "presets"
 CS_PRESETS_ALL_JSON = "cs-presets-all.json"
 PROJECT_SETUP_PRESET = "csCMakeProjectSetup.json"
+PROJECT_SETUP_COMMON_PRESET = "csCMakeProjectSetup-common.json"
 LAYOUT_TEMPLATE = "layout.json.template"
 _LONG = "$env{CSCMAKE_CSV1_SUB_DIR}"
 _SHORT = "$env{CSCMAKE_CSV1_SUB_DIR_SHORT}"
@@ -83,7 +88,11 @@ LAYOUTS = {
     ),
     "env-short": ("env, short build folder names", "$penv{CSCMAKE_WORKSPACE_ROOT}", "$penv{CSCMAKE_ROOT}", _SHORT),
 }
-PROJECT_SETUP_PRESETS = (PROJECT_SETUP_PRESET, *(f"layout/{name}.json" for name in LAYOUTS))
+PROJECT_SETUP_PRESETS = (
+    PROJECT_SETUP_PRESET,
+    PROJECT_SETUP_COMMON_PRESET,
+    *(f"layout/{name}.json" for name in LAYOUTS),
+)
 PROJECT_SETUP_PRESET_PREFIX = "cscmake-project-setup-"
 
 _TEMPLATE_PREFIX = {
@@ -178,6 +187,20 @@ def project_setup_preset_name(ctx: ContextOsArchitectureCompilerGenerator) -> st
     return PROJECT_SETUP_PRESET_PREFIX + create_context_os_architecture_compiler_generator_string_without_schema(ctx)
 
 
+def project_setup_os_preset_name(os: OS) -> str:
+    """Return the name of the project setup preset of the operating system ``os``, inherited by the ``-base`` presets
+    of its variants."""
+    return PROJECT_SETUP_PRESET_PREFIX + os.value
+
+
+def _preset_list(names: list[str]) -> str:
+    """The hidden configure presets ``names``, with nothing else, as the lines of a ``configurePresets`` array (only
+    inherited: not in the list of the presets of the host)."""
+    return ",\n".join(
+        f'        {{\n            "name": "{name}",\n            "hidden": true\n        }}' for name in names
+    )
+
+
 def _project_setup_sort_key(ctx: ContextOsArchitectureCompilerGenerator) -> tuple[str, int, str, str, str]:
     osa = ctx.context_os_architecture
     ccg = ctx.context_compiler_generator
@@ -191,16 +214,19 @@ def _project_setup_sort_key(ctx: ContextOsArchitectureCompilerGenerator) -> tupl
 
 
 def generate_project_setup_presets(template_dir: Path = TEMPLATE_DIR, output_dir: Path = SETUP_OUTPUT_DIR) -> list[str]:
-    """Render ``csCMakeProjectSetup.json`` and the ``layout/<layout>.json`` files into ``output_dir``; return their
-    names (relative to ``output_dir``)."""
+    """Render ``csCMakeProjectSetup.json``, ``csCMakeProjectSetup-common.json`` and the ``layout/<layout>.json`` files
+    into ``output_dir``; return their names (relative to ``output_dir``)."""
     contexts = sorted(get_supported_context_os_architecture_list(), key=_project_setup_sort_key)
-    presets = ",\n".join(
-        f'        {{\n            "name": "{project_setup_preset_name(ctx)}"\n        }}' for ctx in contexts
-    )
+    os_list = sorted({ctx.context_os_architecture.os for ctx in contexts}, key=lambda os: os.value)
     rendered = {
         PROJECT_SETUP_PRESET: render_template(
-            load_template(template_dir / f"{PROJECT_SETUP_PRESET}.template"), {"csProjectSetupVariantPresets": presets}
-        )
+            load_template(template_dir / f"{PROJECT_SETUP_PRESET}.template"),
+            {"csProjectSetupOsPresets": _preset_list([project_setup_os_preset_name(os) for os in os_list])},
+        ),
+        PROJECT_SETUP_COMMON_PRESET: render_template(
+            load_template(template_dir / f"{PROJECT_SETUP_COMMON_PRESET}.template"),
+            {"csProjectSetupVariantPresets": _preset_list([project_setup_preset_name(ctx) for ctx in contexts])},
+        ),
     }
     layout_template = load_template(template_dir / LAYOUT_TEMPLATE)
     for name, (description, workspace_root, cscmake_root, build_sub_dir) in LAYOUTS.items():
@@ -290,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
         "--setup-output-dir",
         type=Path,
         default=SETUP_OUTPUT_DIR,
-        help="output folder of csCMakeProjectSetup.json and layout/ (default: presets)",
+        help="output folder of csCMakeProjectSetup*.json and layout/ (default: presets)",
     )
     parser.add_argument("--check", action="store_true", help="do not write; exit 1 if the output folder is stale")
     parser.add_argument("-q", "--quiet", action="store_true", help="do not list generated files")
