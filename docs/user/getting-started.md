@@ -81,7 +81,9 @@ It includes every preset of csCMake: one per supported platform, compiler and ge
 ### `csCMakeProjectSetup.json`
 
 It chooses the layout: here the workspace is the parent folder of the project, csCMake one of its folders. The csCMake
-presets include it by this name, from the folder of `CMakePresets.json`.
+presets include it by this name, from the folder of `CMakePresets.json`. It can also add values of the project, for
+every variant or per operating system, or choose other folders: see
+[Choosing the project setup](presets.md#choosing-the-project-setup).
 
 ```{literalinclude} ../../tests/smoke/myApp/csCMakeProjectSetup.json
 :language: json

@@ -13,6 +13,7 @@
             "displayName": "Configure windows v10 x64 generic msvcclang-msvc_2026_18 ninjamulticonfig",
             "description": "Configure preset for windows v10 x64 generic msvcclang-msvc_2026_18 ninjamulticonfig",
             "inherits": [
+                "cscmake-project-setup-windows",
                 "cscmake-project-setup",
                 "cscmake-project-setup-windows-v10-x64-generic-msvcclang-msvc_2026_18-ninjamulticonfig",
                 "cs-host-windows",

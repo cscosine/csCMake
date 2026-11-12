@@ -10,7 +10,9 @@ presets/
   common/                     hand-written building blocks: generators, compilers, build types, hosts, test settings
   template/                   templates of the generated files (@{var} placeholders)
   csv1/                       generated: one set of files per variant, and cs-presets-all.json
-  csCMakeProjectSetup.json    generated: cscmake-common-project-setup, one cscmake-project-setup-<variant> per variant
+  csCMakeProjectSetup.json    generated: includes csCMakeProjectSetup-common.json, one empty cscmake-project-setup-<os> per OS
+  csCMakeProjectSetup-common.json
+                              generated: cscmake-common-project-setup, one cscmake-project-setup-<variant> per variant
   layout/<layout>.json        generated: cscmake-project-setup of each layout
 ```
 
@@ -47,6 +49,7 @@ substitutions of the variant (`@{host}`, `@{osVersion}`, `@{compiler}`, `@{gener
 | `cs-presets-all.json.template` | `cs-presets-all.json`: includes every `-ALL` file |
 | (no template) | `variants.json`: the variants as data (id, every field and its short form, the generator type, the build configurations), for tools that follow the registry without importing csCMake (e.g. a CI generator); not a preset file, nothing includes it |
 | `csCMakeProjectSetup.json.template` | `csCMakeProjectSetup.json` |
+| `csCMakeProjectSetup-common.json.template` | `csCMakeProjectSetup-common.json` |
 | `layout.json.template` | `layout/<layout>.json`, one per entry of the `LAYOUTS` table of `generate.py` |
 
 ```bash
@@ -59,10 +62,12 @@ are removed.
 
 ## Project setup and layouts
 
-The configure preset of a variant inherits `cscmake-project-setup`, the preset defined by the layout the project
-includes in its own `csCMakeProjectSetup.json`, and `cscmake-project-setup-<variant>` (in the generated
-`csCMakeProjectSetup.json`: the folder names of the variant), with the host, generator and compiler building blocks of
-`presets/common/`. A layout only sets three environment values:
+The configure preset of a variant inherits, in this order, `cscmake-project-setup-<os>` (empty in the generated
+`csCMakeProjectSetup.json`, or defined by a project that sets values per operating system), `cscmake-project-setup`,
+the preset defined by the layout the project includes in its own `csCMakeProjectSetup.json`, and
+`cscmake-project-setup-<variant>` (in the generated `csCMakeProjectSetup-common.json`), with the host, generator and
+compiler building blocks of `presets/common/`. The earlier preset wins: the OS preset can replace any value of the
+setup. A layout only sets three environment values:
 
 | Value | Meaning |
 |---|---|
@@ -73,7 +78,8 @@ includes in its own `csCMakeProjectSetup.json`, and `cscmake-project-setup-<vari
 `cscmake-common-project-setup` turns them into the build and install folders, `CMAKE_PREFIX_PATH` (the `install/` and
 `libs/` folders of the variant in the workspace) and `CMAKE_MODULE_PATH`, and passes the
 `CSCMAKE_{PREFIX,MODULE}_PATH_{HEAD,TAIL}` environment variables on to `cs_initialize_project`. A preset can only
-inherit presets of its own file or of the files it includes: the layouts include `csCMakeProjectSetup.json` for this.
+inherit presets of its own file or of the files it includes: the layouts include `csCMakeProjectSetup.json` for this
+(which includes `csCMakeProjectSetup-common.json`).
 
 ## Adding a variant
 

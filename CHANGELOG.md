@@ -10,6 +10,19 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
+Since `v1.0.0-rc1`:
+
+- **Presets**: the configure preset of a variant inherits `cscmake-project-setup-<os>` (`linux`, `windows`,
+  `macos`) before `cscmake-project-setup`. `presets/csCMakeProjectSetup.json` defines them empty and includes the
+  new `presets/csCMakeProjectSetup-common.json` (`cscmake-common-project-setup` and the presets of the variants). A
+  project with a layout, or with its own setup on `csCMakeProjectSetup.json`: nothing to change. A project that sets
+  values per operating system includes `csCMakeProjectSetup-common.json` instead and defines the three OS presets
+  ([Presets](docs/user/presets.md#choosing-the-project-setup)).
+- **Presets**: the generated `cscmake-project-setup-<os>` and `cscmake-project-setup-<variant>` presets are hidden: the
+  list of the presets of a project (`cmake --list-presets`, IDEs) shows only the `csv1-*` presets of the host.
+
+Release candidate 1:
+
 - **Projects**: `cs_initialize_project` after `project(<name> VERSION ...)`: namespace, C++ standard, build
   configurations (Debug, Release, RelWithDebInfo, mapped and custom ones with their postfixes); the project is
   finalized at the end of the same `CMakeLists.txt`.

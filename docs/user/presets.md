@@ -73,9 +73,146 @@ build folder names are. A project includes one layout in its `csCMakeProjectSetu
 - `env`: the workspace and csCMake anywhere, e.g. set by a CI job or a shell profile.
 - The short build folder names keep Visual Studio builds clear of the 260-character path limit of Windows.
 
-A project can also define its own setup: include `presets/csCMakeProjectSetup.json`, define a configure preset
-`cscmake-project-setup` inheriting `cscmake-common-project-setup`, and set the environment values
-`CSCMAKE_WORKSPACE_ROOT`, `CSCMAKE_ROOT` and `CSCMAKE_BUILD_SUB_DIR` (as the files of `presets/layout/` do).
+## Choosing the project setup
+
+`csCMakeProjectSetup.json`, next to `CMakePresets.json`, is the project setup: the csCMake presets include it by this
+name and inherit the presets it defines. Choose the first level that covers what the project needs:
+
+| Level | When | The setup of the project |
+|---|---|---|
+| 1. A layout | the usual case: say where the workspace and csCMake are | includes a layout |
+| 2. Values for every variant | cache variables or environment values of the project, the same on every platform | includes `presets/csCMakeProjectSetup.json`, defines `cscmake-project-setup` |
+| 3. Values per operating system | values that differ between Linux, Windows and macOS (e.g. the paths of a toolkit) | includes `presets/csCMakeProjectSetup-common.json`, defines `cscmake-project-setup` and the three OS presets |
+| 4. Folders and search paths of the project | the build and install folders, `CMAKE_PREFIX_PATH`, elsewhere than in a csCMake workspace | as level 2 or 3, `cscmake-project-setup` without `cscmake-common-project-setup` |
+| 5. No csCMake presets | the project chooses the generator, compiler and folders itself | no setup ([Without the presets](#without-the-presets)) |
+
+Whatever the level, csCMake defines the presets of the variants (`cscmake-project-setup-<variant>`) and
+`presets/csCMakeProjectSetup.json` the empty OS presets: a project defining one of them again next to them gets a
+duplicate preset error. A preset can only inherit presets of its own file or of the files it includes, hence the
+includes of each level.
+
+### 1. A layout
+
+The setup includes one of the layouts of the table above, and nothing else:
+
+```json
+{
+    "version": 10,
+    "include": ["${sourceParentDir}/csCMake/presets/layout/sibling.json"]
+}
+```
+
+### 2. Values for every variant
+
+The setup defines `cscmake-project-setup` itself, as a layout does: it inherits `cscmake-common-project-setup` (the
+folders and search paths of the workspace), sets the environment values `CSCMAKE_WORKSPACE_ROOT`, `CSCMAKE_ROOT` and
+`CSCMAKE_BUILD_SUB_DIR` (here those of the `sibling` layout; the files of `presets/layout/` have the others), and adds
+the values of the project. They apply to every variant.
+
+```json
+{
+    "version": 10,
+    "include": ["${sourceParentDir}/csCMake/presets/csCMakeProjectSetup.json"],
+    "configurePresets": [
+        {
+            "name": "cscmake-project-setup",
+            "hidden": true,
+            "inherits": "cscmake-common-project-setup",
+            "environment": {
+                "CSCMAKE_WORKSPACE_ROOT": "${sourceParentDir}",
+                "CSCMAKE_ROOT": "$env{CSCMAKE_WORKSPACE_ROOT}/csCMake",
+                "CSCMAKE_BUILD_SUB_DIR": "$env{CSCMAKE_CSV1_SUB_DIR}"
+            },
+            "cacheVariables": {
+                "BUILD_TESTS": "OFF",
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        }
+    ]
+}
+```
+
+### 3. Values per operating system
+
+The configure preset of a variant also inherits the preset of its operating system, `cscmake-project-setup-linux`,
+`cscmake-project-setup-windows` or `cscmake-project-setup-macos`, before `cscmake-project-setup`: its values win over
+those of the setup, including `CMAKE_PREFIX_PATH` and the folders of `cscmake-common-project-setup`.
+`presets/csCMakeProjectSetup.json` defines them empty. A project that sets values per operating system includes
+`presets/csCMakeProjectSetup-common.json` instead, which has everything else, and defines the three of them, the empty
+ones too:
+
+```json
+{
+    "version": 10,
+    "include": ["${sourceParentDir}/csCMake/presets/csCMakeProjectSetup-common.json"],
+    "configurePresets": [
+        {
+            "name": "cscmake-project-setup",
+            "hidden": true,
+            "inherits": "cscmake-common-project-setup",
+            "environment": {
+                "CSCMAKE_WORKSPACE_ROOT": "${sourceParentDir}",
+                "CSCMAKE_ROOT": "$env{CSCMAKE_WORKSPACE_ROOT}/csCMake",
+                "CSCMAKE_BUILD_SUB_DIR": "$env{CSCMAKE_CSV1_SUB_DIR}"
+            }
+        },
+        {
+            "name": "cscmake-project-setup-linux",
+            "hidden": true,
+            "cacheVariables": {"TOOLKIT_ROOT": "/opt/toolkit"}
+        },
+        {
+            "name": "cscmake-project-setup-windows",
+            "hidden": true,
+            "cacheVariables": {"TOOLKIT_ROOT": "C:/Program Files/Toolkit"}
+        },
+        {
+            "name": "cscmake-project-setup-macos",
+            "hidden": true
+        }
+    ]
+}
+```
+
+A value of the setup that only one operating system replaces goes in `cscmake-project-setup` and in that OS preset.
+
+### 4. Folders and search paths of the project
+
+The presets of the variants still choose the host, generator and compiler, but `cscmake-project-setup` does not inherit
+`cscmake-common-project-setup`: it sets the build and install folders and the search paths itself. The variant presets
+give their names in the environment: `CSCMAKE_CSV1_SUB_DIR` (the variant id), `CSCMAKE_CSV1_SUB_DIR_SHORT` (its short
+form) and `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` (the configuration of a single-config generator, empty otherwise: keep
+it in `binaryDir`, or the configurations share one build folder). `CMAKE_MODULE_PATH` must contain csCMake for
+`include(csCMake)`.
+
+```json
+{
+    "version": 10,
+    "include": ["${sourceParentDir}/csCMake/presets/csCMakeProjectSetup.json"],
+    "configurePresets": [
+        {
+            "name": "cscmake-project-setup",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/build/$env{CSCMAKE_CSV1_SUB_DIR}/$env{CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR}",
+            "installDir": "${sourceDir}/out/install/$env{CSCMAKE_CSV1_SUB_DIR}",
+            "cacheVariables": {
+                "CMAKE_MODULE_PATH": "${sourceParentDir}/csCMake",
+                "CMAKE_PREFIX_PATH": "/opt/dependencies/$env{CSCMAKE_CSV1_SUB_DIR}"
+            }
+        }
+    ]
+}
+```
+
+The [folders](#folders) and [search paths](#search-paths) below are then those of the project: the other projects
+of a csCMake workspace find its packages only if their search paths contain its install folder, and the
+`CSCMAKE_{PREFIX,MODULE}_PATH_{HEAD,TAIL}` environment variables reach `cs_initialize_project` only if the setup passes
+them as cache variables. With values per
+operating system, include `presets/csCMakeProjectSetup-common.json` and define the OS presets as in level 3.
+
+### 5. No csCMake presets
+
+See [Without the presets](#without-the-presets).
 
 ## Folders
 

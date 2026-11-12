@@ -10,7 +10,7 @@ version.
 
 | Asset | Content |
 |---|---|
-| `csCMake-<version>.tar.gz`, `csCMake-<version>.zip` | a `csCMake/` folder with what projects use: `csCMake.cmake`, `modules/`, `templates/`, the presets (`presets/csCMakeProjectSetup.json`, `common/`, `csv1/`, `layout/`), `.gersemirc` and `gersemi/` (the formatter configuration and the `cs_*` signatures), `README.md`, `CHANGELOG.md`, `LICENSE` |
+| `csCMake-<version>.tar.gz`, `csCMake-<version>.zip` | a `csCMake/` folder with what projects use: `csCMake.cmake`, `modules/`, `templates/`, the presets (`presets/csCMakeProjectSetup.json`, `csCMakeProjectSetup-common.json`, `common/`, `csv1/`, `layout/`), `.gersemirc` and `gersemi/` (the formatter configuration and the `cs_*` signatures), `README.md`, `CHANGELOG.md`, `LICENSE` |
 | `csCMake-docs-<version>.zip` | the documentation of the version (HTML), in a `csCMake-docs-<version>/` folder |
 | `SHA256SUMS` | the checksums of the three archives |
 

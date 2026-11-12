@@ -13,6 +13,7 @@
             "displayName": "Configure linux ubuntu26.04 x64 generic clang-default ninjamulticonfig",
             "description": "Configure preset for linux ubuntu26.04 x64 generic clang-default ninjamulticonfig",
             "inherits": [
+                "cscmake-project-setup-linux",
                 "cscmake-project-setup",
                 "cscmake-project-setup-linux-ubuntu26.04-x64-generic-clang-default-ninjamulticonfig",
                 "cs-host-linux",
