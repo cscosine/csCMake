@@ -2,19 +2,14 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
 from tests.cmake.cmake_project import install
 
-# the generated sources compile: a C++ compiler on PATH (not set up on Windows for these tests; covered by the smoke
-# tests)
-pytestmark = [
-    pytest.mark.requires("cmake", "ninja"),
-    pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment"),
-]
+# the generated sources compile: a C++ compiler on PATH (on Windows: the Visual Studio developer environment)
+pytestmark = pytest.mark.requires("cmake", "ninja")
 
 BODY = """enable_language(CXX)
 cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)

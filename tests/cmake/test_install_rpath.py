@@ -9,13 +9,12 @@ import pytest
 
 from tests.cmake.cmake_project import configure
 
-# the targets compile: a C++ compiler on PATH (not set up on Windows for these tests; covered by the smoke tests)
-pytestmark = [
-    pytest.mark.requires("cmake", "ninja"),
-    pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment"),
-]
+# the targets compile: a C++ compiler on PATH (on Windows: the Visual Studio developer environment)
+pytestmark = pytest.mark.requires("cmake", "ninja")
 
+# the install RPATH set by csCMake: of a library, of an executable (none on Windows)
 ORIGIN = "@loader_path" if sys.platform == "darwin" else "$ORIGIN"
+LIB_RPATH, APP_RPATH = ("", "") if sys.platform == "win32" else (ORIGIN, f"{ORIGIN}/../lib")
 FILES = {"lib.cpp": "int lib() { return 0; }\n", "main.cpp": "int main() { return 0; }\n"}
 TARGETS = """
 {before_targets}
@@ -48,9 +47,9 @@ def _configure(  # type: ignore[no-untyped-def]
 def test_default(tmp_path: Path) -> None:
     result = _configure(tmp_path)
 
-    assert result.reports["app"] == f"{ORIGIN}/../lib"
-    assert result.reports["shared_lib"] == ORIGIN
-    assert result.reports["module_lib"] == ORIGIN
+    assert result.reports["app"] == APP_RPATH
+    assert result.reports["shared_lib"] == LIB_RPATH
+    assert result.reports["module_lib"] == LIB_RPATH
     assert result.reports["static_lib"] == ""
 
 
@@ -71,7 +70,7 @@ def test_the_own_value_of_a_target_wins(tmp_path: Path) -> None:
     result = _configure(tmp_path, after_targets='set_target_properties(app PROPERTIES INSTALL_RPATH "/opt/x")\n')
 
     assert result.reports["app"] == "/opt/x"
-    assert result.reports["shared_lib"] == ORIGIN
+    assert result.reports["shared_lib"] == LIB_RPATH
 
 
 def test_the_project_cmake_install_rpath_wins(tmp_path: Path) -> None:

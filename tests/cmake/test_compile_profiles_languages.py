@@ -10,11 +10,11 @@ import pytest
 
 from tests.cmake.cmake_project import configure
 
-# compile_commands.json of a C and a C++ source (Ninja; not set up on Windows for these tests)
-pytestmark = [
-    pytest.mark.requires("cmake", "ninja"),
-    pytest.mark.skipif(sys.platform == "win32", reason="needs a C and C++ compiler environment"),
-]
+# compile_commands.json of a C and a C++ source (Ninja; a C and C++ compiler on PATH, on Windows: the Visual Studio
+# developer environment)
+pytestmark = pytest.mark.requires("cmake", "ninja")
+# the shipped warnings: one for C and C++, one for C++ only
+WARNING_C_CXX, WARNING_CXX = ("/W4", "/permissive-") if sys.platform == "win32" else ("-Wall", "-Wold-style-cast")
 
 BODY = """enable_language(C)
 enable_language(CXX)
@@ -43,6 +43,6 @@ def test_rules_apply_to_their_languages(tmp_path: Path) -> None:
     assert "-DCSTEST_BOTH_OPTION" in commands["lib.cpp"]
     assert "CSTEST_CXX_ONLY" not in commands["lib.c"]
     assert "-DCSTEST_CXX_ONLY" in commands["lib.cpp"]
-    assert "-Wall" in commands["lib.c"]
-    assert "-Wold-style-cast" not in commands["lib.c"]
-    assert "-Wold-style-cast" in commands["lib.cpp"]
+    assert WARNING_C_CXX in commands["lib.c"]
+    assert WARNING_CXX not in commands["lib.c"]
+    assert WARNING_CXX in commands["lib.cpp"]

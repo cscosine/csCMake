@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -68,7 +67,6 @@ def test_a_nested_project_says_where_its_configurations_come_from(tmp_path: Path
     assert expected in _lines(result.output)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 def test_compile_profiles_say_which_rules_apply(tmp_path: Path) -> None:
     """Each rule when defined (DEBUG), the profiles a target asks for (VERBOSE), each rule applied to it (DEBUG), with
     the rules for another platform marked."""
@@ -97,7 +95,6 @@ def test_compile_profiles_say_which_rules_apply(tmp_path: Path) -> None:
     ), lines
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 def test_the_installed_headers_check_says_how_many_headers(tmp_path: Path) -> None:
     body = (
         "enable_language(CXX)\n"

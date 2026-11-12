@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import sys
+import re
 from pathlib import Path
 
 import pytest
@@ -59,7 +59,6 @@ def test_several_configurations_export_one_folder_per_configuration(tmp_path: Pa
     assert (prefix / "include" / "Debug" / "pkg" / "lib.hpp").is_file()
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 @pytest.mark.parametrize("mapped", [False, True], ids=["not-mapped", "mapped"])
 def test_a_consumer_configuration_the_package_does_not_have(tmp_path: Path, mapped: bool) -> None:
     """A MinSizeRel consumer of a package installed in Debug only: generates (no missing folder); with the configuration
@@ -73,4 +72,4 @@ def test_a_consumer_configuration_the_package_does_not_have(tmp_path: Path, mapp
 
     assert result.returncode == 0, result.output
     build_rules = (tmp_path / "consumer" / "build" / "build.ninja").read_text(encoding="utf-8")
-    assert ("install/include/Debug" in build_rules) == mapped
+    assert bool(re.search(r"install[/\\]include[/\\]Debug", build_rules)) == mapped
