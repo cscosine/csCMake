@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -89,7 +88,6 @@ cs_install_target(i_static COMPONENT stat DEFAULT)
 """
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 def test_links_through_aliases_give_the_component_dependencies(tmp_path: Path) -> None:
     """The aliases are resolved by the dependency walk of the finalization and by CMake's export: late depends on
     base, base finds inner's component stat, the private link is exported as $<LINK_ONLY:inner::i_static>."""

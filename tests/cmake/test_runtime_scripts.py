@@ -17,7 +17,6 @@ pytestmark = pytest.mark.requires("cmake", "ninja")
 INIT = "cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)\n"
 SCRIPTS_ON = ["-DCSCMAKE_RUNTIME_SCRIPTS=ON"]
 SOURCES = {"main.cpp": "int main() { return 0; }\n", "lib.cpp": "int lib() { return 0; }\n"}
-needs_compiler = pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 
 
 def _text(path: Path) -> list[str]:
@@ -42,7 +41,6 @@ def test_written_on_windows_or_when_asked(tmp_path: Path, args: list[str], writt
         assert (build / name).is_file() == written, name
 
 
-@needs_compiler
 def test_path_and_variables_of_every_program_and_shared_library(tmp_path: Path) -> None:
     """PATH: the folders of every executable and shared library once (a "," kept, a per-configuration folder
     evaluated), before %PATH%; the variables once each, written as given (";" kept; "'" doubled for PowerShell).
@@ -75,7 +73,6 @@ cs_target_runtime_environment(headers PATH /opt/headers SET HEADERS=1)
     ]
 
 
-@needs_compiler
 def test_no_path_line_without_folders(tmp_path: Path) -> None:
     body = "enable_language(CXX)\n" + INIT + "cs_add_executable(app main.cpp)\n"
     result = configure(tmp_path, body, SOURCES, args=SCRIPTS_ON)
@@ -84,7 +81,6 @@ def test_no_path_line_without_folders(tmp_path: Path) -> None:
     assert len(_text(tmp_path / "build" / "cs-env" / "Debug.bat")) == 1
 
 
-@needs_compiler
 def test_a_variable_with_two_values_fails(tmp_path: Path) -> None:
     body = (
         "enable_language(CXX)\n"
@@ -103,7 +99,6 @@ cs_target_runtime_environment(lib SET MODE=b)
     assert "app sets MODE=a, lib sets MODE=b; one value per variable for the whole build" in output
 
 
-@needs_compiler
 def test_one_pair_of_scripts_for_the_build_in_its_top_folder(tmp_path: Path) -> None:
     """A top folder without csCMake project, two csCMake projects in subfolders: their targets are in the scripts of
     the top build folder (next to the .sln with Visual Studio)."""

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -14,7 +13,6 @@ pytestmark = pytest.mark.requires("cmake", "ninja")
 INIT = "cs_initialize_project(NAMESPACE cstest CXX_STANDARD 17 DEFAULT_CONFIG Debug)\n"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="needs a C++ compiler environment")
 def test_the_targets_are_finalized_at_the_end_of_the_project(tmp_path: Path) -> None:
     """A compile profile defined and used after the target is created still applies: the profiles are applied at the
     end, and not before."""

@@ -9,10 +9,11 @@ import pytest
 
 from tests.cmake.cmake_project import configure
 
-# finds OpenMP for a C++ compiler on PATH (not set up on Windows for these tests)
+# finds OpenMP for a C++ compiler on PATH (on Windows: the Visual Studio developer environment); Apple Clang has no
+# OpenMP of its own
 pytestmark = [
     pytest.mark.requires("cmake", "ninja"),
-    pytest.mark.skipif(sys.platform != "linux", reason="needs a C++ compiler with OpenMP"),
+    pytest.mark.skipif(sys.platform == "darwin", reason="Apple Clang has no OpenMP"),
 ]
 
 BODY = """enable_language(CXX)
