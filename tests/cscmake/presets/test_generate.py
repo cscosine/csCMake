@@ -233,6 +233,19 @@ def test_common_setup_preset_passes_the_path_variables_from_the_environment() ->
     assert "PREFIX_PATH" not in cache["CMAKE_PREFIX_PATH"]  # only the workspace folders, HEAD/TAIL are joined by CMake
 
 
+def test_common_setup_preset_puts_the_deployments_next_to_the_install_folder() -> None:
+    """CSCMAKE_DEPLOY_DIR: <workspace>/deploy/<variant>/<project>, as installDir is
+    <workspace>/install/<variant>/<project> (the same folder for every generator, outside CMAKE_PREFIX_PATH)."""
+    presets = json.loads((SETUP_OUTPUT_DIR / PROJECT_SETUP_COMMON_PRESET).read_text(encoding="utf-8"))[
+        "configurePresets"
+    ]
+    (common,) = [p for p in presets if p["name"] == "cscmake-common-project-setup"]
+
+    deploy_dir = common["cacheVariables"]["CSCMAKE_DEPLOY_DIR"]
+    assert deploy_dir == common["installDir"].replace("/install/", "/deploy/")
+    assert "/deploy/" not in common["cacheVariables"]["CMAKE_PREFIX_PATH"]
+
+
 def test_variants_manifest_lists_every_variant_of_the_registry() -> None:
     """presets/csv1/variants.json: the data contract for tools following the registry (e.g. a CI generator)."""
     manifest = json.loads((OUTPUT_DIR / VARIANTS_JSON).read_text(encoding="utf-8"))

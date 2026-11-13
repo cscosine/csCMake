@@ -154,7 +154,8 @@ ctest --preset test-csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticon
 (installing is a build of the `install` target: `install-*` are build presets).
 
 The build goes to `workspace/build/<variant>/myApp/`, the installation to `workspace/install/<variant>/myApp/`, where
-another project of the workspace finds it with `find_package(myApp)`. [Presets](presets.md) explains the names and
+another project of the workspace finds it with `find_package(myApp)`; the deployments to
+`workspace/deploy/<variant>/myApp/` ([below](#ship-the-application)). [Presets](presets.md) explains the names and
 the folders.
 
 ## Ship the application
@@ -165,9 +166,8 @@ the folders.
 cs_deployment(app TARGETS myApp)
 ```
 
-The install above also made `workspace/build/<variant>/myApp/deploy/app-Release/` (with a single-config generator:
-in the build folder of the configuration, `myApp/release/deploy/`), a folder that runs on another machine without the
-workspace:
+The install above also made `workspace/deploy/<variant>/myApp/app-Release/`, next to the installed package, a folder
+that runs on another machine without the workspace:
 
 ```text
 deploy/app-Release/
@@ -194,7 +194,7 @@ deploy/app-Release/
 Run it from anywhere, with an empty environment:
 
 ```bash
-env -i workspace/build/<variant>/myApp/deploy/app-Release/bin/myApp
+env -i workspace/deploy/<variant>/myApp/app-Release/bin/myApp
 ```
 
 Linux today. On Windows and macOS a deployment has the binaries of the project only, for now, with a warning.

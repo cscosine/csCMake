@@ -228,7 +228,7 @@ def run(cmd: Sequence[str | Path], cwd: Path, env: dict[str, str] | None = None)
 def prepare_workspace(workspace: Path) -> None:
     """(Re)create the workspace: csCMake and the smoke projects as siblings, no build/install leftovers."""
     workspace.mkdir(parents=True, exist_ok=True)
-    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install", RELOCATED_INSTALL):
+    for name in ("csCMake", *(project.name for project in PROJECTS), "build", "install", "deploy", RELOCATED_INSTALL):
         shutil.rmtree(workspace / name, ignore_errors=True)
     copy_cscmake(workspace / "csCMake")
     for project in PROJECTS:
@@ -523,13 +523,10 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
         check_deployments(workspace, variant)
 
 
-def deployment_folders(workspace: Path, deployment: Deployment, config: str) -> list[Path]:
-    """The folders of ``deployment`` in ``config``: ``deploy/<name>-<config>`` in the build folders of its project."""
-    return sorted(
-        path
-        for path in (workspace / "build").rglob(f"{deployment.name}-{config}")
-        if path.is_dir() and path.parent.name == "deploy" and deployment.project in path.parts
-    )
+def deployment_folder(workspace: Path, variant: str, deployment: Deployment, config: str) -> Path:
+    """The folder of ``deployment`` in ``config``: ``deploy/<variant>/<project>/<name>-<config>`` of the workspace
+    (CSCMAKE_DEPLOY_DIR of the project setup presets, next to ``install/<variant>/<project>``)."""
+    return workspace / "deploy" / variant / deployment.project / f"{deployment.name}-{config}"
 
 
 def check_deployment_files(folder: Path, deployment: Deployment, config: Config) -> None:
@@ -567,22 +564,24 @@ def run_deployed_app(folder: Path, deployment: Deployment, config: Config) -> No
 
 
 def check_deployments(workspace: Path, variant: str) -> None:
-    """Each deployment of DEPLOYMENTS: one folder per configuration it lists, none in the others; its files; on Linux,
-    its application runs from it with an empty environment. Nothing of a deployment in the install folders (a sample:
-    not installed)."""
+    """Each deployment of DEPLOYMENTS: in the deploy/ folder of the workspace, one folder per configuration it lists,
+    none in the others, none in the build folders; its files; on Linux, its application runs from it with an empty
+    environment. Nothing of a deployment in the install folders (a sample: not installed)."""
+    if in_build := sorted(path for path in (workspace / "build").rglob("deploy") if path.is_dir()):
+        raise SmokeError(f"deployments in the build folders, expected in {workspace / 'deploy'}: {in_build}")
     for deployment in DEPLOYMENTS:
         project = next(p for p in PROJECTS if p.name == deployment.project)
         for config in project.configs:
-            folders = deployment_folders(workspace, deployment, config.cmake)
+            folder = deployment_folder(workspace, variant, deployment, config.cmake)
             if config.cmake not in deployment.configs:
-                if folders:
-                    raise SmokeError(f"{deployment.name} is not made in {config.cmake}: {folders}")
+                if folder.exists():
+                    raise SmokeError(f"{deployment.name} is not made in {config.cmake}: {folder}")
                 continue
-            if len(folders) != 1:
-                raise SmokeError(f"{deployment.name} {config.cmake}: {len(folders)} folders {folders}, expected one")
-            check_deployment_files(folders[0], deployment, config)
+            if not folder.is_dir():
+                raise SmokeError(f"{deployment.name} {config.cmake}: {folder} not found")
+            check_deployment_files(folder, deployment, config)
             if sys.platform == "linux":
-                run_deployed_app(folders[0], deployment, config)
+                run_deployed_app(folder, deployment, config)
             else:
                 print(f"{deployment.name} {config.cmake}: not run (other packages shipped on Linux only)", flush=True)
         installed = workspace / RELOCATED_INSTALL / variant / deployment.project

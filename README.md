@@ -107,7 +107,7 @@ The package is installed in `workspace/install/<variant>/myApp/`, where other pr
 `find_package(myApp)`.
 
 **Deployment, one line.** `cs_deployment(app TARGETS myApp)` makes the same install also produce
-`workspace/build/<variant>/myApp/deploy/app-Release/`: a folder that runs on a clean machine. It holds the
+`workspace/deploy/<variant>/myApp/app-Release/`: a folder that runs on a clean machine. It holds the
 application with every shared library it needs that the system does not provide: the project's own, and the ones of
 other packages (OpenCV, Qt, ...), taken from your workspace and never from the system. The install then checks that
 the folder runs on its own, and fails if it would not. `system-requirements.txt` lists what the machine needs from the

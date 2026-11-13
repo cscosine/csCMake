@@ -179,7 +179,8 @@ A value of the setup that only one operating system replaces goes in `cscmake-pr
 ### 4. Folders and search paths of the project
 
 The presets of the variants still choose the host, generator and compiler, but `cscmake-project-setup` does not inherit
-`cscmake-common-project-setup`: it sets the build and install folders and the search paths itself. The variant presets
+`cscmake-common-project-setup`: it sets the build and install folders and the search paths itself (and
+`CSCMAKE_DEPLOY_DIR`, else the deployments go to the build folder). The variant presets
 give their names in the environment: `CSCMAKE_CSV1_SUB_DIR` (the variant id), `CSCMAKE_CSV1_SUB_DIR_SHORT` (its short
 form) and `CSCMAKE_CSV1_SINGLE_CONFIG_SUB_DIR` (the configuration of a single-config generator, empty otherwise: keep
 it in `binaryDir`, or the configurations share one build folder). `CMAKE_MODULE_PATH` must contain csCMake for
@@ -219,7 +220,11 @@ See [Without the presets](#without-the-presets).
 ```text
 $CSCMAKE_WORKSPACE_ROOT/build/<variant id or short form>/<project folder>/   build
 $CSCMAKE_WORKSPACE_ROOT/install/<variant id>/<project folder>/               install prefix
+$CSCMAKE_WORKSPACE_ROOT/deploy/<variant id>/<project folder>/                deployments (CSCMAKE_DEPLOY_DIR)
 ```
+
+The deployments of a project (`cs_deployment`) go to `<name>-<config>` in its deploy folder, made by the install:
+outside `CMAKE_PREFIX_PATH`, never found by `find_package`.
 
 `CMAKE_PREFIX_PATH` contains `$CSCMAKE_WORKSPACE_ROOT/install/<variant id>` and
 `$CSCMAKE_WORKSPACE_ROOT/libs/<variant id>` (third-party libraries built for the variant), so the projects of the

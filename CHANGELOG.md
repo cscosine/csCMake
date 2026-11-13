@@ -37,6 +37,9 @@ Since `v1.0.0-rc1`:
   their Debian packages and the `apt install` line. `cs_deployment(... EXCLUDE_REGEXES <regex>...)` never ships (nor
   checks) the matching libraries. On Windows, macOS and in cross builds: a warning, the deployment has the binaries of
   the project only.
+- **Deployments in the workspace**: the project setup presets set `CSCMAKE_DEPLOY_DIR` to
+  `<workspace>/deploy/<variant>/<project folder>`, next to `install/<variant>/<project folder>`: the deployments go
+  there, the same folder for every generator, instead of the build folder.
 - **Deployments, plugins**: `cs_deployment(... PLUGINS <plugin target>... DESTINATION <folder>)` ships plugins
   (imported module libraries, loaded at run time) in a folder of the deployment, as they are, with the shared libraries
   they need (Linux); e.g. the Qt platform plugins: `PLUGINS Qt6::QXcbIntegrationPlugin DESTINATION plugins/platforms`.

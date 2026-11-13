@@ -33,7 +33,6 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
   exclusions (`System32`, `api-ms-*`, `/System`), `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime, default `ON`; debug CRT configurations fail), `@loader_path`, the
   `csSmokeDeploy` applications run in the smoke. OpenCV loads `opencv_videoio_ffmpeg*.dll` at run time: shipped as a
   plugin (like the Qt ones). Cross builds: the libraries of the sysroot are the system ones.
-- [ ] Deployments in the presets: `CSCMAKE_DEPLOY_DIR` in the project setup layouts (`deploy/` of the workspace).
 - [ ] Deployments, a user-guide page (and `docs/advanced/runtime-dependencies.md`).
 - [ ] Windows build folder in ctest and VS Code: the tests and `launch.json` need the `PATH` of `cs-env.bat` (e.g.
   `ENVIRONMENT_MODIFICATION` on the tests, an `envFile` generated next to the scripts).

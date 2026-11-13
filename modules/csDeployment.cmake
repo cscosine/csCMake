@@ -664,9 +664,10 @@ endfunction()
 #
 #   The folder of the deployments: each one goes to ``<CSCMAKE_DEPLOY_DIR>/<name>-<config>``. Default
 #   ``<top build folder>/deploy``; a relative path is relative to the top build folder. Read when the project is
-#   finalized: set it with ``-D`` (the project setup presets set it to the ``deploy/`` folder of the workspace), or in
-#   the project before the end of the ``CMakeLists.txt`` of :command:`cs_initialize_project`. Fixed at configure time:
-#   ``cmake --install --prefix`` does not change it.
+#   finalized: set it with ``-D`` (the project setup presets set it to
+#   ``<workspace>/deploy/<variant>/<project folder>``, next to its install folder), or in the project before the end of
+#   the ``CMakeLists.txt`` of :command:`cs_initialize_project`. Fixed at configure time: ``cmake --install --prefix``
+#   does not change it.
 #
 # .. variable:: CSCMAKE_DEPLOY_ON_INSTALL
 #
