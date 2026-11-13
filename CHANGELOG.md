@@ -37,6 +37,10 @@ Since `v1.0.0-rc1`:
   their Debian packages and the `apt install` line. `cs_deployment(... EXCLUDE_REGEXES <regex>...)` never ships (nor
   checks) the matching libraries. On Windows, macOS and in cross builds: a warning, the deployment has the binaries of
   the project only.
+- **Deployments, plugins**: `cs_deployment(... PLUGINS <plugin target>... DESTINATION <folder>)` ships plugins
+  (imported module libraries, loaded at run time) in a folder of the deployment, as they are, with the shared libraries
+  they need (Linux); e.g. the Qt platform plugins: `PLUGINS Qt6::QXcbIntegrationPlugin DESTINATION plugins/platforms`.
+  `DESTINATION` now goes with `PLUGINS`, `FILES` or `DIRECTORY`.
 
 Release candidate 1:
 

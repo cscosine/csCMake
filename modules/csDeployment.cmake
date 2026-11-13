@@ -16,7 +16,8 @@
 # where the install RPATH of :command:`cs_add_executable` / :command:`cs_add_library` finds them. The shared libraries
 # of other packages the deployment needs (e.g. OpenCV, Qt) go to ``lib/`` too, unchanged: their own RPATH (``$ORIGIN``)
 # finds each other there. Linux only (native builds): on the other systems, a deployment has the binaries of the
-# project only, with a warning.
+# project only, with a warning. Plugins (``PLUGINS``) go to the folder their library looks for them in (e.g. Qt:
+# ``plugins/<type>/``, next to ``lib/``).
 #
 # Commands
 # ^^^^^^^^
@@ -37,7 +38,7 @@ include(GNUInstallDirs)
 #
 #     cs_deployment(<name>
 #       [TARGETS <target>...]
-#       [FILES <file>...] [DIRECTORY <folder>...] [DESTINATION <folder>]
+#       [PLUGINS <plugin target>...] [FILES <file>...] [DIRECTORY <folder>...] [DESTINATION <folder>]
 #       [CONFIGS <config>...]
 #       [EXCLUDE_REGEXES <regex>...])
 #
@@ -86,13 +87,26 @@ include(GNUInstallDirs)
 #     :command:`cs_add_library`, before or after this call), with the shared and module libraries of the build they
 #     depend on (:prop_tgt:`CSCMAKE_PROJECT_DEPENDENCIES`). A deployment needs at least one target.
 #
+#   ``PLUGINS``
+#     Plugins: imported module libraries, loaded at run time (nothing links them), in ``DESTINATION``. They are copied
+#     as they are, with the shared libraries they need (Linux): their RPATH finds those from ``DESTINATION`` (e.g. Qt
+#     plugins: ``$ORIGIN/../../lib``). E.g. the Qt platform plugins of Linux, where Qt looks for them:
+#
+#     .. code-block:: cmake
+#
+#       cs_deployment(app PLUGINS Qt6::QXcbIntegrationPlugin Qt6::QOffscreenIntegrationPlugin
+#                     DESTINATION plugins/platforms)
+#
+#     A plugin is given with one destination only.
+#
 #   ``FILES``, ``DIRECTORY``
 #     Files and folders to ship (data, configuration files, licences), relative to the current source folder or
-#     absolute; a folder as with :command:`install(DIRECTORY) <install>`: ``data`` ships the folder, ``data/`` its
-#     content. They need ``DESTINATION``.
+#     absolute, in ``DESTINATION``; a folder as with :command:`install(DIRECTORY) <install>`: ``data`` ships the
+#     folder, ``data/`` its content.
 #
 #   ``DESTINATION``
-#     The folder of ``FILES`` and ``DIRECTORY`` in the deployment, relative (e.g. ``share/demo``), without ``..``.
+#     The folder of ``PLUGINS``, ``FILES`` and ``DIRECTORY`` in the deployment, relative (e.g. ``share/demo``), without
+#     ``..``. Needed by them, and only by them.
 #
 #   ``CONFIGS``
 #     The configurations the deployment is made in, among the ones of the project (default ``Release``). Given once:
@@ -104,17 +118,18 @@ include(GNUInstallDirs)
 #
 #   :Reads: :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_DEPLOY_DIR`, :variable:`CSCMAKE_DEPLOY_ON_INSTALL`
 #   :Writes: :prop_gbl:`CSCMAKE_<namespace>_DEPLOYMENTS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_NAMESPACE`,
-#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_TARGETS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_CONFIGS`,
+#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_TARGETS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_PLUGINS`,
+#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_CONFIGS`,
 #     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES`
 function(cs_deployment name)
   _cs_message_context(cs_deployment)
-  cmake_parse_arguments(PARSE_ARGV 1 arg "" "DESTINATION" "TARGETS;FILES;DIRECTORY;CONFIGS;EXCLUDE_REGEXES")
+  cmake_parse_arguments(PARSE_ARGV 1 arg "" "DESTINATION" "TARGETS;PLUGINS;FILES;DIRECTORY;CONFIGS;EXCLUDE_REGEXES")
   if(arg_UNPARSED_ARGUMENTS OR arg_KEYWORDS_MISSING_VALUES)
     message(
       FATAL_ERROR
       "[cs_deployment] ${name}: unexpected or empty arguments ${arg_UNPARSED_ARGUMENTS} ${arg_KEYWORDS_MISSING_VALUES} "
-      "(cs_deployment(<name> [TARGETS <target>...] [FILES <file>...] [DIRECTORY <folder>...] [DESTINATION <folder>] "
-      "[CONFIGS <config>...] [EXCLUDE_REGEXES <regex>...]))"
+      "(cs_deployment(<name> [TARGETS <target>...] [PLUGINS <plugin target>...] [FILES <file>...] "
+      "[DIRECTORY <folder>...] [DESTINATION <folder>] [CONFIGS <config>...] [EXCLUDE_REGEXES <regex>...]))"
     )
   endif()
   _cs_deployment_check_call(${name})
@@ -122,6 +137,19 @@ function(cs_deployment name)
 
   foreach(target_name IN LISTS arg_TARGETS)
     _cs_add_to_global_property_unique_value(CSCMAKE_DEPLOYMENT_${name}_TARGETS ${target_name})
+  endforeach()
+  if(DEFINED arg_PLUGINS OR DEFINED arg_FILES OR DEFINED arg_DIRECTORY OR DEFINED arg_DESTINATION)
+    set(content ${arg_PLUGINS} ${arg_FILES} ${arg_DIRECTORY})
+    _cs_deployment_check_destination(${name} "${arg_DESTINATION}" "${content}" destination)
+  endif()
+  foreach(plugin IN LISTS arg_PLUGINS)
+    _cs_add_to_global_property_unique_value(CSCMAKE_DEPLOYMENT_${name}_PLUGINS ${plugin})
+    _cs_deployment_set_setting(
+      ${name}
+      "PLUGINS ${plugin} DESTINATION"
+      CSCMAKE_DEPLOYMENT_${name}_PLUGIN_${plugin}_DESTINATION
+      "${destination}"
+    )
   endforeach()
   if(DEFINED arg_CONFIGS)
     _cs_deployment_check_configs(${name} "${arg_CONFIGS}")
@@ -135,8 +163,8 @@ function(cs_deployment name)
       "${arg_EXCLUDE_REGEXES}"
     )
   endif()
-  if(DEFINED arg_FILES OR DEFINED arg_DIRECTORY OR DEFINED arg_DESTINATION)
-    _cs_deployment_install_files(${name} "${arg_DESTINATION}" "${arg_FILES}" "${arg_DIRECTORY}")
+  if(DEFINED arg_FILES OR DEFINED arg_DIRECTORY)
+    _cs_deployment_install_files(${name} "${destination}" "${arg_FILES}" "${arg_DIRECTORY}")
   endif()
 endfunction()
 
@@ -229,19 +257,29 @@ function(_cs_deployment_check_configs name configs)
   endforeach()
 endfunction()
 
-# Add the install rules of files and folders to the component of the deployment name, under destination (relative,
-# without ..); relative paths are relative to the current source folder, and must exist (unless generator expressions).
-function(_cs_deployment_install_files name destination files directories)
-  if("${destination}" STREQUAL "" OR (NOT files AND NOT directories))
-    message(FATAL_ERROR "[cs_deployment] ${name}: FILES and DIRECTORY go with DESTINATION, and DESTINATION with them")
+# Set out to destination normalized; fail unless given with content (PLUGINS, FILES, DIRECTORY) and content with it,
+# relative, without ..
+function(_cs_deployment_check_destination name destination content out)
+  if("${destination}" STREQUAL "" OR "${content}" STREQUAL "")
+    message(
+      FATAL_ERROR
+      "[cs_deployment] ${name}: PLUGINS, FILES and DIRECTORY go with DESTINATION, and DESTINATION with them"
+    )
   endif()
   cmake_path(SET destination NORMALIZE "${destination}")
+  string(REGEX REPLACE "/$" "" destination "${destination}")
   if(IS_ABSOLUTE "${destination}" OR destination MATCHES "(^|/)\\.\\.(/|$)")
     message(
       FATAL_ERROR
       "[cs_deployment] ${name}: DESTINATION ${destination} is a folder of the deployment: relative, without .."
     )
   endif()
+  set(${out} "${destination}" PARENT_SCOPE)
+endfunction()
+
+# Add the install rules of files and folders to the component of the deployment name, under destination (checked);
+# relative paths are relative to the current source folder, and must exist (unless generator expressions).
+function(_cs_deployment_install_files name destination files directories)
   _cs_deployment_absolute_paths(${name} "${files}" FILES absolute_files)
   _cs_deployment_absolute_paths(${name} "${directories}" DIRECTORY absolute_directories)
   if(absolute_files)
@@ -297,7 +335,8 @@ endfunction()
 # Reads:
 #
 # * variable CSCMAKE_DEPLOY_DIR
-# * global property CSCMAKE_DEPLOYMENT_<name>_TARGETS, CSCMAKE_DEPLOYMENT_<name>_CONFIGS
+# * global property CSCMAKE_DEPLOYMENT_<name>_TARGETS, CSCMAKE_DEPLOYMENT_<name>_PLUGINS,
+#   CSCMAKE_DEPLOYMENT_<name>_CONFIGS
 #
 # Writes:
 #
@@ -344,8 +383,19 @@ function(_cs_finalize_deployment namespace name)
   set_property(GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_DIR "${deploy_dir}")
   set_property(GLOBAL APPEND PROPERTY _CSCMAKE_DEPLOYMENTS ${name})
 
+  get_property(plugins_given GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGINS)
+  set(plugins "")
+  set(plugin_destinations "")
+  foreach(plugin IN LISTS plugins_given)
+    _cs_deployment_check_plugin(${name} ${plugin} real_name)
+    get_property(destination GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGIN_${plugin}_DESTINATION)
+    list(APPEND plugins ${real_name})
+    list(APPEND plugin_destinations "${destination}")
+  endforeach()
+
   _cs_deployment_install_targets(${name} "${runtime_targets}")
-  _cs_deployment_add_closure(${name} "${runtime_targets}")
+  _cs_deployment_install_plugins(${name} "${plugins}" "${plugin_destinations}")
+  _cs_deployment_add_closure(${name} "${runtime_targets}" "${plugins}" "${plugin_destinations}")
   _cs_deployment_add_build_target(${name} "${configs}" "${deploy_dir}" "${runtime_targets}")
   _cs_deployment_add_install_rule(${name} "${configs}" "${deploy_dir}")
   list(JOIN runtime_targets ", " text)
@@ -389,6 +439,35 @@ function(_cs_deployment_check_target namespace name target_name real_name_out)
   set(${real_name_out} ${target_name} PARENT_SCOPE)
 endfunction()
 
+# Fail unless plugin is an imported module library (an alias resolved, set in real_name_out).
+function(_cs_deployment_check_plugin name plugin real_name_out)
+  if(NOT TARGET ${plugin})
+    message(FATAL_ERROR "[cs_deployment] ${name}: PLUGINS ${plugin} is not a target")
+  endif()
+  get_target_property(aliased ${plugin} ALIASED_TARGET)
+  if(aliased)
+    set(plugin ${aliased})
+  endif()
+  get_target_property(imported ${plugin} IMPORTED)
+  get_target_property(type ${plugin} TYPE)
+  if(NOT imported OR NOT type STREQUAL "MODULE_LIBRARY")
+    message(
+      FATAL_ERROR
+      "[cs_deployment] ${name}: PLUGINS ${plugin} is not an imported module library (a plugin of another package, "
+      "e.g. Qt6::QXcbIntegrationPlugin)"
+    )
+  endif()
+  set(${real_name_out} ${plugin} PARENT_SCOPE)
+endfunction()
+
+# Install the plugins (imported, checked) in the component of the deployment name, each in its destination, as they are
+# (their RPATH unchanged).
+function(_cs_deployment_install_plugins name plugins destinations)
+  foreach(plugin destination IN ZIP_LISTS plugins destinations)
+    install(FILES "$<TARGET_FILE:${plugin}>" DESTINATION "${destination}" COMPONENT cs_deploy_${name} EXCLUDE_FROM_ALL)
+  endforeach()
+endfunction()
+
 # Install the targets in the component of the deployment name: executables and DLLs in CMAKE_INSTALL_BINDIR, shared and
 # module libraries in CMAKE_INSTALL_LIBDIR (no namelink); the import libraries go to a component never installed.
 function(_cs_deployment_install_targets name targets)
@@ -400,14 +479,14 @@ function(_cs_deployment_install_targets name targets)
   )
 endfunction()
 
-# Add the install rule shipping the libraries of other packages the targets of the deployment name need, then checking
-# the deployment (modules/scripts/csDeploymentClosure.cmake), after the targets, in the component of the deployment.
-# Linux only (native builds): elsewhere, a warning.
+# Add the install rule shipping the libraries of other packages the targets and the plugins of the deployment name
+# need, then checking the deployment (modules/scripts/csDeploymentClosure.cmake), after the targets, in the component
+# of the deployment. Linux only (native builds): elsewhere, a warning.
 #
 # Reads:
 #
 # * global property CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES
-function(_cs_deployment_add_closure name targets)
+function(_cs_deployment_add_closure name targets plugins destinations)
   if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_CROSSCOMPILING)
     message(
       WARNING
@@ -429,6 +508,10 @@ function(_cs_deployment_add_closure name targets)
       string(APPEND call " BUILD_MODULES [==[$<TARGET_FILE:${target_name}>]==]")
       string(APPEND call " MODULES [==[${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:${target_name}>]==]")
     endif()
+  endforeach()
+  foreach(plugin destination IN ZIP_LISTS plugins destinations)
+    string(APPEND call " BUILD_MODULES [==[$<TARGET_FILE:${plugin}>]==]")
+    string(APPEND call " MODULES [==[${destination}/$<TARGET_FILE_NAME:${plugin}>]==]")
   endforeach()
   get_property(excludes GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_EXCLUDE_REGEXES)
   foreach(regex IN LISTS excludes)
@@ -604,6 +687,14 @@ endfunction()
 # .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_TARGETS
 #
 #   The ``TARGETS`` of the deployment, as given.
+#
+# .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_PLUGINS
+#
+#   The ``PLUGINS`` of the deployment, as given.
+#
+# .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_PLUGIN_<plugin>_DESTINATION
+#
+#   The ``DESTINATION`` of a plugin of the deployment (``<plugin>``: as given in ``PLUGINS``), normalized.
 #
 # .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_CONFIGS
 #

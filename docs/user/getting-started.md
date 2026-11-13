@@ -185,6 +185,9 @@ deploy/app-Release/
 - **Independent of the package.** Nothing of it goes to the install folder, and it can ship targets the package does
   not install (samples) and data files: `cs_deployment(demo TARGETS sample FILES data/input.png DESTINATION share)`.
   A project can declare several deployments, each a complete folder of its own.
+- **Plugins.** Libraries loaded at run time (nothing links them) are listed with the folder they are looked for in,
+  e.g. the Qt platform plugins of Linux:
+  `PLUGINS Qt6::QXcbIntegrationPlugin Qt6::QWaylandIntegrationPlugin DESTINATION plugins/platforms`.
 - **Configurations.** Made in `Release` by default (`CONFIGS` chooses others), skipped in the other configurations.
   To make it alone, without installing: `cmake --build --preset <build preset> --target cs_deploy_app`.
 

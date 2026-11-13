@@ -24,7 +24,10 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
 
 ## Runtime
 
-- [ ] Deployments, plugins: `PLUGINS <imported module target>...` to `plugins/<QT_PLUGIN_TYPE>/` (Qt), as shipped.
+- [ ] Deployments, plugins of the project itself (`cs_add_library(MODULE)`): installed in their `DESTINATION` with an
+  install RPATH reaching `lib/` from there; today `PLUGINS` takes imported targets only.
+- [ ] csqt6 (not csCMake): a recommended set of Qt plugins per system with their folders, so that projects do not
+  repeat the list.
 - [ ] Deployments on Windows and macOS: the shared libraries of other packages (today a warning, the binaries of the
   project only): DLL folders (`$<TARGET_RUNTIME_DLL_DIRS>`, plus a `DIRECTORIES` option for the others), system
   exclusions (`System32`, `api-ms-*`, `/System`), `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime, default `ON`; debug CRT configurations fail), `@loader_path`, the

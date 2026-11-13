@@ -282,8 +282,8 @@ def test_no_deployments_file_without_deployments(tmp_path: Path) -> None:
             "cs_deployment(demo TARGETS app CONFIGS Release)\ncs_deployment(demo CONFIGS Debug)",
             "CONFIGS Debug, but already CONFIGS Release",
         ),
-        ("cs_deployment(demo TARGETS app FILES data/sample.txt)", "FILES and DIRECTORY go with DESTINATION"),
-        ("cs_deployment(demo TARGETS app DESTINATION d)", "FILES and DIRECTORY go with DESTINATION"),
+        ("cs_deployment(demo TARGETS app FILES data/sample.txt)", "PLUGINS, FILES and DIRECTORY go with DESTINATION"),
+        ("cs_deployment(demo TARGETS app DESTINATION d)", "PLUGINS, FILES and DIRECTORY go with DESTINATION"),
         ("cs_deployment(demo TARGETS app FILES data/sample.txt DESTINATION /abs)", "DESTINATION /abs is a folder"),
         ("cs_deployment(demo TARGETS app FILES data/sample.txt DESTINATION a/../..)", "relative, without .."),
         ("cs_deployment(demo TARGETS app FILES missing.txt DESTINATION d)", "FILES missing.txt is not a file"),
@@ -387,7 +387,18 @@ set(EXT_RPATH "$ORIGIN" CACHE STRING "")
 set_target_properties(ext ext2 PROPERTIES VERSION 1.2.3 SOVERSION 1 INSTALL_RPATH "${EXT_RPATH}")
 install(TARGETS ext ext2 EXPORT extTargets LIBRARY DESTINATION lib)
 install(EXPORT extTargets NAMESPACE ext:: DESTINATION lib/cmake/ext FILE extConfig.cmake)
+# a plugin, laid out as the Qt ones: plugins/<type>/, RPATH $ORIGIN/../../lib, needing ext3 (not used by the
+# applications)
+add_library(ext3 SHARED ext3.cpp)
+add_library(fake MODULE fake.cpp)
+target_link_libraries(fake PRIVATE ext3)
+set_target_properties(ext3 PROPERTIES INSTALL_RPATH "$ORIGIN")
+set_target_properties(fake PROPERTIES INSTALL_RPATH "$ORIGIN/../../lib")
+install(TARGETS ext3 LIBRARY DESTINATION lib)
+install(TARGETS fake LIBRARY DESTINATION plugins/platforms)
 """,
+    "ext3.cpp": "int ext3() { return 3; }\n",
+    "fake.cpp": "int ext3();\nint fake() { return ext3(); }\n",
     "ext2.cpp": "int ext2() { return 2; }\n",
     "ext.cpp": "int ext2();\nint ext() { return ext2() - 1; }\n",
 }
@@ -449,6 +460,37 @@ def test_ships_the_libraries_of_other_packages(tmp_path: Path) -> None:
     for folder, program in (("first-Release", "app"), ("second-Release", "sample")):
         run = subprocess.run([str(deploy / folder / "bin" / program)], env={}, check=False)
         assert run.returncode == 0
+
+
+def _plugin(ext: Path) -> str:
+    """CMake code: the imported target fakeplugin, the plugin of the other package."""
+    return (
+        "add_library(fakeplugin MODULE IMPORTED)\n"
+        f'set_target_properties(fakeplugin PROPERTIES IMPORTED_LOCATION "{ext}/plugins/platforms/libfake.so")\n'
+    )
+
+
+@linux_only
+def test_plugins(tmp_path: Path) -> None:
+    """A plugin goes to its DESTINATION with the libraries it needs (libext3, which the application does not
+    need); loaded from the deployment with an empty environment, it finds them (its RPATH, $ORIGIN/../../lib)."""
+    ext = _external(tmp_path)
+    body = _plugin(ext) + "cs_deployment(demo TARGETS app PLUGINS fakeplugin DESTINATION plugins/platforms/)\n"
+
+    built = _deploy_ext(tmp_path / "project", ext, body)
+
+    assert built.returncode == 0, built.stdout + built.stderr
+    deploy = tmp_path / "project" / "build" / "deploy" / "demo-Release"
+    assert _files(deploy) == {
+        "bin/app",
+        SHARED_LIB,
+        *EXT_FILES,
+        "lib/libext3.so",
+        "plugins/platforms/libfake.so",
+        *REPORT,
+    }
+    load = f"import ctypes; ctypes.CDLL({str(deploy / 'plugins' / 'platforms' / 'libfake.so')!r})"
+    assert subprocess.run([sys.executable, "-c", load], env={}, check=False).returncode == 0
 
 
 @linux_only
@@ -568,8 +610,24 @@ def test_other_systems_warn(tmp_path: Path) -> None:
             "cs_deployment(demo TARGETS app EXCLUDE_REGEXES a)\ncs_deployment(demo EXCLUDE_REGEXES b)",
             "EXCLUDE_REGEXES b, but already EXCLUDE_REGEXES a (given once per deployment)",
         ),
+        ("cs_deployment(demo TARGETS app PLUGINS nothing DESTINATION p)", "PLUGINS nothing is not a target"),
+        (
+            "cs_deployment(demo TARGETS app PLUGINS core DESTINATION p)",
+            "PLUGINS core is not an imported module library",
+        ),
+        ("cs_deployment(demo TARGETS app PLUGINS core)", "PLUGINS, FILES and DIRECTORY go with DESTINATION"),
+        (
+            "cs_deployment(demo TARGETS app PLUGINS st DESTINATION a)\ncs_deployment(demo PLUGINS st DESTINATION b)",
+            "PLUGINS st DESTINATION b, but already PLUGINS st DESTINATION a (given once per deployment)",
+        ),
     ],
-    ids=["exclude-regexes-changed"],
+    ids=[
+        "exclude-regexes-changed",
+        "plugin-unknown",
+        "plugin-not-imported",
+        "plugin-without-destination",
+        "plugin-destination-changed",
+    ],
 )
 def test_closure_mistakes_fail(tmp_path: Path, body: str, message: str) -> None:
     result = configure(tmp_path, INIT + TARGETS + body + "\n", SOURCES)
