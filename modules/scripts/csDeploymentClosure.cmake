@@ -13,6 +13,10 @@
 #    * complete: every library they need, but the ones of the system (and what those need), is in the deployment.
 # 3. The report: system-requirements.txt in the deployment, the libraries of the system it needs, with their Debian
 #    packages (dpkg-query, when there) and the apt install line.
+#
+# The install script sets no policies: the ones of csCMake here (include() scopes them to this file, and the functions
+# keep them where they are called).
+cmake_policy(VERSION 3.31)
 
 # The regular expressions of the paths of the libraries of the system (never shipped).
 function(_cs_deployment_system_regexes out)
