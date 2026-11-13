@@ -494,6 +494,28 @@ def test_plugins(tmp_path: Path) -> None:
 
 
 @linux_only
+def test_a_plugin_of_a_subfolder(tmp_path: Path) -> None:
+    """The plugin target defined in a subfolder (an imported target is visible there only, e.g. a find_package(Qt6) of
+    the folder of the application), its deployment declared there: shipped and scanned, the project finalized at the
+    top."""
+    ext = _external(tmp_path)
+    files = {
+        **EXT_SOURCES,
+        "sub/CMakeLists.txt": _plugin(ext) + "cs_deployment(demo PLUGINS fakeplugin DESTINATION plugins/platforms)\n",
+    }
+    args = [*RELEASE, f"-DCMAKE_PREFIX_PATH={ext}"]
+    body = INIT + TARGETS + EXT_TARGETS + "cs_deployment(demo TARGETS app)\nadd_subdirectory(sub)\n"
+    result = configure(tmp_path / "project", body, files, args=args)
+    assert result.returncode == 0, result.output
+
+    built = _build(tmp_path / "project", "cs_deploy_demo")
+
+    assert built.returncode == 0, built.stdout + built.stderr
+    deployed = _files(tmp_path / "project" / "build" / "deploy" / "demo-Release")
+    assert {"plugins/platforms/libfake.so", "lib/libext3.so"} <= deployed
+
+
+@linux_only
 def test_a_library_not_found_fails(tmp_path: Path) -> None:
     """A library of the other package removed after the build: not found, the deployment fails, and so does the
     install."""
@@ -617,8 +639,9 @@ def test_other_systems_warn(tmp_path: Path) -> None:
         ),
         ("cs_deployment(demo TARGETS app PLUGINS core)", "PLUGINS, FILES and DIRECTORY go with DESTINATION"),
         (
-            "cs_deployment(demo TARGETS app PLUGINS st DESTINATION a)\ncs_deployment(demo PLUGINS st DESTINATION b)",
-            "PLUGINS st DESTINATION b, but already PLUGINS st DESTINATION a (given once per deployment)",
+            "add_library(p MODULE IMPORTED)\n"
+            "cs_deployment(demo TARGETS app PLUGINS p DESTINATION a)\ncs_deployment(demo PLUGINS p DESTINATION b)",
+            "PLUGINS p DESTINATION b, but already PLUGINS p DESTINATION a (given once per deployment)",
         ),
     ],
     ids=[

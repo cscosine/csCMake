@@ -143,13 +143,7 @@ function(cs_deployment name)
     _cs_deployment_check_destination(${name} "${arg_DESTINATION}" "${content}" destination)
   endif()
   foreach(plugin IN LISTS arg_PLUGINS)
-    _cs_add_to_global_property_unique_value(CSCMAKE_DEPLOYMENT_${name}_PLUGINS ${plugin})
-    _cs_deployment_set_setting(
-      ${name}
-      "PLUGINS ${plugin} DESTINATION"
-      CSCMAKE_DEPLOYMENT_${name}_PLUGIN_${plugin}_DESTINATION
-      "${destination}"
-    )
+    _cs_deployment_add_plugin(${name} ${plugin} "${destination}")
   endforeach()
   if(DEFINED arg_CONFIGS)
     _cs_deployment_check_configs(${name} "${arg_CONFIGS}")
@@ -383,19 +377,8 @@ function(_cs_finalize_deployment namespace name)
   set_property(GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_DIR "${deploy_dir}")
   set_property(GLOBAL APPEND PROPERTY _CSCMAKE_DEPLOYMENTS ${name})
 
-  get_property(plugins_given GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGINS)
-  set(plugins "")
-  set(plugin_destinations "")
-  foreach(plugin IN LISTS plugins_given)
-    _cs_deployment_check_plugin(${name} ${plugin} real_name)
-    get_property(destination GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGIN_${plugin}_DESTINATION)
-    list(APPEND plugins ${real_name})
-    list(APPEND plugin_destinations "${destination}")
-  endforeach()
-
   _cs_deployment_install_targets(${name} "${runtime_targets}")
-  _cs_deployment_install_plugins(${name} "${plugins}" "${plugin_destinations}")
-  _cs_deployment_add_closure(${name} "${runtime_targets}" "${plugins}" "${plugin_destinations}")
+  _cs_deployment_add_closure(${name} "${runtime_targets}")
   _cs_deployment_add_build_target(${name} "${configs}" "${deploy_dir}" "${runtime_targets}")
   _cs_deployment_add_install_rule(${name} "${configs}" "${deploy_dir}")
   list(JOIN runtime_targets ", " text)
@@ -460,12 +443,36 @@ function(_cs_deployment_check_plugin name plugin real_name_out)
   set(${real_name_out} ${plugin} PARENT_SCOPE)
 endfunction()
 
-# Install the plugins (imported, checked) in the component of the deployment name, each in its destination, as they are
-# (their RPATH unchanged).
-function(_cs_deployment_install_plugins name plugins destinations)
-  foreach(plugin destination IN ZIP_LISTS plugins destinations)
-    install(FILES "$<TARGET_FILE:${plugin}>" DESTINATION "${destination}" COMPONENT cs_deploy_${name} EXCLUDE_FROM_ALL)
-  endforeach()
+# Add plugin to the deployment name, in destination (checked), where cs_deployment is called: an imported target is
+# visible in the folder of its find_package (and below) only, not where the project is finalized. Its install rule
+# copies it as it is (its RPATH unchanged); a second one appends its build-tree file and its file in the deployment to
+# the variables _cs_deployment_<name>_build_plugins and _cs_deployment_<name>_plugins of the install script, read by
+# the closure of the deployment (_cs_deployment_add_closure, after the folders of the project).
+#
+# Writes:
+#
+# * global property CSCMAKE_DEPLOYMENT_<name>_PLUGINS, CSCMAKE_DEPLOYMENT_<name>_PLUGIN_<plugin>_DESTINATION
+function(_cs_deployment_add_plugin name plugin destination)
+  _cs_deployment_check_plugin(${name} ${plugin} real_name)
+  _cs_deployment_set_setting(
+    ${name}
+    "PLUGINS ${plugin} DESTINATION"
+    CSCMAKE_DEPLOYMENT_${name}_PLUGIN_${plugin}_DESTINATION
+    "${destination}"
+  )
+  get_property(plugins GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGINS)
+  if(plugin IN_LIST plugins)
+    return()
+  endif()
+  set_property(GLOBAL APPEND PROPERTY CSCMAKE_DEPLOYMENT_${name}_PLUGINS ${plugin})
+  install(FILES "$<TARGET_FILE:${real_name}>" DESTINATION "${destination}" COMPONENT cs_deploy_${name} EXCLUDE_FROM_ALL)
+  install(
+    CODE
+      "list(APPEND _cs_deployment_${name}_build_plugins [==[$<TARGET_FILE:${real_name}>]==])
+list(APPEND _cs_deployment_${name}_plugins [==[${destination}/$<TARGET_FILE_NAME:${real_name}>]==])"
+    COMPONENT cs_deploy_${name}
+    EXCLUDE_FROM_ALL
+  )
 endfunction()
 
 # Install the targets in the component of the deployment name: executables and DLLs in CMAKE_INSTALL_BINDIR, shared and
@@ -486,7 +493,7 @@ endfunction()
 # Reads:
 #
 # * global property CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES
-function(_cs_deployment_add_closure name targets plugins destinations)
+function(_cs_deployment_add_closure name targets)
   if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_CROSSCOMPILING)
     message(
       WARNING
@@ -509,10 +516,9 @@ function(_cs_deployment_add_closure name targets plugins destinations)
       string(APPEND call " MODULES [==[${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:${target_name}>]==]")
     endif()
   endforeach()
-  foreach(plugin destination IN ZIP_LISTS plugins destinations)
-    string(APPEND call " BUILD_MODULES [==[$<TARGET_FILE:${plugin}>]==]")
-    string(APPEND call " MODULES [==[${destination}/$<TARGET_FILE_NAME:${plugin}>]==]")
-  endforeach()
+  # the plugins, recorded by their install rules (_cs_deployment_add_plugin)
+  string(APPEND call " BUILD_MODULES \${_cs_deployment_${name}_build_plugins}")
+  string(APPEND call " MODULES \${_cs_deployment_${name}_plugins}")
   get_property(excludes GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_EXCLUDE_REGEXES)
   foreach(regex IN LISTS excludes)
     string(APPEND call " EXCLUDE_REGEXES [==[${regex}]==]")
