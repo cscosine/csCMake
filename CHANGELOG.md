@@ -10,7 +10,16 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
-Since `v1.0.0-rc2`:
+Since `v1.0.0-rc3`:
+
+- **Deployments on Windows and macOS**: the shared libraries of other packages are shipped there too (native builds;
+  a warning in cross builds). Windows: the DLLs, found in the folders of the DLLs of the targets
+  (`TARGET_RUNTIME_DLL_DIRS`) and `cs_deployment(... DIRECTORIES <folder>...)`, next to the executables, with the C++
+  runtime of MSVC (`MSVC_RUNTIME ON`, default; `OFF`: the machine needs the Visual C++ Redistributable); a deployment
+  using the debug C runtime of MSVC (e.g. Debug) fails, it is not redistributable. macOS: the dylibs and frameworks
+  (without their headers) in `lib/`. `system-requirements.txt`: Linux only.
+
+Release candidate 3:
 
 - **Deployments** (new, `csDeployment`): `cs_deployment(<name> TARGETS ... [FILES|DIRECTORY ... DESTINATION ...]
   [CONFIGS ...])` declares a folder that runs without the build: the targets with the shared libraries of the project

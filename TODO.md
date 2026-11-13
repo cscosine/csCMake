@@ -28,11 +28,12 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
   install RPATH reaching `lib/` from there; today `PLUGINS` takes imported targets only.
 - [ ] csqt6 (not csCMake): a recommended set of Qt plugins per system with their folders, so that projects do not
   repeat the list.
-- [ ] Deployments on Windows and macOS: the shared libraries of other packages (today a warning, the binaries of the
-  project only): DLL folders (`$<TARGET_RUNTIME_DLL_DIRS>`, plus a `DIRECTORIES` option for the others), system
-  exclusions (`System32`, `api-ms-*`, `/System`), `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime, default `ON`; debug CRT configurations fail), `@loader_path`, the
-  `csSmokeDeploy` applications run in the smoke. OpenCV loads `opencv_videoio_ffmpeg*.dll` at run time: shipped as a
-  plugin (like the Qt ones). Cross builds: the libraries of the sysroot are the system ones.
+- [ ] Deployments in cross builds: the libraries of the sysroot are the system ones (today a warning, the binaries of
+  the project only).
+- [ ] Deployments on Windows, notes for the projects: OpenCV loads `opencv_videoio_ffmpeg*.dll` at run time and Qt
+  its software OpenGL `opengl32sw.dll` (machines without GPU): shipped with `FILES` (or `PLUGINS` of their imported
+  targets).
+- [ ] Deployments on macOS: the `.app` bundles (`MACOSX_BUNDLE`), and checked on a project with Qt frameworks.
 - [ ] Deployments, a user-guide page (and `docs/advanced/runtime-dependencies.md`).
 - [ ] Windows build folder in ctest and VS Code: the tests and `launch.json` need the `PATH` of `cs-env.bat` (e.g.
   `ENVIRONMENT_MODIFICATION` on the tests, an `envFile` generated next to the scripts).

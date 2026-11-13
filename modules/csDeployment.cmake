@@ -14,10 +14,11 @@
 # Layout of the folder of a deployment, the one of the installed package (``CMAKE_INSTALL_BINDIR``,
 # ``CMAKE_INSTALL_LIBDIR``): executables in ``bin/``, shared and module libraries in ``lib/`` (``bin/`` on Windows),
 # where the install RPATH of :command:`cs_add_executable` / :command:`cs_add_library` finds them. The shared libraries
-# of other packages the deployment needs (e.g. OpenCV, Qt) go to ``lib/`` too, unchanged: their own RPATH (``$ORIGIN``)
-# finds each other there. Linux only (native builds): on the other systems, a deployment has the binaries of the
-# project only, with a warning. Plugins (``PLUGINS``) go to the folder their library looks for them in (e.g. Qt:
-# ``plugins/<type>/``, next to ``lib/``).
+# of other packages the deployment needs (e.g. OpenCV, Qt) go there too, unchanged: on Linux and macOS their own RPATH
+# (``$ORIGIN``, ``@loader_path``) finds each other in ``lib/`` (a macOS framework: its folder, without its headers);
+# on Windows, next to the executables, where Windows looks for them. Plugins (``PLUGINS``) go to the folder their
+# library looks for them in (e.g. Qt: ``plugins/<type>/``, next to ``lib/`` and ``bin/``). In cross builds and on
+# other systems, a deployment has the binaries of the project only, with a warning.
 #
 # Commands
 # ^^^^^^^^
@@ -40,7 +41,7 @@ include(GNUInstallDirs)
 #       [TARGETS <target>...]
 #       [PLUGINS <plugin target>...] [FILES <file>...] [DIRECTORY <folder>...] [DESTINATION <folder>]
 #       [CONFIGS <config>...]
-#       [EXCLUDE_REGEXES <regex>...])
+#       [EXCLUDE_REGEXES <regex>...] [DIRECTORIES <folder>...] [MSVC_RUNTIME ON|OFF])
 #
 #   The first call with a name creates the deployment, the next ones (in any folder of the project) add to it. Its
 #   content goes to the install component ``cs_deploy_<name>``, not in the install prefix: the deployment is made in
@@ -56,12 +57,16 @@ include(GNUInstallDirs)
 #
 #     cmake --build --preset <build preset of a configuration> --target cs_deploy_<name>
 #
-#   Then the deployment gets the shared libraries of other packages its binaries need (Linux), found from their build
-#   tree: their build RPATH finds the packages of the workspace before the ones of the system. Not shipped: the
-#   libraries of the system (in ``/lib``, ``/usr/lib``, ...) and what they need, and ``EXCLUDE_REGEXES``. Then the
-#   deployment is checked, its binaries scanned again with their own RPATH and the system folders only: every library
-#   they need is in the deployment or a library of the system, and every library it ships resolves to its copy, never
-#   to a library of the system of the same name. Last, ``system-requirements.txt`` in the deployment lists the
+#   Then the deployment gets the shared libraries of other packages its binaries need, found from their build tree:
+#   on Linux and macOS, their build RPATH finds the packages of the workspace before the ones of the system; on
+#   Windows, the folders of the DLLs of the targets (:genex:`TARGET_RUNTIME_DLL_DIRS`) and ``DIRECTORIES``. Not
+#   shipped: the libraries of the system and what they need (Linux: ``/lib``, ``/usr/lib``, ...; Windows: the
+#   ``Windows`` folder, ``api-ms-*``; macOS: ``/usr/lib``, ``/System``), and ``EXCLUDE_REGEXES``. On Windows with MSVC,
+#   the deployment ships the C++ runtime of MSVC too (``MSVC_RUNTIME``). Then the deployment is checked, its binaries
+#   scanned again with their own RPATH and the system folders only (Windows: and the folder of the executables): every
+#   library they need is in the deployment or a library of the system, every library it ships resolves to its copy,
+#   never to a library of the system of the same name, and none is a debug C runtime of MSVC (not redistributable: a
+#   Debug deployment fails on Windows). Last, on Linux, ``system-requirements.txt`` in the deployment lists the
 #   libraries of the system it needs, with their Debian packages and the ``apt install`` line: the machine running the
 #   deployment needs them (the same system release).
 #
@@ -114,22 +119,40 @@ include(GNUInstallDirs)
 #
 #   ``EXCLUDE_REGEXES``
 #     Regular expressions of the libraries never shipped, matched on their names and paths (e.g. ``^libGL\\.so``: a
-#     library the machines running the deployment have); the check ignores them too. Given once, as ``CONFIGS``.
+#     library the machines running the deployment have; on Windows the names are matched in lowercase); the check
+#     ignores them too. Given once, as ``CONFIGS``.
+#
+#   ``DIRECTORIES``
+#     Windows: more folders where the DLLs of other packages are searched, after the folders of the DLLs of the targets
+#     (e.g. the DLLs a plugin needs, that the targets do not link); relative to the current source folder or absolute.
+#     No effect on the other systems (the RPATH of the libraries finds them). Given once, as ``CONFIGS``.
+#
+#   ``MSVC_RUNTIME``
+#     Windows with MSVC: ``ON`` (default) ships the C++ runtime of MSVC (``vcruntime``, ``msvcp``, ... DLLs, from the
+#     redistributable of the compiler, :module:`InstallRequiredSystemLibraries`) next to the executables; ``OFF``: the
+#     machine running the deployment needs the Visual C++ Redistributable. Given once, as ``CONFIGS``.
 #
 #   :Reads: :variable:`CSCMAKE_NAMESPACE`, :variable:`CSCMAKE_DEPLOY_DIR`, :variable:`CSCMAKE_DEPLOY_ON_INSTALL`
 #   :Writes: :prop_gbl:`CSCMAKE_<namespace>_DEPLOYMENTS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_NAMESPACE`,
 #     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_TARGETS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_PLUGINS`,
-#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_CONFIGS`,
-#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES`
+#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_CONFIGS`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES`,
+#     :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_DIRECTORIES`, :prop_gbl:`CSCMAKE_DEPLOYMENT_<name>_MSVC_RUNTIME`
 function(cs_deployment name)
   _cs_message_context(cs_deployment)
-  cmake_parse_arguments(PARSE_ARGV 1 arg "" "DESTINATION" "TARGETS;PLUGINS;FILES;DIRECTORY;CONFIGS;EXCLUDE_REGEXES")
+  cmake_parse_arguments(
+    PARSE_ARGV 1
+    arg
+    ""
+    "DESTINATION;MSVC_RUNTIME"
+    "TARGETS;PLUGINS;FILES;DIRECTORY;CONFIGS;EXCLUDE_REGEXES;DIRECTORIES"
+  )
   if(arg_UNPARSED_ARGUMENTS OR arg_KEYWORDS_MISSING_VALUES)
     message(
       FATAL_ERROR
       "[cs_deployment] ${name}: unexpected or empty arguments ${arg_UNPARSED_ARGUMENTS} ${arg_KEYWORDS_MISSING_VALUES} "
       "(cs_deployment(<name> [TARGETS <target>...] [PLUGINS <plugin target>...] [FILES <file>...] "
-      "[DIRECTORY <folder>...] [DESTINATION <folder>] [CONFIGS <config>...] [EXCLUDE_REGEXES <regex>...]))"
+      "[DIRECTORY <folder>...] [DESTINATION <folder>] [CONFIGS <config>...] [EXCLUDE_REGEXES <regex>...] "
+      "[DIRECTORIES <folder>...] [MSVC_RUNTIME ON|OFF]))"
     )
   endif()
   _cs_deployment_check_call(${name})
@@ -149,14 +172,7 @@ function(cs_deployment name)
     _cs_deployment_check_configs(${name} "${arg_CONFIGS}")
     _cs_deployment_set_setting(${name} CONFIGS CSCMAKE_DEPLOYMENT_${name}_CONFIGS "${arg_CONFIGS}")
   endif()
-  if(DEFINED arg_EXCLUDE_REGEXES)
-    _cs_deployment_set_setting(
-      ${name}
-      EXCLUDE_REGEXES
-      CSCMAKE_DEPLOYMENT_${name}_EXCLUDE_REGEXES
-      "${arg_EXCLUDE_REGEXES}"
-    )
-  endif()
+  _cs_deployment_set_closure_settings(${name} "${arg_EXCLUDE_REGEXES}" "${arg_DIRECTORIES}" "${arg_MSVC_RUNTIME}")
   if(DEFINED arg_FILES OR DEFINED arg_DIRECTORY)
     _cs_deployment_install_files(${name} "${destination}" "${arg_FILES}" "${arg_DIRECTORY}")
   endif()
@@ -233,6 +249,29 @@ function(_cs_deployment_set_setting name keyword property values)
   set_property(GLOBAL PROPERTY ${property} "${values}")
 endfunction()
 
+# Set the settings of the closure of the deployment name given (not empty): excludes (EXCLUDE_REGEXES), directories
+# (DIRECTORIES, made absolute, must exist), msvc_runtime (MSVC_RUNTIME, ON or OFF).
+#
+# Writes:
+#
+# * global property CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES, CSCMAKE_DEPLOYMENT_<name>_DIRECTORIES,
+#   CSCMAKE_DEPLOYMENT_<name>_MSVC_RUNTIME
+function(_cs_deployment_set_closure_settings name excludes directories msvc_runtime)
+  if(NOT "${excludes}" STREQUAL "")
+    _cs_deployment_set_setting(${name} EXCLUDE_REGEXES CSCMAKE_DEPLOYMENT_${name}_EXCLUDE_REGEXES "${excludes}")
+  endif()
+  if(NOT "${directories}" STREQUAL "")
+    _cs_deployment_absolute_paths(${name} "${directories}" DIRECTORIES absolute)
+    _cs_deployment_set_setting(${name} DIRECTORIES CSCMAKE_DEPLOYMENT_${name}_DIRECTORIES "${absolute}")
+  endif()
+  if(NOT "${msvc_runtime}" STREQUAL "")
+    if(NOT msvc_runtime MATCHES "^(ON|OFF)$")
+      message(FATAL_ERROR "[cs_deployment] ${name}: MSVC_RUNTIME ${msvc_runtime}: ON or OFF")
+    endif()
+    _cs_deployment_set_setting(${name} MSVC_RUNTIME CSCMAKE_DEPLOYMENT_${name}_MSVC_RUNTIME "${msvc_runtime}")
+  endif()
+endfunction()
+
 # Fail unless every configuration of configs is a configuration of the project (once each).
 function(_cs_deployment_check_configs name configs)
   cs_get_build_configurations(project_configs)
@@ -285,7 +324,7 @@ function(_cs_deployment_install_files name destination files directories)
 endfunction()
 
 # Set out to the paths of the keyword made absolute (from the current source folder; a trailing / kept): files (FILES)
-# or folders (DIRECTORY); fail when one does not exist or is of the other kind. Paths with generator
+# or folders (DIRECTORY, DIRECTORIES); fail when one does not exist or is of the other kind. Paths with generator
 # expressions are kept as given.
 function(_cs_deployment_absolute_paths name paths keyword out)
   set(result "")
@@ -488,34 +527,30 @@ endfunction()
 
 # Add the install rule shipping the libraries of other packages the targets and the plugins of the deployment name
 # need, then checking the deployment (modules/scripts/csDeploymentClosure.cmake), after the targets, in the component
-# of the deployment. Linux only (native builds): elsewhere, a warning.
+# of the deployment; on Windows with MSVC, the rule of the C++ runtime of MSVC. Native builds on Linux, Windows and
+# macOS: elsewhere, a warning.
 #
 # Reads:
 #
-# * global property CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES
+# * global property CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES, CSCMAKE_DEPLOYMENT_<name>_DIRECTORIES
 function(_cs_deployment_add_closure name targets)
-  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_CROSSCOMPILING)
+  if(CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Darwin)$")
     message(
       WARNING
-      "[cs_deployment] ${name}: the libraries of other packages are shipped on Linux only, in native builds: the "
-      "deployment has the binaries of the project only"
+      "[cs_deployment] ${name}: the libraries of other packages are shipped in native builds on Linux, Windows and "
+      "macOS only: the deployment has the binaries of the project only"
     )
     return()
   endif()
-  set(call "_cs_deployment_closure(NAME ${name} CONFIG $<CONFIG> LIBDIR [==[${CMAKE_INSTALL_LIBDIR}]==]")
-  foreach(target_name IN LISTS targets)
-    get_target_property(type ${target_name} TYPE)
-    if(type STREQUAL "EXECUTABLE")
-      string(APPEND call " BUILD_EXECUTABLES [==[$<TARGET_FILE:${target_name}>]==]")
-      string(APPEND call " EXECUTABLES [==[${CMAKE_INSTALL_BINDIR}/$<TARGET_FILE_NAME:${target_name}>]==]")
-    elseif(type STREQUAL "SHARED_LIBRARY")
-      string(APPEND call " BUILD_LIBRARIES [==[$<TARGET_FILE:${target_name}>]==]")
-      string(APPEND call " LIBRARIES [==[${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:${target_name}>]==]")
-    else()
-      string(APPEND call " BUILD_MODULES [==[$<TARGET_FILE:${target_name}>]==]")
-      string(APPEND call " MODULES [==[${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:${target_name}>]==]")
-    endif()
-  endforeach()
+  set(libdir ${CMAKE_INSTALL_LIBDIR})
+  if(WIN32)
+    set(libdir ${CMAKE_INSTALL_BINDIR})
+    _cs_deployment_install_msvc_runtime(${name})
+  endif()
+  set(call "_cs_deployment_closure(NAME ${name} CONFIG $<CONFIG> PLATFORM ${CMAKE_SYSTEM_NAME}")
+  string(APPEND call " LIBDIR [==[${libdir}]==] BINDIR [==[${CMAKE_INSTALL_BINDIR}]==]")
+  _cs_deployment_closure_binaries("${targets}" "${libdir}" binaries)
+  string(APPEND call "${binaries}")
   # the plugins, recorded by their install rules (_cs_deployment_add_plugin)
   string(APPEND call " BUILD_MODULES \${_cs_deployment_${name}_build_plugins}")
   string(APPEND call " MODULES \${_cs_deployment_${name}_plugins}")
@@ -523,9 +558,85 @@ function(_cs_deployment_add_closure name targets)
   foreach(regex IN LISTS excludes)
     string(APPEND call " EXCLUDE_REGEXES [==[${regex}]==]")
   endforeach()
+  get_property(directories GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_DIRECTORIES)
+  foreach(directory IN LISTS directories)
+    string(APPEND call " DIRECTORIES [==[${directory}]==]")
+  endforeach()
+  _cs_deployment_dependency_tool(tool)
   _cs_get_root_dir(cscmake_root)
   install(
-    CODE "include([==[${cscmake_root}/modules/scripts/csDeploymentClosure.cmake]==])\n${call})"
+    CODE "${tool}include([==[${cscmake_root}/modules/scripts/csDeploymentClosure.cmake]==])\n${call})"
+    COMPONENT cs_deploy_${name}
+    EXCLUDE_FROM_ALL
+  )
+endfunction()
+
+# Set out to the arguments of _cs_deployment_closure for the targets: BUILD_<kind> (their build-tree files) and <kind>
+# (their files in the deployment: executables in CMAKE_INSTALL_BINDIR, shared libraries in shared_dir, module
+# libraries in CMAKE_INSTALL_LIBDIR); on Windows, DIRECTORIES: the folders of the DLLs they need.
+function(_cs_deployment_closure_binaries targets shared_dir out)
+  set(result "")
+  foreach(target_name IN LISTS targets)
+    get_target_property(type ${target_name} TYPE)
+    set(file "[==[$<TARGET_FILE:${target_name}>]==]")
+    set(name "$<TARGET_FILE_NAME:${target_name}>")
+    if(type STREQUAL "EXECUTABLE")
+      string(APPEND result " BUILD_EXECUTABLES ${file} EXECUTABLES [==[${CMAKE_INSTALL_BINDIR}/${name}]==]")
+    elseif(type STREQUAL "SHARED_LIBRARY")
+      string(APPEND result " BUILD_LIBRARIES ${file} LIBRARIES [==[${shared_dir}/${name}]==]")
+    else()
+      string(APPEND result " BUILD_MODULES ${file} MODULES [==[${CMAKE_INSTALL_LIBDIR}/${name}]==]")
+    endif()
+    if(WIN32)
+      # one argument per folder: [==[<dir 1>]==] [==[<dir 2>]==]
+      string(APPEND result " DIRECTORIES [==[$<JOIN:$<TARGET_RUNTIME_DLL_DIRS:${target_name}>,]==] [==[>]==]")
+    endif()
+  endforeach()
+  set(${out} "${result}" PARENT_SCOPE)
+endfunction()
+
+# Set out to the code choosing the tool of file(GET_RUNTIME_DEPENDENCIES) in the install script: on Windows with MSVC,
+# dumpbin (next to the compiler or the linker, else on the PATH; not found: CMake chooses); else empty (CMake chooses).
+function(_cs_deployment_dependency_tool out)
+  set(code "")
+  if(WIN32 AND MSVC)
+    cmake_path(GET CMAKE_CXX_COMPILER PARENT_PATH compiler_dir)
+    cmake_path(GET CMAKE_LINKER PARENT_PATH linker_dir)
+    find_program(dumpbin NAMES dumpbin HINTS "${compiler_dir}" "${linker_dir}" NO_CACHE)
+    if(dumpbin)
+      set(code "set(CMAKE_GET_RUNTIME_DEPENDENCIES_TOOL dumpbin)\n")
+      string(APPEND code "set(CMAKE_GET_RUNTIME_DEPENDENCIES_COMMAND [==[${dumpbin}]==])\n")
+    endif()
+  endif()
+  set(${out} "${code}" PARENT_SCOPE)
+endfunction()
+
+# Windows with MSVC, MSVC_RUNTIME ON (default): install the C++ runtime of MSVC (InstallRequiredSystemLibraries, its
+# variables local to this function) next to the executables, in the component of the deployment name; fail when it is
+# not found.
+#
+# Reads:
+#
+# * global property CSCMAKE_DEPLOYMENT_<name>_MSVC_RUNTIME
+function(_cs_deployment_install_msvc_runtime name)
+  # cscmake-lint: disable=CS103 the input variables of InstallRequiredSystemLibraries, local to this function
+  get_property(msvc_runtime GLOBAL PROPERTY CSCMAKE_DEPLOYMENT_${name}_MSVC_RUNTIME)
+  if(NOT MSVC OR msvc_runtime STREQUAL "OFF")
+    return()
+  endif()
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS "")
+  include(InstallRequiredSystemLibraries)
+  if(NOT CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+    message(
+      FATAL_ERROR
+      "[cs_deployment] ${name}: the C++ runtime of MSVC is not found (InstallRequiredSystemLibraries): install the "
+      "redistributable of Visual Studio, or cs_deployment(${name} MSVC_RUNTIME OFF)"
+    )
+  endif()
+  install(
+    PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT cs_deploy_${name}
     EXCLUDE_FROM_ALL
   )
@@ -710,6 +821,14 @@ endfunction()
 # .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_EXCLUDE_REGEXES
 #
 #   The ``EXCLUDE_REGEXES`` of the deployment.
+#
+# .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_DIRECTORIES
+#
+#   The ``DIRECTORIES`` of the deployment, made absolute.
+#
+# .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_MSVC_RUNTIME
+#
+#   The ``MSVC_RUNTIME`` of the deployment, when given (``ON`` by default).
 #
 # .. prop_gbl:: CSCMAKE_DEPLOYMENT_<name>_DIR
 #

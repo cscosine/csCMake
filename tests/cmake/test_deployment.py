@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import shutil
 import subprocess
 import sys
@@ -54,8 +56,17 @@ def _build(project_dir: Path, target: str | None = None) -> subprocess.Completed
     return subprocess.run(command, capture_output=True, text=True, check=False)
 
 
-def _files(folder: Path) -> set[str]:
+# the C++ runtime of MSVC in a deployment (Windows with MSVC, MSVC_RUNTIME ON): its DLLs vary with the compiler
+MSVC_RUNTIME_FILE = re.compile(r"bin/(vcruntime|msvcp|concrt|vccorlib|vcomp)[0-9]+[0-9a-z_]*\.dll", re.IGNORECASE)
+
+
+def _all_files(folder: Path) -> set[str]:
     return {path.relative_to(folder).as_posix() for path in folder.rglob("*") if path.is_file()}
+
+
+def _files(folder: Path) -> set[str]:
+    """The files of folder, but the C++ runtime of MSVC (test_msvc_runtime)."""
+    return {name for name in _all_files(folder) if not MSVC_RUNTIME_FILE.fullmatch(name)}
 
 
 def _deploy(project_dir: Path, body: str, target: str, args: list[str] | None = None) -> Path:
@@ -214,6 +225,7 @@ def test_fails_in_a_configuration_not_listed(tmp_path: Path) -> None:
     assert not (tmp_path / "build" / "deploy" / "demo-Debug").exists()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows: a Debug deployment fails (test_debug_runtime_fails)")
 def test_other_configurations(tmp_path: Path) -> None:
     """CONFIGS chooses the configurations (here Debug: the postfixed output names)."""
     deploy = _deploy(tmp_path, "cs_deployment(demo TARGETS app CONFIGS Debug)\n", "cs_deploy_demo", args=[])
@@ -372,37 +384,64 @@ cs_deployment(demo TARGETS inner_app)
     assert "demo: already a deployment of the project cstest" in _text(result.output), result.output
 
 
-# --- the libraries of other packages (Linux) ---
+# --- the libraries of other packages ---
 
-linux_only = pytest.mark.skipif(sys.platform != "linux", reason="the libraries of other packages: Linux only")
+WINDOWS = sys.platform == "win32"
+MACOS = sys.platform == "darwin"
+linux_only = pytest.mark.skipif(sys.platform != "linux", reason="system-requirements.txt: Linux only")
+rpath_only = pytest.mark.skipif(WINDOWS, reason="RPATH: Linux and macOS")
+windows_only = pytest.mark.skipif(not WINDOWS, reason="Windows only")
 
-# another package (plain CMake): ext links ext2, both versioned (symlink chains), RPATH $ORIGIN unless EXT_RPATH
+# another package (plain CMake): ext links ext2, both versioned (symlink chains on Linux and macOS), RPATH $ORIGIN
+# (@loader_path) unless EXT_RPATH; DLLs in bin/ on Windows
 EXTERNAL = {
     "CMakeLists.txt": """cmake_minimum_required(VERSION 3.31)
 project(ext LANGUAGES CXX)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+if(APPLE)
+  set(origin "@loader_path")
+else()
+  set(origin "$ORIGIN")
+endif()
 add_library(ext2 SHARED ext2.cpp)
 add_library(ext SHARED ext.cpp)
 target_link_libraries(ext PRIVATE ext2)
-set(EXT_RPATH "$ORIGIN" CACHE STRING "")
+set(EXT_RPATH "${origin}" CACHE STRING "")
 set_target_properties(ext ext2 PROPERTIES VERSION 1.2.3 SOVERSION 1 INSTALL_RPATH "${EXT_RPATH}")
-install(TARGETS ext ext2 EXPORT extTargets LIBRARY DESTINATION lib)
+install(TARGETS ext ext2 EXPORT extTargets RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(EXPORT extTargets NAMESPACE ext:: DESTINATION lib/cmake/ext FILE extConfig.cmake)
 # a plugin, laid out as the Qt ones: plugins/<type>/, RPATH $ORIGIN/../../lib, needing ext3 (not used by the
 # applications)
 add_library(ext3 SHARED ext3.cpp)
 add_library(fake MODULE fake.cpp)
 target_link_libraries(fake PRIVATE ext3)
-set_target_properties(ext3 PROPERTIES INSTALL_RPATH "$ORIGIN")
-set_target_properties(fake PROPERTIES INSTALL_RPATH "$ORIGIN/../../lib")
-install(TARGETS ext3 LIBRARY DESTINATION lib)
+set_target_properties(ext3 PROPERTIES INSTALL_RPATH "${origin}")
+set_target_properties(fake PROPERTIES INSTALL_RPATH "${origin}/../../lib")
+install(TARGETS ext3 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(TARGETS fake LIBRARY DESTINATION plugins/platforms)
 """,
     "ext3.cpp": "int ext3() { return 3; }\n",
-    "fake.cpp": "int ext3();\nint fake() { return ext3(); }\n",
+    # exported (on Windows, an unused function of a DLL is dropped, and its import of ext3 with it)
+    "fake.cpp": "int ext3();\n#ifdef _WIN32\n__declspec(dllexport)\n#endif\nint fake() { return ext3(); }\n",
     "ext2.cpp": "int ext2() { return 2; }\n",
     "ext.cpp": "int ext2();\nint ext() { return ext2() - 1; }\n",
 }
-EXT_FILES = {"lib/libext.so.1", "lib/libext.so.1.2.3", "lib/libext2.so.1", "lib/libext2.so.1.2.3"}
+
+
+def _ext_files(name: str) -> set[str]:
+    """The files of the library name of the other package in a deployment (with its symlink chain)."""
+    if WINDOWS:
+        return {f"bin/{name}.dll"}
+    if MACOS:
+        return {f"lib/lib{name}.1.dylib", f"lib/lib{name}.1.2.3.dylib"}
+    return {f"lib/lib{name}.so.1", f"lib/lib{name}.so.1.2.3"}
+
+
+EXT_FILES = _ext_files("ext") | _ext_files("ext2")
+# the symlink of libext (Linux, macOS): its soname, its install name
+EXT_SYMLINK = "lib/libext.1.dylib" if MACOS else "lib/libext.so.1"
+EXT3_FILE = {"win32": "bin/ext3.dll", "darwin": "lib/libext3.dylib"}.get(sys.platform, "lib/libext3.so")
+PLUGIN_FILE = "plugins/platforms/" + ("fake.dll" if WINDOWS else "libfake.so")
 # the application and the sample link the library of the other package too
 EXT_TARGETS = """
 find_package(ext CONFIG REQUIRED)
@@ -411,22 +450,29 @@ cs_target_link_libraries(sample PRIVATE ext::ext)
 """
 EXT_SOURCES = {
     **SOURCES,
-    "main.cpp": "int core();\nint st();\nint ext();\nint main() { return core() + st() + ext() - 4; }\n",
-    "sample.cpp": "int core();\nint ext();\nint main() { return core() + ext() - 2; }\n",
+    "main.cpp": f"{IMPORT}int core();\nint st();\nint ext();\nint main() {{ return core() + st() + ext() - 4; }}\n",
+    "sample.cpp": f"{IMPORT}int core();\nint ext();\nint main() {{ return core() + ext() - 2; }}\n",
 }
 
 
-def _external(folder: Path, rpath: str = "$ORIGIN") -> Path:
-    """Build and install the other package in folder; its install prefix."""
+def _clean_environment() -> dict[str, str]:
+    """An environment with nothing to find libraries with: empty; Windows: PATH with the system folder only."""
+    if WINDOWS:
+        system_root = os.environ["SYSTEMROOT"]  # case-insensitive on Windows
+        return {"SystemRoot": system_root, "PATH": str(Path(system_root) / "System32")}
+    return {}
+
+
+def _external(folder: Path, rpath: str | None = None) -> Path:
+    """Build and install the other package in folder (EXT_RPATH: rpath when given); its install prefix."""
     for name, content in EXTERNAL.items():
         (folder / "ext-src").mkdir(parents=True, exist_ok=True)
         (folder / "ext-src" / name).write_text(content, encoding="utf-8")
     prefix = folder / "ext"
-    for command in (
-        ["-S", "ext-src", "-B", "ext-build", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", f"-DEXT_RPATH={rpath}"],
-        ["--build", "ext-build"],
-        ["--install", "ext-build", "--prefix", str(prefix)],
-    ):
+    configure_args = ["-S", "ext-src", "-B", "ext-build", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release"]
+    if rpath is not None:
+        configure_args.append(f"-DEXT_RPATH={rpath}")
+    for command in (configure_args, ["--build", "ext-build"], ["--install", "ext-build", "--prefix", str(prefix)]):
         run = subprocess.run(["cmake", *command], cwd=folder, capture_output=True, text=True, check=False)
         assert run.returncode == 0, run.stdout + run.stderr
     return prefix
@@ -436,16 +482,15 @@ def _deploy_ext(
     project_dir: Path, ext: Path, body: str, target: str = "cs_deploy_demo"
 ) -> subprocess.CompletedProcess[str]:
     """Configure INIT + TARGETS + EXT_TARGETS + body against the other package (Release), build the target."""
-    args = [*RELEASE, f"-DCMAKE_PREFIX_PATH={ext}"]
+    args = [*RELEASE, f"-DCMAKE_PREFIX_PATH={ext.as_posix()}"]
     result = configure(project_dir, INIT + TARGETS + EXT_TARGETS + body, EXT_SOURCES, args=args)
     assert result.returncode == 0, result.output
     return _build(project_dir, target)
 
 
-@linux_only
 def test_ships_the_libraries_of_other_packages(tmp_path: Path) -> None:
     """Two deployments: each gets the libraries of the other package (with their symlinks), not the ones of the
-    system; each application runs with an empty environment."""
+    system; each application runs with a clean environment."""
     ext = _external(tmp_path)
     body = "cs_deployment(first TARGETS app)\ncs_deployment(second TARGETS sample)\n"
     for target in ("cs_deploy_first", "cs_deploy_second"):
@@ -454,11 +499,12 @@ def test_ships_the_libraries_of_other_packages(tmp_path: Path) -> None:
         assert "2 libraries of other packages shipped" in _text(built.stdout)
 
     deploy = tmp_path / "project" / "build" / "deploy"
-    assert _files(deploy / "first-Release") == {"bin/app", SHARED_LIB, *EXT_FILES, *REPORT}
-    assert _files(deploy / "second-Release") == {"bin/sample", SHARED_LIB, *EXT_FILES, *REPORT}
-    assert (deploy / "first-Release" / "lib" / "libext.so.1").is_symlink()
+    assert _files(deploy / "first-Release") == {f"bin/app{EXE}", SHARED_LIB, *EXT_FILES, *REPORT}
+    assert _files(deploy / "second-Release") == {f"bin/sample{EXE}", SHARED_LIB, *EXT_FILES, *REPORT}
+    if not WINDOWS:
+        assert (deploy / "first-Release" / EXT_SYMLINK).is_symlink()
     for folder, program in (("first-Release", "app"), ("second-Release", "sample")):
-        run = subprocess.run([str(deploy / folder / "bin" / program)], env={}, check=False)
+        run = subprocess.run([str(deploy / folder / "bin" / f"{program}{EXE}")], env=_clean_environment(), check=False)
         assert run.returncode == 0
 
 
@@ -466,14 +512,14 @@ def _plugin(ext: Path) -> str:
     """CMake code: the imported target fakeplugin, the plugin of the other package."""
     return (
         "add_library(fakeplugin MODULE IMPORTED)\n"
-        f'set_target_properties(fakeplugin PROPERTIES IMPORTED_LOCATION "{ext}/plugins/platforms/libfake.so")\n'
+        f'set_target_properties(fakeplugin PROPERTIES IMPORTED_LOCATION "{(ext / PLUGIN_FILE).as_posix()}")\n'
     )
 
 
-@linux_only
 def test_plugins(tmp_path: Path) -> None:
-    """A plugin goes to its DESTINATION with the libraries it needs (libext3, which the application does not
-    need); loaded from the deployment with an empty environment, it finds them (its RPATH, $ORIGIN/../../lib)."""
+    """A plugin goes to its DESTINATION with the libraries it needs (ext3, which the application does not need; found
+    on Windows in the folders of the DLLs of the targets); loaded from the deployment with an empty environment, it
+    finds them (Linux, macOS: its RPATH, $ORIGIN/../../lib)."""
     ext = _external(tmp_path)
     body = _plugin(ext) + "cs_deployment(demo TARGETS app PLUGINS fakeplugin DESTINATION plugins/platforms/)\n"
 
@@ -481,19 +527,12 @@ def test_plugins(tmp_path: Path) -> None:
 
     assert built.returncode == 0, built.stdout + built.stderr
     deploy = tmp_path / "project" / "build" / "deploy" / "demo-Release"
-    assert _files(deploy) == {
-        "bin/app",
-        SHARED_LIB,
-        *EXT_FILES,
-        "lib/libext3.so",
-        "plugins/platforms/libfake.so",
-        *REPORT,
-    }
-    load = f"import ctypes; ctypes.CDLL({str(deploy / 'plugins' / 'platforms' / 'libfake.so')!r})"
-    assert subprocess.run([sys.executable, "-c", load], env={}, check=False).returncode == 0
+    assert _files(deploy) == {f"bin/app{EXE}", SHARED_LIB, *EXT_FILES, EXT3_FILE, PLUGIN_FILE, *REPORT}
+    if not WINDOWS:  # Windows: the DLLs of a plugin are found next to the executable that loads it
+        load = f"import ctypes; ctypes.CDLL({str(deploy / PLUGIN_FILE)!r})"
+        assert subprocess.run([sys.executable, "-c", load], env={}, check=False).returncode == 0
 
 
-@linux_only
 def test_a_plugin_of_a_subfolder(tmp_path: Path) -> None:
     """The plugin target defined in a subfolder (an imported target is visible there only, e.g. a find_package(Qt6) of
     the folder of the application), its deployment declared there: shipped and scanned, the project finalized at the
@@ -503,7 +542,7 @@ def test_a_plugin_of_a_subfolder(tmp_path: Path) -> None:
         **EXT_SOURCES,
         "sub/CMakeLists.txt": _plugin(ext) + "cs_deployment(demo PLUGINS fakeplugin DESTINATION plugins/platforms)\n",
     }
-    args = [*RELEASE, f"-DCMAKE_PREFIX_PATH={ext}"]
+    args = [*RELEASE, f"-DCMAKE_PREFIX_PATH={ext.as_posix()}"]
     body = INIT + TARGETS + EXT_TARGETS + "cs_deployment(demo TARGETS app)\nadd_subdirectory(sub)\n"
     result = configure(tmp_path / "project", body, files, args=args)
     assert result.returncode == 0, result.output
@@ -511,11 +550,9 @@ def test_a_plugin_of_a_subfolder(tmp_path: Path) -> None:
     built = _build(tmp_path / "project", "cs_deploy_demo")
 
     assert built.returncode == 0, built.stdout + built.stderr
-    deployed = _files(tmp_path / "project" / "build" / "deploy" / "demo-Release")
-    assert {"plugins/platforms/libfake.so", "lib/libext3.so"} <= deployed
+    assert {PLUGIN_FILE, EXT3_FILE} <= _files(tmp_path / "project" / "build" / "deploy" / "demo-Release")
 
 
-@linux_only
 def test_a_library_not_found_fails(tmp_path: Path) -> None:
     """A library of the other package removed after the build: not found, the deployment fails, and so does the
     install."""
@@ -525,29 +562,29 @@ def test_a_library_not_found_fails(tmp_path: Path) -> None:
         project,
         INIT + TARGETS + EXT_TARGETS + "cs_deployment(demo TARGETS app)\n",
         EXT_SOURCES,
-        args=[*RELEASE, f"-DCMAKE_PREFIX_PATH={ext}"],
+        args=[*RELEASE, f"-DCMAKE_PREFIX_PATH={ext.as_posix()}"],
     )
     assert configured.returncode == 0, configured.output
     assert _build(project, "app").returncode == 0
-    for library in (ext / "lib").glob("libext2.so*"):
-        library.unlink()
+    for name in _ext_files("ext2"):
+        (ext / name).unlink()
 
     run = subprocess.run(
         ["cmake", "--install", "build", "--prefix", "install"], cwd=project, capture_output=True, text=True, check=False
     )
 
     assert run.returncode != 0
-    assert (
-        "not found from the build tree (a library without the RPATH to find the ones it needs?): libext2.so.1"
-        in _text(run.stdout + run.stderr)
-    )
+    output = _text(run.stdout + run.stderr)
+    assert "libraries not found from the build tree" in output, output
+    assert "ext2" in output.split("libraries not found from the build tree")[1]
 
 
-@linux_only
+@rpath_only
 def test_a_binary_not_finding_its_libraries_fails(tmp_path: Path) -> None:
     """The install RPATH of the application does not reach lib/: the check fails."""
     ext = _external(tmp_path)
-    body = 'set_target_properties(app PROPERTIES INSTALL_RPATH "$ORIGIN/nowhere")\ncs_deployment(demo TARGETS app)\n'
+    origin = "@loader_path" if MACOS else "$ORIGIN"
+    body = f'set_target_properties(app PROPERTIES INSTALL_RPATH "{origin}/nowhere")\ncs_deployment(demo TARGETS app)\n'
 
     built = _deploy_ext(tmp_path / "project", ext, body)
 
@@ -555,13 +592,14 @@ def test_a_binary_not_finding_its_libraries_fails(tmp_path: Path) -> None:
     assert "libraries not found from the deployment" in _text(built.stdout + built.stderr)
 
 
-@linux_only
+@rpath_only
 def test_a_shadowed_library_fails(tmp_path: Path) -> None:
     """The application finds the library of the other package outside the deployment (an absolute RPATH first), while
     the deployment ships it: the check fails."""
     ext = _external(tmp_path)
+    origin = "@loader_path" if MACOS else "$ORIGIN"
     body = (
-        f'set_target_properties(app PROPERTIES INSTALL_RPATH "{ext}/lib;$ORIGIN/../lib")\n'
+        f'set_target_properties(app PROPERTIES INSTALL_RPATH "{ext}/lib;{origin}/../lib")\n'
         "cs_deployment(demo TARGETS app)\n"
     )
 
@@ -569,33 +607,33 @@ def test_a_shadowed_library_fails(tmp_path: Path) -> None:
 
     assert built.returncode != 0
     output = _text(built.stdout + built.stderr)
-    assert "libext.so.1 resolves to" in output
+    assert "resolves to" in output
     assert "which ships it: a binary does not find the copy of the deployment" in output
 
 
-@linux_only
 def test_excluded_libraries(tmp_path: Path) -> None:
     """EXCLUDE_REGEXES: not shipped (the machines running the deployment have it), and ignored by the check."""
     ext = _external(tmp_path)
 
-    built = _deploy_ext(tmp_path / "project", ext, "cs_deployment(demo TARGETS app EXCLUDE_REGEXES ^libext2)\n")
+    built = _deploy_ext(tmp_path / "project", ext, "cs_deployment(demo TARGETS app EXCLUDE_REGEXES ext2[.])\n")
 
     assert built.returncode == 0, built.stdout + built.stderr
     deployed = _files(tmp_path / "project" / "build" / "deploy" / "demo-Release")
-    assert deployed == {"bin/app", SHARED_LIB, "lib/libext.so.1", "lib/libext.so.1.2.3", *REPORT}
+    assert deployed == {f"bin/app{EXE}", SHARED_LIB, *_ext_files("ext"), *REPORT}
 
 
 @linux_only
 def test_libraries_without_rpath(tmp_path: Path) -> None:
-    """The other package without RPATH: libext does not find libext2 (its RPATH), the deployment fails."""
+    """The other package without RPATH: libext does not find libext2 (its RPATH), the deployment fails. (macOS: found
+    through the RPATH of the executable from the build tree, then not from the deployment: the check fails.)"""
     ext = _external(tmp_path, rpath="")
 
     built = _deploy_ext(tmp_path / "project", ext, "cs_deployment(demo TARGETS app)\n")
 
     assert built.returncode != 0
-    assert "not found from the build tree (a library without the RPATH to find the ones it needs?): libext2.so.1" in (
-        _text(built.stdout + built.stderr)
-    )
+    output = _text(built.stdout + built.stderr)
+    assert "libraries not found from the build tree (Linux, macOS: a library without the RPATH" in output, output
+    assert "ext2" in output.split("libraries not found from the build tree")[1]
 
 
 @linux_only
@@ -617,12 +655,26 @@ def test_system_requirements(tmp_path: Path) -> None:
         assert "libc6" in apt.split()[2:], report
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="Linux ships the libraries of other packages")
-def test_other_systems_warn(tmp_path: Path) -> None:
-    result = configure(tmp_path, INIT + TARGETS + "cs_deployment(demo TARGETS app)\n", SOURCES)
+@windows_only
+def test_msvc_runtime(tmp_path: Path) -> None:
+    """Windows with MSVC: the C++ runtime of MSVC next to the executables, unless MSVC_RUNTIME OFF."""
+    deploy = _deploy(tmp_path / "on", "cs_deployment(demo TARGETS app)\n", "cs_deploy_demo")
+    assert "bin/vcruntime140.dll" in _all_files(deploy / "demo-Release")
 
+    deploy = _deploy(tmp_path / "off", "cs_deployment(demo TARGETS app MSVC_RUNTIME OFF)\n", "cs_deploy_demo")
+    assert not any(MSVC_RUNTIME_FILE.match(name) for name in _all_files(deploy / "demo-Release"))
+
+
+@windows_only
+def test_debug_runtime_fails(tmp_path: Path) -> None:
+    """Windows with MSVC: a Debug deployment needs the debug C runtime of MSVC, not redistributable: it fails."""
+    result = configure(tmp_path, INIT + TARGETS + "cs_deployment(demo TARGETS app CONFIGS Debug)\n", SOURCES)
     assert result.returncode == 0, result.output
-    assert "the libraries of other packages are shipped on Linux only" in _text(result.output)
+
+    built = _build(tmp_path, "cs_deploy_demo")
+
+    assert built.returncode != 0
+    assert "a debug C runtime of MSVC, not redistributable" in _text(built.stdout + built.stderr)
 
 
 @pytest.mark.parametrize(
@@ -631,6 +683,16 @@ def test_other_systems_warn(tmp_path: Path) -> None:
         (
             "cs_deployment(demo TARGETS app EXCLUDE_REGEXES a)\ncs_deployment(demo EXCLUDE_REGEXES b)",
             "EXCLUDE_REGEXES b, but already EXCLUDE_REGEXES a (given once per deployment)",
+        ),
+        ("cs_deployment(demo TARGETS app DIRECTORIES missing)", "DIRECTORIES missing is not a folder"),
+        (
+            "cs_deployment(demo TARGETS app DIRECTORIES data)\ncs_deployment(demo DIRECTORIES data/sub)",
+            "but already DIRECTORIES",
+        ),
+        ("cs_deployment(demo TARGETS app MSVC_RUNTIME maybe)", "MSVC_RUNTIME maybe: ON or OFF"),
+        (
+            "cs_deployment(demo TARGETS app MSVC_RUNTIME ON)\ncs_deployment(demo MSVC_RUNTIME OFF)",
+            "MSVC_RUNTIME OFF, but already MSVC_RUNTIME ON (given once per deployment)",
         ),
         ("cs_deployment(demo TARGETS app PLUGINS nothing DESTINATION p)", "PLUGINS nothing is not a target"),
         (
@@ -646,6 +708,10 @@ def test_other_systems_warn(tmp_path: Path) -> None:
     ],
     ids=[
         "exclude-regexes-changed",
+        "missing-directory",
+        "directories-changed",
+        "msvc-runtime-not-a-switch",
+        "msvc-runtime-changed",
         "plugin-unknown",
         "plugin-not-imported",
         "plugin-without-destination",

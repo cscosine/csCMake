@@ -12,8 +12,8 @@ folder), runs the csv1 workflow presets (configure, build, install, ctest) for e
 runs the installed applications of each configuration, checks the ``find_dependency`` calls of every installed
 ``<Package>Config.cmake`` (PUBLIC ``cs_find_package`` propagated, PRIVATE not) and lints it with cscmake-lint.
 Then it moves the install folder (relocation): the installed applications run from there, and two consumers are built
-again against it. Last, it checks the deployments (cs_deployment) the installs made: their files and, on Linux, their
-applications run with an empty environment (the install folder moved away: nothing found from there).
+again against it. Last, it checks the deployments (cs_deployment) the installs made: their files, and their
+applications run with a clean environment (empty; Windows: System32 only on PATH), the install folder moved away.
 
 Usage:
     python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
@@ -125,12 +125,12 @@ class Deployment:
     configs: tuple[str, ...]  # the CMake configurations it is made in (none in the others)
     app: App  # the deployed application (in bin/)
     files: tuple[str, ...] = ()  # other files of the deployment, relative to its folder
-    libraries: tuple[str, ...] = ()  # Linux: the shared libraries shipped (path prefixes, e.g. lib/libsharedCore)
+    libraries: tuple[str, ...] = ()  # the shared libraries shipped, by name (e.g. sharedCore: lib/libsharedCore*)
     not_installed: tuple[str, ...] = ()  # names (glob) deployed but not in the install folder of the project
 
 
 # the shared libraries of the deployments of csSmokeDeploy: its own, and the ones of csSmokeShared (another package)
-SMOKE_DEPLOY_LIBRARIES = ("lib/libdeployCore", "lib/libsharedText", "lib/libsharedCore")
+SMOKE_DEPLOY_LIBRARIES = ("deployCore", "sharedText", "sharedCore")
 # the deployments of the smoke projects, made by the install step of the workflow presets
 DEPLOYMENTS = (
     # the one of the quick start: the application alone (static libraries)
@@ -519,7 +519,7 @@ def run_smoke(variant: str, workspace: Path, lint: bool = True) -> None:
             with group(f"{project.name}: cscmake-lint installed {project.name}Config.cmake"):
                 lint_installed_config(workspace, variant, project)
     check_relocation(ctx, variant, workspace)
-    with group("deployments: their folders, their applications run with an empty environment"):
+    with group("deployments: their folders, their applications run with a clean environment"):
         check_deployments(workspace, variant)
 
 
@@ -529,18 +529,24 @@ def deployment_folder(workspace: Path, variant: str, deployment: Deployment, con
     return workspace / "deploy" / variant / deployment.project / f"{deployment.name}-{config}"
 
 
+def shared_library_prefix(name: str) -> str:
+    """The start of the path of the shared library ``name`` in a deployment: next to the executables on Windows."""
+    return f"bin/{name}" if os.name == "nt" else f"lib/lib{name}"
+
+
 def check_deployment_files(folder: Path, deployment: Deployment, config: Config) -> None:
-    """The application and the files of the deployment are in ``folder``, nothing that is not run time; on Linux, the
-    shared libraries it ships too, and system-requirements.txt (libc among them)."""
+    """The application, the shared libraries it ships and the files of the deployment are in ``folder``, nothing that
+    is not run time; Windows with MSVC: its C++ runtime; Linux: system-requirements.txt (libc among them)."""
     suffix = ".exe" if os.name == "nt" else ""
     files = {path.relative_to(folder).as_posix() for path in folder.rglob("*") if path.is_file()}
     print(f"{folder}: {sorted(files)}", flush=True)
     expected = {f"bin/{deployment.app.name}{config.postfix}{suffix}", *deployment.files}
+    for prefix in (shared_library_prefix(name) for name in deployment.libraries):
+        if not any(name.startswith(prefix) for name in files):
+            raise SmokeError(f"{folder}: no {prefix}* in {sorted(files)}")
+    if os.name == "nt" and not any(name.lower().startswith("bin/vcruntime") for name in files):
+        raise SmokeError(f"{folder}: no C++ runtime of MSVC (bin/vcruntime*.dll)")
     if sys.platform == "linux":
-        libraries = [name for name in files if name.startswith("lib/")]
-        for prefix in deployment.libraries:
-            if not any(name.startswith(prefix) for name in libraries):
-                raise SmokeError(f"{folder}: no {prefix}* in the shared libraries {sorted(libraries)}")
         report = folder / "system-requirements.txt"
         if not report.is_file() or "libc.so.6 " not in report.read_text(encoding="utf-8"):
             raise SmokeError(f"{report}: missing, or without libc.so.6")
@@ -550,10 +556,19 @@ def check_deployment_files(folder: Path, deployment: Deployment, config: Config)
         raise SmokeError(f"{folder}: not run time, never deployed: {unexpected}")
 
 
+def clean_environment() -> dict[str, str]:
+    """An environment with nothing to find libraries with: empty; Windows: PATH with the system folder only."""
+    if os.name == "nt":
+        system_root = os.environ["SYSTEMROOT"]  # case-insensitive on Windows
+        return {"SystemRoot": system_root, "PATH": str(Path(system_root) / "System32")}
+    return {}
+
+
 def run_deployed_app(folder: Path, deployment: Deployment, config: Config) -> None:
-    """Run the application of the deployment with an empty environment and check its output."""
-    app = folder / "bin" / f"{deployment.app.name}{config.postfix}"
-    result = subprocess.run([str(app)], capture_output=True, text=True, env={}, check=False)
+    """Run the application of the deployment with a clean environment and check its output."""
+    suffix = ".exe" if os.name == "nt" else ""
+    app = folder / "bin" / f"{deployment.app.name}{config.postfix}{suffix}"
+    result = subprocess.run([str(app)], capture_output=True, text=True, env=clean_environment(), check=False)
     lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     print(f"{app}: exit code {result.returncode}, output {lines}", flush=True)
     if result.returncode != 0 or lines != list(deployment.app.output):
@@ -565,8 +580,8 @@ def run_deployed_app(folder: Path, deployment: Deployment, config: Config) -> No
 
 def check_deployments(workspace: Path, variant: str) -> None:
     """Each deployment of DEPLOYMENTS: in the deploy/ folder of the workspace, one folder per configuration it lists,
-    none in the others, none in the build folders; its files; on Linux, its application runs from it with an empty
-    environment. Nothing of a deployment in the install folders (a sample: not installed)."""
+    none in the others, none in the build folders; its files; its application runs from it with a clean environment.
+    Nothing of a deployment in the install folders (a sample: not installed)."""
     if in_build := sorted(path for path in (workspace / "build").rglob("deploy") if path.is_dir()):
         raise SmokeError(f"deployments in the build folders, expected in {workspace / 'deploy'}: {in_build}")
     for deployment in DEPLOYMENTS:
@@ -580,10 +595,7 @@ def check_deployments(workspace: Path, variant: str) -> None:
             if not folder.is_dir():
                 raise SmokeError(f"{deployment.name} {config.cmake}: {folder} not found")
             check_deployment_files(folder, deployment, config)
-            if sys.platform == "linux":
-                run_deployed_app(folder, deployment, config)
-            else:
-                print(f"{deployment.name} {config.cmake}: not run (other packages shipped on Linux only)", flush=True)
+            run_deployed_app(folder, deployment, config)
         installed = workspace / RELOCATED_INSTALL / variant / deployment.project
         if found := [path for pattern in deployment.not_installed for path in installed.rglob(pattern)]:
             raise SmokeError(f"{installed}: deployed, not installed: {found}")

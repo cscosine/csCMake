@@ -173,13 +173,17 @@ that runs on another machine without the workspace:
 deploy/app-Release/
   bin/myApp                      the application (and every target of TARGETS)
   lib/                           the shared libraries it needs: the project's own, and the ones of other packages
-  system-requirements.txt        what the machine needs from the system, with the apt install line
+                                 (Windows: in bin/, next to the application, with the C++ runtime of MSVC)
+  system-requirements.txt        Linux: what the machine needs from the system, with the apt install line
 ```
 
 - **Nothing else to write.** The shared libraries of the project come from the targets. The libraries of other
   packages (e.g. OpenCV and Qt from the workspace) are found from the build and copied with their symlinks. The
-  libraries of the system (`/lib`, `/usr/lib`) are not shipped: `system-requirements.txt` lists them, with their
-  Debian packages, for a machine with the same system release.
+  libraries of the system are not shipped (Linux: `/lib`, `/usr/lib`; Windows: the `Windows` folder; macOS:
+  `/usr/lib`, `/System`); on Linux `system-requirements.txt` lists them, with their Debian packages, for a machine
+  with the same system release. On Windows with MSVC, the deployment ships the C++ runtime of MSVC
+  (`MSVC_RUNTIME OFF`: the machine needs the Visual C++ Redistributable); a Debug deployment fails there (the debug
+  runtime is not redistributable).
 - **Checked.** The install fails if the folder would not run: a library not found, or a library of the system
   loaded instead of the copy in the folder (e.g. the Qt of the system).
 - **Independent of the package.** Nothing of it goes to the install folder, and it can ship targets the package does
@@ -197,8 +201,8 @@ Run it from anywhere, with an empty environment:
 env -i workspace/deploy/<variant>/myApp/app-Release/bin/myApp
 ```
 
-Linux today. On Windows and macOS a deployment has the binaries of the project only, for now, with a warning.
-[csDeployment](../reference/csDeployment.rst) is the reference.
+Linux, Windows and macOS, native builds (in a cross build, a deployment has the binaries of the project only, with a
+warning). [csDeployment](../reference/csDeployment.rst) is the reference.
 
 ## Next
 

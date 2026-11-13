@@ -92,7 +92,7 @@ In both, headers are included relative to the top project folder, in the build t
 | unit tests `textTest`, `csSmokeMidATest`, `csSmokeMidBTest` | exit code 0 |
 | default target in the installed `cscmake_commonTargets.cmake` | exactly `<Package>::cscmake_base_include` |
 | `find_dependency` in the installed Configs | `csSmokeBase`: none; `csSmokeMidA`, `csSmokeMidB`, `csSmokeEnv`: `csSmokeBase`; `csSmokeTop`: `csSmokeMidA` only; `csSmokeStandalone`, `csSmokeDeploy`: none |
-| deployments of `csSmokeDeploy` (`<build folder>/deploy/<name>-<config>`) | one folder per configuration they list, none in the others; the application (and the data file); never headers, static or import libraries, CMake or PDB files; on Linux the shared libraries of the project and of `csSmokeShared`, `system-requirements.txt`, and the applications print `deploy(shared-text(shared-core))` / `sample deploy(shared-text(shared-core))` run with an **empty environment**, after the install folder is moved away; the sample and the data are not in the install folder |
+| deployments of `myApp` and `csSmokeDeploy` (`deploy/<variant>/<project>/<name>-<config>` of the workspace) | one folder per configuration they list, none in the others, none in the build folders; the application (and the data file); never headers, static or import libraries, CMake or PDB files; the shared libraries of the project and of `csSmokeShared` (`lib/`, Windows: `bin/`); Windows with MSVC: its C++ runtime; Linux: `system-requirements.txt`; the applications print `Hello from myApp` / `deploy(shared-text(shared-core))` / `sample deploy(shared-text(shared-core))` run with a **clean environment** (empty; Windows: only `System32` on `PATH`), after the install folder is moved away; the sample and the data are not in the install folder |
 
 ## What a smoke run does
 
@@ -111,7 +111,7 @@ flowchart TD
     loop --> move["relocation: move install/ to install-relocated/<br/>no installed CMake file names install/"]
     move --> moved["run the installed applications<br/>from install-relocated/"]
     moved --> rebuild["build csSmokeTop and csSmokePlainConsumer again,<br/>new build folders, packages found in install-relocated/ only<br/>(CMAKE_PREFIX_PATH environment variable)"]
-    rebuild --> deployments["check the deployments of csSmokeDeploy<br/>Linux: run them with an empty environment"]
+    rebuild --> deployments["check the deployments of myApp and csSmokeDeploy<br/>run them with a clean environment"]
 ```
 
 The relocation checks that the installed packages can be moved (e.g. built on a CI machine and unpacked elsewhere):

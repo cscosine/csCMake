@@ -165,9 +165,9 @@ cs_deployment(app TARGETS myApp sample FILES data/input.png DESTINATION share/my
 
 The normal install also makes `deploy/app-Release/`: the executables, the shared libraries of the project and of the
 other packages they use (OpenCV, Qt, ... from the workspace, never the copies of the system), the data. Then it checks
-the folder: a library not found, or one of the system loaded instead of the shipped copy, fails the install.
-`system-requirements.txt` lists what the machine needs from the system, as an `apt install` line. Nothing of it goes
-to the installed package. Linux today; Windows and macOS next.
+the folder: a library not found, or one of the system loaded instead of the shipped copy, fails the install. On Linux,
+`system-requirements.txt` lists what the machine needs from the system, as an `apt install` line; on Windows, the C++
+runtime of MSVC is shipped too. Nothing of it goes to the installed package. Linux, Windows and macOS.
 ```
 
 ```{tab-item} Plain CMake

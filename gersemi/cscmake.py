@@ -87,8 +87,16 @@ command_definitions = {
     "cs_target_use_compile_profiles": {"front_positional_arguments": ["target"]},
     "cs_deployment": {
         "front_positional_arguments": ["name"],
-        "one_value_keywords": ["DESTINATION"],
-        "multi_value_keywords": ["TARGETS", "PLUGINS", "FILES", "DIRECTORY", "CONFIGS", "EXCLUDE_REGEXES"],
+        "one_value_keywords": ["DESTINATION", "MSVC_RUNTIME"],
+        "multi_value_keywords": [
+            "TARGETS",
+            "PLUGINS",
+            "FILES",
+            "DIRECTORY",
+            "CONFIGS",
+            "EXCLUDE_REGEXES",
+            "DIRECTORIES",
+        ],
     },
     "cs_target_runtime_environment": {
         "front_positional_arguments": ["target"],
