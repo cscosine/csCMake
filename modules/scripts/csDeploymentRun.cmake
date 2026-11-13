@@ -19,6 +19,8 @@ elseif(NOT config IN_LIST configs_list)
 endif()
 
 file(REMOVE_RECURSE "${out_dir}")
+# the folder of the deployment is not under the install prefix: a DESTDIR of the normal install does not apply
+set(ENV{DESTDIR} "")
 execute_process(
   COMMAND
     "${CMAKE_COMMAND}" --install "${build_dir}" --config "${config}" --component "${component}" --prefix "${out_dir}"

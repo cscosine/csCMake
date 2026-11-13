@@ -24,16 +24,14 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
 
 ## Runtime
 
-- [ ] Deployments, the shared libraries of other packages: `cs_deployment` resolves the closure of its targets
-  (`file(GET_RUNTIME_DEPENDENCIES)` on the build-tree binaries, `DIRECTORIES`, `EXCLUDE_REGEXES`), copies it to `lib/`
-  (`bin/` on Windows), system libraries excluded; unresolved or conflicting fails; a last check of the deployed folder
-  fails on a library resolved outside it that the deployment ships.
 - [ ] Deployments, plugins: `PLUGINS <imported module target>...` to `plugins/<QT_PLUGIN_TYPE>/` (Qt), as shipped.
-- [ ] Deployments on Windows and macOS: DLL folders, system exclusions, `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime,
-  default `ON`; debug CRT configurations fail), `@loader_path`.
+- [ ] Deployments on Windows and macOS: the shared libraries of other packages (today a warning, the binaries of the
+  project only): DLL folders (`$<TARGET_RUNTIME_DLL_DIRS>`, plus a `DIRECTORIES` option for the others), system
+  exclusions (`System32`, `api-ms-*`, `/System`), `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime, default `ON`; debug CRT configurations fail), `@loader_path`, the
+  `csSmokeDeploy` applications run in the smoke. OpenCV loads `opencv_videoio_ffmpeg*.dll` at run time: shipped as a
+  plugin (like the Qt ones). Cross builds: the libraries of the sysroot are the system ones.
 - [ ] Deployments in the presets: `CSCMAKE_DEPLOY_DIR` in the project setup layouts (`deploy/` of the workspace).
-- [ ] Deployments, smoke `csSmokeDeploy`: an application using csSmokeShared from another package, a sample deployed
-  but not installed, data; two deployments; run with an empty environment; a user-guide page.
+- [ ] Deployments, a user-guide page (and `docs/advanced/runtime-dependencies.md`).
 - [ ] Windows build folder in ctest and VS Code: the tests and `launch.json` need the `PATH` of `cs-env.bat` (e.g.
   `ENVIRONMENT_MODIFICATION` on the tests, an `envFile` generated next to the scripts).
 - [ ] MSVC ASan: the ASan runtime DLLs on the debugger `PATH` and in `cs-env.bat`.
@@ -74,7 +72,9 @@ project may be looser than its library.
 ## Presets and CI
 
 - [ ] A CI generator following the registry (`presets/csv1/variants.json`): a selection of variants per project.
-- [ ] Packaging of applications: CPack (archives, installers), with the deployment above.
+- [ ] Packaging of applications: CPack (archives, installers), with the deployment above. DEB: the `Depends` from
+  `CPACK_DEBIAN_PACKAGE_SHLIBDEPS` (`dpkg-shlibdeps`), the shipped libraries private
+  (`CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS`).
 
 ## Smoke
 

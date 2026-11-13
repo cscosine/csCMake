@@ -28,6 +28,15 @@ Since `v1.0.0-rc1`:
   a failing deployment fails the install; `-DCSCMAKE_DEPLOY_ON_INSTALL=OFF` turns it off. The build target
   `cs_deploy_<name>` makes it alone (fails in a configuration it does not list). `cs-deployments.json` in the top build
   folder lists the deployments of the build. Nothing changes for a project without `cs_deployment`.
+- **Deployments, the shared libraries of other packages** (Linux, native builds): a deployment also ships the shared
+  libraries of other packages its binaries need (e.g. OpenCV, Qt), found from the build tree, copied unchanged to
+  `lib/` with their symlinks; the libraries of the system (`/lib`, `/usr/lib`, ...) are not shipped, nor what they
+  need. Then the deployment is checked: every library its binaries need resolves in it or in the system, and every
+  library it ships resolves to its own copy, never to a library of the system of the same name. A library not found
+  or found twice fails. `system-requirements.txt` in the deployment lists the libraries of the system it needs, with
+  their Debian packages and the `apt install` line. `cs_deployment(... EXCLUDE_REGEXES <regex>...)` never ships (nor
+  checks) the matching libraries. On Windows, macOS and in cross builds: a warning, the deployment has the binaries of
+  the project only.
 
 Release candidate 1:
 

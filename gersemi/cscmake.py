@@ -88,7 +88,7 @@ command_definitions = {
     "cs_deployment": {
         "front_positional_arguments": ["name"],
         "one_value_keywords": ["DESTINATION"],
-        "multi_value_keywords": ["TARGETS", "FILES", "DIRECTORY", "CONFIGS"],
+        "multi_value_keywords": ["TARGETS", "FILES", "DIRECTORY", "CONFIGS", "EXCLUDE_REGEXES"],
     },
     "cs_target_runtime_environment": {
         "front_positional_arguments": ["target"],
