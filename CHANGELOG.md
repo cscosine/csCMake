@@ -10,16 +10,8 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
-Since `v1.0.0-rc1`:
+Since `v1.0.0-rc2`:
 
-- **Presets**: the configure preset of a variant inherits `cscmake-project-setup-<os>` (`linux`, `windows`,
-  `macos`) before `cscmake-project-setup`. `presets/csCMakeProjectSetup.json` defines them empty and includes the
-  new `presets/csCMakeProjectSetup-common.json` (`cscmake-common-project-setup` and the presets of the variants). A
-  project with a layout, or with its own setup on `csCMakeProjectSetup.json`: nothing to change. A project that sets
-  values per operating system includes `csCMakeProjectSetup-common.json` instead and defines the three OS presets
-  ([Presets](docs/user/presets.md#choosing-the-project-setup)).
-- **Presets**: the generated `cscmake-project-setup-<os>` and `cscmake-project-setup-<variant>` presets are hidden: the
-  list of the presets of a project (`cmake --list-presets`, IDEs) shows only the `csv1-*` presets of the host.
 - **Deployments** (new, `csDeployment`): `cs_deployment(<name> TARGETS ... [FILES|DIRECTORY ... DESTINATION ...]
   [CONFIGS ...])` declares a folder that runs without the build: the targets with the shared libraries of the project
   they need, and files (data, configuration, licences), run time only, independent of the installed package (e.g.
@@ -44,6 +36,17 @@ Since `v1.0.0-rc1`:
   (imported module libraries, loaded at run time) in a folder of the deployment, as they are, with the shared libraries
   they need (Linux); e.g. the Qt platform plugins: `PLUGINS Qt6::QXcbIntegrationPlugin DESTINATION plugins/platforms`.
   `DESTINATION` now goes with `PLUGINS`, `FILES` or `DIRECTORY`.
+
+Release candidate 2:
+
+- **Presets**: the configure preset of a variant inherits `cscmake-project-setup-<os>` (`linux`, `windows`,
+  `macos`) before `cscmake-project-setup`. `presets/csCMakeProjectSetup.json` defines them empty and includes the
+  new `presets/csCMakeProjectSetup-common.json` (`cscmake-common-project-setup` and the presets of the variants). A
+  project with a layout, or with its own setup on `csCMakeProjectSetup.json`: nothing to change. A project that sets
+  values per operating system includes `csCMakeProjectSetup-common.json` instead and defines the three OS presets
+  ([Presets](docs/user/presets.md#choosing-the-project-setup)).
+- **Presets**: the generated `cscmake-project-setup-<os>` and `cscmake-project-setup-<variant>` presets are hidden: the
+  list of the presets of a project (`cmake --list-presets`, IDEs) shows only the `csv1-*` presets of the host.
 
 Release candidate 1:
 
