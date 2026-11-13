@@ -20,6 +20,14 @@ Since `v1.0.0-rc1`:
   ([Presets](docs/user/presets.md#choosing-the-project-setup)).
 - **Presets**: the generated `cscmake-project-setup-<os>` and `cscmake-project-setup-<variant>` presets are hidden: the
   list of the presets of a project (`cmake --list-presets`, IDEs) shows only the `csv1-*` presets of the host.
+- **Deployments** (new, `csDeployment`): `cs_deployment(<name> TARGETS ... [FILES|DIRECTORY ... DESTINATION ...]
+  [CONFIGS ...])` declares a folder that runs without the build: the targets with the shared libraries of the project
+  they need, and files (data, configuration, licences), run time only, independent of the installed package (e.g.
+  samples). The normal install makes it too, in its own folder `<CSCMAKE_DEPLOY_DIR>/<name>-<config>` (default
+  `<build>/deploy`, not in the install prefix), in its configurations only (default `Release`; skipped in the others);
+  a failing deployment fails the install; `-DCSCMAKE_DEPLOY_ON_INSTALL=OFF` turns it off. The build target
+  `cs_deploy_<name>` makes it alone (fails in a configuration it does not list). `cs-deployments.json` in the top build
+  folder lists the deployments of the build. Nothing changes for a project without `cs_deployment`.
 
 Release candidate 1:
 

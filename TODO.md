@@ -24,11 +24,16 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
 
 ## Runtime
 
-- [ ] Deploy an application with its dependencies, e.g. `cs_install_runtime_dependencies(<app> [DIRECTORIES ...]
-  [PRE_EXCLUDE_REGEXES ...])` with `install(RUNTIME_DEPENDENCY_SET)` / `install(IMPORTED_RUNTIME_ARTIFACTS)`: the
-  shared libraries of other packages copied next to the application (`lib/`, `bin/` on Windows), system libraries
-  excluded; Qt plugins through Qt's deploy script or `windeployqt` / `macdeployqt`. Smoke: an application using
-  csSmokeShared from another package, installed with its dependencies and run.
+- [ ] Deployments, the shared libraries of other packages: `cs_deployment` resolves the closure of its targets
+  (`file(GET_RUNTIME_DEPENDENCIES)` on the build-tree binaries, `DIRECTORIES`, `EXCLUDE_REGEXES`), copies it to `lib/`
+  (`bin/` on Windows), system libraries excluded; unresolved or conflicting fails; a last check of the deployed folder
+  fails on a library resolved outside it that the deployment ships.
+- [ ] Deployments, plugins: `PLUGINS <imported module target>...` to `plugins/<QT_PLUGIN_TYPE>/` (Qt), as shipped.
+- [ ] Deployments on Windows and macOS: DLL folders, system exclusions, `MSVC_RUNTIME ON|OFF` (app-local MSVC runtime,
+  default `ON`; debug CRT configurations fail), `@loader_path`.
+- [ ] Deployments in the presets: `CSCMAKE_DEPLOY_DIR` in the project setup layouts (`deploy/` of the workspace).
+- [ ] Deployments, smoke `csSmokeDeploy`: an application using csSmokeShared from another package, a sample deployed
+  but not installed, data; two deployments; run with an empty environment; a user-guide page.
 - [ ] Windows build folder in ctest and VS Code: the tests and `launch.json` need the `PATH` of `cs-env.bat` (e.g.
   `ENVIRONMENT_MODIFICATION` on the tests, an `envFile` generated next to the scripts).
 - [ ] MSVC ASan: the ASan runtime DLLs on the debugger `PATH` and in `cs-env.bat`.

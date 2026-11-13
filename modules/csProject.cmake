@@ -32,9 +32,11 @@ include(modules/csInternal)
 #
 #   At the end of the same ``CMakeLists.txt`` (:command:`cmake_language(DEFER) <cmake_language>`), csCMake finalizes the
 #   project: the compile profiles of its targets, the targets each one depends on, the Visual Studio debugger
-#   environment, the install rules of its components and ``<namespace>Config.cmake``. Links added afterwards with
-#   :command:`cs_target_link_libraries`, and :command:`cs_target_runtime_environment` calls, fail. At the end of the top
-#   folder of the build, the run-time environment scripts of the build (:variable:`CSCMAKE_RUNTIME_SCRIPTS`).
+#   environment, the install rules of its components and ``<namespace>Config.cmake``, its deployments
+#   (:command:`cs_deployment`). Links added afterwards with :command:`cs_target_link_libraries`, and
+#   :command:`cs_target_runtime_environment` and :command:`cs_deployment` calls, fail. At the end of the top folder of
+#   the build, the run-time environment scripts of the build (:variable:`CSCMAKE_RUNTIME_SCRIPTS`) and
+#   ``cs-deployments.json``.
 #
 #   ``NAMESPACE``
 #     Prefix of the installed targets (<namespace>::<target>) and package name (``find_package(<namespace>)``).
@@ -223,7 +225,7 @@ endfunction()
 
 # Finalize the project of namespace (deferred by cs_initialize_project to the end of its CMakeLists.txt, in the scope of
 # that folder): finalize its targets, resolve their dependencies (the targets each one depends on, the Visual Studio
-# debugger environment), install its components and generate <namespace>Config.cmake.
+# debugger environment), install its components, generate <namespace>Config.cmake and add its deployments.
 #
 # Writes:
 #
@@ -240,6 +242,7 @@ function(_cs_finalize_project namespace)
   endforeach()
   _cs_finalize_runtime_dependencies()
   _cs_finalize_install(${namespace})
+  _cs_finalize_deployments(${namespace})
 
   # the project as finalized (targets, components and their dependencies)
   list(POP_BACK CMAKE_MESSAGE_INDENT)

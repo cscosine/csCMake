@@ -18,7 +18,7 @@
 #
 # The modules: :doc:`csProject`, :doc:`csBuildConfigurations`, :doc:`csTargets`,
 # :doc:`csTargetSources`, :doc:`csTargetLinkLibraries`, :doc:`csFindPackage`, :doc:`csBaseInclude`,
-# :doc:`csTargetDependencies`, :doc:`csInstall`, :doc:`csPackageConfig`,
+# :doc:`csTargetDependencies`, :doc:`csInstall`, :doc:`csPackageConfig`, :doc:`csDeployment`,
 # :doc:`csCheckInstalledHeaders`, :doc:`csCompileProfiles`, :doc:`csCompileProfilesShipped`,
 # :doc:`csDebug`; integrations: :doc:`csOpenMP`.
 
@@ -45,6 +45,7 @@ include(modules/csTargetLinkLibraries)
 include(modules/csTargetDependencies)
 include(modules/csInstall)
 include(modules/csPackageConfig)
+include(modules/csDeployment)
 include(modules/csCheckInstalledHeaders)
 include(modules/csCompileProfiles)
 include(modules/csCompileProfilesShipped)

@@ -233,6 +233,7 @@ reference/csBaseInclude
 reference/csTargetDependencies
 reference/csInstall
 reference/csPackageConfig
+reference/csDeployment
 reference/csCheckInstalledHeaders
 reference/csCompileProfiles
 reference/csCompileProfilesShipped

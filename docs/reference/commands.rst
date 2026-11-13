@@ -21,6 +21,7 @@ Features: when the project needs them
   :command:`cs_target_use_compile_profiles`; the shipped profiles: :doc:`csCompileProfilesShipped`
 * each installed header compiles on its own: :command:`cs_target_check_installed_headers`
 * OpenMP: :command:`cs_target_use_openmp`
+* a folder that runs without the build and the dependency packages (with samples, data): :command:`cs_deployment`
 * what CMake cannot know about the run-time environment of a target (plugins, libraries loaded at run time):
   :command:`cs_target_runtime_environment`
 
