@@ -157,6 +157,46 @@ The build goes to `workspace/build/<variant>/myApp/`, the installation to `works
 another project of the workspace finds it with `find_package(myApp)`. [Presets](presets.md) explains the names and
 the folders.
 
+## Ship the application
+
+`myApp/CMakeLists.txt` also declares a *deployment*:
+
+```cmake
+cs_deployment(app TARGETS myApp)
+```
+
+The install above also made `workspace/build/<variant>/myApp/deploy/app-Release/` (with a single-config generator:
+in the build folder of the configuration, `myApp/release/deploy/`), a folder that runs on another machine without the
+workspace:
+
+```text
+deploy/app-Release/
+  bin/myApp                      the application (and every target of TARGETS)
+  lib/                           the shared libraries it needs: the project's own, and the ones of other packages
+  system-requirements.txt        what the machine needs from the system, with the apt install line
+```
+
+- **Nothing else to write.** The shared libraries of the project come from the targets. The libraries of other
+  packages (e.g. OpenCV and Qt from the workspace) are found from the build and copied with their symlinks. The
+  libraries of the system (`/lib`, `/usr/lib`) are not shipped: `system-requirements.txt` lists them, with their
+  Debian packages, for a machine with the same system release.
+- **Checked.** The install fails if the folder would not run: a library not found, or a library of the system
+  loaded instead of the copy in the folder (e.g. the Qt of the system).
+- **Independent of the package.** Nothing of it goes to the install folder, and it can ship targets the package does
+  not install (samples) and data files: `cs_deployment(demo TARGETS sample FILES data/input.png DESTINATION share)`.
+  A project can declare several deployments, each a complete folder of its own.
+- **Configurations.** Made in `Release` by default (`CONFIGS` chooses others), skipped in the other configurations.
+  To make it alone, without installing: `cmake --build --preset <build preset> --target cs_deploy_app`.
+
+Run it from anywhere, with an empty environment:
+
+```bash
+env -i workspace/build/<variant>/myApp/deploy/app-Release/bin/myApp
+```
+
+Linux today. On Windows and macOS a deployment has the binaries of the project only, for now, with a warning.
+[csDeployment](../reference/csDeployment.rst) is the reference.
+
 ## Next
 
 - [Targets and sources](targets.md): libraries, executables, sources and installed headers, links, when the

@@ -125,22 +125,32 @@ class Deployment:
     configs: tuple[str, ...]  # the CMake configurations it is made in (none in the others)
     app: App  # the deployed application (in bin/)
     files: tuple[str, ...] = ()  # other files of the deployment, relative to its folder
+    libraries: tuple[str, ...] = ()  # Linux: the shared libraries shipped (path prefixes, e.g. lib/libsharedCore)
+    not_installed: tuple[str, ...] = ()  # names (glob) deployed but not in the install folder of the project
 
 
+# the shared libraries of the deployments of csSmokeDeploy: its own, and the ones of csSmokeShared (another package)
+SMOKE_DEPLOY_LIBRARIES = ("lib/libdeployCore", "lib/libsharedText", "lib/libsharedCore")
 # the deployments of the smoke projects, made by the install step of the workflow presets
 DEPLOYMENTS = (
+    # the one of the quick start: the application alone (static libraries)
+    Deployment("myApp", "app", ("Release",), App("myApp", ("Hello from myApp",))),
     Deployment(
         "csSmokeDeploy",
         "app",
         ("Release",),
         App("csSmokeDeployApp", ("deploy(shared-text(shared-core))",)),
         ("share/csSmokeDeploy/readme.txt",),
+        SMOKE_DEPLOY_LIBRARIES,
+        ("readme.txt",),
     ),
     Deployment(
         "csSmokeDeploy",
         "sample",
         ("Release", "RelWithDebInfo"),
         App("csSmokeDeploySample", ("sample deploy(shared-text(shared-core))",)),
+        libraries=SMOKE_DEPLOY_LIBRARIES,
+        not_installed=("csSmokeDeploySample*",),
     ),
 )
 # never in a deployment: headers, static and import libraries, CMake package files, PDB files
@@ -524,14 +534,14 @@ def deployment_folders(workspace: Path, deployment: Deployment, config: str) -> 
 
 def check_deployment_files(folder: Path, deployment: Deployment, config: Config) -> None:
     """The application and the files of the deployment are in ``folder``, nothing that is not run time; on Linux, the
-    shared libraries of the project and of csSmokeShared too, and system-requirements.txt (libc among them)."""
+    shared libraries it ships too, and system-requirements.txt (libc among them)."""
     suffix = ".exe" if os.name == "nt" else ""
     files = {path.relative_to(folder).as_posix() for path in folder.rglob("*") if path.is_file()}
     print(f"{folder}: {sorted(files)}", flush=True)
     expected = {f"bin/{deployment.app.name}{config.postfix}{suffix}", *deployment.files}
     if sys.platform == "linux":
         libraries = [name for name in files if name.startswith("lib/")]
-        for prefix in ("lib/libdeployCore", "lib/libsharedText", "lib/libsharedCore"):
+        for prefix in deployment.libraries:
             if not any(name.startswith(prefix) for name in libraries):
                 raise SmokeError(f"{folder}: no {prefix}* in the shared libraries {sorted(libraries)}")
         report = folder / "system-requirements.txt"
@@ -576,8 +586,8 @@ def check_deployments(workspace: Path, variant: str) -> None:
             else:
                 print(f"{deployment.name} {config.cmake}: not run (other packages shipped on Linux only)", flush=True)
         installed = workspace / RELOCATED_INSTALL / variant / deployment.project
-        if any(installed.rglob("csSmokeDeploySample*")) or (installed / "share").exists():
-            raise SmokeError(f"{installed}: the sample or the data of the deployments installed")
+        if found := [path for pattern in deployment.not_installed for path in installed.rglob(pattern)]:
+            raise SmokeError(f"{installed}: deployed, not installed: {found}")
 
 
 def check_relocation(ctx: ContextOsArchitectureCompilerGenerator, variant: str, workspace: Path) -> None:

@@ -39,7 +39,7 @@ The decisions behind csCMake, and what they mean for a project.
 ## What it solves
 
 Plain CMake can do all of it: the cost is the boilerplate, written again in every project, and every project doing it
-a little differently. Three examples.
+a little differently. Four examples.
 
 ### A library installed as a package with components
 
@@ -151,6 +151,40 @@ the same names in every project and in CI.
 A `CMakePresets.json` per project with configure, build, test and workflow presets for every compiler, generator and
 platform, their build and install folders, and the search paths to find the other projects: copied from project to
 project, and kept in sync by hand.
+```
+````
+
+### A folder that runs on another machine
+
+````{tab-set}
+
+```{tab-item} With csCMake
+~~~cmake
+cs_deployment(app TARGETS myApp sample FILES data/input.png DESTINATION share/myApp)
+~~~
+
+The normal install also makes `deploy/app-Release/`: the executables, the shared libraries of the project and of the
+other packages they use (OpenCV, Qt, ... from the workspace, never the copies of the system), the data. Then it checks
+the folder: a library not found, or one of the system loaded instead of the shipped copy, fails the install.
+`system-requirements.txt` lists what the machine needs from the system, as an `apt install` line. Nothing of it goes
+to the installed package. Linux today; Windows and macOS next.
+```
+
+```{tab-item} Plain CMake
+~~~cmake
+install(TARGETS myApp sample RUNTIME_DEPENDENCY_SET app_libs
+        RUNTIME DESTINATION bin COMPONENT deploy EXCLUDE_FROM_ALL
+        LIBRARY DESTINATION lib COMPONENT deploy EXCLUDE_FROM_ALL)
+install(RUNTIME_DEPENDENCY_SET app_libs DESTINATION lib COMPONENT deploy EXCLUDE_FROM_ALL
+        PRE_EXCLUDE_REGEXES "^ld-linux" "^libc\\." ...
+        POST_EXCLUDE_REGEXES "^/lib/" "^/usr/lib/" ...
+        DIRECTORIES ...)
+install(FILES data/input.png DESTINATION share/myApp COMPONENT deploy EXCLUDE_FROM_ALL)
+~~~
+
+…plus the shared libraries of the project each target needs, the symlinks of the copied libraries, a command per
+configuration to install the component in its own folder, the exclusions of every platform, and nothing that tells
+you the folder loads the Qt of the system, or which packages the other machine needs.
 ```
 ````
 

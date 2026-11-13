@@ -84,6 +84,9 @@ cs_add_executable(myApp main.cpp)
 cs_target_link_libraries(myApp PRIVATE core)
 cs_install_target(myApp COMPONENT app)
 
+# a folder that runs on another machine, made by the install (Release)
+cs_deployment(app TARGETS myApp)
+
 add_test(NAME myAppGreets COMMAND myApp)
 set_tests_properties(myAppGreets PROPERTIES PASS_REGULAR_EXPRESSION "Hello from myApp")
 ```
@@ -101,7 +104,16 @@ cmake --workflow --preset workflow-csv1-linux-ubuntu24.04-x64-generic-gcc-defaul
 ```
 
 The package is installed in `workspace/install/<variant>/myApp/`, where other projects find it with
-`find_package(myApp)`. [Getting started](docs/user/getting-started.md) explains each line.
+`find_package(myApp)`.
+
+**Deployment, one line.** `cs_deployment(app TARGETS myApp)` makes the same install also produce
+`workspace/build/<variant>/myApp/deploy/app-Release/`: a folder that runs on a clean machine. It holds the
+application with every shared library it needs that the system does not provide: the project's own, and the ones of
+other packages (OpenCV, Qt, ...), taken from your workspace and never from the system. The install then checks that
+the folder runs on its own, and fails if it would not. `system-requirements.txt` lists what the machine needs from the
+system, as an `apt install` line. Linux today; Windows and macOS are next.
+
+[Getting started](docs/user/getting-started.md) explains each line.
 
 ## What it does
 
@@ -121,6 +133,9 @@ The package is installed in `workspace/install/<variant>/myApp/`, where other pr
 - **Presets**: Linux (Ubuntu 22.04 to 26.04, x64 and arm64, GCC and Clang), Windows (MSVC and clang-cl, Visual Studio
   and Ninja), macOS (Apple Clang, Ninja and Xcode); workspace layouts for side-by-side, standalone and CI setups.
   [Presets](docs/user/presets.md)
+- **Deployments**: `cs_deployment` declares a folder that runs on another machine (the targets, the shared
+  libraries of the project and of other packages, data files), made by the normal install and checked.
+  [Getting started](docs/user/getting-started.md#ship-the-application)
 - **Checks**: links added after the project is finalized fail, installed headers can be compiled on their own, and
   runtime dependencies are resolved per configuration (Visual Studio debugger `PATH`).
 

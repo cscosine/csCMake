@@ -7,5 +7,8 @@ cs_add_executable(myApp main.cpp)
 cs_target_link_libraries(myApp PRIVATE core)
 cs_install_target(myApp COMPONENT app)
 
+# a folder that runs on another machine, made by the install (Release)
+cs_deployment(app TARGETS myApp)
+
 add_test(NAME myAppGreets COMMAND myApp)
 set_tests_properties(myAppGreets PROPERTIES PASS_REGULAR_EXPRESSION "Hello from myApp")
