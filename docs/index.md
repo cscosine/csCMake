@@ -257,12 +257,14 @@ advanced/smoke-tests
 
 reference/commands
 reference/csCMake
+reference/csCMakeSetup
 reference/csProject
 reference/csBuildConfigurations
 reference/csTargets
 reference/csTargetSources
 reference/csTargetLinkLibraries
 reference/csFindPackage
+reference/csMacosDeploymentTarget
 reference/csBaseInclude
 reference/csTargetDependencies
 reference/csInstall

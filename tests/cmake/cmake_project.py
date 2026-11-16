@@ -84,9 +84,18 @@ def configure(
     return Configured(result.returncode, result.stdout + result.stderr)
 
 
-def install(project_dir: Path, body: str, prefix: Path, files: dict[str, str] | None = None) -> Configured:
-    """Configure ``HEADER + body`` (``files`` too), build and install it into ``prefix``; return the first failure."""
-    configured = configure(project_dir, body, files, args=[f"-DCMAKE_INSTALL_PREFIX={prefix.as_posix()}"])
+def install(
+    project_dir: Path,
+    body: str,
+    prefix: Path,
+    files: dict[str, str] | None = None,
+    args: list[str] | None = None,
+) -> Configured:
+    """Configure ``HEADER + body`` (``files`` too, ``args`` as in :func:`configure`), build and install it into
+    ``prefix``; return the first failure."""
+    configured = configure(
+        project_dir, body, files, args=[f"-DCMAKE_INSTALL_PREFIX={prefix.as_posix()}", *(args or [])]
+    )
     if configured.returncode != 0:
         return configured
     output = configured.output

@@ -10,6 +10,31 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
+Release candidate 6 (since `v1.0.0-rc5`):
+
+- **macOS deployment target: declared by each project, checked by csCMake** (breaking for macOS builds): the macOS
+  presets set no `CMAKE_OSX_DEPLOYMENT_TARGET` (rc5: `13.3`). To change in a project built on macOS:
+  - a csCMake project: `include(csCMakeSetup)` and `cs_macos_deployment_target(<version>)` (new) before `project()` in
+    its top-level `CMakeLists.txt`; at least the value of the packages it uses (`14.4` with Qt 6.12; `13.3` with a
+    compiled library that needs the floating-point `std::to_chars`, e.g. cpptrace). The build may raise it
+    (`-DCMAKE_OSX_DEPLOYMENT_TARGET`, a preset), never lower it;
+  - a project without csCMake built with the presets (a fork): `CMAKE_OSX_DEPLOYMENT_TARGET` and
+    `CMAKE_PROJECT_INCLUDE=modules/scripts/csRecordMacosDeploymentTarget` in the `cscmake-project-setup-macos` preset
+    of its `csCMakeProjectSetup.json`.
+
+  Without a value, the binaries are built for the macOS of the build machine (a warning). The value is recorded in the
+  installed package (`share/cscmake/<project>.macos-deployment-target`); a package found built for a newer macOS than
+  the project fails the configure, with the value to raise to. `cs_require_macos_deployment_target(<version>
+  [REASON <text>])` (new): the same check for a need of the project.
+- **Checks on the packages found, hooks** (new): `cs_find_package` and the installed `<namespace>Config.cmake` (after
+  each `find_dependency`) run `cs_after_find_dependency(<package>)`: the deployment target check, then the hooks
+  registered for that package with `cs_add_after_find_hook(<package> <function>)`, the place for the checks of one
+  library (guide: [Dependencies](docs/user/dependencies.md#hooks-checks-for-one-library)).
+- **Qt** (`csQt`): the hook for `Qt6` checks that the project builds for `QT_SUPPORTED_MIN_MACOS_VERSION` of Qt or
+  newer. Qt loaded without it (a plain `find_package(Qt6)`) fails at the end of the project: find it with
+  `cs_find_package(<target> PUBLIC|PRIVATE Qt6 ...)`, or `-DCSCMAKE_QT_ALLOW_FIND_PACKAGE=ON` (a warning, the check
+  done anyway).
+
 Release candidate 5 (since `v1.0.0-rc4`):
 
 - **macOS deployment target**: the macOS presets set `CMAKE_OSX_DEPLOYMENT_TARGET` to `13.3` (the floating-point

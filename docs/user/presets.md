@@ -33,11 +33,10 @@ csv1-<os>-<os version>-<arch>-generic-<compiler>-<compiler version>-<generator>
 | `<compiler version>` | `default` (the one of the platform); with Ninja on Windows, the MSVC toolset: `msvc_2022_17`, `msvc_2026_18` |
 | `<generator>` | `ninja`, `ninjamulticonfig`; `msvc2022`, `msvc2026` (Visual Studio); `xcode` |
 
-The macOS presets set the oldest macOS the binaries run on, `CMAKE_OSX_DEPLOYMENT_TARGET`, to `13.3` (the libc++ of
-Apple has the floating-point `std::to_chars` of `std::format` and `std::print` from there; Qt 6.11 needs 13.0), whatever
-the macOS of the build machine: a build on macOS 15 or 26 runs from macOS 13.3. A project sets its
-own value in `cscmake-project-setup-macos` ([Values per operating system](#3-values-per-operating-system)), which
-wins.
+The presets set no `CMAKE_OSX_DEPLOYMENT_TARGET` (the oldest macOS the binaries run on): a csCMake project declares
+it in its `CMakeLists.txt`, `cs_macos_deployment_target(<version>)` before `project()`
+([Dependencies](dependencies.md#macos-deployment-target)); a project without csCMake, in its setup
+([below](#values-of-a-project-without-cscmake)).
 
 `cmake --list-presets` lists the ones of the current machine. From the name of a variant:
 
@@ -181,6 +180,26 @@ ones too:
 ```
 
 A value of the setup that only one operating system replaces goes in `cscmake-project-setup` and in that OS preset.
+
+### Values of a project without csCMake
+
+A project that does not use csCMake but is built with the presets (a fork of a third-party library) sets in its setup
+what a csCMake project sets in its `CMakeLists.txt`. The macOS deployment target, at level 3: the value, and the
+script of csCMake that records it in the installed package for the consumers (`CMAKE_PROJECT_INCLUDE`, a module found
+in `CMAKE_MODULE_PATH`, run after every `project()`):
+
+```json
+{
+    "name": "cscmake-project-setup-macos",
+    "hidden": true,
+    "cacheVariables": {
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "13.3",
+        "CMAKE_PROJECT_INCLUDE": "modules/scripts/csRecordMacosDeploymentTarget"
+    }
+}
+```
+
+A csCMake project does not need it: `cs_macos_deployment_target` and `cs_initialize_project` do both.
 
 ### 4. Folders and search paths of the project
 

@@ -62,9 +62,13 @@ workspace/
 
 ```cmake
 cmake_minimum_required(VERSION 3.31)
+
+# found through CMAKE_MODULE_PATH, set by the presets: before project(), the oldest macOS the binaries run on
+include(csCMakeSetup)
+cs_macos_deployment_target(14.4)
+
 project(myApp VERSION 1.0.0 LANGUAGES CXX)
 
-# found through CMAKE_MODULE_PATH, set by the presets
 include(csCMake)
 
 cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
@@ -151,6 +155,7 @@ macOS.
 
 ```text
 csCMake.cmake          entry point: include(csCMake)
+csCMakeSetup.cmake     before project(): include(csCMakeSetup)
 modules/               the CMake modules (cs_* commands); modules/integrations/: OpenMP, ...
 templates/             template of the generated <namespace>Config.cmake
 presets/               the presets: common blocks, templates, generated csv1/, project setup and layouts

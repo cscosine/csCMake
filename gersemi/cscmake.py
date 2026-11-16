@@ -70,6 +70,10 @@ command_definitions = {
         "multi_value_keywords": ["COMPILE_PROFILES"],
     },
     "cs_target_use_openmp": {"front_positional_arguments": ["target", "scope"]},
+    "cs_macos_deployment_target": {"front_positional_arguments": ["version"]},
+    "cs_after_find_dependency": {"front_positional_arguments": ["package"]},
+    "cs_add_after_find_hook": {"front_positional_arguments": ["package", "function"]},
+    "cs_require_macos_deployment_target": {"front_positional_arguments": ["version"], "one_value_keywords": ["REASON"]},
     "cs_add_compile_profile_rule": {
         "options": ["CLANG_TIDY"],
         "one_value_keywords": ["PROFILE"],
