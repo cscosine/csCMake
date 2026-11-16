@@ -1,8 +1,8 @@
 """Check that the reference documentation of the CMake modules is complete.
 
-The reference is written in the ``#.rst:`` comment blocks of ``csCMake.cmake`` and ``modules/**/*.cmake`` (see
-``docs/contributing/documentation.md``). Sphinx (``sphinx-build -W -n``) checks that every reference resolves; this tool
-checks what Sphinx cannot see:
+The reference is written in the ``#.rst:`` comment blocks of ``csCMake.cmake``, ``csCMakeSetup.cmake`` and
+``modules/**/*.cmake`` (see ``docs/contributing/documentation.md``). Sphinx (``sphinx-build -W -n``) checks that every
+reference resolves; this tool checks what Sphinx cannot see:
 
 - every public ``cs_*`` function or macro has a ``.. command::`` block of the same name right above it, and every
   ``.. command::`` block is right above its function;
@@ -112,7 +112,7 @@ def read_module(path: Path) -> Module:
 
 def check(root: Path = REPO_ROOT) -> list[str]:
     """Return the problems of the reference documentation of the CMake modules under ``root``."""
-    paths = [root / "csCMake.cmake", *sorted((root / "modules").rglob("*.cmake"))]
+    paths = [root / "csCMake.cmake", root / "csCMakeSetup.cmake", *sorted((root / "modules").rglob("*.cmake"))]
     modules = [read_module(path) for path in paths if path.exists()]
     problems: list[str] = []
 

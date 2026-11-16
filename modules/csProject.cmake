@@ -146,6 +146,9 @@ macro(cs_initialize_project)
 
   _cs_set_generator_variables()
 
+  # the macOS deployment target in the installed files (also when the presets of csCMake did not include it)
+  include(modules/scripts/csRecordMacosDeploymentTarget)
+
   _cs_report_initialized()
 
   _cs_add_default_targets()
@@ -243,6 +246,10 @@ function(_cs_finalize_project namespace)
   _cs_finalize_runtime_dependencies()
   _cs_finalize_install(${namespace})
   _cs_finalize_deployments(${namespace})
+  # Qt found without the checks of csCMake (csQt)
+  if(COMMAND _cs_qt_check_found_with_cscmake)
+    _cs_qt_check_found_with_cscmake()
+  endif()
 
   # the project as finalized (targets, components and their dependencies)
   list(POP_BACK CMAKE_MESSAGE_INDENT)

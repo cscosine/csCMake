@@ -17,6 +17,7 @@ installed in it.
 
 ```text
 csCMake.cmake                       entry point: include(csCMake) loads the modules
+csCMakeSetup.cmake                  before project(): include(csCMakeSetup) (cs_macos_deployment_target)
 modules/cs<Name>.cmake              one module per subject (project, targets, sources, install, compile profiles, ...)
 modules/integrations/               integrations with third-party tools and libraries (OpenMP, ...)
 templates/csTemplateConfig.cmake.in the generated <namespace>Config.cmake
@@ -74,8 +75,8 @@ ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src t
 python -m pytest                          # fast tests: Python and CMake configure tests
 python -m pytest --run-all                # + smoke builds of the variants of this machine
 cscmake-generate-presets --check
-gersemi --check csCMake.cmake modules templates tests/smoke
-cscmake-lint csCMake.cmake modules/*.cmake modules/*/*.cmake templates/*.cmake.in
+gersemi --check csCMake.cmake csCMakeSetup.cmake modules templates tests/smoke
+cscmake-lint csCMake.cmake csCMakeSetup.cmake modules/*.cmake modules/*/*.cmake templates/*.cmake.in
 cscmake-check-docs
 sphinx-build -W -n docs docs/_build/html
 ```

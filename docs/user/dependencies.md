@@ -29,6 +29,84 @@ Packages are searched in `CMAKE_PREFIX_PATH`. With the csCMake presets it contai
 in the folders starting with `<name>`, so **the folder of a project must be named like its package** (its namespace).
 See [Presets](presets.md#folders).
 
+## Checks on the packages found
+
+Each time csCMake finds a package (`cs_find_package`, and the installed `<namespace>Config.cmake` of a csCMake package
+for each of its dependencies), it runs `cs_after_find_dependency(<package>)`:
+
+1. the checks of every package: the **macOS deployment target** the package recorded must not be newer than the one
+   of the project ([below](#macos-deployment-target));
+2. the **hooks** registered for that package name: the checks only that library needs (e.g. Qt, below).
+
+A plain `find_package` runs none of them: find the packages with `cs_find_package`.
+
+### macOS deployment target
+
+`CMAKE_OSX_DEPLOYMENT_TARGET` is the oldest macOS the binaries run on. CMake fixes it when `project()` sets up the
+compilers, so it is set **before** `project()`. csCMake sets no value of its own: each project declares its minimum,
+at least the value of the packages it uses (e.g. `14.4` with Qt 6.12). Without a value, the binaries are built for the
+macOS of the build machine and do not start on an older one (a warning on macOS).
+
+**A csCMake project** declares it in its top-level `CMakeLists.txt`, with `csCMakeSetup` (the part of csCMake used
+before `project()`):
+
+```cmake
+cmake_minimum_required(VERSION 3.31)
+include(csCMakeSetup)
+cs_macos_deployment_target(14.4)
+project(myApp VERSION 1.0.0 LANGUAGES CXX)
+include(csCMake)
+cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
+```
+
+- The build may raise it, never lower it: `-DCMAKE_OSX_DEPLOYMENT_TARGET=15` (or a preset, or the
+  `MACOSX_DEPLOYMENT_TARGET` environment variable) builds for macOS 15; `13.3` fails the configure.
+- Called after `project()`, it fails; in a project added with `add_subdirectory` to another one, it checks that the
+  build (the value of the top-level project) is that version or newer.
+- Nothing on Linux and Windows.
+
+**A project without csCMake** built with the csCMake presets (a third-party library, e.g. a fork of cpptrace) cannot
+call it: it sets the value in the `cscmake-project-setup-macos` preset of its `csCMakeProjectSetup.json`, with the
+script that records it (below), see [Presets](presets.md#values-of-a-project-without-cscmake).
+
+**Recorded and checked:**
+
+- **Recorded**: `cs_initialize_project` installs the value in `<prefix>/share/cscmake/<project>.macos-deployment-target`
+  (a project without csCMake: the script of its preset, the same file).
+- **Checked**: each package found (`cs_find_package`, and the dependencies of csCMake packages) built for a newer macOS
+  than the project fails the configure, with the value to raise to; an older one is fine. A package without the file
+  is not checked (`--log-level=VERBOSE` says so).
+- **Qt** has its minimum in its package (`QT_SUPPORTED_MIN_MACOS_VERSION`): the hook of csQt for `Qt6` checks it. Qt
+  loaded without that check (a plain `find_package(Qt6)`, or a package not made by csCMake that finds it) fails at the
+  end of the project; `-DCSCMAKE_QT_ALLOW_FIND_PACKAGE=ON`: a warning instead, and the check is done anyway.
+- `cs_require_macos_deployment_target(<version> REASON <text>)`: the same check, for a need of the project itself.
+
+### Hooks: checks for one library
+
+A library with special needs gets a hook: a function called with the package name each time csCMake finds that
+package, in the scope of the find (the variables of the package are visible):
+
+```cmake
+function(_cs_mylib_after_find package)
+  cs_require_macos_deployment_target("${MYLIB_MIN_MACOS}" REASON "MyLib ${MyLib_VERSION}")
+endfunction()
+cs_add_after_find_hook(MyLib _cs_mylib_after_find)
+```
+
+- **Where**: a library used by several projects: an integration module of csCMake,
+  `modules/integrations/cs<Lib>.cmake`, included by `csCMake.cmake` (as `csQt.cmake`, `csOpenMP.cmake`); a need of
+  one project only: in that project, before its `cs_find_package`.
+- **Register before the find**: a hook registered after the package is found does not run for that find.
+- **The function**: a function, not a macro; it reads the variables of the package and sets nothing in the caller;
+  it fails with `message(FATAL_ERROR ...)` saying what to change in the project. The hooks of a package run in the
+  order they are registered, after the checks of every package.
+- **Enforcing the hook** (optional): a plain `find_package` runs no hook. An integration that must not be bypassed
+  marks the package as checked in its hook (a global property) and fails at the end of the project when the package
+  is loaded but not checked, with a way out (a `CSCMAKE_<LIB>_ALLOW_FIND_PACKAGE` cache variable): see
+  `_cs_qt_after_find` and `_cs_qt_check_found_with_cscmake` in `csQt.cmake`, called by `_cs_finalize_project`.
+- **Test**: a configure test with a stand-in of the package (a `<Package>Config.cmake` setting the variables the hook
+  reads), as `tests/cmake/test_macos_deployment_target.py`.
+
 ## Other csCMake projects, installed
 
 A csCMake project installed in the workspace is a package like any other:

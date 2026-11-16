@@ -83,7 +83,7 @@ repos:
         entry: cscmake-check-docs
         language: system
         pass_filenames: false
-        files: ^(csCMake\.cmake|modules/.*\.cmake|docs/reference/.*)$
+        files: ^(csCMake\.cmake|csCMakeSetup\.cmake|modules/.*\.cmake|docs/reference/.*)$
 
       # requires the dev venv, like generate-csv1-presets
       - id: import-linter

@@ -2,14 +2,74 @@
 # csQt
 # ----
 #
-# Qt: what a deployment of a Qt GUI application needs besides the libraries its binaries link (found by
-# :command:`cs_deployment`): the plugins Qt loads at run time.
+# Qt: finding it with the checks of csCMake, and what a deployment of a Qt GUI application needs besides the libraries
+# its binaries link (found by :command:`cs_deployment`): the plugins Qt loads at run time.
+#
+# Qt is found with :command:`cs_find_package` (``cs_find_package(<target> PUBLIC|PRIVATE Qt6 ...)``), or by the
+# ``<namespace>Config.cmake`` of a csCMake package that depends on it: then the hook of csQt for ``Qt6``
+# (:command:`cs_add_after_find_hook`) checks that the project builds for a macOS Qt supports
+# (``CMAKE_OSX_DEPLOYMENT_TARGET`` at least ``QT_SUPPORTED_MIN_MACOS_VERSION`` of the Qt package,
+# :command:`cs_require_macos_deployment_target`). Qt found otherwise (a plain :command:`find_package`, or a non-csCMake
+# package that finds it) fails the configure at the end of the project, unless ``CSCMAKE_QT_ALLOW_FIND_PACKAGE`` is
+# ``ON``: then a warning, and the check is done anyway.
 #
 # Commands
 # ^^^^^^^^
 include_guard(GLOBAL)
 include(modules/csDebug)
 include(modules/csDeployment)
+include(modules/csMacosDeploymentTarget)
+
+# The check of csCMake on Qt just found (cs_after_find_dependency): the project builds for a macOS Qt supports.
+#
+# Reads:
+#
+# * variable QT_SUPPORTED_MIN_MACOS_VERSION, Qt6_VERSION (Qt6ConfigExtras.cmake, Qt6ConfigVersion.cmake)
+#
+# Writes:
+#
+# * global property _CSCMAKE_QT_CHECKED
+function(_cs_qt_after_find package)
+  set_property(GLOBAL PROPERTY _CSCMAKE_QT_CHECKED TRUE)
+  cs_require_macos_deployment_target("${QT_SUPPORTED_MIN_MACOS_VERSION}" REASON "Qt ${Qt6_VERSION}")
+endfunction()
+cs_add_after_find_hook(Qt6 _cs_qt_after_find)
+
+# At the end of the project (_cs_finalize_project): Qt loaded (Qt6_DIR, and its commands) without the check of csCMake
+# fails, unless CSCMAKE_QT_ALLOW_FIND_PACKAGE: a warning, and the check from the Qt6ConfigExtras.cmake of Qt6_DIR.
+#
+# Reads:
+#
+# * cache variable Qt6_DIR, CSCMAKE_QT_ALLOW_FIND_PACKAGE
+# * global property _CSCMAKE_QT_CHECKED
+function(_cs_qt_check_found_with_cscmake)
+  # cscmake-lint: disable=CS103 the variable of Qt6ConfigExtras.cmake (it sets it when empty), local to this function
+  get_property(checked GLOBAL PROPERTY _CSCMAKE_QT_CHECKED)
+  # Qt6_DIR alone may be left in the cache by an older configure: Qt is loaded in this one when its commands exist
+  if(checked OR NOT Qt6_DIR OR NOT IS_DIRECTORY "${Qt6_DIR}" OR NOT COMMAND qt6_add_executable)
+    return()
+  endif()
+  if(NOT CSCMAKE_QT_ALLOW_FIND_PACKAGE)
+    message(
+      FATAL_ERROR
+      "[csCMake] Qt (${Qt6_DIR}) is found without the checks of csCMake (find_package, or a package that is not "
+      "csCMake's): find it with cs_find_package(<target> PUBLIC|PRIVATE Qt6 ...), which checks that "
+      "the project builds for a macOS Qt supports. To keep find_package: -DCSCMAKE_QT_ALLOW_FIND_PACKAGE=ON (a "
+      "warning instead, the check done anyway)."
+    )
+  endif()
+  message(
+    WARNING
+    "[csCMake] Qt (${Qt6_DIR}) is found without the checks of csCMake (CSCMAKE_QT_ALLOW_FIND_PACKAGE): checked now "
+    "from its Qt6ConfigExtras.cmake"
+  )
+  set(QT_SUPPORTED_MIN_MACOS_VERSION "")
+  if(EXISTS "${Qt6_DIR}/Qt6ConfigExtras.cmake")
+    include("${Qt6_DIR}/Qt6ConfigExtras.cmake")
+  endif()
+  set_property(GLOBAL PROPERTY _CSCMAKE_QT_CHECKED TRUE)
+  cs_require_macos_deployment_target("${QT_SUPPORTED_MIN_MACOS_VERSION}" REASON "Qt (${Qt6_DIR})")
+endfunction()
 
 #.rst:
 # .. command:: cs_deployment_qt_gui
@@ -21,8 +81,8 @@ include(modules/csDeployment)
 #     cs_deployment_qt_gui(<name> [OFFSCREEN] [NO_WAYLAND])
 #
 #   ``<name>`` is a deployment of the project (:command:`cs_deployment`, before or after this call); Qt is found
-#   (``find_package(Qt6 COMPONENTS Gui)`` or ``Widgets``) in the folder of the call, where its plugin targets are
-#   visible. The plugins go where Qt looks for them in the layout of the deployment:
+#   (``cs_find_package(<target> PRIVATE Qt6 COMPONENTS Gui)`` or ``Widgets``) in the folder of the call, where its
+#   plugin targets are visible. The plugins go where Qt looks for them in the layout of the deployment:
 #
 #   * Linux: ``plugins/<type>/`` (Qt finds them from its libraries in ``lib/``): the platforms ``xcb`` (required) and
 #     ``wayland``, the OpenGL integrations of xcb (GLX, EGL), the shell, graphics and decoration plugins of Wayland;
@@ -45,8 +105,8 @@ include(modules/csDeployment)
 #
 #   .. code-block:: cmake
 #
-#     find_package(Qt6 COMPONENTS Widgets REQUIRED)
 #     cs_add_executable(app main.cpp)
+#     cs_find_package(app PRIVATE Qt6 COMPONENTS Widgets REQUIRED)
 #     cs_target_link_libraries(app PRIVATE Qt6::Widgets)
 #     cs_deployment(app TARGETS app)
 #     cs_deployment_qt_gui(app)
@@ -63,8 +123,8 @@ function(cs_deployment_qt_gui name)
   if(NOT TARGET Qt6::Gui)
     message(
       FATAL_ERROR
-      "[cs_deployment_qt_gui] ${name}: Qt6::Gui is not a target here: find_package(Qt6 COMPONENTS Gui) (or Widgets) "
-      "in this folder first"
+      "[cs_deployment_qt_gui] ${name}: Qt6::Gui is not a target here: find Qt (Gui or Widgets) in this folder first, "
+      "cs_find_package(<target> PRIVATE Qt6 COMPONENTS Gui)"
     )
   endif()
 
@@ -150,3 +210,21 @@ function(_cs_deployment_qt_plugins name destination)
     cs_deployment(${name} PLUGINS ${plugins} DESTINATION ${destination})
   endif()
 endfunction()
+
+#.rst:
+# Variables
+# ^^^^^^^^^
+#
+# .. variable:: CSCMAKE_QT_ALLOW_FIND_PACKAGE
+#
+#   ``ON``: Qt loaded without the check of csCMake (a plain :command:`find_package`, or a package not made by csCMake
+#   that finds it) is a warning at the end of the project, and the check is done then (from the
+#   ``Qt6ConfigExtras.cmake`` of ``Qt6_DIR``); ``OFF`` or unset (default): it fails the configure.
+#
+# Global properties
+# ^^^^^^^^^^^^^^^^^
+#
+# .. prop_gbl:: _CSCMAKE_QT_CHECKED
+#
+#   Internal: ``TRUE`` once Qt is checked (the hook of csQt for ``Qt6``, or the end of the project with
+#   :variable:`CSCMAKE_QT_ALLOW_FIND_PACKAGE`).

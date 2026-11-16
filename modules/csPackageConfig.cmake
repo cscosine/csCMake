@@ -255,6 +255,14 @@ function(_cs_finalize_install export_namespace)
           "      message(DEBUG \"${export_namespace}: find_dependency(${find_args})\")\n"
           "      find_dependency(${find_args})\n"
         )
+        # the checks of csCMake on the package found, when the consumer has csCMake
+        string(REGEX MATCH "^[^ ]+" find_package_name "${find_args}")
+        string(
+          APPEND injected_find_packages_code
+          "      if(COMMAND cs_after_find_dependency)\n"
+          "        cs_after_find_dependency(${find_package_name})\n"
+          "      endif()\n"
+        )
       endforeach()
       string(APPEND injected_find_packages_code "    endif()\n    ")
     endif()

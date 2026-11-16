@@ -26,6 +26,7 @@ def _codes(text: str) -> list[str]:
 def test_the_repository_is_clean() -> None:
     files = [
         REPO_ROOT / "csCMake.cmake",
+        REPO_ROOT / "csCMakeSetup.cmake",
         *(REPO_ROOT / "modules").rglob("*.cmake"),
         *(REPO_ROOT / "templates").glob("*.cmake.in"),
         *(REPO_ROOT / "tests" / "smoke").rglob("CMakeLists.txt"),

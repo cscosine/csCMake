@@ -7,7 +7,7 @@ code. Read it before changing a public command, a variable, a property or a page
 
 | Part | Source | Format |
 |---|---|---|
-| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake` and `modules/`, right above the code they describe | reStructuredText, the format of CMake's own modules |
+| Reference (commands, variables, properties) | `#.rst:` comment blocks in `csCMake.cmake`, `csCMakeSetup.cmake` and `modules/`, right above the code they describe | reStructuredText, the format of CMake's own modules |
 | Reference pages | `docs/reference/<module>.rst`: one line, `.. cmake-module:: ../../modules/<module>.cmake` | reStructuredText |
 | Guides and other pages | `docs/**/*.md` | Markdown (MyST): readable on GitHub too |
 | Site configuration | `docs/conf.py` | Python (Sphinx) |

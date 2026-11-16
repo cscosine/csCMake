@@ -270,14 +270,12 @@ def test_variants_manifest_lists_every_variant_of_the_registry() -> None:
         assert len(variant["build_configs"]) == expected_configs
 
 
-def test_macos_deployment_target_from_the_host_preset_project_value_wins(generated: Path) -> None:
-    """The macOS host preset sets the deployment target (13.3: the libc++ of Apple has the floating-point to_chars of
-    std::format from there; above 13.0, the minimum of Qt 6.11): every macOS -base preset
-    inherits it after the presets of the project (cscmake-project-setup-macos, cscmake-project-setup), so a value of
-    the project wins."""
+def test_host_presets_set_no_build_values(generated: Path) -> None:
+    """The host presets carry no cache variables (no deployment target either: a project sets its own, see
+    csCMakeSetup.cmake); every macOS -base preset inherits the presets of the project, which come first."""
     hosts = json.loads((TEMPLATE_DIR.parent / "common" / "config-hosts.json").read_text(encoding="utf-8"))
     host_presets = {preset["name"]: preset for preset in hosts["configurePresets"]}
-    assert host_presets["cs-host-macos"]["cacheVariables"]["CMAKE_OSX_DEPLOYMENT_TARGET"] == "13.3"
+    assert "cacheVariables" not in host_presets["cs-host-macos"]
     assert "cacheVariables" not in host_presets["cs-host-linux"]
     assert "cacheVariables" not in host_presets["cs-host-windows"]
 

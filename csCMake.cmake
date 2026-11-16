@@ -8,19 +8,22 @@
 # .. code-block:: cmake
 #
 #   cmake_minimum_required(VERSION 3.31)
+#   include(csCMakeSetup)
+#   cs_macos_deployment_target(14.4)
 #   project(myApp VERSION 1.0.0 LANGUAGES CXX)
 #   include(csCMake)
 #   cs_initialize_project(NAMESPACE myApp CXX_STANDARD 20 DEFAULT_CONFIG Debug Release)
 #   cs_add_library(core STATIC core.cpp)
 #   cs_install_target(core COMPONENT core DEFAULT)
 #
-# csCMake needs CMake 3.31; its functions and macros run with the 3.31 policies.
+# Before :command:`project`: :doc:`csCMakeSetup` (the macOS deployment target). csCMake needs CMake 3.31; its functions
+# and macros run with the 3.31 policies.
 #
 # The modules: :doc:`csProject`, :doc:`csBuildConfigurations`, :doc:`csTargets`,
-# :doc:`csTargetSources`, :doc:`csTargetLinkLibraries`, :doc:`csFindPackage`, :doc:`csBaseInclude`,
-# :doc:`csTargetDependencies`, :doc:`csInstall`, :doc:`csPackageConfig`, :doc:`csDeployment`,
+# :doc:`csTargetSources`, :doc:`csTargetLinkLibraries`, :doc:`csFindPackage`, :doc:`csMacosDeploymentTarget`,
+# :doc:`csBaseInclude`, :doc:`csTargetDependencies`, :doc:`csInstall`, :doc:`csPackageConfig`, :doc:`csDeployment`,
 # :doc:`csCheckInstalledHeaders`, :doc:`csCompileProfiles`, :doc:`csCompileProfilesShipped`,
-# :doc:`csDebug`; integrations: :doc:`csOpenMP`.
+# :doc:`csDebug`; integrations: :doc:`csOpenMP`, :doc:`csQt`.
 
 include_guard(GLOBAL)
 
@@ -39,6 +42,7 @@ include(modules/csProject)
 include(modules/csBuildConfigurations)
 include(modules/csBaseInclude)
 include(modules/csTargets)
+include(modules/csMacosDeploymentTarget)
 include(modules/csFindPackage)
 include(modules/csTargetSources)
 include(modules/csTargetLinkLibraries)

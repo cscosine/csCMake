@@ -64,6 +64,7 @@ def test_prepare_workspace_lays_out_siblings_and_cleans_leftovers(tmp_path: Path
     prepare_workspace(tmp_path)
 
     assert (tmp_path / "csCMake" / "csCMake.cmake").is_file()
+    assert (tmp_path / "csCMake" / "csCMakeSetup.cmake").is_file()
     assert (tmp_path / "csCMake" / "presets" / "csv1" / "cs-presets-all.json").is_file()
     for project in PROJECTS:
         assert (tmp_path / project.name / "CMakePresets.json").is_file(), project.name

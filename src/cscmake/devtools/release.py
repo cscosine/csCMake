@@ -34,6 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # the files and folders of the package, relative to the repository root
 PACKAGE_CONTENT = [
     "csCMake.cmake",
+    "csCMakeSetup.cmake",
     "modules",
     "templates",
     "presets/csCMakeProjectSetup.json",
