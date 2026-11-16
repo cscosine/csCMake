@@ -19,7 +19,10 @@ include(modules/csFindPackage)
 #
 #     cs_target_use_openmp(<target> PUBLIC|PRIVATE|INTERFACE)
 #
-#   ClangCL on Windows: /openmp and vcomp; otherwise ``find_package(OpenMP REQUIRED)`` and OpenMP::OpenMP_CXX.
+#   ClangCL on Windows: /openmp and vcomp; Apple Clang: nothing, the target is built without OpenMP (Apple Clang has no
+#   OpenMP runtime; ``_OPENMP`` is not defined, a ``#pragma omp`` is ignored: guard the pragmas and the OpenMP calls,
+#   e.g. with a macro defined only with ``_OPENMP``); otherwise ``find_package(OpenMP REQUIRED)`` and
+#   OpenMP::OpenMP_CXX.
 #   ``find_package(OpenMP)`` goes to the installed package (:command:`cs_find_package` ``PUBLIC``) when its consumers
 #   need it: ``PUBLIC`` and ``INTERFACE``, and ``PRIVATE`` on a static or object library (its consumers link OpenMP).
 #
@@ -45,6 +48,12 @@ function(cs_target_use_openmp target_name visibility)
     message(VERBOSE "${CSCMAKE_NAMESPACE}: ${target_name} uses OpenMP: /openmp and vcomp (ClangCL)")
     target_compile_options(${target_name} ${visibility} /openmp)
     target_link_libraries(${target_name} ${visibility} vcomp)
+    return()
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    # no OpenMP runtime with Apple Clang (libomp is not part of macOS): serial
+    message(STATUS "${CSCMAKE_NAMESPACE}: ${target_name}: no OpenMP with Apple Clang, built without it")
     return()
   endif()
 

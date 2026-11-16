@@ -16,6 +16,8 @@ Since `v1.0.0-rc4`:
   `std::to_chars` of `std::format` in the libc++ of Apple; Qt 6.11 needs 13.0); before, the binaries ran only from
   the macOS of the build machine (macOS 15 or 26 on the CI runners). A project with its own value: in
   `cscmake-project-setup-macos`, which wins.
+- **`cs_target_use_openmp` with Apple Clang**: nothing (a message), the target is built without OpenMP (Apple Clang has
+  no OpenMP runtime); before: `find_package(OpenMP)` failed.
 - **`cs_deployment_qt_gui(<name> [OFFSCREEN] [NO_WAYLAND])`** (new, `modules/integrations/csQt.cmake`): the Qt
   plugins of a GUI application in a deployment, per system (Linux: xcb with its OpenGL integrations, Wayland, in
   `plugins/<type>/`; Windows: `windows`, the native style, `opengl32sw.dll`, in `bin/`; macOS: `cocoa`, the native
