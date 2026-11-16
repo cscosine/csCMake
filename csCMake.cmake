@@ -50,6 +50,7 @@ include(modules/csCheckInstalledHeaders)
 include(modules/csCompileProfiles)
 include(modules/csCompileProfilesShipped)
 include(modules/integrations/csOpenMP)
+include(modules/integrations/csQt)
 
 # Store the csCMake folder; fail if csCMake is included from two different folders.
 #
