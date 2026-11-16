@@ -33,6 +33,12 @@ csv1-<os>-<os version>-<arch>-generic-<compiler>-<compiler version>-<generator>
 | `<compiler version>` | `default` (the one of the platform); with Ninja on Windows, the MSVC toolset: `msvc_2022_17`, `msvc_2026_18` |
 | `<generator>` | `ninja`, `ninjamulticonfig`; `msvc2022`, `msvc2026` (Visual Studio); `xcode` |
 
+The macOS presets set the oldest macOS the binaries run on, `CMAKE_OSX_DEPLOYMENT_TARGET`, to `13.3` (the libc++ of
+Apple has the floating-point `std::to_chars` of `std::format` and `std::print` from there; Qt 6.11 needs 13.0), whatever
+the macOS of the build machine: a build on macOS 15 or 26 runs from macOS 13.3. A project sets its
+own value in `cscmake-project-setup-macos` ([Values per operating system](#3-values-per-operating-system)), which
+wins.
+
 `cmake --list-presets` lists the ones of the current machine. From the name of a variant:
 
 | Generator | Configure | Build, install, test (per configuration) | Workflow |

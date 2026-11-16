@@ -10,7 +10,20 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
-Since `v1.0.0-rc3`:
+Release candidate 5 (since `v1.0.0-rc4`):
+
+- **macOS deployment target**: the macOS presets set `CMAKE_OSX_DEPLOYMENT_TARGET` to `13.3` (the floating-point
+  `std::to_chars` of `std::format` in the libc++ of Apple; Qt 6.11 needs 13.0); before, the binaries ran only from
+  the macOS of the build machine (macOS 15 or 26 on the CI runners). A project with its own value: in
+  `cscmake-project-setup-macos`, which wins.
+- **`cs_target_use_openmp` with Apple Clang**: nothing (a message), the target is built without OpenMP (Apple Clang has
+  no OpenMP runtime); before: `find_package(OpenMP)` failed.
+- **`cs_deployment_qt_gui(<name> [OFFSCREEN] [NO_WAYLAND])`** (new, `modules/integrations/csQt.cmake`): the Qt
+  plugins of a GUI application in a deployment, per system (Linux: xcb with its OpenGL integrations, Wayland, in
+  `plugins/<type>/`; Windows: `windows`, the native style, `opengl32sw.dll`, in `bin/`; macOS: `cocoa`, the native
+  style, in `bin/<type>/`), instead of the list of plugins in every project.
+
+Release candidate 4 (since `v1.0.0-rc3`):
 
 - **Deployments on Windows and macOS**: the shared libraries of other packages are shipped there too (native builds;
   a warning in cross builds). Windows: the DLLs, found in the folders of the DLLs of the targets

@@ -268,3 +268,23 @@ def test_variants_manifest_lists_every_variant_of_the_registry() -> None:
         }
         expected_configs = {"singleconfig": 4, "multiconfig": 6}[variant["generator_type"]]
         assert len(variant["build_configs"]) == expected_configs
+
+
+def test_macos_deployment_target_from_the_host_preset_project_value_wins(generated: Path) -> None:
+    """The macOS host preset sets the deployment target (13.3: the libc++ of Apple has the floating-point to_chars of
+    std::format from there; above 13.0, the minimum of Qt 6.11): every macOS -base preset
+    inherits it after the presets of the project (cscmake-project-setup-macos, cscmake-project-setup), so a value of
+    the project wins."""
+    hosts = json.loads((TEMPLATE_DIR.parent / "common" / "config-hosts.json").read_text(encoding="utf-8"))
+    host_presets = {preset["name"]: preset for preset in hosts["configurePresets"]}
+    assert host_presets["cs-host-macos"]["cacheVariables"]["CMAKE_OSX_DEPLOYMENT_TARGET"] == "13.3"
+    assert "cacheVariables" not in host_presets["cs-host-linux"]
+    assert "cacheVariables" not in host_presets["cs-host-windows"]
+
+    macos_base = list(generated.glob("*-macos-*-base.json"))
+    assert macos_base
+    for path in macos_base:
+        for preset in json.loads(path.read_text(encoding="utf-8"))["configurePresets"]:
+            inherits = preset["inherits"]
+            assert inherits.index("cs-host-macos") > inherits.index("cscmake-project-setup-macos"), path.name
+            assert inherits.index("cs-host-macos") > inherits.index("cscmake-project-setup"), path.name

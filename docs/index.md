@@ -273,6 +273,7 @@ reference/csCompileProfiles
 reference/csCompileProfilesShipped
 reference/csDebug
 reference/csOpenMP
+reference/csQt
 ```
 
 ```{toctree}
