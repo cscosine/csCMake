@@ -71,8 +71,9 @@ script that records it (below), see [Presets](presets.md#values-of-a-project-wit
 
 **Recorded and checked:**
 
-- **Recorded**: `cs_initialize_project` installs the value in `<prefix>/share/cscmake/<project>.macos-deployment-target`
-  (a project without csCMake: the script of its preset, the same file).
+- **Recorded**: `cs_initialize_project` installs the value in
+  `<prefix>/share/cscmake/<namespace>.macos-deployment-target`, named as the package its consumers find (also for a
+  project added with `add_subdirectory`); a project without csCMake: the script of its preset, under its project name.
 - **Checked**: each package found (`cs_find_package`, and the dependencies of csCMake packages) built for a newer macOS
   than the project fails the configure, with the value to raise to; an older one is fine. A package without the file
   is not checked (`--log-level=VERBOSE` says so).

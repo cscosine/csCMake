@@ -5,7 +5,8 @@
 # The oldest macOS the binaries run on, ``CMAKE_OSX_DEPLOYMENT_TARGET``: csCMake sets no value, each project declares
 # its own before its first :command:`project` (a csCMake project: :command:`cs_macos_deployment_target` of
 # :doc:`csCMakeSetup`; a project without csCMake: its preset, see the user guide). csCMake records it in the installed
-# package (``<prefix>/share/cscmake/<project>.macos-deployment-target``, by :command:`cs_initialize_project`) and checks
+# package (``<prefix>/share/cscmake/<namespace>.macos-deployment-target``, named as the package, by
+# :command:`cs_initialize_project`) and checks
 # the packages found (:command:`cs_after_find_dependency`): a package built for a newer macOS than the project fails the
 # configure (its binaries would not start on the older macOS). An older one is fine.
 #
@@ -40,6 +41,37 @@ function(cs_require_macos_deployment_target version)
       "[csCMake] ${reason} needs macOS ${version} or newer, the project builds for macOS "
       "${CMAKE_OSX_DEPLOYMENT_TARGET} (CMAKE_OSX_DEPLOYMENT_TARGET). Raise it to ${version} or more in "
       "cscmake-project-setup-macos (CMakePresets.json of the project)."
+    )
+  endif()
+endfunction()
+
+# Record the macOS deployment target of the csCMake project namespace in its installed package
+# (cs_initialize_project): <prefix>/share/cscmake/<namespace>.macos-deployment-target, one line with the version, named
+# as the package the consumers find; also for a project added with add_subdirectory. Nothing when the project sets no
+# deployment target (on macOS: a warning, once per build).
+#
+# Writes:
+#
+# * global property _CSCMAKE_MACOS_DEPLOYMENT_TARGET_RECORDED_<namespace>, _CSCMAKE_MACOS_DEPLOYMENT_TARGET_WARNED
+function(_cs_record_macos_deployment_target namespace)
+  get_property(done GLOBAL PROPERTY _CSCMAKE_MACOS_DEPLOYMENT_TARGET_RECORDED_${namespace})
+  if(done)
+    return()
+  endif()
+  set_property(GLOBAL PROPERTY _CSCMAKE_MACOS_DEPLOYMENT_TARGET_RECORDED_${namespace} TRUE)
+  if(CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(file "${CMAKE_BINARY_DIR}/cscmake/${namespace}.macos-deployment-target")
+    file(WRITE "${file}" "${CMAKE_OSX_DEPLOYMENT_TARGET}\n")
+    install(FILES "${file}" DESTINATION share/cscmake)
+    return()
+  endif()
+  get_property(warned GLOBAL PROPERTY _CSCMAKE_MACOS_DEPLOYMENT_TARGET_WARNED)
+  if(APPLE AND NOT warned)
+    set_property(GLOBAL PROPERTY _CSCMAKE_MACOS_DEPLOYMENT_TARGET_WARNED TRUE)
+    message(
+      WARNING
+      "${namespace}: no macOS deployment target, the binaries are built for the macOS of this machine and do not run "
+      "on an older one: cs_macos_deployment_target(<version>) before project() (include(csCMakeSetup))"
     )
   endif()
 endfunction()
@@ -96,6 +128,15 @@ endfunction()
 #
 # .. prop_gbl:: _CSCMAKE_MACOS_DEPLOYMENT_TARGET_RECORDED
 #
-#   Internal: ``TRUE`` once the deployment target of the top-level project is recorded (the
-#   ``modules/scripts/csRecordMacosDeploymentTarget.cmake`` script, included after :command:`project` by the macOS
-#   presets and by :command:`cs_initialize_project`).
+#   Internal: ``TRUE`` once the deployment target of the top-level project without csCMake is recorded (the
+#   ``modules/scripts/csRecordMacosDeploymentTarget.cmake`` script, included after :command:`project` through
+#   ``CMAKE_PROJECT_INCLUDE``).
+#
+# .. prop_gbl:: _CSCMAKE_MACOS_DEPLOYMENT_TARGET_RECORDED_<namespace>
+#
+#   Internal: ``TRUE`` once the deployment target of the csCMake project ``<namespace>`` is recorded
+#   (:command:`cs_initialize_project`).
+#
+# .. prop_gbl:: _CSCMAKE_MACOS_DEPLOYMENT_TARGET_WARNED
+#
+#   Internal: ``TRUE`` once the warning for a project without deployment target is shown.

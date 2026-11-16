@@ -2,10 +2,11 @@
 # <prefix>/share/cscmake/<project>.macos-deployment-target, one line with the version. A consumer that finds the package
 # with csCMake (cs_find_package, cs_after_find_dependency) checks it against its own value (csMacosDeploymentTarget).
 #
-# Included by cs_initialize_project. A project without csCMake (e.g. a third-party library built with the csCMake
-# presets) includes it after its project() through CMAKE_PROJECT_INCLUDE (a module of CMAKE_MODULE_PATH), set with its
-# deployment target in the cscmake-project-setup-macos preset of its csCMakeProjectSetup.json: plain CMake. Once per
-# build, for the top-level project only; nothing when the project sets no deployment target (on macOS: a warning).
+# For a project without csCMake (a csCMake project records under its namespace, in cs_initialize_project). A project
+# (e.g. a third-party library built with the csCMake presets) includes it after its project() through
+# CMAKE_PROJECT_INCLUDE (a module of CMAKE_MODULE_PATH), set with its deployment target in the
+# cscmake-project-setup-macos preset of its csCMakeProjectSetup.json: plain CMake. Once per build, for the top-level
+# project only; nothing when the project sets no deployment target (on macOS: a warning).
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
 endif()
@@ -26,8 +27,7 @@ elseif(APPLE)
   message(
     WARNING
     "${PROJECT_NAME}: no CMAKE_OSX_DEPLOYMENT_TARGET, the binaries are built for the macOS of this machine and do not "
-    "run on an older one. A csCMake project: cs_macos_deployment_target(<version>) before project() (csCMakeSetup); "
-    "another project: CMAKE_OSX_DEPLOYMENT_TARGET in the cscmake-project-setup-macos preset of its "
+    "run on an older one: set CMAKE_OSX_DEPLOYMENT_TARGET in the cscmake-project-setup-macos preset of its "
     "csCMakeProjectSetup.json."
   )
 endif()
