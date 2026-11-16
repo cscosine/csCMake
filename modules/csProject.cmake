@@ -11,6 +11,7 @@
 include_guard(GLOBAL)
 include(modules/csDebug)
 include(modules/csInternal)
+include(modules/csMacosDeploymentTarget)
 
 #.rst:
 # .. command:: cs_initialize_project
@@ -146,8 +147,8 @@ macro(cs_initialize_project)
 
   _cs_set_generator_variables()
 
-  # the macOS deployment target in the installed files (also when the presets of csCMake did not include it)
-  include(modules/scripts/csRecordMacosDeploymentTarget)
+  # the macOS deployment target in the installed package, under the package name
+  _cs_record_macos_deployment_target(${CSCMAKE_NAMESPACE})
 
   _cs_report_initialized()
 

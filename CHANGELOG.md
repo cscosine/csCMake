@@ -10,6 +10,13 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
+Release candidate 7 (since `v1.0.0-rc6`):
+
+- **The recorded macOS deployment target of a csCMake project** is named as its package:
+  `share/cscmake/<namespace>.macos-deployment-target` (rc6: the project name, e.g. `csCoreSol` for the package
+  `csCore`, which its consumers did not find, so they did not check it); a project added with `add_subdirectory`
+  records its own too. Nothing to change in a project.
+
 Release candidate 6 (since `v1.0.0-rc5`):
 
 - **macOS deployment target: declared by each project, checked by csCMake** (breaking for macOS builds): the macOS

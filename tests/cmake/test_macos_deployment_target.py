@@ -81,6 +81,22 @@ def test_recorded_in_the_installed_package(tmp_path: Path) -> None:
     assert (prefix / "share" / "cscmake" / "cstest.macos-deployment-target").read_text(encoding="utf-8") == "13.3\n"
 
 
+def test_recorded_under_the_package_name(tmp_path: Path) -> None:
+    """A csCMake project records under its namespace, the name its consumers find (the project name may differ); a
+    project added with add_subdirectory records its own."""
+    prefix = tmp_path / "prefix"
+    body = "cs_initialize_project(NAMESPACE myLib CXX_STANDARD 17 DEFAULT_CONFIG Debug)\nadd_subdirectory(nested)\n"
+    nested = (
+        "project(nestedSol VERSION 1.0.0 LANGUAGES NONE)\n"
+        "cs_initialize_project(NAMESPACE nested CXX_STANDARD 17 DEFAULT_CONFIG Debug)\n"
+    )
+    result = install(tmp_path / "project", body, prefix, {"nested/CMakeLists.txt": nested}, args=_target("14.4"))
+
+    assert result.returncode == 0, result.output
+    names = sorted(p.name for p in (prefix / "share" / "cscmake").iterdir())
+    assert names == ["myLib.macos-deployment-target", "nested.macos-deployment-target"]
+
+
 def test_nothing_recorded_without_a_value(tmp_path: Path) -> None:
     prefix = tmp_path / "prefix"
     result = install(tmp_path / "project", INIT, prefix)
