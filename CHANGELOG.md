@@ -10,7 +10,14 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
-Since `v1.0.0-rc3`:
+Since `v1.0.0-rc4`:
+
+- **macOS deployment target**: the macOS presets set `CMAKE_OSX_DEPLOYMENT_TARGET` to `13.3` (the floating-point
+  `std::to_chars` of `std::format` in the libc++ of Apple; Qt 6.11 needs 13.0);
+  the binaries ran only from the macOS of the build machine (macOS 15 or 26 on the CI runners). A project with its
+  own value: in `cscmake-project-setup-macos`, which wins.
+
+Release candidate 4 (since `v1.0.0-rc3`):
 
 - **Deployments on Windows and macOS**: the shared libraries of other packages are shipped there too (native builds;
   a warning in cross builds). Windows: the DLLs, found in the folders of the DLLs of the targets
