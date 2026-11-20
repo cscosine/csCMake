@@ -26,8 +26,11 @@ The open work of csCMake: one line per item, by area. Done items are removed (th
 
 - [ ] Deployments, plugins of the project itself (`cs_add_library(MODULE)`): installed in their `DESTINATION` with an
   install RPATH reaching `lib/` from there; today `PLUGINS` takes imported targets only.
-- [ ] csqt6 (not csCMake): a recommended set of Qt plugins per system with their folders, so that projects do not
-  repeat the list.
+- [ ] Qt image formats in deployments: `cs_deployment_qt_gui` ships the platforms, styles and OpenGL plugins only.
+  An application that reads or shows JPEG or SVG through Qt (`QImage`, `QIcon`) needs the `imageformats` plugins
+  (`qjpeg`, `qsvg`) and, for SVG icons, `iconengines/qsvgicon`: `cs_deployment_qt_jpg(<name>)` /
+  `cs_deployment_qt_svg(<name>)` (or an `IMAGE_FORMATS` option of `cs_deployment_qt_gui`), in the same folders per
+  system. Not needed yet (the applications use PNG icons and OpenCV images).
 - [ ] Deployments in cross builds: the libraries of the sysroot are the system ones (today a warning, the binaries of
   the project only).
 - [ ] Deployments on Windows, notes for the projects: OpenCV loads `opencv_videoio_ffmpeg*.dll` at run time and Qt

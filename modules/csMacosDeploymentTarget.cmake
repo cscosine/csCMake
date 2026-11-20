@@ -39,8 +39,9 @@ function(cs_require_macos_deployment_target version)
     message(
       FATAL_ERROR
       "[csCMake] ${reason} needs macOS ${version} or newer, the project builds for macOS "
-      "${CMAKE_OSX_DEPLOYMENT_TARGET} (CMAKE_OSX_DEPLOYMENT_TARGET). Raise it to ${version} or more in "
-      "cscmake-project-setup-macos (CMakePresets.json of the project)."
+      "${CMAKE_OSX_DEPLOYMENT_TARGET} (CMAKE_OSX_DEPLOYMENT_TARGET). Raise it to ${version} or more: "
+      "cs_macos_deployment_target(${version}) before project() (a csCMake project), or CMAKE_OSX_DEPLOYMENT_TARGET in "
+      "the cscmake-project-setup-macos preset of its csCMakeProjectSetup.json (a project without csCMake)."
     )
   endif()
 endfunction()
