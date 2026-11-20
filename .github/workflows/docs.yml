@@ -1,12 +1,12 @@
 name: Docs
 
 # Build the documentation (Sphinx, reference from the #.rst: blocks of the CMake modules) on every push, pull
-# request and release tag (called by release.yml), as a downloadable artifact; publish it on GitHub Pages from main.
+# request and release tag (called by release.yml), as a downloadable artifact; publish it on GitHub Pages from stable (the last release).
 on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: [ main, dev ]
+    branches: [ main, stable ]
   # release tags: called by release.yml
   workflow_call:
 
@@ -40,7 +40,7 @@ jobs:
           path: docs/_build/html
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
     needs: build
     runs-on: ubuntu-latest
     permissions:

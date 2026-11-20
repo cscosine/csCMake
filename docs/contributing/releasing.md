@@ -20,7 +20,7 @@ are not in the package: they are needed only to develop csCMake. The list is `PA
 
 ## Steps
 
-1. On `dev`, prepare the release:
+1. On `main`, prepare the release:
    - the version in `pyproject.toml`;
    - a section `## v<version> (<date>)` in `CHANGELOG.md` (the release candidates of a version share its section):
      what changed for the projects using csCMake (new features, fixes; a breaking change with what to change in a
@@ -34,8 +34,8 @@ are not in the package: they are needed only to develop csCMake. The list is `PA
 
    `cscmake-release` fails when the tag does not match the version of `pyproject.toml` or `CHANGELOG.md` has no
    section for it; `dist/` gets the assets (git-ignored).
-3. Merge `dev` into `main` (`git merge --no-ff dev`) and push `main`; wait for its `ci`, `smoke` and `docs` runs.
-4. Tag `main` and push the tag:
+3. Push `main`; wait for its `ci` and `smoke` runs.
+4. Tag the commit and push the tag:
 
    ```bash
    git tag -a v<version> -m "csCMake <version>"
@@ -48,22 +48,20 @@ The push of the tag runs the `release` workflow (`.github/workflows/release.yml`
 2. when the three pass, the `publish` job builds the documentation, runs `cscmake-release` and creates the GitHub
    Release of the tag with the assets and the release notes.
 
-The documentation on GitHub Pages is the one of `main`, published by the push of step 3.
+Once the release is published, fast-forward `stable` to it: `git push origin v<version>:stable`. The documentation
+on GitHub Pages is the one of `stable` (the latest release), published by that push.
 
 ## Pre-releases
 
 A tag with a pre-release part, `v<version>-rc<n>` (the version of `pyproject.toml` without the suffix), makes a GitHub
-pre-release with the same assets. Use it to test a release before tagging `main`: tag `dev`, check the release, then
-make the final release from `main`.
+pre-release with the same assets (and leaves `stable` where it is). Use it to test a release: tag a commit of
+`main`, check the release, then make the final release on the same commit.
 
 ## A failed release
 
-When the `release` workflow fails, nothing is published. Fix the problem on `dev`, merge it into `main` again, then
-move the tag:
-
-```bash
-git tag -d v<version> && git push origin :refs/tags/v<version>
-git tag -a v<version> -m "csCMake <version>" && git push origin v<version>
-```
+When the `release` workflow fails, nothing is published. A release candidate: delete its tag
+(`gh release delete v<version>-rc<n> --cleanup-tag`, or `git push origin :refs/tags/v<version>-rc<n>`), fix on `main`,
+tag the next candidate. A final tag cannot be moved or deleted (organisation rules): fix on `main` and release the next
+patch version.
 
 Once a release is published, its tag never moves: a fix is a new patch version.
