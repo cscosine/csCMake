@@ -40,7 +40,7 @@
       "displayName": "Windows MSVC (cl), Visual Studio 2022",
       "description": "MSVC (cl) of Visual Studio 2022, for the Ninja generators",
       "hidden": true,
-      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up. The clang-cl of this Visual Studio (VCINSTALLDIR of the environment), not the first clang-cl on PATH: its version matches the standard library of the MSVC toolset (MSVC 14.52 needs Clang 22, a standalone LLVM may be older)",
       "toolset": {
         "value": "v143,host=x64",
         "strategy": "external"
@@ -59,7 +59,7 @@
       "displayName": "Windows MSVC LLVM (clang-cl), Visual Studio 2022",
       "description": "MSVC LLVM (clang-cl) of Visual Studio 2022, for the Ninja generators",
       "hidden": true,
-      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "$comment": "Ninja: configure from a Visual Studio 2022 developer environment (vcvars); the external toolset and architecture let IDEs set it up. The clang-cl of this Visual Studio (VCINSTALLDIR of the environment), not the first clang-cl on PATH: its version matches the standard library of the MSVC toolset (MSVC 14.52 needs Clang 22, a standalone LLVM may be older)",
       "toolset": {
         "value": "v143,host=x64",
         "strategy": "external"
@@ -69,8 +69,8 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl"
+        "CMAKE_C_COMPILER": "$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-cl.exe"
       }
     },
     {
@@ -78,7 +78,7 @@
       "displayName": "Windows MSVC (cl), Visual Studio 2026",
       "description": "MSVC (cl) of Visual Studio 2026, for the Ninja generators",
       "hidden": true,
-      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up. The clang-cl of this Visual Studio (VCINSTALLDIR of the environment), not the first clang-cl on PATH: its version matches the standard library of the MSVC toolset (MSVC 14.52 needs Clang 22, a standalone LLVM may be older)",
       "toolset": {
         "value": "v145,host=x64",
         "strategy": "external"
@@ -97,7 +97,7 @@
       "displayName": "Windows MSVC LLVM (clang-cl), Visual Studio 2026",
       "description": "MSVC LLVM (clang-cl) of Visual Studio 2026, for the Ninja generators",
       "hidden": true,
-      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up",
+      "$comment": "Ninja: configure from a Visual Studio 2026 developer environment (vcvars); the external toolset and architecture let IDEs set it up. The clang-cl of this Visual Studio (VCINSTALLDIR of the environment), not the first clang-cl on PATH: its version matches the standard library of the MSVC toolset (MSVC 14.52 needs Clang 22, a standalone LLVM may be older)",
       "toolset": {
         "value": "v145,host=x64",
         "strategy": "external"
@@ -107,8 +107,8 @@
         "strategy": "external"
       },
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl"
+        "CMAKE_C_COMPILER": "$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-cl.exe"
       }
     },
     {

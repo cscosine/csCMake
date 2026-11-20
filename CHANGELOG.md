@@ -10,6 +10,17 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
+Release candidate 8 (since `v1.0.0-rc7`):
+
+- **clang-cl with Ninja on Windows**: the `msvcclang-msvc_2022_17` and `msvcclang-msvc_2026_18` presets use the clang-cl
+  of their Visual Studio (`$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-cl.exe`), no longer the first `clang-cl` on
+  `PATH`: a standalone LLVM older than the standard library of the toolset failed every compile (MSVC 14.52 of
+  Visual Studio 2026 needs Clang 22: `error STL1000`). Nothing to change in a project; configure from the developer
+  environment of that Visual Studio, as before.
+- **The error of a package built for a newer macOS** names both ways to raise the deployment target:
+  `cs_macos_deployment_target(<version>)` (a csCMake project) or the `cscmake-project-setup-macos` preset (a project
+  without csCMake).
+
 Release candidate 7 (since `v1.0.0-rc6`):
 
 - **The recorded macOS deployment target of a csCMake project** is named as its package:
