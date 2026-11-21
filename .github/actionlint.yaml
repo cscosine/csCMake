@@ -1,3 +1,4 @@
+# Owned by the project template (cs-project-template): change it there.
 # Configuration of actionlint (the actionlint hook of .pre-commit-config.yaml), which checks the workflow files.
 #
 # actionlint checks each runs-on label against its own list of the GitHub-hosted runner images. GitHub-hosted images
@@ -8,5 +9,5 @@
 # Remove a label once the pinned actionlint knows it (actionlint then reports nothing without it).
 self-hosted-runner:
   labels:
-    # ci.yml (the matrix of smoke.yml is generated at run time, not checked by actionlint)
     - ubuntu-26.04
+    - ubuntu-26.04-arm

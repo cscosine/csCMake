@@ -4,7 +4,6 @@
   "python.testing.pytestArgs": [
     "tests"
   ],
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.analysis.typeCheckingMode": "strict",
   "python.analysis.autoSearchPaths": true,
   "python.analysis.indexing": true,
@@ -12,13 +11,27 @@
   "python.analysis.extraPaths": [
     "${workspaceFolder}/src"
   ],
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "csorchestrator",
+      "depth": 10
+    }
+  ],
   "python.analysis.exclude": [
+    "./workspace",
     "**/node_modules",
     "**/__pycache__",
     "**/.*",
     ".venv"
   ],
   "python.analysis.autoImportCompletions": true,
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.autocomplete": "disabled",
+  "C_Cpp.errorSquiggles": "disabled",
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy"
+  ],
   "editor.formatOnSave": true,
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
@@ -27,8 +40,5 @@
     }
   },
   "ruff.organizeImports": true,
-  "ruff.fixAll": true,
-  "mypy-type-checker.args": [
-    "--strict"
-  ]
+  "ruff.fixAll": true
 }

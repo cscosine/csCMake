@@ -4,4 +4,4 @@ namespace myapp {
 
 std::string greeting() { return "Hello from myApp"; }
 
-}  // namespace myapp
+} // namespace myapp

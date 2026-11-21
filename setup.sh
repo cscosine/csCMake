@@ -1,23 +1,51 @@
 #!/usr/bin/env bash
+# Owned by the project template (cs-project-template): change it there.
+# Creates .venv, installs the project with its dev tools, installs the pre-commit hooks.
+set -euo pipefail
+
 if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
   echo "Do not source this script. Run: ./setup.sh"
   return 1
 fi
 
-PYTHON="${1:-python3}"
+usage() {
+  cat <<USAGE
+Usage: ./setup.sh [--python=<interpreter>]
 
-echo "Using Python: ${PYTHON}"
+  --python=<interpreter>        Python used to create .venv (default: python3 when it is 3.11 or newer, otherwise
+                                  the newest of python3.14 ... python3.11 found)
+USAGE
+}
 
-# Check Python version >= 3.11
-if ! ${PYTHON} -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
+PYTHON=""
+for arg in "$@"; do
+  case "${arg}" in
+    --python=*) PYTHON="${arg#*=}" ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: ${arg}"; usage; exit 1 ;;
+  esac
+done
+
+recent_enough() { command -v "$1" >/dev/null 2>&1 && "$1" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; }
+if [[ -z "${PYTHON}" ]]; then
+  for candidate in python3 python3.14 python3.13 python3.12 python3.11; do
+    if recent_enough "${candidate}"; then PYTHON="${candidate}"; break; fi
+  done
+  PYTHON="${PYTHON:-python3}"
+fi
+
+echo "Using Python: ${PYTHON} ($("${PYTHON}" --version 2>&1))"
+
+if ! "${PYTHON}" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
   echo "Error: Python 3.11 or newer is required."
   echo "Found:"
-  ${PYTHON} --version
+  "${PYTHON}" --version
   exit 1
 fi
 
-${PYTHON} -m venv .venv
+"${PYTHON}" -m venv .venv
 
+# shellcheck disable=SC1091
 source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
@@ -33,6 +61,3 @@ echo "  code ."
 echo ""
 echo "Or: "
 echo "  ./open-code.sh"
-echo ""
-echo "Or: "
-echo "  source ./open-code.sh"
