@@ -7,4 +7,4 @@ namespace myapp {
 // the message of the application
 std::string greeting();
 
-}  // namespace myapp
+} // namespace myapp

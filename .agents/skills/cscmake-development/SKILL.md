@@ -104,8 +104,9 @@ entries in `presets/common/build-configurations.json`.
   `csSmokeBase` → `csSmokeMidA`/`csSmokeMidB` → `csSmokeTop`), driven by
   `tests/smoke/run_smoke.py --variant <id>`; CI runs it for every registry variant (`smoke.yml`,
   matrix from `tests/smoke/ci_matrix.py`). New csCMake features should get coverage there.
-- Markers (root `conftest.py`): `@pytest.mark.slow` (skipped unless `--run-all`) and
-  `@pytest.mark.requires("cmake")` (skipped when the tool is not on PATH).
+- Markers (`tests/conftest.py`; the mechanism, `--run-all` and `--run=<marker>`, is the template's root
+  `conftest.py`): `@pytest.mark.smoke` (skipped unless `--run=smoke`, not part of `--run-all`: `smoke.yml` builds
+  them in CI) and `@pytest.mark.requires("cmake")` (skipped when the tool is not on PATH).
 
 ### Dependency hygiene
 - When adding a new dev dependency to `[project.optional-dependencies] dev` in

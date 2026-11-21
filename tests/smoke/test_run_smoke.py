@@ -95,7 +95,7 @@ def _host_variants() -> list[str]:
     ]
 
 
-@pytest.mark.slow
+@pytest.mark.smoke
 @pytest.mark.requires("cmake")
 @pytest.mark.parametrize(
     "variant", _host_variants() or [pytest.param("none", marks=pytest.mark.skip("no host variant"))]

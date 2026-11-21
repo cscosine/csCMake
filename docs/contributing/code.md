@@ -73,7 +73,7 @@ Run on the working tree:
 ```bash
 ruff check . && ruff format --check . && mypy --config-file=pyproject.toml src tests && lint-imports
 python -m pytest                          # fast tests: Python and CMake configure tests
-python -m pytest --run-all                # + smoke builds of the variants of this machine
+python -m pytest --run=smoke              # + smoke builds of the variants of this machine
 cscmake-generate-presets --check
 gersemi --check csCMake.cmake csCMakeSetup.cmake modules templates tests/smoke
 cscmake-lint csCMake.cmake csCMakeSetup.cmake modules/*.cmake modules/*/*.cmake templates/*.cmake.in

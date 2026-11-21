@@ -3,6 +3,8 @@
 
 namespace cssmokebase {
 
-std::string text_message() { return "text(" + core_message() + ")"; }
+std::string text_message() {
+  return "text(" + core_message() + ")";
+}
 
 } // namespace cssmokebase

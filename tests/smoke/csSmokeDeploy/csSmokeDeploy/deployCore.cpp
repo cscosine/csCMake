@@ -2,5 +2,7 @@
 #include <csSmokeShared/sharedText.hpp>
 
 namespace cssmokedeploy {
-std::string deploy_message() { return "deploy(" + cssmokeshared::text_message() + ")"; }
+std::string deploy_message() {
+  return "deploy(" + cssmokeshared::text_message() + ")";
+}
 } // namespace cssmokedeploy

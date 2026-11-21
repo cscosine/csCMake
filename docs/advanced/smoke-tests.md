@@ -144,7 +144,7 @@ project folder must be named like the package**.
   ```bash
   python tests/smoke/run_smoke.py --variant csv1-linux-ubuntu24.04-x64-generic-gcc-default-ninjamulticonfig
   python tests/smoke/run_smoke.py --variant <id> --workspace /tmp/ws --no-lint
-  python -m pytest --run-all     # test_run_smoke.py: every variant of this machine (CSCMAKE_SMOKE_VARIANTS=id1,id2)
+  python -m pytest --run=smoke   # test_run_smoke.py: every variant of this machine (CSCMAKE_SMOKE_VARIANTS=id1,id2)
   ```
 
 ## Adding a project
