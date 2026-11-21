@@ -1,5 +1,7 @@
 # csCMake
 
+CMake for families of C++ projects: targets, packages, presets for every platform
+
 CMake utilities for C++ projects: one way to define targets, find dependencies, install packages with components,
 choose compile options per configuration and build on every platform with ready-made presets.
 
@@ -17,6 +19,31 @@ csCMake is made of two parts:
 > **Status:** 1.0.0 release candidates: the API proposed for 1.0.0, validated by the projects that use it.
 > Development happens on `main`; `stable` holds the latest release. Releases: GitHub Releases (the csCMake package and
 > its documentation), changes in [CHANGELOG.md](CHANGELOG.md).
+
+<!-- cs-template:begin (this block is owned by cs-project-template: do not edit; the rest of the file is the project's) -->
+## Getting started
+
+Requires Python 3.11 or newer and Git.
+
+```bash
+./setup.sh                    # Windows: .\setup.ps1
+source .venv/bin/activate     # Windows: .\.venv\Scripts\Activate.ps1
+```
+
+`setup.sh` creates `.venv`, installs the project with its development tools, and installs the
+pre-commit hooks.
+
+Checks and tests:
+
+```bash
+pre-commit run --all-files
+pytest                        # --run-all: every test, as CI; --run=<marker>: an opt-in group (tests/conftest.py)
+```
+
+The shared files (setup, checks, CI, agent rules) come from
+[cs-project-template](https://github.com/cscosine/cs-project-template); to bring them to its latest version, on a
+branch: `copier update --defaults`.
+<!-- cs-template:end -->
 
 ## Documentation
 
@@ -163,31 +190,6 @@ src/cscmake/           Python: preset registry and generator, dev tools
 tests/                 Python tests, CMake configure tests (tests/cmake/), smoke projects (tests/smoke/)
 docs/                  the documentation (Sphinx)
 ```
-
-<!-- cs-template:begin (this block is owned by cs-project-template: do not edit; the rest of the file is the project's) -->
-## Getting started
-
-Requires Python 3.11 or newer and Git.
-
-```bash
-./setup.sh                    # Windows: .\setup.ps1
-source .venv/bin/activate     # Windows: .\.venv\Scripts\Activate.ps1
-```
-
-`setup.sh` creates `.venv`, installs the project with its development tools, and installs the
-pre-commit hooks.
-
-Checks and tests:
-
-```bash
-pre-commit run --all-files
-pytest                        # --run-all: every test, as CI; --run=<marker>: an opt-in group (tests/conftest.py)
-```
-
-The shared files (setup, checks, CI, agent rules) come from
-[cs-project-template](https://github.com/cscosine/cs-project-template); to bring them to its latest version, on a
-branch: `copier update --defaults`.
-<!-- cs-template:end -->
 
 Documentation: `sphinx-build -W -n docs docs/_build/html`; the CMake smoke builds of this machine: `pytest --run=smoke`.
 
