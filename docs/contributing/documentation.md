@@ -147,7 +147,7 @@ lines of a field are indented 2 more spaces than the field name:
 gersemi leaves comments exactly as written, so wrap `#.rst:` blocks by hand at 120 columns: `cscmake-lint` checks the
 line length and that a comment block is right above every function.
 
-A changed signature also goes in `gersemi/cscmake.py`, so gersemi lays out the keyword arguments of the calls.
+A changed signature also goes in `gersemi/gersemi_cscmake.py`, so gersemi lays out the keyword arguments of the calls.
 
 ### Variables and properties
 
@@ -223,6 +223,6 @@ for the projects (with what to change in a project for a breaking change).
 
 1. The `#.rst:` block of the command: summary, signature, details, arguments, `:Reads:` / `:Writes:`.
 2. The variables and properties it introduces: an entry in the module that sets them.
-3. `gersemi/cscmake.py`: its signature.
+3. `gersemi/gersemi_cscmake.py`: its signature.
 4. The guides that show it, `README.md` if it appears there, `CHANGELOG.md`.
 5. `sphinx-build -W -n docs docs/_build/html`, and look at the page.

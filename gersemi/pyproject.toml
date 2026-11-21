@@ -1,0 +1,17 @@
+# gersemi-cscmake: the signatures of the csCMake commands as a gersemi extension (`extensions: [cscmake]`).
+# Installed from a csCMake tag, e.g. by the gersemi pre-commit hook of the projects (docs/user/formatting.md):
+#   gersemi-cscmake @ git+https://github.com/cscosine/csCMake@v1.0.0#subdirectory=gersemi
+# Its version is csCMake's (checked by cscmake.devtools.release).
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gersemi-cscmake"
+version = "1.0.0"
+description = "gersemi extension: the signatures of the csCMake commands"
+license = "MIT"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+py-modules = ["gersemi_cscmake"]

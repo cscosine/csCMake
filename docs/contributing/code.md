@@ -50,7 +50,7 @@ docs/                               this documentation
   `_cs_log_level_at_least(<level> out)`. Errors: `[<public command>] <subject>: <what is wrong>; <what to do>`.
 - Every module starts with `include_guard(GLOBAL)` and includes the modules it uses.
 - gersemi formats every CMake file (`.gersemirc`: 120 columns, indent 2; the `cs_*` signatures in
-  `gersemi/cscmake.py`); `cscmake-lint` checks the rules: lowercase names (`CS101`-`CS103`), a comment block right above
+  `gersemi/gersemi_cscmake.py`); `cscmake-lint` checks the rules: lowercase names (`CS101`-`CS103`), a comment block right above
   every function and macro (`CS104`), at most 5 named arguments, 50 statements, 12 branches (`CS105`-`CS107`), 120
   columns (`CS108`). A finding is silenced only with `# cscmake-lint: disable=<code>` as the first line of the function
   body, with the reason.
@@ -60,7 +60,7 @@ docs/                               this documentation
 1. The code, in the module of its subject.
 2. Its documentation: the `#.rst:` block, and the variables and properties it sets (see
    [Contributing to the documentation](documentation.md#checklist-a-new-or-changed-public-command)).
-3. Its signature in `gersemi/cscmake.py`.
+3. Its signature in `gersemi/gersemi_cscmake.py`.
 4. Tests: a configure test in `tests/cmake/` for its behaviour and its errors; a smoke project when it changes what a
    build or an installed package does.
 5. The user guide and tutorials that show it; `CHANGELOG.md` (a breaking change: with what to change in a project;

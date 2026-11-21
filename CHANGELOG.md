@@ -10,6 +10,15 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
 candidate to the next, listed here with what to change in a project.
 
+Release candidate 9 (since `v1.0.0-rc8`):
+
+- **The gersemi extension is a package**: `gersemi/` is the Python package `gersemi-cscmake` (module
+  `gersemi_cscmake`, the file renamed from `gersemi/cscmake.py`), installed from a csCMake tag
+  (`gersemi-cscmake @ git+https://github.com/cscosine/csCMake@<tag>#subdirectory=gersemi`, e.g. as an
+  `additional_dependencies` of the gersemi pre-commit hook) and loaded with `extensions: [cscmake]`: no path to a
+  csCMake checkout. A project that referenced `<csCMake>/gersemi/cscmake.py` uses `[cscmake]` instead
+  ([Formatting](docs/user/formatting.md)).
+
 Release candidate 8 (since `v1.0.0-rc7`):
 
 - **clang-cl with Ninja on Windows**: the `msvcclang-msvc_2022_17` and `msvcclang-msvc_2026_18` presets use the clang-cl
