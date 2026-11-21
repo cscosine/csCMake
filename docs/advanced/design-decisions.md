@@ -87,8 +87,11 @@ public has no entry.
 
 ## Formatting and linting
 
-gersemi formats the CMake code; the signatures of the `cs_*` commands ship as a gersemi extension, so a project
-formats its calls the same way. csCMake checks its own conventions with a small linter of its own, `cscmake-lint`: no
-maintained CMake linter checks them, and the previous one (cmakelang) is no longer maintained.
+gersemi formats the CMake code; the signatures of the `cs_*` commands are a gersemi extension, so a project formats
+its calls the same way. The conventions are checked by a small linter of cscosine, `cscmake-lint`: no maintained CMake
+linter checks them, and the previous one (cmakelang) is no longer maintained. Both are pre-commit hooks in their own
+repository, [cs-pre-commit-hooks](https://github.com/cscosine/cs-pre-commit-hooks), not in csCMake: the project
+template uses them, and csCMake uses the template, so keeping them here would tie every csCMake release to a template
+release and the other way round.
 
-**For a project:** `gersemi` with the csCMake extension; see [Formatting your CMake files](../user/formatting.md).
+**For a project:** the hooks `gersemi-cscmake` and `cscmake-lint`; see [Formatting your CMake files](../user/formatting.md).

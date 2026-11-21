@@ -1,9 +1,10 @@
 # Formatting your CMake files
 
 [gersemi](https://github.com/BlankSpruce/gersemi) lays out CMake code. To lay out the calls of the `cs_*` commands
-well (one keyword with its values per line), it needs the signatures of the commands: csCMake ships them as a gersemi
-extension, the package `gersemi-cscmake` in its `gersemi/` folder (module `gersemi_cscmake`), installed from a csCMake
-tag; gersemi loads it as `extensions: [cscmake]`.
+well (one keyword with its values per line), it needs the signatures of the commands: they are a gersemi extension
+(module `gersemi_cscmake`) in [cs-pre-commit-hooks](https://github.com/cscosine/cs-pre-commit-hooks), the pre-commit
+hooks of cscosine, which also check the CMake rules of cscosine (`cscmake-lint`); gersemi loads it as
+`extensions: [cscmake]`.
 
 ```cmake
 # without the signatures                 # with them
@@ -35,27 +36,27 @@ projects get both files of this page from the project template.
 
 ## With pre-commit
 
-The gersemi hook installs the extension in its environment, from the csCMake tag the project uses:
+The hooks install gersemi (pinned) with the signatures in their own environment:
 
 ```yaml
-- repo: https://github.com/BlankSpruce/gersemi-pre-commit
-  rev: 0.29.2
+- repo: https://github.com/cscosine/cs-pre-commit-hooks
+  rev: v1.0.0
   hooks:
-    - id: gersemi
-      additional_dependencies:
-        - gersemi-cscmake @ git+https://github.com/cscosine/csCMake@v1.0.0#subdirectory=gersemi
+    - id: gersemi-cscmake
+    - id: cscmake-lint      # optional: the CMake rules of cscosine
 ```
 
-The hook reads the `.gersemirc` of the project.
+The hook reads the `.gersemirc` of the project. A release of cs-pre-commit-hooks has the signatures of the csCMake
+commands of its time (its CHANGELOG says which); a newer csCMake command is laid out on one line until the project
+moves to a newer release of the hooks.
 
 ## From the command line
 
 ```bash
-pip install gersemi "gersemi-cscmake @ git+https://github.com/cscosine/csCMake@v1.0.0#subdirectory=gersemi"
+pip install "cs-pre-commit-hooks @ git+https://github.com/cscosine/cs-pre-commit-hooks@v1.0.0"
 gersemi -i CMakeLists.txt src/CMakeLists.txt    # format in place
 gersemi --check .                               # exit 1 when a file is not formatted
+cscmake-lint CMakeLists.txt                     # the CMake rules of cscosine
 ```
-
-The released archive contains the same folder: `pip install <csCMake>/gersemi` installs it from a downloaded csCMake.
 
 gersemi leaves comments as written: wrap them by hand.

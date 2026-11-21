@@ -22,7 +22,6 @@ dependencies = []
 
 [project.scripts]
 cscmake-generate-presets = "cscmake.presets.generate:main"
-cscmake-lint = "cscmake.devtools.cmake_lint:main"
 cscmake-update-cmake-inventory = "cscmake.devtools.cmake_inventory:main"
 cscmake-check-docs = "cscmake.devtools.check_docs:main"
 cscmake-release = "cscmake.devtools.release:main"
@@ -39,7 +38,8 @@ dev = [
     "types-PyYAML",
     "copier>=9.4",
     # project: below
-    "gersemi>=0.29.2",
+    # the CMake hooks of cscosine: gersemi with the cs_* signatures, cscmake-lint (also the hooks of this repository)
+    "cs-pre-commit-hooks @ git+https://github.com/cscosine/cs-pre-commit-hooks@v1.0.0-rc1",
     # documentation (Sphinx, CMake domain, Markdown pages)
     "sphinx>=8.1",
     "sphinxcontrib-moderncmakedomain>=3.29",

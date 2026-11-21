@@ -94,6 +94,5 @@ project may be looser than its library.
 ## Project template
 
 - [ ] A project template (copier): `CMakePresets.json`, `csCMakeProjectSetup.json`, the top `CMakeLists.txt`,
-  pre-commit, `.clang-format`, `.clang-tidy` tiers, gersemi configuration (the `cs_*` signatures stay in csCMake,
-  referenced from the checkout), `.vscode` (extensions, settings, `launch.json` per platform), licence and its check, a
+  pre-commit, `.clang-format`, `.clang-tidy` tiers, gersemi configuration (the `cs_*` signatures: cs-pre-commit-hooks), `.vscode` (extensions, settings, `launch.json` per platform), licence and its check, a
   CI stub; it pins a compatible csCMake version.

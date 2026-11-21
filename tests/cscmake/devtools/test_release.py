@@ -37,11 +37,11 @@ First.
 """
 
 
-def _repo(tmp_path: Path, version: str = "0.2.0", gersemi_version: str | None = None) -> Path:
+def _repo(tmp_path: Path, version: str = "0.2.0") -> Path:
     root = tmp_path / "repo"
     for entry in PACKAGE_CONTENT:
         path = root / entry
-        if path.suffix or entry in ("LICENSE", ".gersemirc"):
+        if path.suffix or entry == "LICENSE":
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(entry, encoding="utf-8")
         else:
@@ -50,9 +50,6 @@ def _repo(tmp_path: Path, version: str = "0.2.0", gersemi_version: str | None = 
             (path / "__pycache__").mkdir()
             (path / "__pycache__" / "x.pyc").write_text("", encoding="utf-8")
     (root / "pyproject.toml").write_text(f'[project]\nname = "cscmake"\nversion = "{version}"\n', encoding="utf-8")
-    (root / "gersemi" / "pyproject.toml").write_text(
-        f'[project]\nname = "gersemi-cscmake"\nversion = "{gersemi_version or version}"\n', encoding="utf-8"
-    )
     (root / "CHANGELOG.md").write_text(CHANGELOG, encoding="utf-8")
     (root / "presets" / "template").mkdir()
     (root / "presets" / "template" / "t.json.template").write_text("", encoding="utf-8")
@@ -113,7 +110,7 @@ def test_build_release(tmp_path: Path) -> None:
     assert "csCMake/csCMake.cmake" in tar_names
     assert "csCMake/presets/csv1/sub/a.cmake" in tar_names
     assert not [n for n in tar_names if "__pycache__" in n or "template/" in n or n == "csCMake/pyproject.toml"]
-    assert "csCMake/gersemi/pyproject.toml" in tar_names  # the extension can be installed from the archive
+    assert not [n for n in tar_names if "gersemi" in n]  # the CMake hooks are in cs-pre-commit-hooks
     with zipfile.ZipFile(output / "csCMake-docs-0.2.0-rc1.zip") as archive:
         assert sorted(archive.namelist()) == [
             "csCMake-docs-0.2.0-rc1/_static/style.css",
@@ -130,13 +127,6 @@ def test_the_tag_must_match_the_project_version(tmp_path: Path) -> None:
     root = _repo(tmp_path, version="0.1.0")
 
     with pytest.raises(ReleaseError, match=r"tag v0.2.0 does not match the version 0.1.0 of pyproject.toml"):
-        build_release("v0.2.0", tmp_path / "html", tmp_path / "dist", root)
-
-
-def test_the_tag_must_match_the_gersemi_extension_version(tmp_path: Path) -> None:
-    root = _repo(tmp_path, gersemi_version="0.1.0")
-
-    with pytest.raises(ReleaseError, match=r"tag v0.2.0 does not match the version 0.1.0 of gersemi/pyproject.toml"):
         build_release("v0.2.0", tmp_path / "html", tmp_path / "dist", root)
 
 
