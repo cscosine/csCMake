@@ -72,7 +72,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
 - No runtime dependencies: the package and the preset generator use the standard library only.
 - New dev dependency in `pyproject.toml` → pin the minimum in `constraints-minimum.txt` in the same commit.
 - Python: mypy strict, ruff (line length 120, double quotes), type hints everywhere.
-- CMake: gersemi formats (`.gersemirc`: line width 120, indent 2; the `cs_*` signatures in `gersemi/cscmake.py`),
+- CMake: gersemi formats (`.gersemirc`: line width 120, indent 2; the `cs_*` signatures in `gersemi/gersemi_cscmake.py`),
   `cscmake-lint` checks (`src/cscmake/devtools/cmake_lint.py`): lowercase names, a comment block directly above every
   `function`/`macro`, complexity limits, line length. Both handle the `@VAR@` templates. Silence a finding only with
   `# cscmake-lint: disable=<code>` as first line of the function body, plus a reason.
@@ -96,7 +96,7 @@ cscmake-release --tag v<x.y.z> --docs docs/_build/html --output dist  # release 
     `docs/_inventories/cmake-<version>.inv`, the local copy of the cmake.org inventory: never edit it; a new minimum
     CMake version → `CMAKE_DOCS_VERSION` in `src/cscmake/devtools/cmake_inventory.py`, then
     `cscmake-update-cmake-inventory`).
-- New or changed public `cs_*` command → update its signature in `gersemi/cscmake.py` (shipped to the projects too),
+- New or changed public `cs_*` command → update its signature in `gersemi/gersemi_cscmake.py` (shipped to the projects too),
   so gersemi lays out its keyword arguments. Names: functions/macros `[0-9a-z_]+`, arguments and locals
   `[a-z][a-z0-9_]*` (`cscmake-lint`).
 - Comments are not reflowed: wrap them by hand at 120 columns; an empty `#` line between paragraphs and before bullet

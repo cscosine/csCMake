@@ -2,5 +2,5 @@
 line_length: 120
 indent: 2
 list_expansion: favour-inlining
-extensions: [gersemi/cscmake.py]
+extensions: [gersemi/gersemi_cscmake.py] # this working copy; projects: [cscmake] (the installed package)
 warn_about_unknown_commands: false

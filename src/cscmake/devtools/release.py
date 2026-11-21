@@ -66,9 +66,13 @@ def parse_tag(tag: str) -> tuple[str, bool]:
     return match["version"], match["pre_release"] is not None
 
 
-def project_version(root: Path) -> str:
-    """Return the version of ``pyproject.toml``."""
-    with (root / "pyproject.toml").open("rb") as file:
+# the Python projects whose version is the version of csCMake: csCMake's own and the gersemi extension's
+VERSIONED_PROJECTS = ["pyproject.toml", "gersemi/pyproject.toml"]
+
+
+def project_version(root: Path, pyproject: str = "pyproject.toml") -> str:
+    """Return the version of a ``pyproject.toml`` (csCMake's own by default)."""
+    with (root / pyproject).open("rb") as file:
         version: str = tomllib.load(file)["project"]["version"]
     return version
 
@@ -132,8 +136,11 @@ def write_checksums(paths: list[Path], path: Path) -> Path:
 def build_release(tag: str, docs: Path, output: Path, root: Path = REPO_ROOT) -> list[Path]:
     """Check the tag against the project and build the release assets in ``output``; return their paths."""
     version, _ = parse_tag(tag)
-    if version != project_version(root):
-        raise ReleaseError(f"tag {tag} does not match the version {project_version(root)} of pyproject.toml")
+    for pyproject in VERSIONED_PROJECTS:
+        if version != project_version(root, pyproject):
+            raise ReleaseError(
+                f"tag {tag} does not match the version {project_version(root, pyproject)} of {pyproject}"
+            )
     notes = release_notes(root, version)
     tag_version = tag.removeprefix("v")
     output.mkdir(parents=True, exist_ok=True)

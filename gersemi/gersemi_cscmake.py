@@ -1,7 +1,9 @@
 """gersemi extension: the signatures of the csCMake commands, so that gersemi lays out their keyword arguments.
 
-Used by csCMake (``.gersemirc``) and by the projects using csCMake (``extensions: [<csCMake>/gersemi/cscmake.py]``, see
-``docs/user/formatting.md``). A new or changed public ``cs_*`` command updates its entry here.
+gersemi loads it as ``extensions: [cscmake]`` (the module ``gersemi_cscmake``) once the package of this folder is
+installed: the projects install it from a csCMake tag with the gersemi pre-commit hook (``docs/user/formatting.md``);
+csCMake itself uses this file by its path (``.gersemirc``). A new or changed public ``cs_*`` command updates its entry
+here.
 """
 
 _TARGET_SCOPES = ["PUBLIC", "PRIVATE", "INTERFACE"]

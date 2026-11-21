@@ -78,7 +78,7 @@ repos:
         always_run: true
 
       # CMake files, templates (@VAR@) included: gersemi formats (.gersemirc, the cs_* signatures in
-      # gersemi/cscmake.py), cscmake-lint checks the rules of csCMake (cscmake.devtools.cmake_lint); require the dev
+      # gersemi/gersemi_cscmake.py), cscmake-lint checks the rules of csCMake (cscmake.devtools.cmake_lint); require the dev
       # venv, like generate-csv1-presets
       - id: gersemi
         name: gersemi (format CMake)
