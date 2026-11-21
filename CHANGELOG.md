@@ -5,10 +5,10 @@ package, the documentation): GitHub Releases of this repository. How a release i
 [Releasing](docs/contributing/releasing.md). What a project can rely on between releases:
 [Compatibility](docs/user/compatibility.md).
 
-## v1.0.0 (release candidates)
+## v1.0.0 (2026-11-21)
 
-The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
-candidate to the next, listed here with what to change in a project.
+The first release: from here on the API follows semantic versioning ([Compatibility](docs/user/compatibility.md)).
+Below, what changed from one release candidate (`v1.0.0-rc<n>`) to the next, with what to change in a project.
 
 Release candidate 9 (since `v1.0.0-rc8`):
 
