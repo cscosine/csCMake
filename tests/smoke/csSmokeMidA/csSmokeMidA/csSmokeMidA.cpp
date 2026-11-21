@@ -3,8 +3,6 @@
 
 namespace cssmokemida {
 
-std::string message() {
-  return "mid-a(" + cssmokebase::text_message() + ")";
-}
+std::string message() { return "mid-a(" + cssmokebase::text_message() + ")"; }
 
 } // namespace cssmokemida

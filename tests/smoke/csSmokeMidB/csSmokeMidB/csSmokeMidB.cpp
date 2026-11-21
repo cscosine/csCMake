@@ -3,8 +3,6 @@
 
 namespace cssmokemidb {
 
-std::string message() {
-  return "mid-b(" + cssmokebase::core_message() + ")";
-}
+std::string message() { return "mid-b(" + cssmokebase::core_message() + ")"; }
 
 } // namespace cssmokemidb
