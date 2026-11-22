@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cscmake"
-version = "1.0.0"
+version = "1.0.1"
 description = "CMake for families of C++ projects: targets, packages, presets for every platform"
 authors = [
   { name = "cscosine-dev", email = "cscosine@gmail.com" }
