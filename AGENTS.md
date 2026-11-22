@@ -28,6 +28,10 @@ there, then `copier update --defaults`; never edit its parts here):
 What follows is csCMake's own guidance (commands, generated files, conventions, process).
 
 - **Repository map and recipes**: [.agents/skills/cscmake-development/SKILL.md](.agents/skills/cscmake-development/SKILL.md).
+- **The skill for the projects using csCMake**: [agent-plugin/skills/cscmake-usage/SKILL.md](agent-plugin/skills/cscmake-usage/SKILL.md),
+  the Claude Code plugin `cscmake` of the `cscosine` marketplace (`cscosine/.github`). A change of a public command,
+  preset name or layout updates it in the same PR; its `version` in `agent-plugin/.claude-plugin/plugin.json` follows
+  the csCMake version. Test it with `claude --plugin-dir agent-plugin`.
 - **Open work**: [TODO.md](TODO.md), by area; what changed for the projects: [CHANGELOG.md](CHANGELOG.md).
 - **How csCMake works**: the documentation in `docs/`: user guide, advanced pages (lifecycle, runtime dependencies,
   installed packages, presets internals), and the reference in the `#.rst:` blocks of `csCMake.cmake` and `modules/`.
