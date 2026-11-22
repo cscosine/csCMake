@@ -10,6 +10,9 @@ package, the documentation): GitHub Releases of this repository. How a release i
 No change for the projects: csCMake itself on cs-project-template v1.1.0 (the pre-commit checks in CI,
 `.github/workflows/checks.yml`).
 
+- New: the Claude Code plugin `cscmake` (`agent-plugin/`, skill `cscmake-usage`: how to use csCMake in a project),
+  installed from the `cscosine` marketplace (`/plugin install cscmake@cscosine`).
+
 ## v1.0.0 (2026-11-22)
 
 The first release: from here on the API follows semantic versioning ([Compatibility](docs/user/compatibility.md)).
