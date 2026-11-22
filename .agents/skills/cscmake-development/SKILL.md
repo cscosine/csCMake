@@ -35,8 +35,7 @@ compile-option defaults, and CMake presets. It has two parts:
 | `modules/csInternal.cmake` | Private helpers (lists, properties, paths); no reference page. |
 | `modules/integrations/csOpenMP.cmake` | `cs_target_use_openmp` (integrations with third-party tools and libraries). |
 | `templates/csTemplateConfig.cmake.in` | Template for the installed `<Ns>Config.cmake` (component-based). |
-| `.gersemirc`, `gersemi/gersemi_cscmake.py` | gersemi configuration (width 120, indent 2) and the `cs_*` signatures (shipped to projects). |
-| `src/cscmake/devtools/cmake_lint.py` | `cscmake-lint`: names, comment above every function, complexity, line length. |
+| `.gersemirc` | gersemi configuration (width 120, indent 2); the `cs_*` signatures and `cscmake-lint` are in cs-pre-commit-hooks (a dev dependency). |
 | `presets/common/` | Reusable preset building blocks (hosts, compilers, generators, build types, tests). |
 | `presets/csv1/` | **Generated** preset matrix — do not edit by hand. |
 | `presets/template/` | `@VAR@` templates used to generate `presets/csv1/`. |

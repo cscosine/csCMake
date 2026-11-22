@@ -22,7 +22,7 @@ tag (see [Getting started](getting-started.md#where-cscmake-lives)).
 | the default targets of a project | `<namespace>::cscmake_base_include` ([Targets and sources](targets.md)) |
 | the installed package | `find_package(<namespace> [COMPONENTS ...])`, the components, the public variables of `<namespace>Config.cmake` ([Installed packages](install.md)) |
 | the presets | the names of the `csv1` presets (configure, build, test, workflow), the layouts (`presets/layout/*.json`), `csCMakeProjectSetup.json`, `csCMakeProjectSetup-common.json`, the OS presets `cscmake-project-setup-<os>` and the environment variables they read ([Presets](presets.md)) |
-| the formatter configuration | `.gersemirc` and the `cs_*` signatures in `gersemi/` ([Formatting](formatting.md)) |
+| the formatter configuration | none in csCMake: `.gersemirc` comes from the project template, the `cs_*` signatures from cs-pre-commit-hooks ([Formatting](formatting.md)) |
 
 A new command, argument, variable, preset or component is not a breaking change. Neither is a new message at the
 `VERBOSE` or `DEBUG` log level, or a change of one: the messages are not part of the API.

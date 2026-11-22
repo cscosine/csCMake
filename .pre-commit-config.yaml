@@ -1,6 +1,9 @@
 # Owned by the project template (cs-project-template): change it there.
 # Project hooks: between the `project: begin` / `project: end` markers (they merge cleanly on `copier update`).
 fail_fast: false # using true is too annoying in development
+# --- project: begin (files no hook touches, a regex on the path: e.g. the upstream files of a copied library) ---
+# exclude: ^(docs|vendor)/
+# --- project: end ---
 
 repos:
   # run pre-commit autoupdate to update these versions
@@ -63,6 +66,14 @@ repos:
       - id: actionlint
 
   # --- project: begin (this repository's own hooks, between the two markers) ---
+  # CMake files, templates (@VAR@) included: gersemi lays them out (.gersemirc, the cs_* signatures), cscmake-lint checks
+  # the CMake rules; the hooks of cscosine (a new or changed public cs_* command: its signature there first, README)
+  - repo: https://github.com/cscosine/cs-pre-commit-hooks
+    rev: v1.0.0-rc1
+    hooks:
+      - id: gersemi-cscmake
+      - id: cscmake-lint
+
   - repo: local
     hooks:
       # regenerates presets/csv1 in place; fails (files modified) when the committed
@@ -76,21 +87,6 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-
-      # CMake files, templates (@VAR@) included: gersemi formats (.gersemirc, the cs_* signatures in
-      # gersemi/gersemi_cscmake.py), cscmake-lint checks the rules of csCMake (cscmake.devtools.cmake_lint); require the dev
-      # venv, like generate-csv1-presets
-      - id: gersemi
-        name: gersemi (format CMake)
-        entry: gersemi -i
-        language: system
-        files: (\.cmake|\.cmake\.in|CMakeLists\.txt)$
-
-      - id: cscmake-lint
-        name: cscmake-lint (lint CMake)
-        entry: cscmake-lint
-        language: system
-        files: (\.cmake|\.cmake\.in|CMakeLists\.txt)$
 
       # reference documentation complete: every public command, variable and property of the CMake modules has its
       # #.rst: entry (cscmake.devtools.check_docs); requires the dev venv, like generate-csv1-presets

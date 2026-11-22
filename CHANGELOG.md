@@ -5,10 +5,19 @@ package, the documentation): GitHub Releases of this repository. How a release i
 [Releasing](docs/contributing/releasing.md). What a project can rely on between releases:
 [Compatibility](docs/user/compatibility.md).
 
-## v1.0.0 (release candidates)
+## v1.0.0 (2026-11-22)
 
-The first release. A release candidate (`v1.0.0-rc<n>`) is the API proposed for 1.0.0: it may still change from one
-candidate to the next, listed here with what to change in a project.
+The first release: from here on the API follows semantic versioning ([Compatibility](docs/user/compatibility.md)).
+Below, what changed from one release candidate (`v1.0.0-rc<n>`) to the next, with what to change in a project.
+
+Release candidate 10 (since `v1.0.0-rc9`):
+
+- **The CMake hooks moved to [cs-pre-commit-hooks](https://github.com/cscosine/cs-pre-commit-hooks)**: the `cs_*`
+  signatures for gersemi (the `gersemi/` folder, package `gersemi-cscmake`) and `cscmake-lint` are no longer in
+  csCMake nor in its release archive. A project uses the hooks `gersemi-cscmake` and `cscmake-lint` of that repository
+  instead of the gersemi hook with `gersemi-cscmake @ git+https://github.com/cscosine/csCMake@<tag>#subdirectory=gersemi`
+  ([Formatting](docs/user/formatting.md)); `.gersemirc` keeps `extensions: [cscmake]`. The projects on the cscosine
+  template get it with the template.
 
 Release candidate 9 (since `v1.0.0-rc8`):
 

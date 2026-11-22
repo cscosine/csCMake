@@ -42,8 +42,6 @@ PACKAGE_CONTENT = [
     "presets/common",
     "presets/csv1",
     "presets/layout",
-    ".gersemirc",
-    "gersemi",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
@@ -66,8 +64,8 @@ def parse_tag(tag: str) -> tuple[str, bool]:
     return match["version"], match["pre_release"] is not None
 
 
-# the Python projects whose version is the version of csCMake: csCMake's own and the gersemi extension's
-VERSIONED_PROJECTS = ["pyproject.toml", "gersemi/pyproject.toml"]
+# the Python projects whose version is the version of csCMake
+VERSIONED_PROJECTS = ["pyproject.toml"]
 
 
 def project_version(root: Path, pyproject: str = "pyproject.toml") -> str:

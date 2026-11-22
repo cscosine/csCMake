@@ -484,7 +484,7 @@ def lint_installed_config(workspace: Path, variant: str, project: Project) -> No
     config_file = installed_config(workspace, variant, project)
     print(f"{config_file.name}: {line_ending(config_file)} line endings", flush=True)
     run(
-        [sys.executable, "-m", "cscmake.devtools.cmake_lint", "--disable", "CS101,CS102,CS103,CS108", config_file],
+        [sys.executable, "-m", "cs_pre_commit_hooks.cmake_lint", "--disable", "CS101,CS102,CS103,CS108", config_file],
         cwd=workspace,
     )
 
