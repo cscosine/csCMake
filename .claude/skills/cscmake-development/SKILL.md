@@ -1,7 +1,7 @@
 # csCMake development skill
 
 Agent-facing guide for working in the csCMake repository. This file lives at
-`.agents/skills/cscmake-development/SKILL.md`.
+`.claude/skills/cscmake-development/SKILL.md`.
 
 ## Repository purpose
 
@@ -80,7 +80,7 @@ pytest --cov=cscmake       # with coverage
 ```
 
 ### Add a new build configuration
-Edit `utils/csBuildConfigurations.cmake` (`_cs_add_default_build_configuration` /
+Edit `modules/csBuildConfigurations.cmake` (`_cs_add_default_build_configuration` /
 `_cs_add_default_build_configuration_mapped`) and add the corresponding preset
 entries in `presets/common/build-configurations.json`.
 
