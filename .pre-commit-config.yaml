@@ -60,20 +60,20 @@ repos:
         types_or: [c, c++, cuda]
         args: ["-style=file"]
 
+  # CMake: gersemi lays out the CMake files (.gersemirc) with the signatures of the csCMake commands, cscmake-lint checks
+  # the CMake rules of cscosine (lowercase names, a comment above every function, size limits, line length)
+  - repo: https://github.com/cscosine/cs-pre-commit-hooks
+    rev: v1.0.0
+    hooks:
+      - id: gersemi-cscmake
+      - id: cscmake-lint
+
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:
       - id: actionlint
 
   # --- project: begin (this repository's own hooks, between the two markers) ---
-  # CMake files, templates (@VAR@) included: gersemi lays them out (.gersemirc, the cs_* signatures), cscmake-lint checks
-  # the CMake rules; the hooks of cscosine (a new or changed public cs_* command: its signature there first, README)
-  - repo: https://github.com/cscosine/cs-pre-commit-hooks
-    rev: v1.0.0-rc1
-    hooks:
-      - id: gersemi-cscmake
-      - id: cscmake-lint
-
   - repo: local
     hooks:
       # regenerates presets/csv1 in place; fails (files modified) when the committed

@@ -29,7 +29,7 @@ cscmake-release = "cscmake.devtools.release:main"
 [project.optional-dependencies]
 # the smoke tests (tests/smoke/run_smoke.py): cscmake-lint of the installed package configs; the same pin as the hooks
 # `rev:` in .pre-commit-config.yaml
-smoke = ["cs-pre-commit-hooks @ git+https://github.com/cscosine/cs-pre-commit-hooks@v1.0.0-rc1"]
+smoke = ["cs-pre-commit-hooks @ git+https://github.com/cscosine/cs-pre-commit-hooks@v1.0.0"]
 dev = [
     # template: the tools of .pre-commit-config.yaml and the tests
     "pytest>=9",
