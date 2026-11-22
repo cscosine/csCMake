@@ -10,6 +10,9 @@ package, the documentation): GitHub Releases of this repository. How a release i
 The first release: from here on the API follows semantic versioning ([Compatibility](docs/user/compatibility.md)).
 Below, what changed from one release candidate (`v1.0.0-rc<n>`) to the next, with what to change in a project.
 
+The release (since `v1.0.0-rc10`): no change for the projects; csCMake itself on cs-project-template v1.0.0 and
+cs-pre-commit-hooks v1.0.0.
+
 Release candidate 10 (since `v1.0.0-rc9`):
 
 - **The CMake hooks moved to [cs-pre-commit-hooks](https://github.com/cscosine/cs-pre-commit-hooks)**: the `cs_*`
