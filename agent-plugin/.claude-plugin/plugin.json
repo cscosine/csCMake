@@ -1,7 +1,7 @@
 {
   "name": "cscmake",
   "description": "How to use csCMake in a C++ project: the cs_* commands, installed packages with components, build configurations, compile profiles, presets and layouts, deployments, and what its errors mean.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": { "name": "cscosine" },
   "homepage": "https://cscosine.github.io/csCMake/",
   "repository": "https://github.com/cscosine/csCMake"

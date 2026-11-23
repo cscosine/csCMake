@@ -31,8 +31,8 @@ jobs and shells that set the variables once for every project.
 
 ## Its own workspace: `csSmokeStandalone`
 
-A self-contained project keeps its workspace inside: `<project>/workspace/` holds csCMake and the build and install
-folders.
+A self-contained project keeps its workspace inside: `<project>/_csw/` holds csCMake and the build and install
+folders. The folder name is the standalone layout's, fixed by csCMake; a workspace anywhere else: the `env` layout.
 
 ```text
 csSmokeStandalone/
@@ -40,7 +40,7 @@ csSmokeStandalone/
   CMakePresets.json
   csCMakeProjectSetup.json
   csSmokeStandalone/
-  workspace/
+  _csw/
     csCMake/                  a copy (or a git submodule) of csCMake
     build/  install/          created by the presets
 ```

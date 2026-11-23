@@ -5,10 +5,16 @@ package, the documentation): GitHub Releases of this repository. How a release i
 [Releasing](docs/contributing/releasing.md). What a project can rely on between releases:
 [Compatibility](docs/user/compatibility.md).
 
-## v1.0.1 (unreleased)
+## v1.1.0 (unreleased)
 
-No change for the projects: csCMake itself on cs-project-template v1.1.0 (the pre-commit checks in CI,
-`.github/workflows/checks.yml`).
+- **Changed, breaking for the `standalone` layouts**: the workspace inside the project is `<project>/_csw` (was
+  `<project>/workspace`), a short name for the Windows path length that does not clash with the folder holding the
+  clones. The name is fixed by csCMake; a workspace anywhere else: the `env` layout. A minor version, not a major: every
+  project using these layouts is cscosine's and moves with this release (cscosine/.github, `PLAN-vscode.md` C4). What
+  to change in a project: the includes of `CMakePresets.json` and `csCMakeProjectSetup.json`,
+  `${sourceDir}/workspace/csCMake/...` to `${sourceDir}/_csw/csCMake/...`; the folder of the csorchestrator recipe
+  (`base_target_dir`), the git and tool ignores; locally, move `workspace/` to `_csw/` (or build again).
+- csCMake itself on cs-project-template v1.1.0 (the pre-commit checks in CI, `.github/workflows/checks.yml`).
 
 - New: the Claude Code plugin `cscmake` (`agent-plugin/`, skill `cscmake-usage`: how to use csCMake in a project),
   installed from the `cscosine` marketplace (`/plugin install cscmake@cscosine`).

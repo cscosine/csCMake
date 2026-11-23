@@ -8,11 +8,11 @@
         {
             "name": "cscmake-project-setup",
             "displayName": "csCMake Project Setup (standalone)",
-            "description": "the workspace inside the project: <project>/workspace/csCMake",
+            "description": "the workspace inside the project: <project>/_csw/csCMake",
             "hidden": true,
             "inherits": "cscmake-common-project-setup",
             "environment": {
-                "CSCMAKE_WORKSPACE_ROOT": "${sourceDir}/workspace",
+                "CSCMAKE_WORKSPACE_ROOT": "${sourceDir}/_csw",
                 "CSCMAKE_ROOT": "$env{CSCMAKE_WORKSPACE_ROOT}/csCMake",
                 "CSCMAKE_BUILD_SUB_DIR": "$env{CSCMAKE_CSV1_SUB_DIR}"
             }

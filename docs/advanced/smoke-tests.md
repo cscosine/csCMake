@@ -19,7 +19,7 @@ install folder):
 | `csSmokeMidB` | package depending on the base, simplest layout | **flat** layout: a single `project()` named like the package, library folder without its own `project()`; depends on `csSmokeBase` (`COMPONENTS core`, PUBLIC); preset layout `sibling-short` (Base, MidA, Top: `sibling`) |
 | `csSmokeTop` | application using several packages | finds `csSmokeMidA` PUBLIC and `csSmokeMidB` **PRIVATE** (not propagated to its Config); `csSmokeBase` is reached through two `find_dependency` paths with different components (diamond); installed application |
 | `csSmokeEnv` | application located by the environment | preset layout `env`: workspace and csCMake from `CSCMAKE_WORKSPACE_ROOT` / `CSCMAKE_ROOT` (set by `run_smoke.py`), also in the includes of its presets (`$penv{CSCMAKE_ROOT}/presets/...`); finds `csSmokeBase` there |
-| `csSmokeStandalone` | self-contained application | preset layout `standalone-short`: its own workspace `csSmokeStandalone/workspace/` with a copy of csCMake, build and install folders |
+| `csSmokeStandalone` | self-contained application | preset layout `standalone-short`: its own workspace `csSmokeStandalone/_csw/` with a copy of csCMake, build and install folders |
 | `csSmokeShared` | shared libraries | two SHARED libraries (`sharedText` uses `sharedCore`, components `text` and `core`) and an application; Windows: `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS`; the **installed** application runs from the install folder (install RPATH of `cs_add_library` / `cs_add_executable` on Linux and macOS, DLLs in `bin/` on Windows); Visual Studio: the debugger `PATH` of the application in its `.vcxproj` (its `CSCMAKE_RUNTIME_DIRS` folder, then the DLL folder, every configuration) |
 | `csSmokeDeploy` | deployments | a SHARED library (`deployCore`) using `csSmokeShared::sharedText` of another package, an application, a sample **not installed**, a data file; two deployments (`cs_deployment`) made by the install step of the workflow presets: `app` (application + data, Release) and `sample` (Release and RelWithDebInfo), each with its own copies of the shared libraries |
 | `csSmokePlainConsumer` | consumer without csCMake | plain CMake (no `include(csCMake)`): `find_package(csSmokeShared COMPONENTS text)` and `csSmokeShared::sharedText`; on Windows copies `$<TARGET_RUNTIME_DLLS>` next to its executable; its ctest runs it from the build folder; Debug and Release only (the configurations plain CMake knows) |
@@ -123,7 +123,7 @@ and a consumer finds the packages, and the ones they depend on (`find_dependency
 <workspace>/
   csCMake/                          the content of the release package (copied from the checkout)
   csSmokeBase/ ... csSmokeEnv/      the projects (copied from tests/smoke/)
-  csSmokeStandalone/workspace/      its own workspace: csCMake (copied), build/, install/
+  csSmokeStandalone/_csw/           its own workspace: csCMake (copied), build/, install/
   build/<variant>/<project>         created by the presets (short folder names with the *-short preset layouts)
   install/<variant>/<project>
   install-relocated/                install/ moved by the relocation step (install/ then holds the rebuilt consumers)

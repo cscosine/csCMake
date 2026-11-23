@@ -12,7 +12,7 @@
             "hidden": true,
             "inherits": "cscmake-common-project-setup",
             "environment": {
-                "CSCMAKE_WORKSPACE_ROOT": "${sourceDir}/workspace",
+                "CSCMAKE_WORKSPACE_ROOT": "${sourceDir}/_csw",
                 "CSCMAKE_ROOT": "$env{CSCMAKE_WORKSPACE_ROOT}/csCMake",
                 "CSCMAKE_BUILD_SUB_DIR": "$env{CSCMAKE_CSV1_SUB_DIR_SHORT}"
             }

@@ -74,12 +74,12 @@ LAYOUTS = {
     "sibling": ("csCMake and the project side by side in the workspace", "${sourceParentDir}", _IN_WORKSPACE, _LONG),
     "sibling-short": ("sibling, short build folder names", "${sourceParentDir}", _IN_WORKSPACE, _SHORT),
     "standalone": (
-        "the workspace inside the project: <project>/workspace/csCMake",
-        "${sourceDir}/workspace",
+        "the workspace inside the project: <project>/_csw/csCMake",
+        "${sourceDir}/_csw",
         _IN_WORKSPACE,
         _LONG,
     ),
-    "standalone-short": ("standalone, short build folder names", "${sourceDir}/workspace", _IN_WORKSPACE, _SHORT),
+    "standalone-short": ("standalone, short build folder names", "${sourceDir}/_csw", _IN_WORKSPACE, _SHORT),
     "env": (
         "workspace and csCMake from the environment variables CSCMAKE_WORKSPACE_ROOT and CSCMAKE_ROOT",
         "$penv{CSCMAKE_WORKSPACE_ROOT}",

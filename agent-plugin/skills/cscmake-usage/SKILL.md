@@ -42,7 +42,7 @@ includes one layout, `<csCMake>/presets/layout/<layout>.json`. The `<csCMake>` p
 | Layout | Workspace / csCMake | Path in both files |
 |---|---|---|
 | `sibling` | parent folder of the project / `<workspace>/csCMake` | `${sourceParentDir}/csCMake/...` |
-| `standalone` (what csorchestrator projects use) | `<project>/workspace` / `<workspace>/csCMake` | `${sourceDir}/workspace/csCMake/...` |
+| `standalone` (what csorchestrator projects use) | `<project>/_csw` (fixed name) / `<workspace>/csCMake` | `${sourceDir}/_csw/csCMake/...` |
 | `env` | env `CSCMAKE_WORKSPACE_ROOT` / env `CSCMAKE_ROOT` | `$penv{CSCMAKE_ROOT}/...` |
 
 `*-short` variants of each: short build folder names (Visual Studio, 260-character paths). Project values in the

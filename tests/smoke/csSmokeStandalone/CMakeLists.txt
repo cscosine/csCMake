@@ -1,6 +1,6 @@
 # smoke test: standalone layout, the workspace inside the project
 #
-# * <project>/workspace/csCMake, build and install folders in <project>/workspace
+# * <project>/_csw/csCMake, build and install folders in <project>/_csw
 # * presets/layout/standalone-short.json (see tests/smoke/README.md)
 cmake_minimum_required(VERSION 3.31)
 project(csSmokeStandalone VERSION 1.0.0 LANGUAGES CXX)

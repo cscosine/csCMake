@@ -17,7 +17,7 @@ and install folders and the search paths.
 
 The csCMake presets include `csCMakeProjectSetup.json` from the same folder: it chooses the layout (below). The path of
 the first include depends on the layout too: `${sourceParentDir}/csCMake/...` for the `sibling` layouts,
-`${sourceDir}/workspace/csCMake/...` for the `standalone` ones, `$penv{CSCMAKE_ROOT}/...` for the `env` ones.
+`${sourceDir}/_csw/csCMake/...` for the `standalone` ones, `$penv{CSCMAKE_ROOT}/...` for the `env` ones.
 
 ## Preset names
 
@@ -68,13 +68,14 @@ build folder names are. A project includes one layout in its `csCMakeProjectSetu
 |---|---|---|---|
 | `sibling` | the parent folder of the project | `<workspace>/csCMake` | long (variant id) |
 | `sibling-short` | the parent folder of the project | `<workspace>/csCMake` | short |
-| `standalone` | `<project>/workspace` | `<workspace>/csCMake` | long |
-| `standalone-short` | `<project>/workspace` | `<workspace>/csCMake` | short |
+| `standalone` | `<project>/_csw` | `<workspace>/csCMake` | long |
+| `standalone-short` | `<project>/_csw` | `<workspace>/csCMake` | short |
 | `env` | environment variable `CSCMAKE_WORKSPACE_ROOT` | environment variable `CSCMAKE_ROOT` | long |
 | `env-short` | environment variable `CSCMAKE_WORKSPACE_ROOT` | environment variable `CSCMAKE_ROOT` | short |
 
 - `sibling`: projects and csCMake side by side in a workspace folder; the usual choice.
-- `standalone`: a self-contained project, with its own workspace (and copy of csCMake) inside it.
+- `standalone`: a self-contained project, with its own workspace (and copy of csCMake) inside it, in `<project>/_csw`:
+  the name is fixed by csCMake (the includes of the project's presets name it too); another place: `env`.
 - `env`: the workspace and csCMake anywhere, e.g. set by a CI job or a shell profile.
 - The short build folder names keep Visual Studio builds clear of the 260-character path limit of Windows.
 

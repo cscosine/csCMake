@@ -77,7 +77,7 @@ class Project:
     name: str  # folder name = package name = export namespace (find_package searches <prefix>/<name>*/...)
     find_dependencies: tuple[str, ...] = ()  # exactly the packages of find_dependency() in its installed Config
     apps: tuple[App, ...] = ()  # installed applications to run
-    standalone: bool = False  # standalone layout: its own workspace, <project>/workspace (csCMake copied there)
+    standalone: bool = False  # standalone layout: its own workspace, <project>/_csw (csCMake copied there)
     # a consumer without csCMake: plain CMake, Debug and Release only (the configurations CMake knows), no installed
     # package to check
     plain: bool = False
@@ -234,7 +234,7 @@ def prepare_workspace(workspace: Path) -> None:
     for project in PROJECTS:
         shutil.copytree(SMOKE_DIR / project.name, workspace / project.name)
         if project.standalone:
-            copy_cscmake(workspace / project.name / "workspace" / "csCMake")
+            copy_cscmake(workspace / project.name / "_csw" / "csCMake")
 
 
 def copy_cscmake(target_dir: Path) -> None:
@@ -252,7 +252,7 @@ def copy_cscmake(target_dir: Path) -> None:
 
 def install_dir(workspace: Path, variant: str, project: Project) -> Path:
     """Install folder of ``project``: install/<variant>/<project> of its workspace (csCMakeProjectSetup.json)."""
-    project_workspace = workspace / project.name / "workspace" if project.standalone else workspace
+    project_workspace = workspace / project.name / "_csw" if project.standalone else workspace
     return project_workspace / "install" / variant / project.name
 
 
